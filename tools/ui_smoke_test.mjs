@@ -34,12 +34,17 @@ try {
     studioCellGroups: document.querySelectorAll(".studio-lane .studio-cell-group").length,
     studioRulerGroups: document.querySelectorAll(".studio-ruler-group").length,
     studioActions: document.querySelectorAll("[data-studio-action]").length,
+    distortionTriggers: document.querySelectorAll(".distortion-trigger").length,
+    distortionControls: document.querySelectorAll(".distortion-overlay .control[data-param]").length,
+    distortionTypes: document.querySelectorAll(".distortion-types button").length,
   }));
-  if (counts.controls !== 12 || counts.endpointControls !== 12
+  if (counts.controls !== 16 || counts.endpointControls !== 16
       || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
       || counts.stepGroups !== 4 || counts.whiteKeys !== 7 || counts.blackKeys !== 5
       || counts.studioCells !== 64 || counts.studioCellGroups !== 16
-      || counts.studioRulerGroups !== 4 || counts.studioActions !== 11) {
+      || counts.studioRulerGroups !== 4 || counts.studioActions !== 11
+      || counts.distortionTriggers !== 1 || counts.distortionControls !== 4
+      || counts.distortionTypes !== 3) {
     throw new Error(`Unexpected UI element counts: ${JSON.stringify(counts)}`);
   }
 
@@ -179,6 +184,43 @@ try {
   await page.locator(".run-switch button:visible").click();
   if (!(await page.locator(".run-lamp").evaluate(node => node.classList.contains("lit")))) {
     throw new Error("Run switch failed");
+  }
+
+  const distortionTrigger = page.locator(".distortion-trigger");
+  if (await distortionTrigger.evaluate(node => node.classList.contains("active"))) {
+    throw new Error("Distortion is not bypassed by default");
+  }
+  await distortionTrigger.click();
+  if (!(await page.locator(".distortion-overlay").isVisible())
+      || await distortionTrigger.getAttribute("aria-expanded") !== "true") {
+    throw new Error("Distortion overlay did not open");
+  }
+  await page.locator(".distortion-power button").click();
+  await page.locator('.distortion-types button[data-value="1"]').click();
+  const distortionState = await page.locator("acidify-patch-view").evaluate(node => ({
+    enabled: node._values.get("param45"),
+    type: node._values.get("param46"),
+    status: node.querySelector(".distortion-status").textContent,
+    triggerActive: node.querySelector(".distortion-trigger").classList.contains("active"),
+    pendingEchoes: node._recentSends.length,
+  }));
+  if (distortionState.enabled !== 1 || distortionState.type !== 1
+      || distortionState.status !== "MACKIE ACTIVE"
+      || !distortionState.triggerActive || distortionState.pendingEchoes !== 0) {
+    throw new Error(`Distortion controls failed: ${JSON.stringify(distortionState)}`);
+  }
+  const drive = page.locator('.control[data-param="param47"] .dial');
+  const driveBefore = Number(await drive.getAttribute("aria-valuenow"));
+  await drive.focus();
+  await drive.press("ArrowRight");
+  const driveAfter = Number(await drive.getAttribute("aria-valuenow"));
+  if (!(driveAfter > driveBefore)) {
+    throw new Error(`Distortion drive keyboard input failed: ${driveBefore} -> ${driveAfter}`);
+  }
+  await page.keyboard.press("Escape");
+  if (await page.locator(".distortion-overlay").isVisible()
+      || await distortionTrigger.getAttribute("aria-expanded") !== "false") {
+    throw new Error("Distortion overlay did not close with Escape");
   }
 
   await page.locator('.sequence-step[data-step="7"]').click();
@@ -323,7 +365,7 @@ try {
       mounted: node._mounted,
     };
   });
-  if (reconnect.sends !== 1 || reconnect.controls !== 12 || reconnect.endpointControls !== 12
+  if (reconnect.sends !== 1 || reconnect.controls !== 16 || reconnect.endpointControls !== 16
       || reconnect.pendingEchoes !== 0 || !reconnect.mounted) {
     throw new Error(`Reconnect lifecycle failed: ${JSON.stringify(reconnect)}`);
   }
@@ -346,6 +388,12 @@ try {
       keyboardUndo: true,
       batchTranspose: true,
       batchRest: true,
+    },
+    distortion: {
+      state: distortionState,
+      drive: { before: driveBefore, after: driveAfter },
+      overlay: true,
+      escapeClose: true,
     },
     scaledBounds: bounds,
     reconnect,

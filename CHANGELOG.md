@@ -6,6 +6,52 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-25
+
+### Added
+
+- Kleine `DIST`-Statusschaltfläche im unveränderten Master-Kopf; Klick öffnet
+  ein fokussierbares Overlay für True Bypass, Charakter, Drive und Mix.
+- Append-only `param45..param48` für Distortion Enable, Type, Drive und Mix.
+- Drei klar vom Instrumentenkern getrennte Post-Stufen: Airwindows
+  `PurestDrive`, Airwindows `Mackity` und ein generisches
+  RIAA-/Phono-Übersteuerungsmodell.
+- Physikalisches Ideal-Dioden-Knotenmodell des 47-kΩ/100-kΩ/1-µF-
+  Accent-Sweep-Netzwerks einschließlich der zweiten Resonance-Potisektion.
+- Separater 47-kΩ/0,033-µF-Accentpfad zum VCA.
+- Monophoner MIDI-Notenstapel mit Slide zur neuen Note und Rückkehr zur zuletzt
+  noch gehaltenen Note sowie Unterstützung für MIDI All Sound Off/All Notes Off.
+- DSP-Matrix, die Clean- und Effektpfad innerhalb derselben Instanz
+  samplegenau vergleicht, sowie interner Cmajor-Artikulationstest für
+  Legato versus Retrigger.
+- Festgepinnte Open303-/Airwindows-Quellstände und vollständige MIT-Hinweise in
+  `THIRD_PARTY_NOTICES.md`.
+
+### Changed
+
+- VCO läuft frei weiter; neue Einzelnoten setzen weder Phase noch Filterzustände
+  hart zurück.
+- Square verwendet die aus Open303s gemessenem 303-Shaper abgeleitete
+  Pulsposition und den halben Pegel.
+- Clean-Core verwendet die gemessene Open303-TB-Rekursion ohne generischen
+  `tanh`-Waveshaper im Filter.
+- Vollständiges Ausgangsnetzwerk aus 14,008-Hz-Allpass,
+  24,167-Hz-Hochpass und 7,5164-Hz-Bandreject ergänzt.
+- Einpolige Koppelfilter, 200-Hz-VCA-De-Clicker, MEG-/VEG-Zeiten und
+  50-%-Gate-Länge an die festgepinnte Referenz angeglichen.
+- Klang-, Typ-, Mix- und Bypass-Änderungen werden geglättet beziehungsweise
+  überblendet; deaktivierter Pfad und `MIX = 0` sind sampletransparent.
+- Live-Renderer erzeugt zusätzlich das Distortion-Overlay bei 1180 × 580 und
+  590 × 290 px.
+
+### Validated
+
+- Cmajor 1.0.3175 C++-Codegen ohne Warnung.
+- Amorph-Preflight: 0 Fehler, 0 Warnungen, 48/48 Parameter synchron.
+- Clean/Distortion-Matrix und Legato/Retrigger bei 44,1, 48, 88,2 und 96 kHz.
+- UI-Smoke-Test einschließlich Overlay, Tastaturbedienung, Parameter-Echo,
+  Reconnect und unveränderter Modulgeometrie.
+
 ## [0.4.1] - 2026-07-25
 
 ### Fixed

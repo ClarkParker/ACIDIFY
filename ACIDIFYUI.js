@@ -16,6 +16,10 @@ const ACIDIFY_GLOBALS = [
   { id: "param10", type: "toggle",  label: "RUN",          min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param11", type: "stepper", label: "LENGTH",       min: 1,  max: 16,  step: 1, init: 16,      format: v => `${Math.round(v)}` },
   { id: "param12", type: "stepper", label: "ROOT",         min: 24, max: 60,  step: 1, init: 36,      format: v => noteName(Math.round(v)) },
+  { id: "param45", type: "toggle",  label: "DISTORTION",   min: 0,  max: 1,   step: 1, init: 0 },
+  { id: "param46", type: "toggle",  label: "TYPE",         min: 0,  max: 2,   step: 1, init: 0 },
+  { id: "param47", type: "dial",    label: "DRIVE",        min: 0,  max: 1,   step: 0.001, init: 0.35, format: v => `${Math.round(v * 100)}` },
+  { id: "param48", type: "dial",    label: "MIX",          min: 0,  max: 1,   step: 0.001, init: 1,    format: v => `${Math.round(v * 100)}%` },
 ];
 
 const STEP_PITCH_DEFAULTS = [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7];
@@ -29,6 +33,7 @@ const STEP_FLAG_IDS = [
   "param37", "param38", "param39", "param40", "param41", "param42", "param43", "param44",
 ];
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const DISTORTION_NAMES = ["PURE", "MACKIE", "PHONO"];
 
 function noteName(note) {
   const n = Math.max(0, Math.min(127, Math.round(Number(note) || 0)));
@@ -220,6 +225,7 @@ class AcidifyPatchView extends HTMLElement {
     this._selectionAnchor = 0;
     this._playingStep = -1;
     this._studioMode = false;
+    this._distortionOpen = false;
     this._history = [];
     this._future = [];
     this._clipboard = null;
@@ -233,6 +239,7 @@ class AcidifyPatchView extends HTMLElement {
     this._meter = 0;
     this._studioPointerEnd = null;
     this._studioKeyDown = null;
+    this._distortionKeyDown = null;
     this._midiHandler = null;
     this._recentSends = [];
     this._mounted = false;
@@ -241,6 +248,7 @@ class AcidifyPatchView extends HTMLElement {
   connectedCallback() {
     if (this._mounted) return;
     this._mounted = true;
+    this._distortionOpen = false;
     this.innerHTML = this.getHTML();
     this._controls.clear();
     this._values.clear();
@@ -249,6 +257,7 @@ class AcidifyPatchView extends HTMLElement {
     this._wireSteps();
     this._wireKeyboard();
     this._wireStudio();
+    this._wireDistortion();
     this._renderStepEditor();
     this._renderStudio();
 
@@ -257,6 +266,10 @@ class AcidifyPatchView extends HTMLElement {
       this._values.set(endpointID, Number(value));
       const control = this._controls.get(endpointID);
       if (control) control.setValue(value, false);
+      if (endpointID === "param45" || endpointID === "param46"
+          || endpointID === "param47" || endpointID === "param48") {
+        this._renderDistortionState();
+      }
       if (this._isStepParam(endpointID)) {
         this._renderStepStrip();
         this._renderStepEditor();
@@ -318,6 +331,7 @@ class AcidifyPatchView extends HTMLElement {
     if (this._scaleTimer) window.clearInterval(this._scaleTimer);
     if (this._toastTimer) window.clearTimeout(this._toastTimer);
     if (this._studioKeyDown) this.removeEventListener("keydown", this._studioKeyDown);
+    if (this._distortionKeyDown) this.removeEventListener("keydown", this._distortionKeyDown);
     if (window.__amorphProcessMidi === this._midiHandler) delete window.__amorphProcessMidi;
     this._controls.forEach(control => control.dispose?.());
     this._controls.clear();
@@ -332,6 +346,7 @@ class AcidifyPatchView extends HTMLElement {
     this._toastTimer = null;
     this._studioPointerEnd = null;
     this._studioKeyDown = null;
+    this._distortionKeyDown = null;
     this._midiHandler = null;
     this._mounted = false;
   }
@@ -340,6 +355,10 @@ class AcidifyPatchView extends HTMLElement {
     const value = Number(rawValue);
     const now = performance.now();
     this._values.set(endpointID, value);
+    if (endpointID === "param45" || endpointID === "param46"
+        || endpointID === "param47" || endpointID === "param48") {
+      this._renderDistortionState();
+    }
     this._recentSends = this._recentSends.filter(entry => now - entry.time < 1500);
     this._recentSends.push({ endpointID, value, time: now });
     if (this._recentSends.length > 64) this._recentSends.shift();
@@ -375,6 +394,9 @@ class AcidifyPatchView extends HTMLElement {
           onChange: value => {
             if (config.id === "param10") {
               this.querySelector(".run-lamp")?.classList.toggle("lit", value >= 0.5);
+            }
+            if (config.id === "param45" || config.id === "param46") {
+              this._renderDistortionState();
             }
           },
         });
@@ -525,6 +547,7 @@ class AcidifyPatchView extends HTMLElement {
     this._studioKeyDown = event => {
       const command = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
+      if (this._distortionOpen && event.key === "Escape") return;
       if (!command && key === "m") {
         event.preventDefault();
         this._setStudioMode(!this._studioMode);
@@ -549,6 +572,56 @@ class AcidifyPatchView extends HTMLElement {
       }
     };
     this.addEventListener("keydown", this._studioKeyDown);
+  }
+
+  _wireDistortion() {
+    this.querySelector(".distortion-trigger")?.addEventListener("click", () => {
+      this._setDistortionOpen(true);
+    });
+    this.querySelector(".distortion-close")?.addEventListener("click", () => {
+      this._setDistortionOpen(false);
+    });
+    this.querySelector(".distortion-scrim")?.addEventListener("pointerdown", event => {
+      if (event.target === event.currentTarget) this._setDistortionOpen(false);
+    });
+    this._distortionKeyDown = event => {
+      if (!this._distortionOpen || event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      this._setDistortionOpen(false);
+    };
+    this.addEventListener("keydown", this._distortionKeyDown);
+    this._renderDistortionState();
+  }
+
+  _setDistortionOpen(enabled) {
+    this._distortionOpen = Boolean(enabled);
+    this.classList.toggle("distortion-open", this._distortionOpen);
+    const trigger = this.querySelector(".distortion-trigger");
+    const scrim = this.querySelector(".distortion-scrim");
+    trigger?.setAttribute("aria-expanded", `${this._distortionOpen}`);
+    if (scrim) {
+      scrim.hidden = !this._distortionOpen;
+      scrim.setAttribute("aria-hidden", `${!this._distortionOpen}`);
+    }
+    if (this._distortionOpen) {
+      queueMicrotask(() => this.querySelector(".distortion-close")?.focus());
+    } else {
+      trigger?.focus();
+    }
+  }
+
+  _renderDistortionState() {
+    const enabled = Number(this._values.get("param45") ?? 0) >= 0.5;
+    const typeIndex = clamp(Math.round(Number(this._values.get("param46") ?? 0)), 0, 2);
+    const name = DISTORTION_NAMES[typeIndex];
+    const trigger = this.querySelector(".distortion-trigger");
+    trigger?.classList.toggle("active", enabled);
+    trigger?.setAttribute("aria-label", `Distortion ${enabled ? `${name} enabled` : "disabled"}; open controls`);
+    trigger?.setAttribute("title", `Distortion · ${enabled ? name : "OFF"}`);
+    const status = this.querySelector(".distortion-status");
+    if (status) status.textContent = enabled ? `${name} ACTIVE` : "TRUE BYPASS";
+    this.querySelector(".distortion-led")?.classList.toggle("lit", enabled);
   }
 
   _setStudioMode(enabled) {
@@ -2554,6 +2627,167 @@ class AcidifyPatchView extends HTMLElement {
     color: #55574f;
     text-shadow: 0 .5px rgba(255,255,255,.38);
   }
+  acidify-patch-view .distortion-trigger {
+    display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+    width: 40px; height: 15px; padding: 0 4px; border-radius: 3px; cursor: pointer;
+    color: #4f5049; font-size: 5.5px; line-height: 1; font-weight: 900; letter-spacing: .65px;
+    background: linear-gradient(#d9d8cf, #a6a69e);
+    border: 1px solid #77776f;
+    box-shadow: inset 0 1px rgba(255,255,255,.75), 0 1px rgba(255,255,255,.38);
+  }
+  acidify-patch-view .distortion-trigger:hover { color: #272823; }
+  acidify-patch-view .distortion-trigger:active,
+  acidify-patch-view .distortion-trigger.active {
+    transform: translateY(1px);
+    color: #fff0e8; border-color: #751911;
+    background: linear-gradient(#a72a21, #64130e);
+    box-shadow: inset 0 2px 3px rgba(41,3,1,.52), 0 0 6px rgba(181,41,33,.22);
+  }
+  acidify-patch-view .distortion-trigger:focus-visible,
+  acidify-patch-view .distortion-close:focus-visible,
+  acidify-patch-view .distortion-types button:focus-visible,
+  acidify-patch-view .distortion-power button:focus-visible {
+    outline: 2px solid rgba(169,32,26,.72); outline-offset: 2px;
+  }
+  acidify-patch-view .distortion-led {
+    display: block; width: 5px; height: 5px; border-radius: 50%;
+    background: #3d1612; border: 1px solid #2b0a07;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.16);
+  }
+  acidify-patch-view .distortion-led.lit {
+    background: #ff4f3c;
+    box-shadow: 0 0 4px #ff3826, inset 0 0 1px #fff;
+  }
+  acidify-patch-view .distortion-scrim[hidden] { display: none; }
+  acidify-patch-view .distortion-scrim {
+    position: absolute; z-index: 80; inset: 0; border-radius: 15px;
+    background: rgba(25,24,20,.2);
+  }
+  acidify-patch-view .distortion-overlay {
+    position: absolute; right: 22px; top: 20px; width: 514px; height: 198px;
+    overflow: hidden; border: 1px solid #595a54; border-radius: 8px;
+    color: #24251f;
+    background:
+      radial-gradient(ellipse at 36% -10%, rgba(255,255,255,.58), transparent 52%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, rgba(49,50,48,.025) 1px 2px, transparent 2px 5px),
+      linear-gradient(155deg, #dedfd9, #b7b8b2);
+    box-shadow:
+      0 14px 28px rgba(35,32,25,.42),
+      0 4px 9px rgba(35,32,25,.34),
+      inset 0 1px #fafaf5,
+      inset 0 -2px 4px rgba(0,0,0,.2);
+    animation: distortion-enter 130ms ease-out both;
+  }
+  @keyframes distortion-enter {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  acidify-patch-view .distortion-overlay-head {
+    height: 35px; padding: 7px 9px 5px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(69,69,64,.55);
+    box-shadow: 0 1px rgba(255,255,255,.55);
+  }
+  acidify-patch-view .distortion-overlay-head > div {
+    display: flex; align-items: baseline; gap: 11px;
+  }
+  acidify-patch-view .distortion-overlay-head strong {
+    color: #9f1e18; font-size: 10px; letter-spacing: 1.8px;
+  }
+  acidify-patch-view .distortion-status {
+    color: #62635c; font: 7px "Courier New", monospace; letter-spacing: .75px;
+  }
+  acidify-patch-view .distortion-close {
+    width: 23px; height: 21px; border-radius: 3px; cursor: pointer;
+    color: #e8e6dd; font: 18px/17px Arial, sans-serif;
+    background: linear-gradient(#57564f, #292925);
+    border: 1px solid #1b1b18;
+    box-shadow: inset 0 1px rgba(255,255,255,.18), 0 1px rgba(255,255,255,.42);
+  }
+  acidify-patch-view .distortion-overlay-body {
+    height: 137px; padding: 9px 10px 6px;
+    display: grid; grid-template-columns: 76px 190px 96px 96px; gap: 8px;
+    align-items: stretch;
+  }
+  acidify-patch-view .distortion-power-cell,
+  acidify-patch-view .distortion-type-cell,
+  acidify-patch-view .distortion-knob-cell {
+    position: relative; min-width: 0; border: 1px solid rgba(72,72,66,.52); border-radius: 5px;
+    background: linear-gradient(135deg, rgba(255,255,255,.22), rgba(98,98,91,.035));
+    box-shadow: inset 0 1px rgba(255,255,255,.52);
+  }
+  acidify-patch-view .distortion-cell-label {
+    display: block; margin-top: 7px; text-align: center;
+    color: #55574f; font-size: 6px; font-weight: 900; letter-spacing: 1.15px;
+  }
+  acidify-patch-view .distortion-power-cell {
+    display: flex; flex-direction: column; align-items: center;
+  }
+  acidify-patch-view .distortion-power-cell > small {
+    margin-top: 8px; color: #696a63; font-size: 5px; font-weight: 900; letter-spacing: .55px;
+  }
+  acidify-patch-view .distortion-power.run-switch {
+    width: 54px; height: 42px; margin-top: 11px; padding: 4px;
+  }
+  acidify-patch-view .distortion-power.run-switch button {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    font-size: 7px; letter-spacing: .8px;
+  }
+  acidify-patch-view .distortion-power button i {
+    width: 7px; height: 7px; border-radius: 50%; background: #48140f;
+    box-shadow: inset 0 1px rgba(255,255,255,.18);
+  }
+  acidify-patch-view .distortion-power.is-on button i {
+    background: #ff503d; box-shadow: 0 0 5px rgba(255,50,32,.9), inset 0 0 1px #fff;
+  }
+  acidify-patch-view .distortion-type-cell { padding: 0 7px; }
+  acidify-patch-view .distortion-types {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;
+    margin-top: 13px;
+  }
+  acidify-patch-view .distortion-types button {
+    height: 59px; border-radius: 4px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+    color: #dddcd3; font-size: 7px; font-weight: 900; letter-spacing: .6px;
+    background: linear-gradient(105deg, rgba(255,255,255,.13), transparent 34% 77%, rgba(0,0,0,.25)),
+                linear-gradient(#5a5953, #292925);
+    border: 1px solid #1a1a17;
+    box-shadow: 0 3px 2px rgba(0,0,0,.33), inset 0 1px rgba(255,255,255,.2);
+  }
+  acidify-patch-view .distortion-types button small {
+    color: #aaa9a1; font-size: 5px; letter-spacing: .8px;
+  }
+  acidify-patch-view .distortion-types button.active {
+    transform: translateY(2px); color: #fff0e9; border-color: #75160f;
+    background: linear-gradient(#ae3026, #67140f);
+    box-shadow: 0 1px 1px rgba(0,0,0,.52), inset 0 2px 4px rgba(52,5,2,.4);
+  }
+  acidify-patch-view .distortion-types button.active small { color: #ffc0b5; }
+  acidify-patch-view .distortion-knob-cell {
+    display: flex; align-items: flex-start; justify-content: center; padding-top: 13px;
+  }
+  acidify-patch-view .distortion-overlay .knob-control { width: 82px; height: 112px; }
+  acidify-patch-view .distortion-overlay .dial { width: 61px; height: 61px; }
+  acidify-patch-view .distortion-overlay .dial::before,
+  acidify-patch-view .distortion-overlay .dial-cap { inset: 6px; }
+  acidify-patch-view .distortion-overlay .dial-pointer { top: 3px; height: 16px; }
+  acidify-patch-view .distortion-overlay .tick-ring {
+    top: -8px; width: 78px; height: 78px;
+  }
+  acidify-patch-view .distortion-overlay .tick-ring::after {
+    left: 37px; transform-origin: 2px 38px;
+  }
+  acidify-patch-view .distortion-overlay .control-label {
+    margin-top: 10px; font-size: 7px; letter-spacing: .8px;
+  }
+  acidify-patch-view .distortion-overlay .value-label {
+    margin-top: 2px; font-size: 7px;
+  }
+  acidify-patch-view .distortion-overlay footer {
+    height: 25px; padding: 4px 12px 0; border-top: 1px solid rgba(69,69,64,.35);
+    color: #666760; font-size: 5px; font-weight: 900; letter-spacing: 1.1px;
+    text-align: right;
+  }
   @media (max-width: 700px), (max-height: 360px) {
     acidify-patch-view .model { font-size: 10px; letter-spacing: 1.35px; }
     acidify-patch-view .computer { font-size: 8px; letter-spacing: 1.45px; }
@@ -2581,6 +2815,12 @@ class AcidifyPatchView extends HTMLElement {
     acidify-patch-view .studio-ruler-group span { font-size: 6px; }
     acidify-patch-view .studio-cell { font-size: 8px; }
     acidify-patch-view .studio-hint { font-size: 6px; }
+    acidify-patch-view .distortion-trigger { font-size: 6.5px; }
+    acidify-patch-view .distortion-overlay-head strong { font-size: 11px; }
+    acidify-patch-view .distortion-status { font-size: 8px; }
+    acidify-patch-view .distortion-cell-label { font-size: 7px; }
+    acidify-patch-view .distortion-types button { font-size: 8px; }
+    acidify-patch-view .distortion-types button small { font-size: 6px; }
   }
 </style>
 <div class="chassis">
@@ -2623,11 +2863,49 @@ class AcidifyPatchView extends HTMLElement {
       <div class="volume-bank">
         <div class="master-head">
           <span>MASTER</span>
+          <button class="distortion-trigger" type="button" aria-expanded="false"
+            aria-controls="distortion-overlay" aria-label="Distortion disabled; open controls"
+            title="Distortion · OFF"><i class="distortion-led"></i><span>DIST</span></button>
           <span class="master-output"><span class="output-lamp"></span>OUT</span>
         </div>
         ${dial("param8")}
       </div>
     </section>
+
+    <div class="distortion-scrim" hidden aria-hidden="true">
+      <section class="distortion-overlay" id="distortion-overlay" role="dialog" aria-modal="true"
+        aria-labelledby="distortion-title">
+        <header class="distortion-overlay-head">
+          <div>
+            <strong id="distortion-title">DISTORTION STAGE</strong>
+            <span class="distortion-status" role="status">TRUE BYPASS</span>
+          </div>
+          <button class="distortion-close" type="button" aria-label="Close distortion controls">×</button>
+        </header>
+        <div class="distortion-overlay-body">
+          <div class="distortion-power-cell">
+            <span class="distortion-cell-label">POWER</span>
+            <div class="control run-switch distortion-power" data-param="param45" data-endpoint-id="param45"
+              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+              <button data-value="1" type="button"><i></i><span>ON</span></button>
+            </div>
+            <small>CLEAN BYPASS</small>
+          </div>
+          <div class="distortion-type-cell">
+            <span class="distortion-cell-label">CHARACTER</span>
+            <div class="control distortion-types" data-param="param46" data-endpoint-id="param46"
+              data-min="0" data-max="2" data-step="1" data-init="0" data-control="buttons">
+              <button data-value="0" type="button">PURE<small>SUBTLE</small></button>
+              <button data-value="1" type="button">MACKIE<small>1202</small></button>
+              <button data-value="2" type="button">PHONO<small>RIAA</small></button>
+            </div>
+          </div>
+          <div class="distortion-knob-cell">${dial("param47")}</div>
+          <div class="distortion-knob-cell">${dial("param48")}</div>
+        </div>
+        <footer>POST OUTPUT · 4× OVERSAMPLED · TYPE CHANGES CROSSFADED</footer>
+      </section>
+    </div>
 
     <section class="program-strip">
       <div class="program-header">
@@ -2695,7 +2973,7 @@ class AcidifyPatchView extends HTMLElement {
         </div>
       </div>
     </section>
-    <div class="footer-mark">ACIDIFY 0.4.1 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
+    <div class="footer-mark">ACIDIFY 0.5.0 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
   </div>
 </div>`;
   }

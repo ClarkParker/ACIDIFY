@@ -19,6 +19,10 @@ Parameter werden ausschließlich angehängt.
 | `param12` | Root Note | MIDI 24…60 | 36 |
 | `param13..28` | Step 1..16 Pitch | 0…24 st | siehe DSP |
 | `param29..44` | Step 1..16 Flags | 0…7 | siehe DSP |
+| `param45` | Distortion Enable | 0/1 | 0 |
+| `param46` | Distortion Type | 0…2 | 0 |
+| `param47` | Distortion Drive | 0…1 | 0.35 |
+| `param48` | Distortion Mix | 0…1 | 1 |
 
 Flag-Bits:
 
@@ -27,3 +31,15 @@ Flag-Bits:
 | 0 | 1 | Gate |
 | 1 | 2 | Accent |
 | 2 | 4 | Slide zum nächsten aktiven Step |
+
+Distortion-Typen:
+
+| Wert | Modus | Bedeutung |
+|---:|---|---|
+| 0 | `PURE` | Airwindows PurestDrive, subtil und pegelabhängig |
+| 1 | `MACKIE` | Airwindows Mackity, pre-VLZ-1202-Eingangspfad |
+| 2 | `PHONO` | generische RIAA-Wiedergabekurve plus Eingangsübersteuerung |
+
+`param45..param48` wurden in 0.5.0 ausschließlich angehängt. Die Belegung von
+`param1..param44` bleibt unverändert. Damit sind 48 der 50 von Amorph
+garantierten dynamischen Parameter belegt.

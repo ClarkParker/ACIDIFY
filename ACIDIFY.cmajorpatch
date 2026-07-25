@@ -1,7 +1,7 @@
 {
   "CmajorVersion": 1,
   "ID": "com.clarkparker.acidify",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "name": "ACIDIFY",
   "description": "Analog-modelled 303-class bassline instrument for Amorph.",
   "category": "instrument",

@@ -5,10 +5,12 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **UI Release Candidate 0.4.1**. Die zweistufige Instrumentenoberfläche,
-> der stabile Parametervertrag und der spielbare DSP-Kern sind implementiert.
-> Für einen belastbaren akustischen Vergleich mit Originalhardware fehlen weiterhin
-> kalibrierte Hardware-Captures und Blindtests.
+> Status: **DSP/Distortion Release Candidate 0.5.0**. Die fixierte
+> Classic-/Studio-Oberfläche wurde nur um einen kleinen `DIST`-Button mit
+> ausklappbarem Overlay erweitert. Clean-Core, 48-Parameter-Vertrag und drei
+> getrennte Post-Stufen sind implementiert und automatisiert geprüft. Die
+> Bezeichnung „AAA Clone“ bleibt bis zu kalibrierten Hardware-Captures und
+> Blindtests ausdrücklich ein Ziel, kein bereits beanspruchtes Messergebnis.
 
 ## Inhalt
 
@@ -17,11 +19,14 @@ Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 - `ACIDIFYUI.js` – selbständige, skalierbare Web-Component ohne Abhängigkeiten
 - `CHANGELOG.md` – vollständige Versionshistorie
 - `docs/CONCEPT.md` – Produkt-, UI- und DSP-Konzept mit Quellen
-- `docs/PARAMETERS.md` – stabiler `param1..param44`-Vertrag
+- `docs/PARAMETERS.md` – stabiler `param1..param48`-Vertrag
+- `THIRD_PARTY_NOTICES.md` – festgepinnte Quellstände und MIT-Hinweise
 - `docs/VERSIONING.md` – verbindlicher Release- und Versionsablauf
 - `mockup/preview.html` – lokaler UI-Preview-Host
-- `tools/render_mockup.mjs` – rendert Classic und Studio in beiden Zielgrößen als PNG
+- `tools/render_mockup.mjs` – rendert Classic, Studio und Distortion in beiden Zielgrößen
 - `tools/ui_smoke_test.mjs` – prüft Controls, Interaktionen und Skalierung
+- `tools/dsp_matrix_test.mjs` – vergleicht Clean- und Effektpfad im selben Render
+- `tools/dsp_articulation_test.mjs` – prüft Slide, Retrigger und gehaltene Noten
 - `tools/check_version.py` – prüft konsistente Versionsmetadaten
 
 ## Versionierung
@@ -41,12 +46,30 @@ In Amorph `ACIDIFY.cmajorpatch` öffnen und kompilieren. Alternativ:
 python3 ../Amorph_DEV_KIt/tools/preflight.py .
 cmaj generate --target=cpp --output=/dev/null ACIDIFY.cmajorpatch
 node tools/smoke_test.mjs /path/to/cmaj 48000
+node tools/dsp_matrix_test.mjs /path/to/cmaj 48000
+node tools/dsp_articulation_test.mjs /path/to/cmaj 48000
 ```
 
 MIDI-Noten spielen den Synth direkt. Velocity ab 100 aktiviert Accent. Überlappende
-Noten gleiten mit der festen 303-Slide-Zeit. Der interne Sequencer wird mit
-`RUN/STOP` gestartet; Tonhöhe, Gate, Accent und Slide lassen sich pro Step am Panel
-editieren.
+Noten gleiten mit der festen 303-Slide-Zeit; beim Loslassen kehrt der monophone
+Notenstapel zur zuletzt noch gehaltenen Note zurück. Der interne Sequencer wird
+mit `RUN/STOP` gestartet; Tonhöhe, Gate, Accent und Slide lassen sich pro Step am
+Panel editieren.
+
+## Distortion Stage
+
+Der kleine `DIST`-Button im Master-Kopf zeigt per LED, ob die Stage aktiv ist,
+und öffnet das Overlay. Das Hauptpanel wird nicht vergrößert oder umgebaut. Im
+Overlay stehen True Bypass, Charakter, Drive und Mix zur Verfügung:
+
+- `PURE` – subtiler, pegelabhängiger Airwindows-PurestDrive-Port,
+- `MACKIE` – Port des pre-VLZ-Mackie-1202-Signalwegs aus Airwindows Mackity,
+- `PHONO` – bewusst generisches Line-in-Phono-Abuse-Modell mit
+  3180/318/75-µs-RIAA-Kurve; keine Behauptung, einen bestimmten Mixer zu emulieren.
+
+Die Stage liegt ausschließlich hinter dem Clean-Instrument, läuft innerhalb des
+4×-Kerns und überblendet Bypass, Typ und Mix ohne harte Parametersprünge.
+Deaktiviert oder bei `MIX = 0` bleibt der Ausgang sampletransparent.
 
 ## Classic Surface / Studio Intelligence
 
@@ -87,9 +110,12 @@ nur den Editor in das präzise Vier-Lane-Raster.
 
 ## Herkunft und Lizenz
 
-Der Filter- und Hüllkurvenentwurf orientiert sich an Schaltungsunterlagen, Tim
-Stinchcombes Analyse sowie am MIT-lizenzierten Open303 von Robin Schmidt. Portierte
-Open303-Ideen sind in `ACIDIFYDSP.cmajor` gekennzeichnet. Das Projekt verwendet
-keine Roland-Logos, Samples oder Bitmap-Kopien.
+Der Filter-, Hüllkurven- und Artikulationsentwurf orientiert sich an
+Schaltungsunterlagen, Robin Whittles Accent-Analyse, Tim Stinchcombes
+Filteranalyse sowie am MIT-lizenzierten Open303 von Robin Schmidt. `PURE` und
+`MACKIE` portieren gekennzeichnete Signalwege aus dem ebenfalls
+MIT-lizenzierten Airwindows. Exakte Commits, Quelldateien, Blob-SHAs und
+Lizenztexte stehen in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Das
+Projekt verwendet keine Roland-Logos, Samples oder Bitmap-Kopien.
 
 Der eigene Projektcode steht unter der MIT-Lizenz, siehe `LICENSE`.
