@@ -6,6 +6,25 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-07-26
+
+### Fixed
+
+- Die in 0.7.1 nahezu weiß gebliebene und durch regelmäßige Linien künstlich
+  wirkende Oberfläche wurde ersetzt.
+- Gehäuse, Panel, Funktionsbereiche und Overlays verwenden nun neutrales
+  mittleres Silber, unregelmäßige feine Metallkörnung, breite gerichtete
+  Reflexzonen sowie klarere helle und dunkle Falzkanten.
+- Bediengeometrie, Funktionen, DSP und der 50-Parameter-Vertrag bleiben
+  unverändert.
+
+### Validated
+
+- Classic, Studio, Notenwahl und Distortion wurden in 1180 × 580 sowie die
+  kompakte Classic-Ansicht in 590 × 290 am finalen Render kontrolliert.
+- Der Browserworkflow bestätigt weiterhin null Schraubenelemente, 18 Controls,
+  15 Studio-Aktionen, 142 Tooltip-Ziele und unveränderte Modulgeometrie.
+
 ## [0.7.1] - 2026-07-26
 
 ### Changed
@@ -21,9 +40,12 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 - Der Browserworkflow bestätigt null verbliebene `.screw`-Elemente sowie die
   unveränderten 18 Controls, 15 Studio-Aktionen und 142 Tooltip-Ziele.
-- Zehn Live-Render bei 1180 × 580 und 590 × 290 wurden aus demselben
-  0.7.1-Quellstand neu erzeugt und visuell auf Classic, DAW-Sync, Studio,
-  Notenwahl und Distortion geprüft.
+
+### Known issue
+
+- Die Materialwirkung bestand die nachträgliche Sichtprüfung nicht: Die
+  Oberfläche blieb zu hell und das regelmäßige Linienmuster wirkte wie ein
+  aufgesetzter Filter. Das ist in 0.7.2 korrigiert.
 
 ## [0.7.0] - 2026-07-26
 

@@ -3000,15 +3000,22 @@ class AcidifyPatchView extends HTMLElement {
     right: 28px; bottom: 7px; color: #4f5a67; font-size: 5.5px; letter-spacing: 1.35px; text-shadow: none;
   }
 
-  /* Brushed silver hardware surface.
+  /* Textured silver hardware surface.
      Keeps the established ACIDIFY geometry while matching the cool metallic
      material of the hardware references. */
   acidify-patch-view {
-    --line: #707675;
-    --line-soft: rgba(54, 60, 59, .2);
-    --ink: #202321;
-    --muted: #5c625f;
-    --faint: #717775;
+    --metal-edge: #f7f8f7;
+    --metal-high: #d8dad9;
+    --metal-mid: #bec0bf;
+    --metal-low: #a4a7a6;
+    --metal-dark: #747877;
+    --metal-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.62' numOctaves='2' seed='29' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.52'/%3E%3C/svg%3E");
+    --metal-brush: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='96'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.014 .58' numOctaves='2' seed='17' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23b)' opacity='.1'/%3E%3C/svg%3E");
+    --line: #666a69;
+    --line-soft: rgba(50, 53, 52, .22);
+    --ink: #202221;
+    --muted: #515453;
+    --faint: #676a69;
     --acid: #b52921;
     --acid-hot: #d33a2f;
     --amber: #bb712d;
@@ -3016,52 +3023,58 @@ class AcidifyPatchView extends HTMLElement {
     font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   }
   acidify-patch-view .chassis {
-    border: 1px solid #686e6d;
+    border: 1px solid #565a59;
     border-radius: 33px 33px 27px 27px;
     background:
-      radial-gradient(ellipse at 50% -18%, rgba(255,255,255,.96) 0 12%, transparent 53%),
-      linear-gradient(90deg, rgba(255,255,255,.46) 0, transparent 2.5%, transparent 97%, rgba(37,42,42,.3) 100%),
-      repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0 1px, rgba(44,50,49,.035) 1px 2px, transparent 2px 4px),
-      linear-gradient(180deg, #eef0ef 0%, #d5d9d8 42%, #b8bdbc 78%, #949a99 100%);
+      var(--metal-grain),
+      var(--metal-brush),
+      radial-gradient(ellipse at 48% -24%, rgba(255,255,255,.72) 0 7%, transparent 48%),
+      linear-gradient(104deg, rgba(255,255,255,.46) 0%, rgba(255,255,255,.08) 9%, rgba(67,70,69,.08) 24%, rgba(255,255,255,.29) 43%, rgba(66,69,68,.12) 61%, rgba(255,255,255,.23) 78%, rgba(45,48,47,.28) 100%),
+      linear-gradient(180deg, #e1e3e2 0%, #c9cbca 31%, #b2b5b4 73%, #8d9190 100%);
+    background-blend-mode: overlay, soft-light, screen, normal, normal;
+    background-size: 96px 96px, 160px 96px, auto, auto, auto;
     box-shadow:
       0 30px 46px rgba(0,0,0,.46),
       0 7px 12px rgba(0,0,0,.32),
-      inset 0 3px 1px rgba(255,255,255,.9),
-      inset 0 -8px 12px rgba(48,54,53,.34),
-      inset 4px 0 5px rgba(255,255,255,.3),
-      inset -4px 0 6px rgba(49,55,54,.18);
+      inset 0 3px 1px rgba(255,255,255,.92),
+      inset 0 -10px 14px rgba(38,41,40,.42),
+      inset 5px 0 6px rgba(255,255,255,.28),
+      inset -5px 0 7px rgba(35,38,37,.25);
   }
   acidify-patch-view .chassis::before {
     left: 9px; right: 9px; top: 9px; bottom: 10px;
     border-radius: 24px 24px 18px 18px;
-    border-color: rgba(66,72,71,.46);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.82), 0 1px 0 rgba(255,255,255,.42);
+    border-color: rgba(42,45,44,.72);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.88),
+      inset 0 -1px 0 rgba(24,27,26,.26),
+      0 1px 0 rgba(255,255,255,.42);
   }
   acidify-patch-view .chassis::after {
-    background: linear-gradient(180deg, rgba(61,67,66,.04), rgba(42,47,46,.3));
+    background: linear-gradient(180deg, rgba(58,64,62,.025), rgba(36,42,40,.34));
   }
   acidify-patch-view .panel {
-    border-color: #747a79;
+    border-color: #686b6a;
     background:
-      radial-gradient(ellipse at 34% -12%, rgba(255,255,255,.52), transparent 48%),
-      linear-gradient(102deg, rgba(255,255,255,.2), transparent 19% 74%, rgba(67,73,72,.08)),
-      repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0 1px, rgba(45,51,50,.03) 1px 2px, transparent 2px 5px),
-      linear-gradient(180deg, #e5e8e7 0%, #d0d4d3 47%, #b4b9b8 100%);
+      var(--metal-grain),
+      var(--metal-brush),
+      radial-gradient(ellipse at 34% -14%, rgba(255,255,255,.5), transparent 48%),
+      linear-gradient(101deg, rgba(255,255,255,.24) 0%, rgba(255,255,255,.04) 17%, rgba(48,51,50,.1) 35%, rgba(255,255,255,.18) 56%, rgba(46,49,48,.12) 78%, rgba(255,255,255,.13) 92%, rgba(43,46,45,.15) 100%),
+      linear-gradient(180deg, #cacccb 0%, #b5b8b7 48%, #999d9b 100%);
+    background-blend-mode: overlay, soft-light, screen, normal, normal;
+    background-size: 96px 96px, 160px 96px, auto, auto, auto;
     box-shadow:
-      inset 0 1px 0 #fafcfb,
-      inset 0 -2px 4px rgba(0,0,0,.25),
-      inset 1px 0 1px rgba(255,255,255,.58),
-      0 3px 4px rgba(0,0,0,.34);
+      inset 0 1px 0 #f8f9f8,
+      inset 0 -3px 5px rgba(35,38,37,.3),
+      inset 1px 0 1px rgba(255,255,255,.5),
+      inset -1px 0 1px rgba(45,48,47,.16),
+      0 3px 4px rgba(0,0,0,.4);
   }
   acidify-patch-view .panel::before {
-    opacity: .24;
+    opacity: .42;
     mix-blend-mode: soft-light;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(255,255,255,.16) 0 1px,
-      rgba(37,43,42,.055) 1px 2px,
-      transparent 2px 4px
-    );
+    background:
+      linear-gradient(96deg, rgba(255,255,255,.18) 0%, transparent 12%, rgba(33,36,35,.08) 27%, transparent 39%, rgba(255,255,255,.24) 55%, transparent 70%, rgba(38,41,40,.09) 83%, rgba(255,255,255,.14) 100%);
     background-size: auto;
     -webkit-mask: none;
             mask: none;
@@ -3074,15 +3087,18 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .transport-bank,
   acidify-patch-view .tone-bank,
   acidify-patch-view .volume-bank {
-    border-color: rgba(60,66,65,.72);
+    border-color: rgba(55,58,57,.74);
     background:
-      linear-gradient(135deg, rgba(255,255,255,.25), transparent 42%),
-      linear-gradient(180deg, rgba(252,254,253,.16), rgba(88,95,94,.04));
+      var(--metal-grain),
+      linear-gradient(112deg, rgba(255,255,255,.24), transparent 31%, rgba(41,44,43,.1) 58%, rgba(255,255,255,.11) 83%, rgba(39,42,41,.12)),
+      linear-gradient(180deg, #c4c6c5, #a8aba9);
+    background-blend-mode: overlay, normal, normal;
+    background-size: 96px 96px, auto, auto;
     box-shadow:
-      inset 0 1px rgba(255,255,255,.66),
-      inset 1px 0 rgba(255,255,255,.28),
-      0 1px rgba(255,255,255,.38),
-      0 5px 12px rgba(53,59,58,.09);
+      inset 0 1px rgba(255,255,255,.76),
+      inset 1px 0 rgba(255,255,255,.3),
+      inset 0 -1px rgba(30,33,32,.25),
+      0 5px 12px rgba(25,28,27,.2);
   }
   acidify-patch-view .brand {
     color: #1c1c19;
@@ -3093,14 +3109,14 @@ class AcidifyPatchView extends HTMLElement {
     letter-spacing: .6px;
   }
   acidify-patch-view .brand .acid { color: #aa211b; }
-  acidify-patch-view .model { color: #252520; font-size: 8px; letter-spacing: 1.65px; }
-  acidify-patch-view .computer { color: #62635c; }
+  acidify-patch-view .model { color: #22292b; font-size: 8px; letter-spacing: 1.65px; }
+  acidify-patch-view .computer { color: #566063; }
   acidify-patch-view .bank-title,
   acidify-patch-view .master-head {
-    color: #55574f;
+    color: #4b5558;
     text-shadow: 0 .5px rgba(255,255,255,.52);
   }
-  acidify-patch-view .mini-title { color: #292a25; }
+  acidify-patch-view .mini-title { color: #252d2f; }
   acidify-patch-view .mode-box {
     gap: 3px;
     border-left-color: rgba(68,68,63,.45);
@@ -3149,11 +3165,11 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: inset 0 3px 5px #050504, inset 0 -1px rgba(255,255,255,.14), 0 1px 0 rgba(255,255,255,.66);
   }
   acidify-patch-view .run-switch button {
-    color: #e8e7dd;
+    color: #e6eaeb;
     background:
       linear-gradient(100deg, rgba(255,255,255,.13), transparent 30% 72%, rgba(0,0,0,.25)),
-      linear-gradient(180deg, #6a6961 0%, #4b4a44 43%, #292925 100%);
-    border-color: #1d1d1a;
+      linear-gradient(180deg, #697174 0%, #484f52 43%, #272d2f 100%);
+    border-color: #1a2022;
     box-shadow: 0 3px 2px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.25);
   }
   acidify-patch-view .run-switch.is-on button {
@@ -3171,11 +3187,11 @@ class AcidifyPatchView extends HTMLElement {
   }
 
   acidify-patch-view .wave-buttons button {
-    color: #deddd3;
+    color: #e0e5e6;
     background:
       linear-gradient(105deg, rgba(255,255,255,.16), transparent 35% 75%, rgba(0,0,0,.25)),
-      linear-gradient(#67665f, #353530 62%, #252521);
-    border-color: #171714;
+      linear-gradient(#687174, #353d40 62%, #22282a);
+    border-color: #151b1d;
     box-shadow: 0 3px 2px rgba(0,0,0,.52), inset 0 1px rgba(255,255,255,.25), 0 0 0 2px rgba(78,78,72,.12);
   }
   acidify-patch-view .wave-buttons button.active {
@@ -3184,7 +3200,7 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(#383530, #1b1a17);
     box-shadow: 0 1px 1px rgba(0,0,0,.6), inset 0 2px 5px #0b0b09, 0 0 8px rgba(181,41,33,.18);
   }
-  acidify-patch-view .wave-title { color: #292a25; font-size: 8px; }
+  acidify-patch-view .wave-title { color: #252d2f; font-size: 8px; }
   acidify-patch-view .dial {
     border-color: #11110f;
     background:
@@ -3205,7 +3221,7 @@ class AcidifyPatchView extends HTMLElement {
   }
   acidify-patch-view .dial::after { border-top-color: rgba(255,255,255,.09); }
   acidify-patch-view .dial-pointer {
-    background: linear-gradient(90deg, #d6d3c6, #fffdf1 48%, #aba99f);
+    background: linear-gradient(90deg, #b9c0c2, #f4f7f8 48%, #929b9e);
     box-shadow: 0 1px 1px #050504;
   }
   acidify-patch-view .tick-ring {
@@ -3214,7 +3230,7 @@ class AcidifyPatchView extends HTMLElement {
   }
   acidify-patch-view .tick-ring::after { background: #a7211a; box-shadow: 0 0 3px rgba(167,33,26,.22); }
   acidify-patch-view .control-label {
-    color: #282923;
+    color: #252d2f;
     font-size: 8px;
     letter-spacing: .72px;
     text-shadow: 0 .5px rgba(255,255,255,.46);
@@ -3226,26 +3242,29 @@ class AcidifyPatchView extends HTMLElement {
   }
 
   acidify-patch-view .program-strip {
-    border-color: rgba(66,72,71,.68);
+    border-color: rgba(60,67,65,.7);
     background:
-      linear-gradient(145deg, rgba(255,255,255,.2), transparent 42%),
-      linear-gradient(180deg, rgba(242,245,244,.34), rgba(105,112,111,.08));
-    box-shadow: inset 0 1px rgba(255,255,255,.58), 0 8px 16px rgba(53,59,58,.09);
+      var(--metal-grain),
+      linear-gradient(108deg, rgba(255,255,255,.24), transparent 29%, rgba(42,45,44,.1) 56%, rgba(255,255,255,.11) 82%, rgba(39,42,41,.12)),
+      linear-gradient(180deg, #bfc2c0, #a4a7a5);
+    background-blend-mode: overlay, normal, normal;
+    background-size: 96px 96px, auto, auto;
+    box-shadow: inset 0 1px rgba(255,255,255,.72), inset 0 -1px rgba(31,34,33,.27), 0 8px 16px rgba(28,31,30,.17);
   }
   acidify-patch-view .program-header {
     border-bottom-color: rgba(75,75,69,.58);
     box-shadow: 0 1px rgba(255,255,255,.5);
   }
-  acidify-patch-view .program-title { color: #292a25; }
+  acidify-patch-view .program-title { color: #252d2f; }
   acidify-patch-view .program-title b { color: #a51d17; }
-  acidify-patch-view .program-context { color: #666861; }
+  acidify-patch-view .program-context { color: #505a5d; }
   acidify-patch-view .studio-toggle {
-    color: #5e5e58;
+    color: #505a5d;
     background:
-      linear-gradient(180deg, rgba(255,255,255,.2), transparent 34%),
-      linear-gradient(#adb3b2, #dde1e0 48%, #979e9d);
-    border-color: #666c6b;
-    box-shadow: inset 0 1px #f7f9f8, inset 0 -1px rgba(38,44,43,.18), 0 1px rgba(255,255,255,.46), 0 2px 2px rgba(0,0,0,.2);
+      linear-gradient(104deg, rgba(255,255,255,.32), transparent 34% 75%, rgba(49,52,51,.16)),
+      linear-gradient(180deg, #d0d4d2, #b6bcb8 58%, #9da4a1);
+    border-color: #666d6a;
+    box-shadow: inset 0 1px #e9edee, inset 0 -1px rgba(30,39,42,.25), 0 1px rgba(255,255,255,.34), 0 2px 2px rgba(0,0,0,.24);
   }
   acidify-patch-view .studio-toggle i {
     background:
@@ -3253,14 +3272,14 @@ class AcidifyPatchView extends HTMLElement {
       linear-gradient(#5a5953, #2c2c28);
     border-color: #20201d;
   }
-  acidify-patch-view .studio-toggle .classic-label { color: #f2f0e7; text-shadow: 0 1px #171714; }
+  acidify-patch-view .studio-toggle .classic-label { color: #edf1f2; text-shadow: 0 1px #171d1f; }
   acidify-patch-view .studio-toggle[aria-pressed="true"] i {
     background:
       linear-gradient(105deg, rgba(255,255,255,.16), transparent 38% 78%, rgba(63,0,0,.18)),
       linear-gradient(#b63329, #72150f);
     border-color: #68130e;
   }
-  acidify-patch-view .studio-toggle[aria-pressed="true"] .classic-label { color: #5e5e58; }
+  acidify-patch-view .studio-toggle[aria-pressed="true"] .classic-label { color: #505a5d; }
   acidify-patch-view .studio-toggle[aria-pressed="true"] .studio-label { color: #fff1e9; text-shadow: 0 1px #5b0c08; }
   acidify-patch-view .stepper {
     background: #262622;
@@ -3268,8 +3287,8 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: inset 0 2px 4px rgba(0,0,0,.62), 0 1px 0 rgba(255,255,255,.55);
   }
   acidify-patch-view .stepper button {
-    color: #e5e4da;
-    background: linear-gradient(#64635c, #383833);
+    color: #e4e9ea;
+    background: linear-gradient(#626b6e, #343c3f);
   }
   acidify-patch-view .stepper-value {
     color: #ff6756;
@@ -3277,25 +3296,25 @@ class AcidifyPatchView extends HTMLElement {
     border-inline-color: #080807;
     text-shadow: 0 0 4px rgba(255,57,37,.58);
   }
-  acidify-patch-view .stepper-label { color: #3f403a; }
+  acidify-patch-view .stepper-label { color: #364043; }
 
   acidify-patch-view .step-group:not(:last-child)::after { display: block; }
   acidify-patch-view .sequence-step {
-    color: #24251f;
+    color: #222a2c;
     background:
-      linear-gradient(105deg, rgba(255,255,255,.48) 0, transparent 20% 77%, rgba(58,65,64,.2) 100%),
-      linear-gradient(180deg, #f0f2f1 0%, #d6dad9 46%, #b7bcbb 82%, #969d9c 100%);
-    border-color: #737978;
-    box-shadow: 0 4px 2px rgba(0,0,0,.34), 0 1px 1px rgba(0,0,0,.26), inset 0 1px #fff;
+      linear-gradient(105deg, rgba(255,255,255,.36) 0, transparent 20% 76%, rgba(51,59,57,.17) 100%),
+      linear-gradient(180deg, #dadddb 0%, #c1c6c3 46%, #a7aeaa 82%, #8f9793 100%);
+    border-color: #6b726f;
+    box-shadow: 0 4px 2px rgba(0,0,0,.38), 0 1px 1px rgba(0,0,0,.28), inset 0 1px #edf1f2;
   }
   acidify-patch-view .sequence-step:hover {
-    border-color: #646a69;
-    background: linear-gradient(180deg, #f5f7f6, #c8cdcc 78%, #a5acab);
+    border-color: #59615e;
+    background: linear-gradient(180deg, #e2e4e2, #b9bfbb 78%, #99a19d);
   }
   acidify-patch-view .sequence-step:active,
   acidify-patch-view .sequence-step.selected {
-    color: #1e1f1a;
-    background: linear-gradient(#a9afae, #d7dbda 36%, #c3c8c7);
+    color: #1d2426;
+    background: linear-gradient(#899396, #b9c0c2 36%, #a0a9ac);
     border-color: #a92720;
     box-shadow: 0 1px 1px rgba(0,0,0,.3), inset 0 3px 5px rgba(0,0,0,.28);
   }
@@ -3315,7 +3334,7 @@ class AcidifyPatchView extends HTMLElement {
   }
   acidify-patch-view .step-octave {
     position: absolute; right: 4px; top: 4px;
-    color: #5c5d56; font: 6px "Courier New", monospace; font-weight: 900;
+    color: #4f595c; font: 6px "Courier New", monospace; font-weight: 900;
   }
 
   acidify-patch-view .editor,
@@ -3327,13 +3346,16 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .keyboard,
   acidify-patch-view .time-controls,
   acidify-patch-view .studio-tools {
-    border-color: rgba(68,74,73,.72);
+    border-color: rgba(60,67,65,.7);
     background:
-      linear-gradient(135deg, rgba(255,255,255,.23), transparent 46%),
-      linear-gradient(180deg, rgba(249,251,250,.16), rgba(91,98,97,.03));
-    box-shadow: inset 0 1px rgba(255,255,255,.64), inset 1px 0 rgba(255,255,255,.26), 0 1px rgba(255,255,255,.36);
+      var(--metal-grain),
+      linear-gradient(111deg, rgba(255,255,255,.22), transparent 34%, rgba(41,44,43,.1) 61%, rgba(255,255,255,.1)),
+      linear-gradient(180deg, #bfc2c1, #a6aaa8);
+    background-blend-mode: overlay, normal, normal;
+    background-size: 96px 96px, auto, auto;
+    box-shadow: inset 0 1px rgba(255,255,255,.7), inset 1px 0 rgba(255,255,255,.24), inset 0 -1px rgba(30,33,32,.23);
   }
-  acidify-patch-view .edit-caption { color: #55574f; }
+  acidify-patch-view .edit-caption { color: #4b5558; }
   acidify-patch-view .edit-readout {
     color: #ff513b;
     background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.05) 3px 4px), #1c100d;
@@ -3341,19 +3363,19 @@ class AcidifyPatchView extends HTMLElement {
     text-shadow: 0 0 4px #e32418, 0 0 8px rgba(227,36,24,.38);
   }
   acidify-patch-view .octave-indicator {
-    color: #555750; min-height: 9px;
+    color: #4b5558; min-height: 9px;
     font-family: "Courier New", monospace; font-weight: 900; letter-spacing: .3px;
   }
   acidify-patch-view .octave-indicator::after { content: none; }
   acidify-patch-view .pitch-key {
-    color: #252620;
-    border-color: #707675;
+    color: #222a2c;
+    border-color: #626c6f;
     background:
-      linear-gradient(100deg, rgba(100,106,105,.2), transparent 15% 77%, rgba(62,69,68,.22)),
-      linear-gradient(180deg, #f5f7f6 0%, #e3e6e5 55%, #c5cac9 84%, #9da4a3 100%);
+      linear-gradient(100deg, rgba(92,102,105,.2), transparent 15% 77%, rgba(45,55,58,.24)),
+      linear-gradient(180deg, #e7ebec 0%, #d3d8da 55%, #b3bbbd 84%, #909a9d 100%);
   }
   acidify-patch-view .pitch-key.black-key {
-    color: #e9e7dc;
+    color: #e7ebec;
     border-color: #050505;
     background:
       linear-gradient(100deg, rgba(255,255,255,.09), transparent 24% 74%, rgba(0,0,0,.4)),
@@ -3362,35 +3384,35 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .pitch-key.active,
   acidify-patch-view .pitch-key.midi { color: #b42018; }
   acidify-patch-view .function-button {
-    color: #252521;
+    color: #222a2c;
     background:
-      linear-gradient(105deg, rgba(255,255,255,.44), transparent 22% 78%, rgba(59,66,65,.17)),
-      linear-gradient(180deg, #eceeed 0%, #cdd2d1 55%, #a4abaa 100%);
-    border-color: #707675;
-    box-shadow: 0 4px 2px rgba(0,0,0,.35), inset 0 1px #fff;
+      linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)),
+      linear-gradient(180deg, #d6dad7 0%, #bbc1bd 55%, #9da5a1 100%);
+    border-color: #69706d;
+    box-shadow: 0 4px 2px rgba(0,0,0,.38), inset 0 1px #edf1f2;
   }
-  acidify-patch-view .function-button strong { color: #252521; }
-  acidify-patch-view .function-button small { color: #66675f; }
+  acidify-patch-view .function-button strong { color: #222a2c; }
+  acidify-patch-view .function-button small { color: #525c5f; }
   acidify-patch-view .function-button:active,
   acidify-patch-view .function-button.active {
     color: #a51d17;
-    background: linear-gradient(#a7adac, #d6dad9 44%, #c0c5c4);
+    background: linear-gradient(#879194, #b7bec0 44%, #9ba4a7);
     border-color: #a42a22;
     box-shadow: 0 1px 1px rgba(0,0,0,.25), inset 0 3px 5px rgba(0,0,0,.28);
   }
   acidify-patch-view .function-button.active strong { color: #a51d17; }
 
-  acidify-patch-view .studio-tool-head { color: #65675f; }
+  acidify-patch-view .studio-tool-head { color: #525c5f; }
   acidify-patch-view .studio-selection { color: #9b2019; }
   acidify-patch-view .studio-actions button {
-    color: #e9e8df;
+    color: #e4e9ea;
     background:
       linear-gradient(105deg, rgba(255,255,255,.12), transparent 32% 78%, rgba(0,0,0,.28)),
-      linear-gradient(#52524c, #292925);
-    border-color: #191916;
+      linear-gradient(#535c5f, #282f31);
+    border-color: #171d1f;
     box-shadow: 0 2px 2px rgba(0,0,0,.32), inset 0 1px rgba(255,255,255,.18);
   }
-  acidify-patch-view .studio-actions button small { color: #aaa9a1; }
+  acidify-patch-view .studio-actions button small { color: #a9b0b2; }
   acidify-patch-view .studio-matrix {
     background:
       linear-gradient(110deg, rgba(255,255,255,.035), transparent 27% 75%, rgba(0,0,0,.22)),
@@ -3423,28 +3445,28 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(#d09252, #71431e);
     border-color: #dba05c;
   }
-  acidify-patch-view .studio-hint { color: #55564f; }
+  acidify-patch-view .studio-hint { color: #4c5659; }
   acidify-patch-view.studio-mode .value-label {
     color: #ff7768;
     background: linear-gradient(#282a27, #121311);
     border-color: #080907;
   }
   acidify-patch-view .footer-mark {
-    color: #55574f;
+    color: #4a5457;
     text-shadow: 0 .5px rgba(255,255,255,.38);
   }
   acidify-patch-view .tooltip-toggle {
     position: absolute; z-index: 8; left: 37px; bottom: 3px;
     width: 76px; height: 16px; padding: 1px 4px; border-radius: 4px; cursor: pointer;
     display: grid; grid-template-columns: 12px 1fr 22px; align-items: center; gap: 2px;
-    color: #4d5351; background: linear-gradient(#dfe2e1, #adb3b2);
-    border: 1px solid #69706e;
+    color: #414b4e; background: linear-gradient(#c4cacb, #929b9e);
+    border: 1px solid #586266;
     box-shadow: inset 0 1px rgba(255,255,255,.66), 0 1px rgba(255,255,255,.24);
     font-size: 6px; line-height: 11px; font-weight: 900; letter-spacing: .75px;
   }
   acidify-patch-view .tooltip-toggle > i {
     width: 10px; height: 10px; border-radius: 50%; font-style: normal;
-    display: grid; place-items: center; color: #f6f3e8; background: #55564f;
+    display: grid; place-items: center; color: #eef2f3; background: #4d575a;
     font-size: 7px; line-height: 10px; letter-spacing: 0;
   }
   acidify-patch-view .tooltip-toggle-state {
@@ -3472,13 +3494,15 @@ class AcidifyPatchView extends HTMLElement {
     position: absolute; z-index: 95; width: 394px; height: 278px; overflow: hidden;
     color: #242724; border: 1px solid #565d5b; border-radius: 8px;
     background:
-      radial-gradient(ellipse at 36% -10%, rgba(255,255,255,.66), transparent 52%),
-      repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0 1px, rgba(43,49,48,.03) 1px 2px, transparent 2px 5px),
-      linear-gradient(155deg, #e4e7e6, #b8bdbc);
+      var(--metal-grain),
+      radial-gradient(ellipse at 36% -10%, rgba(255,255,255,.38), transparent 50%),
+      linear-gradient(155deg, #d0d4d1, #a4aba7);
+    background-blend-mode: overlay, screen, normal;
+    background-size: 96px 96px, auto, auto;
     box-shadow:
       0 16px 30px rgba(35,32,25,.46),
       0 5px 10px rgba(35,32,25,.35),
-      inset 0 1px #fafaf5,
+      inset 0 1px #edf1f2,
       inset 0 -2px 4px rgba(0,0,0,.2);
     animation: pitch-menu-enter 110ms ease-out both;
   }
@@ -3500,13 +3524,13 @@ class AcidifyPatchView extends HTMLElement {
     text-overflow: ellipsis; white-space: nowrap;
   }
   acidify-patch-view .pitch-menu-head span {
-    color: #62635c; font-size: 5.5px; font-weight: 900; letter-spacing: .85px;
+    color: #505a5d; font-size: 5.5px; font-weight: 900; letter-spacing: .85px;
   }
   acidify-patch-view .pitch-menu-close {
     flex: 0 0 auto; width: 23px; height: 21px; border-radius: 3px; cursor: pointer;
-    color: #e8e6dd; font: 18px/17px Arial, sans-serif;
-    background: linear-gradient(#57564f, #292925);
-    border: 1px solid #1b1b18;
+    color: #e4e9ea; font: 18px/17px Arial, sans-serif;
+    background: linear-gradient(#555e61, #282f31);
+    border: 1px solid #171d1f;
     box-shadow: inset 0 1px rgba(255,255,255,.18), 0 1px rgba(255,255,255,.42);
   }
   acidify-patch-view .pitch-menu-grid {
@@ -3516,18 +3540,18 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .pitch-menu-choice {
     min-width: 0; cursor: pointer; border-radius: 4px;
     display: flex; align-items: center; justify-content: center; gap: 5px;
-    color: #e9e8df;
+    color: #e4e9ea;
     background:
       linear-gradient(105deg, rgba(255,255,255,.13), transparent 34% 77%, rgba(0,0,0,.25)),
-      linear-gradient(#5a5953, #292925);
-    border: 1px solid #1a1a17;
+      linear-gradient(#576063, #282f31);
+    border: 1px solid #171d1f;
     box-shadow: 0 2px 2px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.18);
   }
   acidify-patch-view .pitch-menu-choice strong {
     font: 10px "Courier New", monospace; letter-spacing: .3px;
   }
   acidify-patch-view .pitch-menu-choice small {
-    color: #aaa9a1; font: 5px "Courier New", monospace; font-weight: 900;
+    color: #a9b0b2; font: 5px "Courier New", monospace; font-weight: 900;
   }
   acidify-patch-view .pitch-menu-choice:hover,
   acidify-patch-view .pitch-menu-choice:focus-visible {
@@ -3545,15 +3569,15 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .pitch-menu-choice.active small { color: #ffc0b5; }
   acidify-patch-view .pitch-menu-foot {
     height: 25px; padding: 5px 9px 0; border-top: 1px solid rgba(69,69,64,.35);
-    color: #666760; font-size: 5px; font-weight: 900; letter-spacing: .85px;
+    color: #505a5d; font-size: 5px; font-weight: 900; letter-spacing: .85px;
     text-align: right;
   }
   acidify-patch-view .distortion-trigger {
     display: inline-flex; align-items: center; justify-content: center; gap: 3px;
     width: 40px; height: 15px; padding: 0 4px; border-radius: 3px; cursor: pointer;
-    color: #4f5049; font-size: 5.5px; line-height: 1; font-weight: 900; letter-spacing: .65px;
-    background: linear-gradient(#e0e3e2, #a7adac);
-    border: 1px solid #737977;
+    color: #424c4f; font-size: 5.5px; line-height: 1; font-weight: 900; letter-spacing: .65px;
+    background: linear-gradient(#c8ced0, #919a9d);
+    border: 1px solid #5d676a;
     box-shadow: inset 0 1px rgba(255,255,255,.75), 0 1px rgba(255,255,255,.38);
   }
   acidify-patch-view .distortion-trigger:hover { color: #272823; }
@@ -3589,13 +3613,15 @@ class AcidifyPatchView extends HTMLElement {
     overflow: hidden; border: 1px solid #595f5e; border-radius: 8px;
     color: #242724;
     background:
-      radial-gradient(ellipse at 36% -10%, rgba(255,255,255,.66), transparent 52%),
-      repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0 1px, rgba(43,49,48,.03) 1px 2px, transparent 2px 5px),
-      linear-gradient(155deg, #e4e7e6, #b8bdbc);
+      var(--metal-grain),
+      radial-gradient(ellipse at 36% -10%, rgba(255,255,255,.38), transparent 50%),
+      linear-gradient(155deg, #d0d4d1, #a4aba7);
+    background-blend-mode: overlay, screen, normal;
+    background-size: 96px 96px, auto, auto;
     box-shadow:
       0 14px 28px rgba(35,32,25,.42),
       0 4px 9px rgba(35,32,25,.34),
-      inset 0 1px #fafaf5,
+      inset 0 1px #edf1f2,
       inset 0 -2px 4px rgba(0,0,0,.2);
     animation: distortion-enter 130ms ease-out both;
   }
@@ -3616,13 +3642,13 @@ class AcidifyPatchView extends HTMLElement {
     color: #9f1e18; font-size: 10px; letter-spacing: 1.8px;
   }
   acidify-patch-view .distortion-status {
-    color: #62635c; font: 7px "Courier New", monospace; letter-spacing: .75px;
+    color: #505a5d; font: 7px "Courier New", monospace; letter-spacing: .75px;
   }
   acidify-patch-view .distortion-close {
     width: 23px; height: 21px; border-radius: 3px; cursor: pointer;
-    color: #e8e6dd; font: 18px/17px Arial, sans-serif;
-    background: linear-gradient(#57564f, #292925);
-    border: 1px solid #1b1b18;
+    color: #e4e9ea; font: 18px/17px Arial, sans-serif;
+    background: linear-gradient(#555e61, #282f31);
+    border: 1px solid #171d1f;
     box-shadow: inset 0 1px rgba(255,255,255,.18), 0 1px rgba(255,255,255,.42);
   }
   acidify-patch-view .distortion-overlay-body {
@@ -3633,19 +3659,23 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .distortion-power-cell,
   acidify-patch-view .distortion-type-cell,
   acidify-patch-view .distortion-knob-cell {
-    position: relative; min-width: 0; border: 1px solid rgba(72,72,66,.52); border-radius: 5px;
-    background: linear-gradient(135deg, rgba(255,255,255,.22), rgba(98,98,91,.035));
-    box-shadow: inset 0 1px rgba(255,255,255,.52);
+    position: relative; min-width: 0; border: 1px solid rgba(49,59,62,.58); border-radius: 5px;
+    background:
+      var(--metal-grain),
+      linear-gradient(135deg, rgba(255,255,255,.2), rgba(61,68,66,.06));
+    background-blend-mode: overlay, normal;
+    background-size: 96px 96px, auto;
+    box-shadow: inset 0 1px rgba(255,255,255,.45);
   }
   acidify-patch-view .distortion-cell-label {
     display: block; margin-top: 7px; text-align: center;
-    color: #55574f; font-size: 6px; font-weight: 900; letter-spacing: 1.15px;
+    color: #4b5558; font-size: 6px; font-weight: 900; letter-spacing: 1.15px;
   }
   acidify-patch-view .distortion-power-cell {
     display: flex; flex-direction: column; align-items: center;
   }
   acidify-patch-view .distortion-power-cell > small {
-    margin-top: 8px; color: #696a63; font-size: 5px; font-weight: 900; letter-spacing: .55px;
+    margin-top: 8px; color: #535d60; font-size: 5px; font-weight: 900; letter-spacing: .55px;
   }
   acidify-patch-view .distortion-power.run-switch {
     width: 54px; height: 42px; margin-top: 11px; padding: 4px;
@@ -3669,14 +3699,14 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .distortion-types button {
     height: 59px; border-radius: 4px; cursor: pointer;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
-    color: #dddcd3; font-size: 7px; font-weight: 900; letter-spacing: .6px;
+    color: #e2e7e8; font-size: 7px; font-weight: 900; letter-spacing: .6px;
     background: linear-gradient(105deg, rgba(255,255,255,.13), transparent 34% 77%, rgba(0,0,0,.25)),
-                linear-gradient(#5a5953, #292925);
-    border: 1px solid #1a1a17;
+                linear-gradient(#576063, #282f31);
+    border: 1px solid #171d1f;
     box-shadow: 0 3px 2px rgba(0,0,0,.33), inset 0 1px rgba(255,255,255,.2);
   }
   acidify-patch-view .distortion-types button small {
-    color: #aaa9a1; font-size: 5px; letter-spacing: .8px;
+    color: #a9b0b2; font-size: 5px; letter-spacing: .8px;
   }
   acidify-patch-view .distortion-types button.active {
     transform: translateY(2px); color: #fff0e9; border-color: #75160f;
@@ -3706,7 +3736,7 @@ class AcidifyPatchView extends HTMLElement {
   }
   acidify-patch-view .distortion-overlay footer {
     height: 25px; padding: 4px 12px 0; border-top: 1px solid rgba(69,69,64,.35);
-    color: #666760; font-size: 5px; font-weight: 900; letter-spacing: 1.1px;
+    color: #505a5d; font-size: 5px; font-weight: 900; letter-spacing: 1.1px;
     text-align: right;
   }
   @media (max-width: 700px), (max-height: 360px) {
@@ -3927,7 +3957,7 @@ class AcidifyPatchView extends HTMLElement {
       data-tooltip="Turn the English control tooltips on or off.">
       <i>?</i><span>TIPS</span><strong class="tooltip-toggle-state">ON</strong>
     </button>
-    <div class="footer-mark">ACIDIFY 0.7.1 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
+    <div class="footer-mark">ACIDIFY 0.7.2 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
   </div>
   <section class="pitch-menu" role="dialog" aria-modal="false" aria-hidden="true"
     aria-labelledby="pitch-menu-title" hidden>

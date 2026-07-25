@@ -1,11 +1,11 @@
-# Validierung 0.7.1
+# Validierung 0.7.2
 
 ## Automatische Prüfungen
 
 | Prüfung | Ergebnis |
 |---|---|
-| Amorph `preflight.py --strict` | für 0.7.1 lokal nicht ausgeführt; das DEV-Kit blieb vertragsgemäß unangetastet |
-| Lokale DSP-/UI-Prüfung | Cmajor-Codegen und `node --check` ohne Fehler; externer DEV-Kit-Lint für 0.7.1 nicht erneut ausgeführt |
+| Amorph `preflight.py --strict` | für 0.7.2 lokal nicht ausgeführt; das DEV-Kit blieb vertragsgemäß unangetastet |
+| Lokale DSP-/UI-Prüfung | Cmajor-Codegen und `node --check` ohne Fehler; externer DEV-Kit-Lint für 0.7.2 nicht erneut ausgeführt |
 | ACIDIFY-lokaler DSP↔UI-Abgleich | 50/50 Parameter konsistent; Amorph `transportIn` plus 3 Cmajor-Timeline-Eingänge separat |
 | Cmajor 1.0.3175 C++-Codegen | bestanden, ohne Compilerwarnung |
 | JavaScript-Syntax aller Test-/Render-Skripte | bestanden |
@@ -18,7 +18,7 @@
 | Tempo-Fine-Control | 0,1 BPM normal und 0,01 BPM mit `Shift` bestanden |
 | Swing-UI | 0…100 %, Parametersend und englischer 2:1-Hinweis bestanden |
 | Englische Tooltips | 142 Ziele, Anzeige, On/Off und 0 verbleibende native `title`-Tooltips bestanden |
-| Gehäuseoberfläche | 0 dekorative Schraubenelemente; kühle Silbermetall-Oberfläche in allen 10 Live-Rendern visuell geprüft |
+| Gehäuseoberfläche | 0 dekorative Schraubenelemente; regelmäßige Linien aus 0.7.1 entfernt; neutrales mittleres Silber mit unregelmäßiger Körnung, breiten Reflexzonen und klaren Falzkanten in Classic, Studio, Notenwahl, Distortion und 590 × 290 kontrolliert |
 | Step-Pitch | Note/Oktave, Keyboard, Rechts-/Doppelklick, 25-Noten-Menü und Mausrad bestanden |
 | Step-Zustände | Accent/Slide einzeln und gemeinsam als 18 × 18 px Badges mittig im freien Step-Bereich bestanden |
 | Step-Zustände bei 590 × 290 | Accent/Slide effektiv je 9 × 9 px bestanden |
@@ -123,7 +123,7 @@ Die fünfte und sechste Instanz prüfen bei 100 % Swing samplegenau das
 Gesamtdauer; Internal-Clock und DAW-PPQ treffen dieselben verschobenen
 Step-Grenzen.
 
-## Was 0.7.1 technisch belegt
+## Was 0.7.2 technisch belegt
 
 - Der Patch kompiliert und der 50-Parameter-Vertrag ist synchron.
 - Der öffentliche Produktionsgraph reicht Amorphs dokumentierten
@@ -169,7 +169,7 @@ Der grüne Produktionsgraphtest belegt die vollständige Patchverarbeitung des
 Amorph-Streamformats. Der Nutzer hat den exakten 0.6.4-Stand
 `a34d0a3813a20ddb5241b587d5502ebd4b67fdac` anschließend in Amorph getestet
 und als grundsätzlich passend bestätigt; detaillierte Angaben zu DAW,
-Amorph-Version und Einzelfällen wurden dabei nicht protokolliert. Für 0.7.1
+Amorph-Version und Einzelfällen wurden dabei nicht protokolliert. Für 0.7.2
 bleibt deshalb die reale Abnahme von Swing, neuen Studio-Werkzeugen,
 Pitch-Map, der überarbeiteten Oberfläche und den geschützten
 Transportfunktionen offen.
@@ -179,7 +179,7 @@ Transportfunktionen offen.
 - kalibrierte Referenzmessung gegen mehrere echte TB-303,
 - signalabhängige Diodenkennlinie und Gerätevarianz anhand dieser Messungen,
 - Preset-/Projekt-Reload und Automation im finalen Amorph Host,
-- detaillierter 0.7.1-Lauf von Tempo, Transport, Position, Swing und
+- detaillierter 0.7.2-Lauf von Tempo, Transport, Position, Swing und
   Parameterautomation im finalen Amorph-Build und in der Ziel-DAW,
 - CPU-Messung im finalen Host,
 - Hostlauf bei 176,4/192 kHz,
