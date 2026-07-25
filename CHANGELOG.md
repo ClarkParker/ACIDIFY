@@ -6,6 +6,52 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-26
+
+### Added
+
+- Append-only `param50` für 0…100 % Swing. 0 % bleibt gerade, 100 % ergibt
+  innerhalb jedes 16tel-Zweierpaars ein 2:1-Triolenverhältnis.
+- Gemeinsame Swing-Phasenberechnung für interne Uhr und DAW-PPQ; die
+  Gate-Länge folgt der tatsächlich langen beziehungsweise kurzen Step-Dauer.
+- Studio-Aktionen `REVERSE` und `MIRROR` für Reihenfolge und Tonhöhenkontur.
+- Skalenbewusstes `GENERATE` und behutsames `MUTATE` mit temporärer Auswahl
+  zwischen Minor Pentatonic, Minor, Major und Chromatic. Alle Änderungen laufen
+  über die bestehende Undo-Historie und speichern ausschließlich die stabilen
+  Step-Parameter.
+- Kompakte Live-`PITCH MAP` mit 16 Knoten für Tonhöhe, Accent, Slide, Rest,
+  Auswahl und aktuelle Wiedergabeposition.
+
+### Changed
+
+- Accent- und Slide-Badges sitzen jetzt mittig im freien Bereich der
+  Step-Taster und halten mehr Abstand zum Notenwert.
+- Der bisherige feste Randomize-Workflow ist in getrenntes musikalisches
+  Generate und schonendes Mutate aufgegliedert.
+- Der stabile Vertrag umfasst nun exakt `param1..param50`; alle von Amorph
+  garantierten dynamischen Parameter sind damit belegt.
+
+### Validated
+
+- Sechskanaliger Produktionsgraphtest bestätigt gerades Timing,
+  2:1-Maximalswing, DAW-Tempo/Transport/PPQ, Seek, Stop/Start,
+  No-Host-Fallback und DAW→INT-Tempoübergabe bei 44,1/48/88,2/96 kHz.
+- Browserworkflow bestätigt 18 globale Controls, 15 Studio-Aktionen,
+  skalenreine Generate-/Mutate-Ergebnisse, vollständiges Undo, 16
+  Pitch-Map-Knoten, 142 Tooltip-Ziele und Reconnect-/Echo-Schutz.
+- Zehn Live-Render bei 1180 × 580 und 590 × 290 wurden aus demselben
+  0.7.0-Quellstand neu erzeugt und auf Überlappungen geprüft.
+- Der Nutzer hat den direkten Vorgänger 0.6.4 (`a34d0a3…`) in Amorph als
+  grundsätzlich passend bestätigt. Die neuen 0.7.0-Funktionen benötigen noch
+  eine reale Abnahme in Amorph und der Ziel-DAW.
+
+### Known limitation
+
+- Der historische externe `cmaj render --midi`-Smoke ist in dieser
+  Linux-Umgebung bei 48/88,2/96 kHz still. Der unveränderte 0.6.4-Ausgangsstand
+  zeigt bei 48 kHz denselben Befund; die internen samplegenauen DSP-,
+  Artikulations- und Transporttests sind bei allen vier Raten grün.
+
 ## [0.6.4] - 2026-07-25
 
 ### Added

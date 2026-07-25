@@ -7,7 +7,7 @@ und eine getrennte, für Acid-Produktionen typische Ausgangsverzerrung anbieten.
 Der Instrumentenkern bleibt auch bei ausgeschalteter Distortion vollständig
 spielbar und messbar.
 
-0.6.4 ist ein technisch geprüfter Modellkandidat. „AAA Clone“ wird erst
+0.7.0 ist ein technisch geprüfter Modellkandidat. „AAA Clone“ wird erst
 beansprucht, wenn identische Pattern mehrerer Originalgeräte kalibriert
 aufgenommen, gegen das Modell vermessen und im Blindtest bewertet wurden.
 Quellcodequalität und grüne Offline-Tests ersetzen diesen Hör- und
@@ -49,12 +49,12 @@ sondern aus dem gekoppelten Verhalten von:
 5. Vierpol-Diodenleiter und seinen Koppelnetzwerken,
 6. optionaler nachgeschalteter Produktionsverzerrung.
 
-## 3. DSP-Topologie 0.6.4
+## 3. DSP-Topologie 0.7.0
 
 ```mermaid
 flowchart TD
     A["MIDI / 16-Step"] --> B["Gate · Slide · Accent"]
-    T["INT BPM / DAW Timeline"] --> A
+    T["INT BPM / DAW Timeline · Swing"] --> A
     B --> C["Free VCO: Saw / 303 Square"]
     B --> D["MEG · VEG · Accent RC"]
     C --> E["Input HP + 4-Pole Ladder"]
@@ -93,6 +93,10 @@ vierfachen `processor.frequency` berechnet.
   `Shift` für gezielte manuelle Drifts zur Verfügung.
 - `param49` schaltet die Quelle append-only um und startet aus Gründen der
   Preset-Kompatibilität in `Internal`.
+- `param50` setzt 0…100 % Swing. Die erste Hälfte jedes 16tel-Zweierpaars wird
+  verlängert und die zweite entsprechend verkürzt; bei 100 % beträgt das
+  Verhältnis 2:1. Internal-Clock und DAW-PPQ-Pfad verwenden dieselbe
+  Phasenberechnung, und die Paarlänge bleibt unverändert.
 
 Der ursprüngliche Dev-Kit enthielt bereits ausdrücklich
 `// optional host transport: input event float64 transportIn;`. Bestehende
@@ -174,18 +178,20 @@ Zweikanaltest samplegenau das Clean-Signal.
 
 ## 5. Parameter- und UI-Vertrag
 
-Amorph garantiert 50 dynamische Parameter. ACIDIFY verwendet 49:
+Amorph garantiert 50 dynamische Parameter. ACIDIFY verwendet alle 50:
 
-- 12 globale Instrumentparameter,
+- 12 ursprüngliche globale Instrumentparameter,
 - 16 Step-Pitches,
 - 16 gepackte Step-Flags (`gate=1`, `accent=2`, `slide=4`),
 - 4 append-only Distortion-Parameter,
-- 1 append-only Clock-Mode-Parameter.
+- 1 append-only Clock-Mode-Parameter,
+- 1 append-only Swing-Parameter.
 
 `param1..param44` wurden nicht umnummeriert oder umgedeutet.
 `param45..param48` sind Enable, Type, Drive und Mix; `param49` wählt Internal
-oder DAW. Die typisierten Timeline-Eingänge sind Host-Kontext und keine
-dynamischen Parameter.
+oder DAW; `param50` setzt Swing. Die typisierten Timeline-Eingänge sind
+Host-Kontext und keine dynamischen Parameter. Weitere persistente Funktionen
+benötigen damit einen späteren erweiterten Zustandsvertrag.
 
 Die fixierte Classic-/Studio-Geometrie bleibt erhalten. Im Master-Kopf wurde
 nur ein kleiner `DIST`-Button ergänzt. Seine LED zeigt Aktivität; ein Klick
@@ -197,7 +203,12 @@ sind in Classic und Studio per Mausrad, Rechtsklick, Doppelklick oder direktem
 25-Noten-Menü erreichbar; die Classic-Klaviatur und die Oktavtaster bleiben
 zusätzlich erhalten. Eine Studio-Mehrfachauswahl kann gemeinsam gesetzt werden.
 Accent und Slide erscheinen als getrennte 18 × 18 px große, farb- und
-formcodierte Badges; beide können gleichzeitig angezeigt werden.
+formcodierte Badges im freien Mittelbereich der Step-Taster; beide können
+gleichzeitig angezeigt werden. Eine kompakte Live-Pitch-Map zeigt die
+Tonhöhenkontur sowie Accent, Slide, Rest, Auswahl und Wiedergabeposition.
+Studio bietet 15 Undo-fähige Aktionen, darunter Reverse, Pitch Mirror sowie
+skalenbewusstes Generate und behutsames Mutate. Die temporäre Skalenwahl erzeugt
+keinen weiteren Parameter; nur die resultierenden Step-Werte werden gespeichert.
 
 ## 6. Verifikation
 
@@ -208,9 +219,11 @@ Automatisiert vorhanden:
 - Clean/Post-FX-Zweikanalmatrix bei 44,1/48/88,2/96 kHz,
 - interner Legato-/Retrigger-Test bei denselben Raten,
 - Transporttest durch den öffentlichen Produktionsgraphen mit BPM-Wechsel,
-  Stop/Start, Seek und No-Host-Internal-Fallback bei denselben Raten,
+  Stop/Start, Seek, No-Host-Internal-Fallback und 2:1-Swing in Internal und DAW
+  bei denselben Raten,
 - Sicherheitsgrenzen, endliche Samples, Release-Tail und Sprungprüfung,
-- UI-, Echo-, Reconnect-, Overlay-, Geometrie- und Responsive-Tests.
+- UI-, Smart-Edit-, Pitch-Map-, Echo-, Reconnect-, Overlay-, Geometrie- und
+  Responsive-Tests.
 
 Für eine belastbare AAA-Freigabe fehlen weiterhin:
 

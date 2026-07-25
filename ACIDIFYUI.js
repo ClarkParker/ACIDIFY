@@ -3943,7 +3943,7 @@ class AcidifyPatchView extends HTMLElement {
       data-tooltip="Turn the English control tooltips on or off.">
       <i>?</i><span>TIPS</span><strong class="tooltip-toggle-state">ON</strong>
     </button>
-    <div class="footer-mark">ACIDIFY 0.6.4 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
+    <div class="footer-mark">ACIDIFY 0.7.0 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
   </div>
   <section class="pitch-menu" role="dialog" aria-modal="false" aria-hidden="true"
     aria-labelledby="pitch-menu-title" hidden>

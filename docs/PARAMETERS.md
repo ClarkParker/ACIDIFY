@@ -24,6 +24,7 @@ Parameter werden ausschließlich angehängt.
 | `param47` | Distortion Drive | 0…1 | 0.35 |
 | `param48` | Distortion Mix | 0…1 | 1 |
 | `param49` | Clock Mode | 0 Internal / 1 DAW | 0 |
+| `param50` | Swing | 0…100 % | 0 |
 
 Flag-Bits:
 
@@ -53,11 +54,19 @@ in `param9`; der DSP hält denselben Wert intern fest. Beim Wechsel zurück auf
 `Internal` bleibt deshalb das letzte Hosttempo erhalten. Die normale
 UI-Schrittweite beträgt 0,1 BPM, mit `Shift` 0,01 BPM.
 
+`param50` wurde in 0.7.0 append-only ergänzt. 0 % lässt jedes
+16tel-Zweierpaar gerade; 100 % verschiebt das zweite 16tel auf die letzte
+Achteltriolenposition und ergibt ein 2:1-Verhältnis. Die Paarlänge bleibt
+konstant. Internal-Clock und DAW-PPQ verwenden dieselbe Berechnung; der
+Initialwert 0 % erhält das bisherige Timing.
+
 Der Dev-Kit-dokumentierte Eingang `input event float64 transportIn` ist
 Amorph-Hostkontext, kein dynamischer Parameter und benötigt kein
 UI-Gegenstück. Er transportiert den zyklischen 6-Slot-DAW-Stream für Play, BPM,
 Taktart und PPQ. Die typisierten Eingänge `std::timeline::Tempo`,
 `std::timeline::TransportState` und `std::timeline::Position` bleiben als
 zusätzlicher Cmajor-Standardpfad erhalten. Auch sie sind keine dynamischen
-Parameter. Damit sind weiterhin 49 der 50 von Amorph garantierten dynamischen
-Parameter belegt.
+Parameter. Damit sind alle 50 von Amorph garantierten dynamischen Parameter
+belegt. Weitere persistente Funktionen benötigen deshalb einen späteren,
+erweiterten Zustandsvertrag; vorhandene IDs werden dafür nicht umgedeutet oder
+zusammengepackt.

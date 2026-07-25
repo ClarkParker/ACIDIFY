@@ -5,15 +5,16 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **DSP/Transport Release Candidate 0.6.4**. Die fixierte
-> Classic-/Studio-Oberfläche wurde nur um einen kleinen `DIST`-Button mit
-> ausklappbarem Overlay sowie die kompakte `INT/DAW`-Uhrwahl erweitert.
-> Clean-Core, 49-Parameter-Vertrag, Amorph-`transportIn`-Sync, sicherer
-> Internal-Fallback und drei getrennte Post-Stufen sind implementiert und
-> automatisiert geprüft. Der neue Build muss für die abschließende
-> Produktbestätigung noch einmal in Amorph und der Ziel-DAW getestet werden. Die
-> Bezeichnung „AAA Clone“ bleibt bis zu kalibrierten Hardware-Captures und
-> Blindtests ausdrücklich ein Ziel, kein bereits beanspruchtes Messergebnis.
+> Status: **DSP/Transport Release Candidate 0.7.0**. Clean-Core,
+> 50-Parameter-Vertrag, Amorph-`transportIn`-Sync, sicherer Internal-Fallback,
+> Swing und drei getrennte Post-Stufen sind implementiert und automatisiert
+> geprüft. Studio ergänzt skalenbewusstes Generate/Mutate, Reverse, Pitch Mirror
+> und eine Live-Pitch-Map. Der Nutzer hat den vorigen 0.6.4-Build in Amorph als
+> grundsätzlich passend bestätigt; der neue 0.7.0-Build muss für die
+> abschließende Produktbestätigung erneut in Amorph und der Ziel-DAW getestet
+> werden. Die Bezeichnung „AAA Clone“ bleibt bis zu kalibrierten
+> Hardware-Captures und Blindtests ausdrücklich ein Ziel, kein bereits
+> beanspruchtes Messergebnis.
 
 ## Inhalt
 
@@ -22,7 +23,7 @@ Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 - `ACIDIFYUI.js` – selbständige, skalierbare Web-Component ohne Abhängigkeiten
 - `CHANGELOG.md` – vollständige Versionshistorie
 - `docs/CONCEPT.md` – Produkt-, UI- und DSP-Konzept mit Quellen
-- `docs/PARAMETERS.md` – stabiler `param1..param49`-Vertrag
+- `docs/PARAMETERS.md` – stabiler `param1..param50`-Vertrag
 - `THIRD_PARTY_NOTICES.md` – festgepinnte Quellstände und MIT-Hinweise
 - `docs/VERSIONING.md` – verbindlicher Release- und Versionsablauf
 - `mockup/preview.html` – lokaler UI-Preview-Host
@@ -89,6 +90,20 @@ für standardkonforme Cmajor-Hosts verdrahtet.
 `INT` ist der Initialwert von `param49`; ältere Presets behalten damit ihr
 bisheriges Verhalten.
 
+## Swing
+
+`param50` fügt dem Sequencer 0…100 % Swing hinzu. Bei 0 % bleibt das
+16tel-Raster gerade. Bei 100 % beginnt der zweite Step jedes Zweierpaars auf
+der letzten Achteltriolenposition; lang und kurz stehen dann im Verhältnis
+2:1, während die Gesamtdauer des Paars unverändert bleibt. Zwischenwerte
+interpolieren stufenlos.
+
+Dieselbe Berechnung steuert die interne Uhr und den DAW-PPQ-Pfad. Auch die
+Gate-Mitte folgt der tatsächlich geswingten Step-Länge. Dadurch bleiben
+Patternphase, Loop und Seek im DAW-Modus gebunden, ohne dass der Swing als
+separate freie Uhr driftet. Der Initialwert 0 % bewahrt das Verhalten älterer
+Projekte.
+
 ## English Tooltips
 
 Alle bedienbaren Hauptfunktionen, Step-Zustände und Studio-Werkzeuge besitzen
@@ -116,7 +131,8 @@ das gesamte Pattern, während jeder Step seinen Offset von 0…24 Halbtönen beh
 
 Accent und Slide werden direkt auf den oberen Step-Tastern als große
 Zustandsbadges dargestellt: rotes `A` für Accent und gelber Diagonalpfeil für
-Slide. Sind beide aktiv, bleiben beide Badges gleichzeitig sichtbar.
+Slide. Die Badges sitzen mittig im freien Bereich der Taster statt direkt neben
+dem Notenwert. Sind beide aktiv, bleiben beide gleichzeitig sichtbar.
 
 ## Distortion Stage
 
@@ -144,13 +160,23 @@ Bearbeitungsebene, ohne neue DSP-Parameter einzuführen:
 - Drag-Paint für Gate, Accent und Slide,
 - sichtbare Note/Oktave, direkte 25-Noten-Auswahl sowie Halbton-Mausrad,
 - Undo/Redo sowie Copy/Paste,
-- Rotate, Oktavtransposition, Rest und dosiertes Randomize,
+- Rotate, Reverse, Pitch Mirror, Oktavtransposition und Rest,
+- skalenbewusstes `GENERATE` und behutsames `MUTATE` für Minor Pentatonic,
+  Minor, Major und Chromatic,
 - präzise temporäre Reglerwerte, Fine-Modus mit `Shift` und Default-Marker,
 - vier musikalisch gruppierte Viererblöcke mit durchgehender Step-Nummerierung.
 
 Die Studio-Werkzeuge schreiben direkt in `param13..param44`. Pattern bleiben
 dadurch vollständig kompatibel mit Amorph-Automation, Presets und dem
-bestehenden DSP.
+bestehenden DSP. Die Skalenwahl ist bewusst nur ein temporärer Editor-Kontext;
+die erzeugten Noten und Flags selbst werden über die stabilen Step-Parameter
+gespeichert. Die kompakte `PITCH MAP` in der Pattern-Kopfzeile zeigt alle
+16 Tonhöhen sowie Accent-, Slide-, Rest-, Auswahl- und Playback-Zustände live.
+
+Persistente Variationen und Bänke, zusätzliche Laufzeit-Play-Modes,
+Step-Zeitraster, ein separates Position Lock, MIDI-/Audio-Drag-and-drop und
+weitere Effektsektionen bleiben ausdrücklich einem späteren V2-Zustandsvertrag
+vorbehalten.
 
 ## Hardware Performance Surface
 
