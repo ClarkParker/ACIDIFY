@@ -23,6 +23,7 @@ Parameter werden ausschließlich angehängt.
 | `param46` | Distortion Type | 0…2 | 0 |
 | `param47` | Distortion Drive | 0…1 | 0.35 |
 | `param48` | Distortion Mix | 0…1 | 1 |
+| `param49` | Clock Mode | 0 Internal / 1 DAW | 0 |
 
 Flag-Bits:
 
@@ -40,6 +41,13 @@ Distortion-Typen:
 | 1 | `MACKIE` | Airwindows Mackity, pre-VLZ-1202-Eingangspfad |
 | 2 | `PHONO` | generische RIAA-Wiedergabekurve plus Eingangsübersteuerung |
 
-`param45..param48` wurden in 0.5.0 ausschließlich angehängt. Die Belegung von
-`param1..param44` bleibt unverändert. Damit sind 48 der 50 von Amorph
-garantierten dynamischen Parameter belegt.
+`param45..param48` wurden in 0.5.0 ausschließlich angehängt. `param49` wurde in
+0.6.0 ebenfalls append-only ergänzt; der Initialwert `Internal` bewahrt das
+Verhalten älterer Presets. In `DAW`-Stellung sind `param9` und `param10`
+weiterhin vollständig erhalten und automatisierbar, bestimmen die laufende Uhr
+aber erst wieder nach dem Umschalten auf `Internal`.
+
+Die typisierten Eingänge `std::timeline::Tempo`,
+`std::timeline::TransportState` und `std::timeline::Position` sind
+Host-Kontext, keine dynamischen Parameter und benötigen keine UI-Gegenstücke.
+Damit sind 49 der 50 von Amorph garantierten dynamischen Parameter belegt.

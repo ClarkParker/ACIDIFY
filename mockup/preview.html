@@ -18,6 +18,7 @@
       ["param5", .45], ["param6", .65], ["param7", 0], ["param8", -6],
       ["param9", 128], ["param10", 0], ["param11", 16], ["param12", 36],
       ["param45", 0], ["param46", 0], ["param47", .35], ["param48", 1],
+      ["param49", 0],
     ]);
     [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7]
       .forEach((v, i) => defaults.set(`param${13 + i}`, v));
@@ -55,6 +56,11 @@
       patchConnection.sendEventOrValue("param45", 1);
       patchConnection.sendEventOrValue("param46", 1);
       view._setDistortionOpen(true);
+    } else if (previewMode === "sync") {
+      patchConnection.sendEventOrValue("param49", 1);
+      endpointListeners.get("effectiveTempo")?.forEach(fn => fn(135));
+      endpointListeners.get("hostSyncStatus")?.forEach(fn => fn(7));
+      endpointListeners.get("transportRunning")?.forEach(fn => fn(1));
     }
     let step = 0;
     setInterval(() => {

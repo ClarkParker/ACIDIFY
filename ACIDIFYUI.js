@@ -12,7 +12,7 @@ const ACIDIFY_GLOBALS = [
   { id: "param6",  type: "dial",    label: "ACCENT",       min: 0,  max: 1,   step: 0.001, init: 0.65, format: v => `${Math.round(v * 100)}` },
   { id: "param7",  type: "toggle",  label: "WAVEFORM",     min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param8",  type: "dial",    label: "VOLUME",       min: -36, max: 0,  step: 0.1, init: -6,    format: v => `${v.toFixed(1)} dB` },
-  { id: "param9",  type: "dial",    label: "TEMPO",        min: 40, max: 300, step: 1, init: 128,     format: v => `${Math.round(v)}` },
+  { id: "param9",  type: "dial",    label: "TEMPO",        min: 40, max: 300, step: 1, init: 128,     format: v => `${Math.round(v)} BPM` },
   { id: "param10", type: "toggle",  label: "RUN",          min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param11", type: "stepper", label: "LENGTH",       min: 1,  max: 16,  step: 1, init: 16,      format: v => `${Math.round(v)}` },
   { id: "param12", type: "stepper", label: "ROOT",         min: 24, max: 60,  step: 1, init: 36,      format: v => noteName(Math.round(v)) },
@@ -20,6 +20,7 @@ const ACIDIFY_GLOBALS = [
   { id: "param46", type: "toggle",  label: "TYPE",         min: 0,  max: 2,   step: 1, init: 0 },
   { id: "param47", type: "dial",    label: "DRIVE",        min: 0,  max: 1,   step: 0.001, init: 0.35, format: v => `${Math.round(v * 100)}` },
   { id: "param48", type: "dial",    label: "MIX",          min: 0,  max: 1,   step: 0.001, init: 1,    format: v => `${Math.round(v * 100)}%` },
+  { id: "param49", type: "toggle",  label: "CLOCK",        min: 0,  max: 1,   step: 1, init: 0 },
 ];
 
 const STEP_PITCH_DEFAULTS = [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7];
@@ -60,8 +61,11 @@ class DialControl {
     this.startValue = config.init;
     this.feedbackTimer = null;
     this.node.style.setProperty("--default-norm", (config.init - config.min) / (config.max - config.min || 1));
+    this.isDisabled = () => this.dial.getAttribute("aria-disabled") === "true"
+      || this.node.getAttribute("aria-disabled") === "true";
 
     this.onPointerDown = e => {
+      if (this.isDisabled()) return;
       this.dragging = true;
       this.startY = e.clientY;
       this.startValue = this.value;
@@ -84,6 +88,7 @@ class DialControl {
       this.pc.sendParameterGestureEnd?.(this.config.id);
     };
     this.onDoubleClick = () => {
+      if (this.isDisabled()) return;
       this.pc.sendParameterGestureStart?.(this.config.id);
       this.showFeedback();
       this.setValue(this.config.init, true);
@@ -91,6 +96,7 @@ class DialControl {
     };
     this.onWheel = e => {
       e.preventDefault();
+      if (this.isDisabled()) return;
       const increment = this.config.step || (this.config.max - this.config.min) / 100;
       this.pc.sendParameterGestureStart?.(this.config.id);
       this.showFeedback();
@@ -98,6 +104,7 @@ class DialControl {
       this.pc.sendParameterGestureEnd?.(this.config.id);
     };
     this.onKeyDown = e => {
+      if (this.isDisabled()) return;
       const increment = this.config.step || (this.config.max - this.config.min) / 100;
       let next = null;
       if (e.key === "ArrowUp" || e.key === "ArrowRight") next = this.value + increment * (e.shiftKey ? 0.2 : 1);
@@ -162,6 +169,7 @@ class ToggleControl {
     this.value = config.init;
     this.buttons = [...node.querySelectorAll("[data-value]")];
     this.onClick = e => {
+      if (node.getAttribute("aria-disabled") === "true") return;
       const button = e.target.closest("[data-value]");
       if (!button) return;
       const value = node.classList.contains("run-switch")
@@ -233,10 +241,16 @@ class AcidifyPatchView extends HTMLElement {
     this._paramListener = null;
     this._stepListener = null;
     this._meterListener = null;
+    this._tempoListener = null;
+    this._transportListener = null;
+    this._syncListener = null;
     this._resizeFn = null;
     this._resizeObserver = null;
     this._scaleTimer = null;
     this._meter = 0;
+    this._effectiveTempo = 128;
+    this._transportRunning = false;
+    this._hostSyncFlags = 0;
     this._studioPointerEnd = null;
     this._studioKeyDown = null;
     this._distortionKeyDown = null;
@@ -270,6 +284,9 @@ class AcidifyPatchView extends HTMLElement {
           || endpointID === "param47" || endpointID === "param48") {
         this._renderDistortionState();
       }
+      if (endpointID === "param9" || endpointID === "param10" || endpointID === "param49") {
+        this._renderTransportState();
+      }
       if (this._isStepParam(endpointID)) {
         this._renderStepStrip();
         this._renderStepEditor();
@@ -293,6 +310,27 @@ class AcidifyPatchView extends HTMLElement {
       this.querySelector(".output-lamp")?.style.setProperty("--level", this._meter);
     };
     this.pc.addEndpointListener("meterOut", this._meterListener);
+
+    this._tempoListener = value => {
+      const n = typeof value === "object" ? Number(value.value ?? value.bpm ?? 0) : Number(value);
+      if (Number.isFinite(n) && n > 0) this._effectiveTempo = n;
+      this._renderTransportState();
+    };
+    this.pc.addEndpointListener("effectiveTempo", this._tempoListener);
+
+    this._transportListener = value => {
+      const n = typeof value === "object" ? Number(value.value ?? value.running ?? 0) : Number(value);
+      this._transportRunning = Number.isFinite(n) && n >= 0.5;
+      this._renderTransportState();
+    };
+    this.pc.addEndpointListener("transportRunning", this._transportListener);
+
+    this._syncListener = value => {
+      const n = typeof value === "object" ? Number(value.value ?? value.flags ?? 0) : Number(value);
+      this._hostSyncFlags = Number.isFinite(n) ? clamp(Math.round(n), 0, 7) : 0;
+      this._renderTransportState();
+    };
+    this.pc.addEndpointListener("hostSyncStatus", this._syncListener);
 
     this._midiHandler = messages => {
       messages.forEach(({ s, d1, d2 }) => {
@@ -319,6 +357,7 @@ class AcidifyPatchView extends HTMLElement {
     this._resizeObserver?.observe(document.documentElement);
     this._scaleTimer = window.setInterval(() => this._doScale(), 250);
     this._doScale();
+    this._renderTransportState();
   }
 
   disconnectedCallback() {
@@ -326,6 +365,9 @@ class AcidifyPatchView extends HTMLElement {
     if (this._paramListener) this.pc.removeAllParameterListener(this._paramListener);
     if (this._stepListener) this.pc.removeEndpointListener("currentStep", this._stepListener);
     if (this._meterListener) this.pc.removeEndpointListener("meterOut", this._meterListener);
+    if (this._tempoListener) this.pc.removeEndpointListener("effectiveTempo", this._tempoListener);
+    if (this._transportListener) this.pc.removeEndpointListener("transportRunning", this._transportListener);
+    if (this._syncListener) this.pc.removeEndpointListener("hostSyncStatus", this._syncListener);
     window.removeEventListener("resize", this._resizeFn);
     this._resizeObserver?.disconnect();
     if (this._scaleTimer) window.clearInterval(this._scaleTimer);
@@ -340,6 +382,9 @@ class AcidifyPatchView extends HTMLElement {
     this._paramListener = null;
     this._stepListener = null;
     this._meterListener = null;
+    this._tempoListener = null;
+    this._transportListener = null;
+    this._syncListener = null;
     this._resizeFn = null;
     this._resizeObserver = null;
     this._scaleTimer = null;
@@ -358,6 +403,9 @@ class AcidifyPatchView extends HTMLElement {
     if (endpointID === "param45" || endpointID === "param46"
         || endpointID === "param47" || endpointID === "param48") {
       this._renderDistortionState();
+    }
+    if (endpointID === "param9" || endpointID === "param10" || endpointID === "param49") {
+      this._renderTransportState();
     }
     this._recentSends = this._recentSends.filter(entry => now - entry.time < 1500);
     this._recentSends.push({ endpointID, value, time: now });
@@ -392,8 +440,8 @@ class AcidifyPatchView extends HTMLElement {
           node,
           config,
           onChange: value => {
-            if (config.id === "param10") {
-              this.querySelector(".run-lamp")?.classList.toggle("lit", value >= 0.5);
+            if (config.id === "param10" || config.id === "param49") {
+              this._renderTransportState();
             }
             if (config.id === "param45" || config.id === "param46") {
               this._renderDistortionState();
@@ -444,6 +492,15 @@ class AcidifyPatchView extends HTMLElement {
         this._renderStepEditor();
         this._renderStudio();
       });
+      node.addEventListener("wheel", event => {
+        if (this._studioMode) return;
+        event.preventDefault();
+        const index = Number(node.dataset.step);
+        this._selectedStep = index;
+        this._selectedSteps = new Set([index]);
+        this._selectionAnchor = index;
+        this._setStepValue(index, "pitch", this._stepPitch(index) + (event.deltaY < 0 ? 1 : -1), true);
+      }, { passive: false });
     });
   }
 
@@ -608,6 +665,54 @@ class AcidifyPatchView extends HTMLElement {
       queueMicrotask(() => this.querySelector(".distortion-close")?.focus());
     } else {
       trigger?.focus();
+    }
+  }
+
+  _renderTransportState() {
+    const dawMode = Number(this._values.get("param49") ?? 0) >= 0.5;
+    const manualRunning = Number(this._values.get("param10") ?? 0) >= 0.5;
+    const internalTempo = Math.round(Number(this._values.get("param9") ?? 128));
+    const effectiveTempo = Math.round(dawMode ? this._effectiveTempo : internalTempo);
+    const hasTempo = (this._hostSyncFlags & 1) !== 0;
+    const hasTransport = (this._hostSyncFlags & 2) !== 0;
+    const hasPosition = (this._hostSyncFlags & 4) !== 0;
+    const hostReady = hasTempo && hasTransport;
+    const running = dawMode ? this._transportRunning : manualRunning;
+
+    this.querySelector(".run-lamp")?.classList.toggle("lit", running);
+    const runSwitch = this.querySelector('.run-switch[data-param="param10"]');
+    runSwitch?.classList.toggle("is-on", running);
+    runSwitch?.classList.toggle("daw-controlled", dawMode);
+    runSwitch?.setAttribute("aria-disabled", `${dawMode}`);
+    runSwitch?.setAttribute("title", dawMode
+      ? "Transport follows the DAW"
+      : "Start or stop the internal pattern clock");
+    const runButton = runSwitch?.querySelector('[data-value="0"]');
+    if (runButton) runButton.textContent = dawMode ? "DAW FOLLOW" : "RUN / STOP";
+
+    const tempoBox = this.querySelector(".tempo-box");
+    tempoBox?.classList.toggle("daw-locked", dawMode);
+    const tempoDial = tempoBox?.querySelector(".dial");
+    tempoDial?.setAttribute("aria-disabled", `${dawMode}`);
+    if (tempoDial) tempoDial.tabIndex = dawMode ? -1 : 0;
+    tempoBox?.setAttribute("title", dawMode
+      ? "Tempo follows the DAW; switch to INT to edit the internal BPM"
+      : "Internal sequencer tempo");
+
+    const readout = this.querySelector(".clock-readout");
+    if (readout) {
+      readout.textContent = dawMode
+        ? (hostReady ? `DAW · ${effectiveTempo} BPM` : "DAW · WAIT")
+        : `INT · ${internalTempo} BPM`;
+      readout.classList.toggle("locked", dawMode && hostReady);
+      readout.classList.toggle("waiting", dawMode && !hostReady);
+      readout.title = dawMode
+        ? (hasPosition
+          ? "DAW tempo, transport and timeline position locked"
+          : hostReady
+            ? "DAW tempo and transport locked; timeline position unavailable"
+            : "Waiting for DAW tempo and transport")
+        : "Internal clock";
     }
   }
 
@@ -864,7 +969,12 @@ class AcidifyPatchView extends HTMLElement {
       node.classList.toggle("rest", (flags & 1) === 0);
       node.classList.toggle("accented", (flags & 2) !== 0);
       node.classList.toggle("sliding", (flags & 4) !== 0);
-      node.querySelector(".step-note").textContent = NOTE_NAMES[this._stepPitch(index) % 12];
+      const root = Math.round(this._values.get("param12") ?? 36);
+      const pitch = this._stepPitch(index);
+      const absoluteNote = noteName(root + pitch);
+      node.querySelector(".step-note").textContent = NOTE_NAMES[pitch % 12];
+      node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}; click to edit, mouse wheel changes pitch`);
+      node.title = `Step ${index + 1} · ${absoluteNote} · click: select · wheel: semitone`;
     });
   }
 
@@ -950,7 +1060,8 @@ class AcidifyPatchView extends HTMLElement {
         }).join("")}
       </div>`).join("");
     const pitchKeys = NOTE_NAMES.map((name, index) => `
-      <button class="pitch-key ${name.includes("#") ? "black-key" : "white-key"}" data-pitch="${index}">
+      <button class="pitch-key ${name.includes("#") ? "black-key" : "white-key"}" data-pitch="${index}"
+        aria-label="Set selected step to ${name}" title="Set selected step to ${name}">
         <span>${name.replace("#", "♯")}</span>
       </button>`).join("");
     const studioLanes = [
@@ -2346,9 +2457,45 @@ class AcidifyPatchView extends HTMLElement {
   }
   acidify-patch-view .mini-title { color: #292a25; }
   acidify-patch-view .mode-box {
+    gap: 3px;
     border-left-color: rgba(68,68,63,.45);
     box-shadow: inset 1px 0 rgba(255,255,255,.42);
   }
+  acidify-patch-view .clock-mode {
+    display: grid; grid-template-columns: 1fr 1fr; width: 108px; height: 19px;
+    padding: 2px; border: 1px solid #2a2a26; border-radius: 4px;
+    background: linear-gradient(#2b2b27, #151512);
+    box-shadow: inset 0 1px 2px #090908, 0 1px rgba(255,255,255,.52);
+  }
+  acidify-patch-view .clock-mode button {
+    min-width: 0; cursor: pointer; border-radius: 2px;
+    color: #aaa99f; background: transparent;
+    font-size: 6px; line-height: 13px; font-weight: 900; letter-spacing: .75px;
+  }
+  acidify-patch-view .clock-mode button.active {
+    color: #fff2ee;
+    background: linear-gradient(#b72b22, #6e1712);
+    box-shadow: inset 0 1px rgba(255,255,255,.18), 0 0 6px rgba(174,32,25,.24);
+  }
+  acidify-patch-view .clock-mode button:focus-visible {
+    outline: 2px solid rgba(169,32,26,.72); outline-offset: 2px;
+  }
+  acidify-patch-view .clock-readout {
+    height: 9px; color: #575850; font: 700 6px/9px "Courier New", monospace;
+    letter-spacing: .25px; white-space: nowrap;
+  }
+  acidify-patch-view .clock-readout.locked { color: #8d1d17; }
+  acidify-patch-view .clock-readout.waiting { color: #776d51; }
+  acidify-patch-view .mode-box > .run-switch { height: 35px; }
+  acidify-patch-view .run-switch.daw-controlled,
+  acidify-patch-view .tempo-box.daw-locked .knob-control {
+    cursor: default;
+  }
+  acidify-patch-view .run-switch.daw-controlled button { cursor: default; }
+  acidify-patch-view .tempo-box.daw-locked .dial {
+    pointer-events: none; opacity: .52; filter: saturate(.35);
+  }
+  acidify-patch-view .tempo-box.daw-locked .value-label { color: #77776f; }
   acidify-patch-view .master-output { color: #666861; }
 
   acidify-patch-view .run-switch {
@@ -2794,6 +2941,8 @@ class AcidifyPatchView extends HTMLElement {
     acidify-patch-view .bank-title,
     acidify-patch-view .master-head { font-size: 8px; }
     acidify-patch-view .mini-title { font-size: 9px; }
+    acidify-patch-view .clock-mode button { font-size: 8px; }
+    acidify-patch-view .clock-readout { font-size: 7px; }
     acidify-patch-view .wave-title,
     acidify-patch-view .control-label { font-size: 10px; letter-spacing: .55px; }
     acidify-patch-view .value-label { font-size: 9px; }
@@ -2840,6 +2989,13 @@ class AcidifyPatchView extends HTMLElement {
         </div>
         <div class="mode-box">
           <div class="mini-title">PATTERN PLAY</div>
+          <div class="control clock-mode" data-param="param49" data-endpoint-id="param49"
+            data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons"
+            aria-label="Clock source">
+            <button data-value="0" type="button">INT</button>
+            <button data-value="1" type="button">DAW</button>
+          </div>
+          <span class="clock-readout" role="status">INT · 128 BPM</span>
           <span class="run-lamp"></span>
           <div class="control run-switch" data-param="param10" data-endpoint-id="param10" data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
             <button data-value="0">RUN / STOP</button>
@@ -2931,7 +3087,7 @@ class AcidifyPatchView extends HTMLElement {
       <div class="step-row">${steps}</div>
       <div class="editor classic-editor" aria-hidden="false">
         <div class="edit-status">
-          <span class="edit-caption">STEP / PITCH</span>
+          <span class="edit-caption">SELECT STEP · CHOOSE KEY</span>
           <strong class="edit-readout">--</strong>
           <span class="octave-indicator"></span>
         </div>
@@ -2973,7 +3129,7 @@ class AcidifyPatchView extends HTMLElement {
         </div>
       </div>
     </section>
-    <div class="footer-mark">ACIDIFY 0.5.0 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
+    <div class="footer-mark">ACIDIFY 0.6.0 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
   </div>
 </div>`;
   }

@@ -1,4 +1,4 @@
-# Validierung 0.5.0
+# Validierung 0.6.0
 
 ## Automatische Prüfungen
 
@@ -6,14 +6,16 @@
 |---|---|
 | Amorph `preflight.py --strict` | bestanden |
 | DSP-Lint / UI-Lint | je 0 Fehler, 0 Warnungen |
-| DSP↔UI-Sync | 48/48 Parameter konsistent |
+| DSP↔UI-Sync | 49/49 Parameter konsistent; 3 Timeline-Eingänge separat |
 | Cmajor 1.0.3175 C++-Codegen | bestanden, ohne Compilerwarnung |
 | JavaScript-Syntax aller Test-/Render-Skripte | bestanden |
-| Live-Browser-Render Classic/Studio/Distortion bei 1180 × 580 px | bestanden |
-| Live-Browser-Render Classic/Studio/Distortion bei 590 × 290 px | bestanden |
+| Live-Browser-Render Classic/DAW-Sync/Studio/Distortion bei 1180 × 580 px | bestanden |
+| Live-Browser-Render Classic/DAW-Sync/Studio/Distortion bei 590 × 290 px | bestanden |
 | Distortion-Overlay | Open/Close, Escape, Außenklick, Fokus und Status bestanden |
 | Distortion-Parameter | Enable, drei Typen, Drive, Mix und Echo-Schutz bestanden |
-| Amorph `data-endpoint-id` an globalen Controls | 16/16 |
+| Amorph `data-endpoint-id` an globalen Controls | 17/17 |
+| INT/DAW-UI | BPM-Anzeige, Wait/Lock, Run-Sperre und Host-Lampe bestanden |
+| Classic-Step-Pitch | Auswahl/Keyboard/Oktave und Mausrad-Halbton bestanden |
 | Parameter-Echo-Schutz und Web-Component-Reconnect | bestanden |
 | Transport/Synthese/Master | je 13 px Abstand, identische Ober-/Unterkante |
 | Waveform/Klangregler/Volume | max. 0,5 px Achsabweichung |
@@ -75,9 +77,32 @@ Damit sind Slide ohne Hüllkurven-Retrigger, Retrigger mit neuer MEG/VEG-Kurve,
 Rückkehr zur gehaltenen Note, Note-off, All Notes Off und ausklingender Zustand
 abgedeckt.
 
-## Was 0.5.0 technisch belegt
+## Clock- und Transportmatrix
 
-- Der Patch kompiliert und der 48-Parameter-Vertrag ist synchron.
+`tools/dsp_transport_test.mjs` taktet zwei parallele Kerne innerhalb desselben
+Cmajor-Renders. Links läuft die interne Uhr, rechts die DAW-Uhr mit typisierten
+Tempo-, Transport- und Positionsereignissen.
+
+| Samplerate | INT 120 BPM | DAW 120→180 BPM | ohne Position | Stop/Start | Startposition / Seek |
+|---:|:---:|:---:|:---:|:---:|:---:|
+| 44,1 kHz | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
+| 48 kHz | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
+| 88,2 kHz | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
+| 96 kHz | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
+
+Bei 120 BPM liegen Internal und DAW auf denselben samplegenauen
+Step-Grenzen. Die erste halbe Sekunde erhält die DAW-Instanz bewusst nur Tempo
+und Transport; der Fallback läuft korrekt und das spätere Positions-Lock
+verursacht keinen Phasensprung. Nach einem Stop bei 1,0 s startet Internal bei Step 1 neu; die
+DAW startet bei 1,25 s mit 180 BPM und Quarter-Note 8,5 korrekt auf Step 3
+(interner Index 2). Ein Seek auf Quarter-Note 12 springt auf Step 1
+(interner Index 0). Stop setzt die sichtbare Step-Position auf inaktiv.
+
+## Was 0.6.0 technisch belegt
+
+- Der Patch kompiliert und der 49-Parameter-Vertrag ist synchron.
+- Interne Uhr und DAW-Timeline-Logik reagieren bis 96 kHz reproduzierbar auf
+  BPM, Play/Stop, Startposition und Seek.
 - Der Clean-Pfad enthält keine fest eingebackene Produktionsverzerrung.
 - Distortion-Bypass und Null-Mix sind innerhalb derselben Instanz
   sampletransparent.
@@ -92,6 +117,8 @@ abgedeckt.
 - kalibrierte Referenzmessung gegen mehrere echte TB-303,
 - signalabhängige Diodenkennlinie und Gerätevarianz anhand dieser Messungen,
 - Preset-/Projekt-Reload und Automation im finalen Amorph Host,
+- tatsächliche Weitergabe von Tempo, Transport und Position durch den finalen
+  Amorph-Build in den unterstützten DAWs,
 - CPU-Messung im finalen Host,
 - Hostlauf bei 176,4/192 kHz,
 - Blindtest mit Produzenten,

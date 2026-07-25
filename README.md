@@ -5,9 +5,10 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **DSP/Distortion Release Candidate 0.5.0**. Die fixierte
+> Status: **DSP/Transport Release Candidate 0.6.0**. Die fixierte
 > Classic-/Studio-Oberfläche wurde nur um einen kleinen `DIST`-Button mit
-> ausklappbarem Overlay erweitert. Clean-Core, 48-Parameter-Vertrag und drei
+> ausklappbarem Overlay sowie die kompakte `INT/DAW`-Uhrwahl erweitert.
+> Clean-Core, 49-Parameter-Vertrag, Host-Tempo/-Transport/-Position und drei
 > getrennte Post-Stufen sind implementiert und automatisiert geprüft. Die
 > Bezeichnung „AAA Clone“ bleibt bis zu kalibrierten Hardware-Captures und
 > Blindtests ausdrücklich ein Ziel, kein bereits beanspruchtes Messergebnis.
@@ -19,14 +20,15 @@ Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 - `ACIDIFYUI.js` – selbständige, skalierbare Web-Component ohne Abhängigkeiten
 - `CHANGELOG.md` – vollständige Versionshistorie
 - `docs/CONCEPT.md` – Produkt-, UI- und DSP-Konzept mit Quellen
-- `docs/PARAMETERS.md` – stabiler `param1..param48`-Vertrag
+- `docs/PARAMETERS.md` – stabiler `param1..param49`-Vertrag
 - `THIRD_PARTY_NOTICES.md` – festgepinnte Quellstände und MIT-Hinweise
 - `docs/VERSIONING.md` – verbindlicher Release- und Versionsablauf
 - `mockup/preview.html` – lokaler UI-Preview-Host
-- `tools/render_mockup.mjs` – rendert Classic, Studio und Distortion in beiden Zielgrößen
+- `tools/render_mockup.mjs` – rendert Classic, DAW-Sync, Studio und Distortion in beiden Zielgrößen
 - `tools/ui_smoke_test.mjs` – prüft Controls, Interaktionen und Skalierung
 - `tools/dsp_matrix_test.mjs` – vergleicht Clean- und Effektpfad im selben Render
 - `tools/dsp_articulation_test.mjs` – prüft Slide, Retrigger und gehaltene Noten
+- `tools/dsp_transport_test.mjs` – prüft interne und DAW-geführte Step-Uhr
 - `tools/check_version.py` – prüft konsistente Versionsmetadaten
 
 ## Versionierung
@@ -48,13 +50,42 @@ cmaj generate --target=cpp --output=/dev/null ACIDIFY.cmajorpatch
 node tools/smoke_test.mjs /path/to/cmaj 48000
 node tools/dsp_matrix_test.mjs /path/to/cmaj 48000
 node tools/dsp_articulation_test.mjs /path/to/cmaj 48000
+node tools/dsp_transport_test.mjs /path/to/cmaj 48000
 ```
 
 MIDI-Noten spielen den Synth direkt. Velocity ab 100 aktiviert Accent. Überlappende
 Noten gleiten mit der festen 303-Slide-Zeit; beim Loslassen kehrt der monophone
-Notenstapel zur zuletzt noch gehaltenen Note zurück. Der interne Sequencer wird
-mit `RUN/STOP` gestartet; Tonhöhe, Gate, Accent und Slide lassen sich pro Step am
-Panel editieren.
+Notenstapel zur zuletzt noch gehaltenen Note zurück.
+
+## Tempo und Transport
+
+Der kleine `INT/DAW`-Schalter im Transportmodul wählt die Taktquelle:
+
+- `INT`: Der Tempo-Regler bestimmt 40…300 BPM; `RUN / STOP` startet und stoppt
+  den internen 16tel-Sequencer.
+- `DAW`: Tempo und Play/Stop folgen den typisierten Cmajor-Hostereignissen.
+  Tempo-Regler und manueller Run-Schalter werden sichtbar gesperrt. Liefert der
+  Host außerdem die Songposition, folgen Pattern-Phase, Loop und Seek exakt dem
+  DAW-16tel-Raster.
+- `DAW · WAIT` zeigt eindeutig an, dass noch kein Host-Tempo/-Transport
+  angekommen ist. Ohne Positionsereignis bleibt Tempo/Play synchron, der
+  Patternlauf beginnt beim nächsten Start jedoch bei Step 1.
+
+`INT` ist der Initialwert von `param49`; ältere Presets behalten damit ihr
+bisheriges Verhalten.
+
+## Tonhöhe einzelner Steps
+
+In Classic gibt es zwei direkte Wege:
+
+1. Step anklicken und auf der kleinen Klaviatur die Tonklasse wählen.
+2. Mit `OCT − / OCT +` zwischen unterer und oberer Oktave wechseln.
+
+Schneller geht es, indem der Mauszeiger direkt über dem Step steht: Das Mausrad
+ändert dessen Tonhöhe in Halbtonschritten. Die Step-Anzeige zeigt die absolute
+Note. In Studio funktioniert das Mausrad ebenso auf der `NOTE`-Zeile; bei
+Mehrfachauswahl werden alle gewählten Steps transponiert. `ROOT` transponiert
+das gesamte Pattern, während jeder Step seinen Offset von 0…24 Halbtönen behält.
 
 ## Distortion Stage
 
@@ -80,7 +111,7 @@ Bearbeitungsebene, ohne neue DSP-Parameter einzuführen:
 
 - Shift-Auswahl und Mehrfachauswahl von Steps,
 - Drag-Paint für Gate, Accent und Slide,
-- Pitch-Änderung per Mausrad,
+- Pitch-Änderung per Mausrad in Halbtonschritten,
 - Undo/Redo sowie Copy/Paste,
 - Rotate, Oktavtransposition, Rest und dosiertes Randomize,
 - präzise temporäre Reglerwerte, Fine-Modus mit `Shift` und Default-Marker,

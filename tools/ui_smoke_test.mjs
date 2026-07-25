@@ -37,14 +37,15 @@ try {
     distortionTriggers: document.querySelectorAll(".distortion-trigger").length,
     distortionControls: document.querySelectorAll(".distortion-overlay .control[data-param]").length,
     distortionTypes: document.querySelectorAll(".distortion-types button").length,
+    clockModes: document.querySelectorAll(".clock-mode button").length,
   }));
-  if (counts.controls !== 16 || counts.endpointControls !== 16
+  if (counts.controls !== 17 || counts.endpointControls !== 17
       || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
       || counts.stepGroups !== 4 || counts.whiteKeys !== 7 || counts.blackKeys !== 5
       || counts.studioCells !== 64 || counts.studioCellGroups !== 16
       || counts.studioRulerGroups !== 4 || counts.studioActions !== 11
       || counts.distortionTriggers !== 1 || counts.distortionControls !== 4
-      || counts.distortionTypes !== 3) {
+      || counts.distortionTypes !== 3 || counts.clockModes !== 2) {
     throw new Error(`Unexpected UI element counts: ${JSON.stringify(counts)}`);
   }
 
@@ -185,6 +186,59 @@ try {
   if (!(await page.locator(".run-lamp").evaluate(node => node.classList.contains("lit")))) {
     throw new Error("Run switch failed");
   }
+  const clockInitial = await page.locator("acidify-patch-view").evaluate(node => ({
+    mode: node._values.get("param49"),
+    readout: node.querySelector(".clock-readout").textContent,
+    runDisabled: node.querySelector('.run-switch[data-param="param10"]').getAttribute("aria-disabled"),
+  }));
+  if (clockInitial.mode !== 0 || clockInitial.readout !== "INT · 128 BPM"
+      || clockInitial.runDisabled !== "false") {
+    throw new Error(`Internal clock state failed: ${JSON.stringify(clockInitial)}`);
+  }
+  await page.locator('.clock-mode button[data-value="1"]').click();
+  const runBeforeDawClick = await page.locator("acidify-patch-view")
+    .evaluate(node => node._values.get("param10"));
+  await page.locator('.run-switch[data-param="param10"] button:not([hidden])')
+    .evaluate(button => button.click());
+  const dawWaiting = await page.locator("acidify-patch-view").evaluate(node => ({
+    mode: node._values.get("param49"),
+    run: node._values.get("param10"),
+    readout: node.querySelector(".clock-readout").textContent,
+    runText: node.querySelector('.run-switch[data-param="param10"] button:not([hidden])').textContent,
+    runDisabled: node.querySelector('.run-switch[data-param="param10"]').getAttribute("aria-disabled"),
+    tempoDisabled: node.querySelector('.tempo-box .dial').getAttribute("aria-disabled"),
+  }));
+  if (dawWaiting.mode !== 1 || dawWaiting.run !== runBeforeDawClick
+      || dawWaiting.readout !== "DAW · WAIT" || dawWaiting.runText !== "DAW FOLLOW"
+      || dawWaiting.runDisabled !== "true" || dawWaiting.tempoDisabled !== "true") {
+    throw new Error(`DAW wait state failed: ${JSON.stringify(dawWaiting)}`);
+  }
+  const tempoBeforeLockedInput = await page.locator("acidify-patch-view")
+    .evaluate(node => node._values.get("param9"));
+  await page.locator(".tempo-box .dial").evaluate(dial => {
+    dial.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+    dial.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true }));
+  });
+  const tempoAfterLockedInput = await page.locator("acidify-patch-view")
+    .evaluate(node => node._values.get("param9"));
+  if (tempoAfterLockedInput !== tempoBeforeLockedInput) {
+    throw new Error(`DAW tempo lock failed: ${tempoBeforeLockedInput} -> ${tempoAfterLockedInput}`);
+  }
+  const dawLocked = await page.locator("acidify-patch-view").evaluate(node => {
+    node._tempoListener(135);
+    node._syncListener(7);
+    node._transportListener(1);
+    return {
+      readout: node.querySelector(".clock-readout").textContent,
+      running: node.querySelector(".run-lamp").classList.contains("lit"),
+      title: node.querySelector(".clock-readout").title,
+    };
+  });
+  if (dawLocked.readout !== "DAW · 135 BPM" || !dawLocked.running
+      || !dawLocked.title.includes("position locked")) {
+    throw new Error(`DAW lock state failed: ${JSON.stringify(dawLocked)}`);
+  }
+  await page.locator('.clock-mode button[data-value="0"]').click();
 
   const distortionTrigger = page.locator(".distortion-trigger");
   if (await distortionTrigger.evaluate(node => node.classList.contains("active"))) {
@@ -228,6 +282,11 @@ try {
     throw new Error("Step selection failed");
   }
   await page.locator('.pitch-key[data-pitch="2"]').click();
+  await page.locator('.sequence-step[data-step="7"]').evaluate(node => {
+    node.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+  });
+  const wheelPitch = await page.locator("acidify-patch-view").evaluate(node => node._stepPitch(7));
+  if (wheelPitch !== 3) throw new Error(`Classic semitone wheel failed: ${wheelPitch}`);
   await page.locator('.function-button[data-flag="2"]').click();
   await page.locator('[data-classic-action="clear-step"]').click();
   const clearedStep = await page.locator("acidify-patch-view").evaluate(node => node._stepSnapshot()[7]);
@@ -365,7 +424,7 @@ try {
       mounted: node._mounted,
     };
   });
-  if (reconnect.sends !== 1 || reconnect.controls !== 16 || reconnect.endpointControls !== 16
+  if (reconnect.sends !== 1 || reconnect.controls !== 17 || reconnect.endpointControls !== 17
       || reconnect.pendingEchoes !== 0 || !reconnect.mounted) {
     throw new Error(`Reconnect lifecycle failed: ${JSON.stringify(reconnect)}`);
   }
@@ -380,6 +439,7 @@ try {
     studio: {
       workflow,
       clearedStep,
+      wheelPitch,
       localEchoState,
       multiSelected,
       dragPaint: true,
@@ -394,6 +454,12 @@ try {
       drive: { before: driveBefore, after: driveAfter },
       overlay: true,
       escapeClose: true,
+    },
+    clock: {
+      initial: clockInitial,
+      waiting: dawWaiting,
+      lockedInputSuppressed: tempoAfterLockedInput === tempoBeforeLockedInput,
+      locked: dawLocked,
     },
     scaledBounds: bounds,
     reconnect,

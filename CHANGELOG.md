@@ -6,6 +6,38 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-25
+
+### Added
+
+- Append-only `param49` für die Taktquelle `Internal` oder `DAW`; ältere
+  Presets bleiben durch den Initialwert `Internal` unverändert.
+- Typisierte Cmajor-Hosteingänge für Tempo, Transportstatus und musikalische
+  Timeline-Position.
+- Kompakter `INT/DAW`-Schalter mit effektivem BPM-, Lock- und Wait-Status im
+  bestehenden Transportmodul.
+- Direkte Halbtonänderung per Mausrad auf jedem Classic-Step sowie
+  verständlichere Auswahl-/Klaviaturhinweise.
+- Reproduzierbarer interner Cmajor-Transporttest für BPM-Wechsel, Stop/Start,
+  Timeline-Neustart und Seek.
+
+### Changed
+
+- In `INT` steuern Tempo und `RUN / STOP` weiterhin die interne 16tel-Uhr.
+- In `DAW` folgen Tempo und Start/Stop dem Host; bei vorhandener Position wird
+  die Pattern-Phase auch bei Loop und Seek am DAW-16tel-Raster ausgerichtet.
+- Tempo und manueller Run-Schalter werden in DAW-Stellung sichtbar gesperrt,
+  während die Run-Lampe den tatsächlichen Hostzustand anzeigt.
+
+### Validated
+
+- Cmajor 1.0.3175 C++-Codegen ohne Warnung.
+- Amorph-Preflight: 0 Fehler, 0 Warnungen, 49/49 Parameter synchron; drei
+  Timeline-Eingänge korrekt als Host-Kontext erkannt.
+- Internal/DAW-Transportmatrix bei 44,1, 48, 88,2 und 96 kHz bestanden.
+- UI-Smoke-Test mit 17 globalen Controls, beiden Clock-Modi, Host-Wait/Lock,
+  gesperrtem DAW-Transport und Classic-Step-Pitch per Mausrad.
+
 ## [0.5.0] - 2026-07-25
 
 ### Added

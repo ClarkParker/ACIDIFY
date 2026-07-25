@@ -1,5 +1,5 @@
 /*
-    ACIDIFY 0.5.0 — analog-modelled 303-class bassline for Amorph.
+    ACIDIFY 0.6.0 — analog-modelled 303-class bassline for Amorph.
 
     MIDI/16-step sequencer -> oscillator -> coupling HP -> four-stage ladder
     -> coupling HP -> accent VCA -> output stage.
@@ -21,9 +21,15 @@
 processor AcidifyCore
 {
     input  event std::midi::Message midiIn;
+    input  event std::timeline::Tempo tempoIn;
+    input  event std::timeline::TransportState transportStateIn;
+    input  event std::timeline::Position positionIn;
     output stream float<2> out;
     output event float currentStep;
     output event float meterOut;
+    output event float effectiveTempo;
+    output event float transportRunning;
+    output event float hostSyncStatus;
 
     input event float param1  [[ name: "Tuning",         min: -1.0, max: 1.0,   init: 0.0,   unit: "st" ]];
     input event float param2  [[ name: "Cut Off Freq",   min: 0.0,  max: 1.0,   init: 0.45 ]];
@@ -76,6 +82,8 @@ processor AcidifyCore
     input event float param46 [[ name: "Distortion Type",   min: 0.0, max: 2.0, init: 0.0, step: 1.0 ]];
     input event float param47 [[ name: "Distortion Drive",  min: 0.0, max: 1.0, init: 0.35 ]];
     input event float param48 [[ name: "Distortion Mix",    min: 0.0, max: 1.0, init: 1.0 ]];
+    input event float param49 [[ name: "Clock Mode",         min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Internal|DAW" ]];
 
     float tuning = 0.0f;
     float cutoffControl = 0.45f;
@@ -90,7 +98,23 @@ processor AcidifyCore
     float distortionDrive = 0.35f;
     float distortionMix = 1.0f;
     float tempo = 128.0f;
-    bool running = false;
+    bool manualRunning = false;
+    bool dawSyncEnabled = false;
+    bool dawPlaying = false;
+    bool hostTempoSeen = false;
+    bool hostTransportSeen = false;
+    bool hostPositionSeen = false;
+    float hostTempo = 128.0f;
+    float64 hostQuarterNote = 0.0;
+    bool dawTickReady = false;
+    int64 lastDawTick = 0;
+    float64 dawGateOffQuarterNote = 0.0;
+    bool dawGateArmed = false;
+    int reportedSyncFlags = -1;
+    int reportedRunning = -1;
+    float reportedTempo = -1.0f;
+    int clockReportCountdown = 1;
+    int clockReportPeriod = 1;
     int patternLength = 16;
     int rootNote = 36;
 
@@ -596,6 +620,8 @@ processor AcidifyCore
         updateRiaaCoefficients (sampleRate);
         meterPeriod = max (1, int (sampleRate * 0.03f));
         meterCountdown = min (meterCountdown, meterPeriod);
+        clockReportPeriod = max (1, int (sampleRate * 0.05f));
+        clockReportCountdown = min (clockReportCountdown, clockReportPeriod);
     }
 
     void initialiseModel (float sampleRate)
@@ -711,19 +737,92 @@ processor AcidifyCore
         gateOpen = false;
     }
 
-    void startSequenceStep (float sampleRate)
+    float activeTempo()
+    {
+        return dawSyncEnabled && hostTempoSeen ? hostTempo : tempo;
+    }
+
+    bool sequencerRunning()
+    {
+        return dawSyncEnabled ? (hostTransportSeen && dawPlaying) : manualRunning;
+    }
+
+    int hostSyncFlags()
+    {
+        return (hostTempoSeen ? 1 : 0)
+             + (hostTransportSeen ? 2 : 0)
+             + (hostPositionSeen ? 4 : 0);
+    }
+
+    void reportClockState()
+    {
+        let nextTempo = activeTempo();
+        if (abs (nextTempo - reportedTempo) > 0.001f)
+        {
+            effectiveTempo <- nextTempo;
+            reportedTempo = nextTempo;
+        }
+
+        let nextRunning = sequencerRunning() ? 1 : 0;
+        if (nextRunning != reportedRunning)
+        {
+            transportRunning <- float (nextRunning);
+            reportedRunning = nextRunning;
+        }
+
+        let nextSyncFlags = hostSyncFlags();
+        if (nextSyncFlags != reportedSyncFlags)
+        {
+            hostSyncStatus <- float (nextSyncFlags);
+            reportedSyncFlags = nextSyncFlags;
+        }
+    }
+
+    void broadcastClockState()
+    {
+        let nextTempo = activeTempo();
+        let nextRunning = sequencerRunning() ? 1 : 0;
+        let nextSyncFlags = hostSyncFlags();
+        effectiveTempo <- nextTempo;
+        transportRunning <- float (nextRunning);
+        hostSyncStatus <- float (nextSyncFlags);
+        reportedTempo = nextTempo;
+        reportedRunning = nextRunning;
+        reportedSyncFlags = nextSyncFlags;
+    }
+
+    void resetSequencer()
+    {
+        clearHeldNotes();
+        sequenceStep = -1;
+        sequenceCountdown = 0;
+        gateCountdown = 0;
+        dawTickReady = false;
+        dawGateArmed = false;
+        currentStep <- -1.0f;
+        releaseNote();
+    }
+
+    int wrapSequenceStep (int64 absoluteStep)
+    {
+        let length = int64 (clamp (patternLength, 1, 16));
+        var wrapped = int (absoluteStep % length);
+        if (wrapped < 0)
+            wrapped += int (length);
+        return wrapped;
+    }
+
+    void startSequenceStepAt (int nextStep, float sampleRate, float bpm)
     {
         let length = clamp (patternLength, 1, 16);
         let previousFlags = sequenceStep >= 0 ? getFlags (sequenceStep) : 0;
-        sequenceStep += 1;
-        if (sequenceStep >= length)
-            sequenceStep = 0;
+        sequenceStep = clamp (nextStep, 0, length - 1);
 
         let flags = getFlags (sequenceStep);
         let hasGate = (flags & 1) != 0;
         let hasAccent = (flags & 2) != 0;
         let previousSlide = (previousFlags & 4) != 0;
-        let stepSamples = max (1, int (sampleRate * 15.0f / max (tempo, 1.0f)));
+        let stepSamples = max (1, int (sampleRate * 15.0f / max (bpm, 1.0f)));
 
         if (hasGate)
         {
@@ -741,6 +840,50 @@ processor AcidifyCore
         sequenceCountdown = stepSamples;
         gateCountdown = (flags & 4) != 0 ? stepSamples + 1 : max (1, stepSamples / 2);
         currentStep <- float (sequenceStep);
+    }
+
+    void startNextInternalStep (float sampleRate)
+    {
+        let length = clamp (patternLength, 1, 16);
+        var nextStep = sequenceStep + 1;
+        if (nextStep >= length)
+            nextStep = 0;
+        startSequenceStepAt (nextStep, sampleRate, activeTempo());
+    }
+
+    void processInternalClock (float sampleRate)
+    {
+        if (sequenceCountdown <= 0)
+            startNextInternalStep (sampleRate);
+
+        sequenceCountdown -= 1;
+        gateCountdown -= 1;
+        if (gateCountdown == 0)
+            releaseNote();
+    }
+
+    void processDawClock (float sampleRate)
+    {
+        let absoluteStep = int64 (floor (hostQuarterNote * 4.0));
+
+        if (! dawTickReady || absoluteStep != lastDawTick)
+        {
+            startSequenceStepAt (wrapSequenceStep (absoluteStep), sampleRate, activeTempo());
+            lastDawTick = absoluteStep;
+            dawTickReady = true;
+
+            let flags = getFlags (sequenceStep);
+            dawGateArmed = (flags & 1) != 0 && (flags & 4) == 0;
+            dawGateOffQuarterNote = (float64 (absoluteStep) + 0.5) * 0.25;
+        }
+
+        if (dawGateArmed && hostQuarterNote >= dawGateOffQuarterNote)
+        {
+            releaseNote();
+            dawGateArmed = false;
+        }
+
+        hostQuarterNote += float64 (activeTempo() / (60.0f * sampleRate));
     }
 
     float processLadder (float signal, float cutoffHz, float sampleRate)
@@ -796,16 +939,21 @@ processor AcidifyCore
         volumeDb = clamp (v, -36.0f, 0.0f);
         outputGainTarget = float (std::levels::dBtoGain (float64 (volumeDb)));
     }
-    event param9 (float v) { tempo = clamp (v, 40.0f, 300.0f); }
+    event param9 (float v)
+    {
+        tempo = clamp (v, 40.0f, 300.0f);
+        reportClockState();
+    }
     event param10 (float v)
     {
-        running = v >= 0.5f;
-        clearHeldNotes();
-        sequenceStep = -1;
-        sequenceCountdown = 0;
-        gateCountdown = 0;
-        if (! running)
-            releaseNote();
+        let nextRunning = v >= 0.5f;
+        if (nextRunning != manualRunning)
+        {
+            manualRunning = nextRunning;
+            if (! dawSyncEnabled)
+                resetSequencer();
+        }
+        reportClockState();
     }
     event param11 (float v) { patternLength = int (clamp (v, 1.0f, 16.0f)); }
     event param12 (float v) { rootNote = int (clamp (v, 24.0f, 60.0f)); }
@@ -847,10 +995,52 @@ processor AcidifyCore
     event param46 (float v) { distortionType = int (clamp (v, 0.0f, 2.0f)); }
     event param47 (float v) { distortionDrive = clamp (v, 0.0f, 1.0f); }
     event param48 (float v) { distortionMix = clamp (v, 0.0f, 1.0f); }
+    event param49 (float v)
+    {
+        let nextMode = v >= 0.5f;
+        if (nextMode != dawSyncEnabled)
+        {
+            dawSyncEnabled = nextMode;
+            resetSequencer();
+        }
+        reportClockState();
+    }
+
+    event tempoIn (std::timeline::Tempo newTempo)
+    {
+        let nextTempo = clamp (newTempo.bpm, 1.0f, 999.0f);
+        let changed = ! hostTempoSeen || abs (nextTempo - hostTempo) > 0.001f;
+        hostTempo = nextTempo;
+        hostTempoSeen = true;
+        if (changed)
+            reportClockState();
+    }
+
+    event transportStateIn (std::timeline::TransportState newState)
+    {
+        let nextPlaying = newState.isPlaying();
+        let changed = ! hostTransportSeen || nextPlaying != dawPlaying;
+        hostTransportSeen = true;
+        dawPlaying = nextPlaying;
+        if (changed && dawSyncEnabled)
+            resetSequencer();
+        if (changed)
+            reportClockState();
+    }
+
+    event positionIn (std::timeline::Position newPosition)
+    {
+        hostQuarterNote = newPosition.quarterNote;
+        if (! hostPositionSeen)
+        {
+            hostPositionSeen = true;
+            reportClockState();
+        }
+    }
 
     event midiIn (std::midi::Message message)
     {
-        if (running)
+        if (sequencerRunning())
             return;
 
         if (message.isControllerNumber (120) || message.isControllerNumber (123))
@@ -903,15 +1093,12 @@ processor AcidifyCore
 
             smoothParameters();
 
-            if (running)
+            if (sequencerRunning())
             {
-                if (sequenceCountdown <= 0)
-                    startSequenceStep (sampleRate);
-
-                sequenceCountdown -= 1;
-                gateCountdown -= 1;
-                if (gateCountdown == 0)
-                    releaseNote();
+                if (dawSyncEnabled && hostPositionSeen)
+                    processDawClock (sampleRate);
+                else
+                    processInternalClock (sampleRate);
             }
 
             currentFrequency = targetFrequency + glideCoeff * (currentFrequency - targetFrequency);
@@ -995,6 +1182,13 @@ processor AcidifyCore
                 meterCountdown = meterPeriod;
             }
 
+            clockReportCountdown -= 1;
+            if (clockReportCountdown <= 0)
+            {
+                broadcastClockState();
+                clockReportCountdown = clockReportPeriod;
+            }
+
             out <- float<2> (sample, sample);
             advance();
         }
@@ -1004,9 +1198,15 @@ processor AcidifyCore
 graph Acidify [[ main ]]
 {
     input  event std::midi::Message midiIn;
+    input  event std::timeline::Tempo tempoIn;
+    input  event std::timeline::TransportState transportStateIn;
+    input  event std::timeline::Position positionIn;
     output stream float<2> out;
     output event float currentStep;
     output event float meterOut;
+    output event float effectiveTempo;
+    output event float transportRunning;
+    output event float hostSyncStatus;
 
     input event float param1  [[ name: "Tuning",         min: -1.0, max: 1.0,   init: 0.0,   unit: "st" ]];
     input event float param2  [[ name: "Cut Off Freq",   min: 0.0,  max: 1.0,   init: 0.45 ]];
@@ -1058,15 +1258,23 @@ graph Acidify [[ main ]]
     input event float param46 [[ name: "Distortion Type",   min: 0.0, max: 2.0, init: 0.0, step: 1.0 ]];
     input event float param47 [[ name: "Distortion Drive",  min: 0.0, max: 1.0, init: 0.35 ]];
     input event float param48 [[ name: "Distortion Mix",    min: 0.0, max: 1.0, init: 1.0 ]];
+    input event float param49 [[ name: "Clock Mode",         min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Internal|DAW" ]];
 
     node core = AcidifyCore * 4;
 
     connection
     {
         midiIn -> core.midiIn;
+        tempoIn -> core.tempoIn;
+        transportStateIn -> core.transportStateIn;
+        positionIn -> core.positionIn;
         core.out -> out;
         core.currentStep -> currentStep;
         core.meterOut -> meterOut;
+        core.effectiveTempo -> effectiveTempo;
+        core.transportRunning -> transportRunning;
+        core.hostSyncStatus -> hostSyncStatus;
 
         param1 -> core.param1;   param2 -> core.param2;
         param3 -> core.param3;   param4 -> core.param4;
@@ -1094,5 +1302,6 @@ graph Acidify [[ main ]]
         param43 -> core.param43; param44 -> core.param44;
         param45 -> core.param45; param46 -> core.param46;
         param47 -> core.param47; param48 -> core.param48;
+        param49 -> core.param49;
     }
 }

@@ -7,7 +7,7 @@ und eine getrennte, für Acid-Produktionen typische Ausgangsverzerrung anbieten.
 Der Instrumentenkern bleibt auch bei ausgeschalteter Distortion vollständig
 spielbar und messbar.
 
-0.5.0 ist ein technisch geprüfter Modellkandidat. „AAA Clone“ wird erst
+0.6.0 ist ein technisch geprüfter Modellkandidat. „AAA Clone“ wird erst
 beansprucht, wenn identische Pattern mehrerer Originalgeräte kalibriert
 aufgenommen, gegen das Modell vermessen und im Blindtest bewertet wurden.
 Quellcodequalität und grüne Offline-Tests ersetzen diesen Hör- und
@@ -49,11 +49,12 @@ sondern aus dem gekoppelten Verhalten von:
 5. Vierpol-Diodenleiter und seinen Koppelnetzwerken,
 6. optionaler nachgeschalteter Produktionsverzerrung.
 
-## 3. DSP-Topologie 0.5.0
+## 3. DSP-Topologie 0.6.0
 
 ```mermaid
 flowchart TD
     A["MIDI / 16-Step"] --> B["Gate · Slide · Accent"]
+    T["INT BPM / DAW Timeline"] --> A
     B --> C["Free VCO: Saw / 303 Square"]
     B --> D["MEG · VEG · Accent RC"]
     C --> E["Input HP + 4-Pole Ladder"]
@@ -67,6 +68,19 @@ Der vollständige Audio- und Post-FX-Pfad läuft als
 `node core = AcidifyCore * 4`. Cmajor übernimmt die Rate-Konvertierung an der
 Node-Grenze; alle zeitabhängigen Koeffizienten werden aus der tatsächlichen
 vierfachen `processor.frequency` berechnet.
+
+### Clock und Transport
+
+- `Internal` verwendet `param9` für 40…300 BPM und `param10` für Run/Stop.
+- `DAW` verwendet die Cmajor-Typen `std::timeline::Tempo`,
+  `std::timeline::TransportState` und `std::timeline::Position`.
+- Mit Position wird der aktuelle Step aus
+  `floor(quarterNote × 4) modulo patternLength` abgeleitet. Dadurch folgen
+  Start, Stop, Loop und Seek dem musikalischen 16tel-Raster.
+- Stellt ein Host Tempo und Transport, aber keine Position bereit, läuft ein
+  klar definierter Fallback ab Step 1 mit Host-BPM.
+- `param49` schaltet die Quelle append-only um und startet aus Gründen der
+  Preset-Kompatibilität in `Internal`.
 
 ### VCO und Slide
 
@@ -138,20 +152,26 @@ Zweikanaltest samplegenau das Clean-Signal.
 
 ## 5. Parameter- und UI-Vertrag
 
-Amorph garantiert 50 dynamische Parameter. ACIDIFY verwendet 48:
+Amorph garantiert 50 dynamische Parameter. ACIDIFY verwendet 49:
 
 - 12 globale Instrumentparameter,
 - 16 Step-Pitches,
 - 16 gepackte Step-Flags (`gate=1`, `accent=2`, `slide=4`),
-- 4 append-only Distortion-Parameter.
+- 4 append-only Distortion-Parameter,
+- 1 append-only Clock-Mode-Parameter.
 
 `param1..param44` wurden nicht umnummeriert oder umgedeutet.
-`param45..param48` sind Enable, Type, Drive und Mix.
+`param45..param48` sind Enable, Type, Drive und Mix; `param49` wählt Internal
+oder DAW. Die typisierten Timeline-Eingänge sind Host-Kontext und keine
+dynamischen Parameter.
 
 Die fixierte Classic-/Studio-Geometrie bleibt erhalten. Im Master-Kopf wurde
 nur ein kleiner `DIST`-Button ergänzt. Seine LED zeigt Aktivität; ein Klick
 öffnet das Overlay. Das Overlay ist per Tastatur erreichbar, schließt mit
 Escape oder Außenklick und verändert weder Panelgröße noch Modulraster.
+Im bestehenden Transportmodul sitzt zusätzlich ein kleiner `INT/DAW`-Schalter
+mit Statuszeile. Step-Pitches sind in Classic direkt per Mausrad oder über
+Step-Auswahl, Klaviatur und Oktavtaster erreichbar.
 
 ## 6. Verifikation
 
@@ -161,6 +181,8 @@ Automatisiert vorhanden:
 - Cmajor-C++-Codegen,
 - Clean/Post-FX-Zweikanalmatrix bei 44,1/48/88,2/96 kHz,
 - interner Legato-/Retrigger-Test bei denselben Raten,
+- interner/DAW-Transporttest mit BPM-Wechsel, Stop/Start und Seek bei denselben
+  Raten,
 - Sicherheitsgrenzen, endliche Samples, Release-Tail und Sprungprüfung,
 - UI-, Echo-, Reconnect-, Overlay-, Geometrie- und Responsive-Tests.
 
