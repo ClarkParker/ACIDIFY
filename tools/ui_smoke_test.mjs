@@ -40,6 +40,8 @@ try {
     distortionTypes: document.querySelectorAll(".distortion-types button").length,
     clockModes: document.querySelectorAll(".clock-mode button").length,
     swingControls: document.querySelectorAll('.control[data-param="param50"]').length,
+    basslineVisuals: document.querySelectorAll(".bassline-visual").length,
+    basslineNodes: document.querySelectorAll(".bassline-node").length,
     tooltipToggles: document.querySelectorAll(".tooltip-toggle").length,
     tooltipBubbles: document.querySelectorAll(".tooltip-bubble").length,
     tooltipTargets: document.querySelectorAll("[data-tooltip]").length,
@@ -54,9 +56,41 @@ try {
       || counts.distortionTriggers !== 1 || counts.distortionControls !== 4
       || counts.distortionTypes !== 3 || counts.clockModes !== 2
       || counts.swingControls !== 1
+      || counts.basslineVisuals !== 1 || counts.basslineNodes !== 16
       || counts.tooltipToggles !== 1 || counts.tooltipBubbles !== 1
       || counts.tooltipTargets < 100 || counts.nativeTitles !== 0) {
     throw new Error(`Unexpected UI element counts: ${JSON.stringify(counts)}`);
+  }
+
+  const bassline = await page.evaluate(() => {
+    const rect = selector => {
+      const bounds = document.querySelector(selector).getBoundingClientRect();
+      return { left: bounds.left, right: bounds.right, width: bounds.width, height: bounds.height };
+    };
+    const node = index => document.querySelector(`.bassline-node[data-step="${index}"]`);
+    return {
+      title: rect(".program-title"),
+      visual: rect(".bassline-visual"),
+      utility: rect(".utility"),
+      path: document.querySelector(".bassline-path").getAttribute("d"),
+      slidePath: document.querySelector(".bassline-slide-path").getAttribute("d"),
+      lowY: Number(node(0).getAttribute("cy")),
+      highY: Number(node(4).getAttribute("cy")),
+      accent: node(0).classList.contains("accented"),
+      slide: node(1).classList.contains("sliding"),
+      selected: node(0).classList.contains("selected"),
+      tooltip: document.querySelector(".bassline-visual").dataset.tooltip,
+    };
+  });
+  if (bassline.visual.width < 170 || bassline.visual.height < 29
+      || bassline.title.right > bassline.visual.left
+      || bassline.visual.right > bassline.utility.left
+      || !bassline.path.startsWith("M ") || !bassline.path.includes(" L ")
+      || !bassline.slidePath.includes(" L ")
+      || !(bassline.lowY > bassline.highY)
+      || !bassline.accent || !bassline.slide || !bassline.selected
+      || !bassline.tooltip.includes("pitch contour")) {
+    throw new Error(`Bassline visualization failed: ${JSON.stringify(bassline)}`);
   }
 
   const stepBadges = await page.evaluate(() => {
@@ -781,6 +815,7 @@ try {
   console.log(JSON.stringify({
     ok: true,
     counts,
+    bassline,
     stepBadges,
     compactBadges,
     upperPanelGeometry,

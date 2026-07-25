@@ -329,6 +329,7 @@ class AcidifyPatchView extends HTMLElement {
     this._wirePitchMenu();
     this._wireDistortion();
     this._wireTooltips();
+    this._renderStepStrip();
     this._renderStepEditor();
     this._renderStudio();
 
@@ -1498,6 +1499,54 @@ class AcidifyPatchView extends HTMLElement {
       node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}; click to edit, wheel changes semitone, right-click or double-click chooses a note`);
       node.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}. Wheel changes one semitone; right-click or double-click opens direct note selection.`;
     });
+    this._renderBassline();
+  }
+
+  _renderBassline() {
+    const path = this.querySelector(".bassline-path");
+    const slidePath = this.querySelector(".bassline-slide-path");
+    const nodes = [...this.querySelectorAll(".bassline-node")];
+    if (!path || !slidePath || nodes.length !== 16) return;
+
+    const root = Math.round(this._values.get("param12") ?? 36);
+    const points = Array.from({ length: 16 }, (_, index) => {
+      const pitch = this._stepPitch(index);
+      return {
+        index,
+        pitch,
+        flags: this._stepFlags(index),
+        x: 35 + index * (199 / 15),
+        y: 24 - pitch * (18 / 24),
+      };
+    });
+    path.setAttribute("d", points.map((point, index) =>
+      `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`
+    ).join(" "));
+    slidePath.setAttribute("d", points.slice(0, -1)
+      .filter(point => (point.flags & 4) !== 0)
+      .map(point => {
+        const next = points[point.index + 1];
+        return `M ${point.x.toFixed(2)} ${point.y.toFixed(2)} L ${next.x.toFixed(2)} ${next.y.toFixed(2)}`;
+      }).join(" "));
+
+    nodes.forEach((node, index) => {
+      const point = points[index];
+      const absoluteNote = noteName(root + point.pitch).replace("#", "♯");
+      node.setAttribute("cx", point.x.toFixed(2));
+      node.setAttribute("cy", point.y.toFixed(2));
+      node.dataset.pitch = `${point.pitch}`;
+      node.classList.toggle("rest", (point.flags & 1) === 0);
+      node.classList.toggle("accented", (point.flags & 2) !== 0);
+      node.classList.toggle("sliding", (point.flags & 4) !== 0);
+      node.classList.toggle("selected", this._selectedSteps.has(index));
+      node.classList.toggle("playing", index === this._playingStep);
+      node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}`);
+    });
+
+    const visual = this.querySelector(".bassline-visual");
+    if (visual) {
+      visual.dataset.tooltip = "Live pitch contour for all 16 steps. Red nodes are accented, amber links are slides, dim nodes are rests, and the bright ring follows playback.";
+    }
   }
 
   _renderStepEditor() {
@@ -1633,6 +1682,9 @@ class AcidifyPatchView extends HTMLElement {
         aria-checked="false">
         <strong>--</strong><small>OCT +${Math.floor(pitch / 12)}</small>
       </button>`).join("");
+    const basslineNodes = Array.from({ length: 16 }, (_, index) =>
+      `<circle class="bassline-node" data-step="${index}" cx="${35 + index * (199 / 15)}" cy="24" r="2"></circle>`
+    ).join("");
 
     return `
 <style>
@@ -2001,8 +2053,44 @@ class AcidifyPatchView extends HTMLElement {
     grid-column: 1 / -1; margin-top: 3px;
     color: #66665f; font-size: 5.5px; line-height: 6px; letter-spacing: 1.45px;
   }
+  acidify-patch-view .bassline-visual {
+    position: relative; flex: 1 1 190px; min-width: 170px; max-width: 250px; height: 30px;
+    margin: 0 10px; overflow: hidden; border: 1px solid #171714; border-radius: 5px;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+      linear-gradient(#292a26, #151613);
+    background-size: 13px 100%, 100% 6px, 100% 100%;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.62), 0 1px rgba(255,255,255,.5);
+  }
+  acidify-patch-view .bassline-visual > span {
+    position: absolute; z-index: 2; left: 5px; top: 4px;
+    color: #76776f; font-size: 4.5px; font-weight: 900; letter-spacing: .65px;
+  }
+  acidify-patch-view .bassline-visual svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  acidify-patch-view .bassline-path,
+  acidify-patch-view .bassline-slide-path {
+    fill: none; stroke-linecap: round; stroke-linejoin: round;
+  }
+  acidify-patch-view .bassline-path { stroke: #8c8d84; stroke-width: 1; opacity: .72; }
+  acidify-patch-view .bassline-slide-path {
+    stroke: #efb34e; stroke-width: 1.8; opacity: .92;
+    filter: drop-shadow(0 0 1.5px rgba(239,179,78,.45));
+  }
+  acidify-patch-view .bassline-node {
+    fill: #deddd3; stroke: #171714; stroke-width: .8;
+    transition: fill 90ms ease, stroke 90ms ease, opacity 90ms ease;
+  }
+  acidify-patch-view .bassline-node.rest { opacity: .28; fill: #66675f; }
+  acidify-patch-view .bassline-node.accented { fill: #e2493a; }
+  acidify-patch-view .bassline-node.sliding { stroke: #f0b34d; stroke-width: 1.2; }
+  acidify-patch-view .bassline-node.selected { stroke: #fff8ec; stroke-width: 1.45; }
+  acidify-patch-view .bassline-node.playing {
+    fill: #ffefe8; stroke: #ff4937; stroke-width: 2;
+    filter: drop-shadow(0 0 2.5px rgba(255,60,42,.85));
+  }
   acidify-patch-view .utility {
-    display: flex; align-items: center; gap: 13px; height: 100%;
+    flex: 0 0 auto; display: flex; align-items: center; gap: 13px; height: 100%;
   }
   acidify-patch-view .studio-toggle {
     position: relative; width: 140px; height: 29px; padding: 0 7px; cursor: pointer; border-radius: 5px;
@@ -3769,6 +3857,15 @@ class AcidifyPatchView extends HTMLElement {
         <div class="program-title">
           <b>16 STEP</b><span>PATTERN PROGRAMMER</span>
           <small class="program-context">CLASSIC PROGRAMMING</small>
+        </div>
+        <div class="bassline-visual" role="img" aria-label="Live 16-step bassline pitch contour"
+          data-tooltip="Live pitch contour for all 16 steps. Red nodes are accented, amber links are slides, dim nodes are rests, and the bright ring follows playback.">
+          <span>PITCH MAP</span>
+          <svg viewBox="0 0 240 30" aria-hidden="true" focusable="false">
+            <path class="bassline-path"></path>
+            <path class="bassline-slide-path"></path>
+            ${basslineNodes}
+          </svg>
         </div>
         <div class="utility">
           <button class="studio-toggle" aria-pressed="false" aria-label="Open Studio edit mode" aria-keyshortcuts="M"
