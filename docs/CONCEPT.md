@@ -11,7 +11,7 @@ reproduzieren:
 - Accent, der Filter und Lautstärke gemeinsam beeinflusst,
 - feste, musikalisch erkennbare Slide-Charakteristik,
 - 16-Step-Sequencer mit Gate, Accent und Slide pro Schritt,
-- eigenständige, dunkle Performance-Oberfläche mit klarer 303-DNA.
+- eigenständige, hardwareinspirierte Performance-Oberfläche mit klarer 303-DNA.
 
 Die erste Version ist bewusst eine **messbare Grundlage**. „AAA“ wird erst dann
 beansprucht, wenn Referenzaufnahmen mehrerer Originalgeräte bei identischen
@@ -121,8 +121,8 @@ private Datenbrücke zwischen UI und DSP.
 
 Designraster: 1180 × 580 px, skaliert per CSS `zoom`.
 
-- graphitfarbenes Chassis mit klar getrennten Performance-Modulen,
-- helle Funktionsbeschriftung, rote LEDs und schwarze geriffelte Drehknöpfe,
+- helles Metall-/Hardware-Chassis mit klar getrennten Performance-Modulen,
+- dunkle Funktionsbeschriftung, rote LEDs und schwarze geriffelte Drehknöpfe,
 - Soundregler in der originaltypischen Reihenfolge,
 - gleich hohe Zonen für Transport, Synthese und Master,
 - untere Programmiersektion mit vier gruppierten Viererblöcken,
@@ -131,7 +131,7 @@ Designraster: 1180 × 580 px, skaliert per CSS `zoom`.
 - eigene Kennzeichnung `ACIDIFY AC-303`, keine Roland-Logos.
 
 Die Materialdarstellung verwendet getrennte Licht- und Oberflächenmodelle:
-Formkanten des dunklen Chassis, eine dezente technische Rasterstruktur,
+Formkanten des warmgrauen Chassis, eine dezente gebürstete Metallstruktur,
 geriffelte Spritzgussflanken an den Potikappen, gefasste LED-Linsen sowie
 eingelassene Taster mit sichtbarem Hub. Die Bedienelemente verändern beim
 Drücken nicht nur ihre Farbe, sondern auch Höhe, Schatten und Innenlicht.

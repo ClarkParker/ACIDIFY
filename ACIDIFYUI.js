@@ -1,4 +1,4 @@
-// ACIDIFY — modern 303-class Amorph instrument UI.
+// ACIDIFY — hardware-inspired modern 303-class Amorph instrument UI.
 // WINDOW SIZE: 1180x580
 //
 // Single-file light-DOM Web Component. No imports, fonts, images or CDN assets.
@@ -42,8 +42,9 @@ function clamp(value, min, max) {
 }
 
 class DialControl {
-  constructor({ patchConnection, node, config }) {
+  constructor({ patchConnection, sendValue, node, config }) {
     this.pc = patchConnection;
+    this.sendValue = sendValue;
     this.node = node;
     this.config = config;
     this.dial = node.querySelector(".dial");
@@ -124,6 +125,11 @@ class DialControl {
     }, 900);
   }
 
+  dispose() {
+    if (this.feedbackTimer) window.clearTimeout(this.feedbackTimer);
+    this.feedbackTimer = null;
+  }
+
   setValue(raw, notify) {
     if (this.dragging && !notify) return;
     const { min, max, step } = this.config;
@@ -137,13 +143,14 @@ class DialControl {
     const formatted = this.config.format(value);
     this.dial.setAttribute("aria-valuetext", formatted);
     this.valueLabel.textContent = formatted;
-    if (notify) this.pc.sendEventOrValue(this.config.id, value);
+    if (notify) this.sendValue(this.config.id, value);
   }
 }
 
 class ToggleControl {
-  constructor({ patchConnection, node, config, onChange }) {
+  constructor({ patchConnection, sendValue, node, config, onChange }) {
     this.pc = patchConnection;
+    this.sendValue = sendValue;
     this.node = node;
     this.config = config;
     this.onChange = onChange;
@@ -171,13 +178,14 @@ class ToggleControl {
     });
     this.node.classList.toggle("is-on", value >= 0.5);
     this.onChange?.(value);
-    if (notify) this.pc.sendEventOrValue(this.config.id, value);
+    if (notify) this.sendValue(this.config.id, value);
   }
 }
 
 class StepperControl {
-  constructor({ patchConnection, node, config, onChange }) {
+  constructor({ patchConnection, sendValue, node, config, onChange }) {
     this.pc = patchConnection;
+    this.sendValue = sendValue;
     this.node = node;
     this.config = config;
     this.onChange = onChange;
@@ -196,8 +204,8 @@ class StepperControl {
     const value = clamp(Math.round((Number(raw) || min) / step) * step, min, max);
     this.value = value;
     this.valueLabel.textContent = this.config.format(value);
+    if (notify) this.sendValue(this.config.id, value);
     this.onChange?.(value);
-    if (notify) this.pc.sendEventOrValue(this.config.id, value);
   }
 }
 
@@ -225,10 +233,18 @@ class AcidifyPatchView extends HTMLElement {
     this._meter = 0;
     this._studioPointerEnd = null;
     this._studioKeyDown = null;
-    this.innerHTML = this.getHTML();
+    this._midiHandler = null;
+    this._recentSends = [];
+    this._mounted = false;
   }
 
   connectedCallback() {
+    if (this._mounted) return;
+    this._mounted = true;
+    this.innerHTML = this.getHTML();
+    this._controls.clear();
+    this._values.clear();
+    this._recentSends = [];
     this._buildControls();
     this._wireSteps();
     this._wireKeyboard();
@@ -237,6 +253,7 @@ class AcidifyPatchView extends HTMLElement {
     this._renderStudio();
 
     this._paramListener = ({ endpointID, value }) => {
+      if (this._consumeEcho(endpointID, value)) return;
       this._values.set(endpointID, Number(value));
       const control = this._controls.get(endpointID);
       if (control) control.setValue(value, false);
@@ -264,13 +281,14 @@ class AcidifyPatchView extends HTMLElement {
     };
     this.pc.addEndpointListener("meterOut", this._meterListener);
 
-    window.__amorphProcessMidi = messages => {
+    this._midiHandler = messages => {
       messages.forEach(({ s, d1, d2 }) => {
         const kind = s & 0xf0;
         if (kind === 0x90 && d2 > 0) this._showMidiNote(d1, true);
         else if (kind === 0x80 || (kind === 0x90 && d2 === 0)) this._showMidiNote(d1, false);
       });
     };
+    window.__amorphProcessMidi = this._midiHandler;
 
     let parent = this.parentElement;
     while (parent && parent !== document.body) {
@@ -291,6 +309,7 @@ class AcidifyPatchView extends HTMLElement {
   }
 
   disconnectedCallback() {
+    if (!this._mounted) return;
     if (this._paramListener) this.pc.removeAllParameterListener(this._paramListener);
     if (this._stepListener) this.pc.removeEndpointListener("currentStep", this._stepListener);
     if (this._meterListener) this.pc.removeEndpointListener("meterOut", this._meterListener);
@@ -299,19 +318,58 @@ class AcidifyPatchView extends HTMLElement {
     if (this._scaleTimer) window.clearInterval(this._scaleTimer);
     if (this._toastTimer) window.clearTimeout(this._toastTimer);
     if (this._studioKeyDown) this.removeEventListener("keydown", this._studioKeyDown);
-    delete window.__amorphProcessMidi;
+    if (window.__amorphProcessMidi === this._midiHandler) delete window.__amorphProcessMidi;
+    this._controls.forEach(control => control.dispose?.());
+    this._controls.clear();
+    this._values.clear();
+    this._recentSends = [];
+    this._paramListener = null;
+    this._stepListener = null;
+    this._meterListener = null;
+    this._resizeFn = null;
+    this._resizeObserver = null;
+    this._scaleTimer = null;
+    this._toastTimer = null;
+    this._studioPointerEnd = null;
+    this._studioKeyDown = null;
+    this._midiHandler = null;
+    this._mounted = false;
+  }
+
+  _sendParameter(endpointID, rawValue) {
+    const value = Number(rawValue);
+    const now = performance.now();
+    this._values.set(endpointID, value);
+    this._recentSends = this._recentSends.filter(entry => now - entry.time < 1500);
+    this._recentSends.push({ endpointID, value, time: now });
+    if (this._recentSends.length > 64) this._recentSends.shift();
+    this.pc.sendEventOrValue(endpointID, rawValue);
+  }
+
+  _consumeEcho(endpointID, rawValue) {
+    const value = Number(rawValue);
+    const now = performance.now();
+    this._recentSends = this._recentSends.filter(entry => now - entry.time < 1500);
+    const index = this._recentSends.findIndex(entry =>
+      entry.endpointID === endpointID && Math.abs(entry.value - value) <= 1e-6
+    );
+    if (index < 0) return false;
+    this._recentSends.splice(index, 1);
+    return true;
   }
 
   _buildControls() {
+    const sendValue = (endpointID, value) => this._sendParameter(endpointID, value);
     ACIDIFY_GLOBALS.forEach(config => {
       const node = this.querySelector(`.control[data-param="${config.id}"]`);
       if (!node) return;
       let control;
       if (config.type === "dial") {
-        control = new DialControl({ patchConnection: this.pc, node, config });
+        control = new DialControl({ patchConnection: this.pc, sendValue, node, config });
       } else if (config.type === "toggle") {
         control = new ToggleControl({
           patchConnection: this.pc,
+          sendValue,
           node,
           config,
           onChange: value => {
@@ -323,6 +381,7 @@ class AcidifyPatchView extends HTMLElement {
       } else {
         control = new StepperControl({
           patchConnection: this.pc,
+          sendValue,
           node,
           config,
           onChange: () => {
@@ -552,11 +611,11 @@ class AcidifyPatchView extends HTMLElement {
       const flags = clamp(Math.round(step.flags), 0, 7);
       if (pitch !== this._stepPitch(index)) {
         this._values.set(pitchID, pitch);
-        if (notify) this.pc.sendEventOrValue(pitchID, pitch);
+        if (notify) this._sendParameter(pitchID, pitch);
       }
       if (flags !== this._stepFlags(index)) {
         this._values.set(flagsID, flags);
-        if (notify) this.pc.sendEventOrValue(flagsID, flags);
+        if (notify) this._sendParameter(flagsID, flags);
       }
     });
     this._renderStepStrip();
@@ -716,7 +775,7 @@ class AcidifyPatchView extends HTMLElement {
     const id = isPitch ? STEP_PITCH_IDS[index] : STEP_FLAG_IDS[index];
     const value = clamp(Math.round(Number(raw) || 0), 0, isPitch ? 24 : 7);
     this._values.set(id, value);
-    if (notify) this.pc.sendEventOrValue(id, value);
+    if (notify) this._sendParameter(id, value);
     this._renderStepStrip();
     this._renderStepEditor();
     this._renderStudio();
@@ -798,7 +857,7 @@ class AcidifyPatchView extends HTMLElement {
     const dial = id => {
       const c = ACIDIFY_GLOBALS.find(item => item.id === id);
       return `
-        <div class="control knob-control" data-param="${c.id}" data-min="${c.min}" data-max="${c.max}" data-step="${c.step}" data-init="${c.init}" data-control="dial">
+        <div class="control knob-control" data-param="${c.id}" data-endpoint-id="${c.id}" data-min="${c.min}" data-max="${c.max}" data-step="${c.step}" data-init="${c.init}" data-control="dial">
           <div class="tick-ring"></div>
           <div class="dial" role="slider" tabindex="0" aria-label="${c.label}" aria-valuemin="${c.min}" aria-valuemax="${c.max}">
             <div class="dial-cap"><i class="dial-pointer"></i></div>
@@ -1638,9 +1697,9 @@ class AcidifyPatchView extends HTMLElement {
     text-shadow: 0 .5px rgba(255,255,255,.34);
   }
 
-  /* 0.4 — modern performance surface.
-     The interaction model above stays untouched; this layer replaces the
-     prototype's beige hardware skin with one coherent product system. */
+  /* 0.4 geometry baseline.
+     The interaction model stays untouched. The reconciled hardware surface
+     below supersedes this release's unapproved graphite palette. */
   acidify-patch-view {
     --surface-0: #0b0d11;
     --surface-1: #11151a;
@@ -2113,6 +2172,416 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .footer-mark {
     right: 28px; bottom: 7px; color: #4f5a67; font-size: 5.5px; letter-spacing: 1.35px; text-shadow: none;
   }
+
+  /* Reconciled hardware surface.
+     Keeps the safer 0.4 geometry while restoring the established ACIDIFY
+     material language instead of inventing a different product identity. */
+  acidify-patch-view {
+    --line: #777a74;
+    --line-soft: rgba(55, 55, 49, .2);
+    --ink: #20211d;
+    --muted: #5d5f59;
+    --faint: #74766f;
+    --acid: #b52921;
+    --acid-hot: #d33a2f;
+    --amber: #bb712d;
+    color: var(--ink);
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  }
+  acidify-patch-view .chassis {
+    border: 1px solid #777268;
+    border-radius: 33px 33px 27px 27px;
+    background:
+      radial-gradient(ellipse at 50% -18%, rgba(255,255,255,.9) 0 12%, transparent 54%),
+      linear-gradient(90deg, rgba(255,255,255,.4) 0, transparent 2.4%, transparent 97%, rgba(40,38,31,.33) 100%),
+      repeating-linear-gradient(7deg, rgba(255,255,255,.025) 0 1px, rgba(57,54,45,.025) 1px 3px),
+      linear-gradient(180deg, #e5e1d2 0%, #d1ccbb 48%, #b5ae9c 84%, #969082 100%);
+    box-shadow:
+      0 30px 46px rgba(0,0,0,.46),
+      0 7px 12px rgba(0,0,0,.32),
+      inset 0 3px 1px rgba(255,255,255,.82),
+      inset 0 -8px 12px rgba(61,56,44,.34),
+      inset 4px 0 5px rgba(255,255,255,.22),
+      inset -4px 0 6px rgba(60,56,48,.16);
+  }
+  acidify-patch-view .chassis::before {
+    left: 9px; right: 9px; top: 9px; bottom: 10px;
+    border-radius: 24px 24px 18px 18px;
+    border-color: rgba(73,70,62,.42);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.74), 0 1px 0 rgba(255,255,255,.35);
+  }
+  acidify-patch-view .chassis::after {
+    background: linear-gradient(180deg, rgba(72,68,57,.04), rgba(47,43,36,.28));
+  }
+  acidify-patch-view .panel {
+    border-color: #77776f;
+    background:
+      radial-gradient(ellipse at 34% -12%, rgba(255,255,255,.38), transparent 47%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, rgba(49,50,48,.025) 1px 2px, transparent 2px 5px),
+      linear-gradient(164deg, #dddeda 0%, #cacbc7 45%, #b7b8b4 100%);
+    box-shadow:
+      inset 0 1px 0 #f8f8f3,
+      inset 0 -2px 4px rgba(0,0,0,.25),
+      inset 1px 0 1px rgba(255,255,255,.48),
+      0 3px 4px rgba(0,0,0,.34);
+  }
+  acidify-patch-view .panel::before {
+    opacity: .17;
+    mix-blend-mode: multiply;
+    background:
+      radial-gradient(circle at 16% 26%, rgba(36,34,30,.16) 0 .45px, transparent .8px),
+      radial-gradient(circle at 77% 64%, rgba(255,255,255,.32) 0 .45px, transparent .85px);
+    background-size: 13px 17px, 17px 13px;
+    -webkit-mask: none;
+            mask: none;
+  }
+  acidify-patch-view .panel::after {
+    left: 24px; right: 24px; top: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(181, 41, 33, .76) 25% 48%, rgba(183, 113, 45, .54) 65%, transparent);
+    opacity: .52;
+  }
+  acidify-patch-view .screw { display: block; }
+
+  acidify-patch-view .transport-bank,
+  acidify-patch-view .tone-bank,
+  acidify-patch-view .volume-bank {
+    border-color: rgba(58,58,53,.72);
+    background:
+      linear-gradient(135deg, rgba(255,255,255,.18), transparent 42%),
+      linear-gradient(180deg, rgba(250,250,244,.12), rgba(102,102,95,.035));
+    box-shadow:
+      inset 0 1px rgba(255,255,255,.58),
+      inset 1px 0 rgba(255,255,255,.22),
+      0 1px rgba(255,255,255,.32),
+      0 5px 12px rgba(62,61,55,.08);
+  }
+  acidify-patch-view .brand {
+    color: #1c1c19;
+    font-family: Impact, "Arial Black", sans-serif;
+    font-size: 29px;
+    line-height: 29px;
+    font-weight: 900;
+    letter-spacing: .6px;
+  }
+  acidify-patch-view .brand .acid { color: #aa211b; }
+  acidify-patch-view .model { color: #252520; font-size: 8px; letter-spacing: 1.65px; }
+  acidify-patch-view .computer { color: #62635c; }
+  acidify-patch-view .bank-title,
+  acidify-patch-view .master-head {
+    color: #55574f;
+    text-shadow: 0 .5px rgba(255,255,255,.52);
+  }
+  acidify-patch-view .mini-title { color: #292a25; }
+  acidify-patch-view .mode-box {
+    border-left-color: rgba(68,68,63,.45);
+    box-shadow: inset 1px 0 rgba(255,255,255,.42);
+  }
+  acidify-patch-view .master-output { color: #666861; }
+
+  acidify-patch-view .run-switch {
+    background: linear-gradient(180deg, #171714, #33332e 14%, #1c1c19 100%);
+    border-color: #10100e;
+    box-shadow: inset 0 3px 5px #050504, inset 0 -1px rgba(255,255,255,.14), 0 1px 0 rgba(255,255,255,.66);
+  }
+  acidify-patch-view .run-switch button {
+    color: #e8e7dd;
+    background:
+      linear-gradient(100deg, rgba(255,255,255,.13), transparent 30% 72%, rgba(0,0,0,.25)),
+      linear-gradient(180deg, #6a6961 0%, #4b4a44 43%, #292925 100%);
+    border-color: #1d1d1a;
+    box-shadow: 0 3px 2px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  acidify-patch-view .run-switch.is-on button {
+    color: #ffb3a9;
+    border-color: #641811;
+    background: linear-gradient(#49332d, #211916);
+    box-shadow: 0 1px 1px #050504, inset 0 2px 4px rgba(0,0,0,.45), 0 0 10px rgba(181,41,33,.18);
+  }
+  acidify-patch-view .run-lamp,
+  acidify-patch-view .output-lamp {
+    border-color: #4f1a15;
+    background:
+      radial-gradient(circle at 34% 25%, rgba(255,255,255,.38) 0 5%, transparent 8%),
+      radial-gradient(circle at 45% 42%, #7f241c, #4a1511 48%, #210906 78%);
+  }
+
+  acidify-patch-view .wave-buttons button {
+    color: #deddd3;
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.16), transparent 35% 75%, rgba(0,0,0,.25)),
+      linear-gradient(#67665f, #353530 62%, #252521);
+    border-color: #171714;
+    box-shadow: 0 3px 2px rgba(0,0,0,.52), inset 0 1px rgba(255,255,255,.25), 0 0 0 2px rgba(78,78,72,.12);
+  }
+  acidify-patch-view .wave-buttons button.active {
+    color: #ff5545;
+    border-color: #5f1812;
+    background: linear-gradient(#383530, #1b1a17);
+    box-shadow: 0 1px 1px rgba(0,0,0,.6), inset 0 2px 5px #0b0b09, 0 0 8px rgba(181,41,33,.18);
+  }
+  acidify-patch-view .wave-title { color: #292a25; font-size: 8px; }
+  acidify-patch-view .dial {
+    border-color: #11110f;
+    background:
+      radial-gradient(circle, transparent 0 62%, rgba(255,255,255,.09) 63%, transparent 67%),
+      repeating-conic-gradient(from 1deg, #0c0c0a 0 5deg, #3a3934 5deg 8deg, #11110f 8deg 13deg);
+    box-shadow:
+      0 8px 9px rgba(0,0,0,.38),
+      0 2px 2px rgba(0,0,0,.6),
+      inset 0 2px 2px rgba(255,255,255,.12),
+      inset 0 -4px 4px #050504;
+  }
+  acidify-patch-view .dial::before {
+    border-color: #11110f;
+    background:
+      radial-gradient(circle at 34% 24%, rgba(255,255,255,.28) 0 2%, rgba(255,255,255,.07) 16%, transparent 36%),
+      radial-gradient(circle at 50% 48%, #56564f 0%, #272723 58%, #0b0b09 84%);
+    box-shadow: inset 0 2px 2px rgba(255,255,255,.1), inset -3px -6px 9px rgba(0,0,0,.64);
+  }
+  acidify-patch-view .dial::after { border-top-color: rgba(255,255,255,.09); }
+  acidify-patch-view .dial-pointer {
+    background: linear-gradient(90deg, #d6d3c6, #fffdf1 48%, #aba99f);
+    box-shadow: 0 1px 1px #050504;
+  }
+  acidify-patch-view .tick-ring {
+    background: repeating-conic-gradient(from 222deg, #34342f 0 1.3deg, transparent 1.3deg 13.5deg);
+    opacity: .82;
+  }
+  acidify-patch-view .tick-ring::after { background: #a7211a; box-shadow: 0 0 3px rgba(167,33,26,.22); }
+  acidify-patch-view .control-label {
+    color: #282923;
+    font-size: 8px;
+    letter-spacing: .72px;
+    text-shadow: 0 .5px rgba(255,255,255,.46);
+  }
+  acidify-patch-view .value-label {
+    color: #741812;
+    font-size: 7.5px;
+    font-family: "Courier New", monospace;
+  }
+
+  acidify-patch-view .program-strip {
+    border-color: rgba(67,67,61,.68);
+    background:
+      linear-gradient(145deg, rgba(255,255,255,.13), transparent 42%),
+      linear-gradient(180deg, rgba(236,236,230,.32), rgba(133,134,128,.08));
+    box-shadow: inset 0 1px rgba(255,255,255,.5), 0 8px 16px rgba(63,62,56,.08);
+  }
+  acidify-patch-view .program-header {
+    border-bottom-color: rgba(75,75,69,.58);
+    box-shadow: 0 1px rgba(255,255,255,.5);
+  }
+  acidify-patch-view .program-title { color: #292a25; }
+  acidify-patch-view .program-title b { color: #a51d17; }
+  acidify-patch-view .program-context { color: #666861; }
+  acidify-patch-view .studio-toggle {
+    color: #5e5e58;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.2), transparent 34%),
+      linear-gradient(#aaa9a1, #d5d4cb 48%, #9b9a92);
+    border-color: #66665f;
+    box-shadow: inset 0 1px #f3f2eb, inset 0 -1px rgba(43,43,39,.18), 0 1px rgba(255,255,255,.42), 0 2px 2px rgba(0,0,0,.2);
+  }
+  acidify-patch-view .studio-toggle i {
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.17), transparent 35% 78%, rgba(0,0,0,.25)),
+      linear-gradient(#5a5953, #2c2c28);
+    border-color: #20201d;
+  }
+  acidify-patch-view .studio-toggle .classic-label { color: #f2f0e7; text-shadow: 0 1px #171714; }
+  acidify-patch-view .studio-toggle[aria-pressed="true"] i {
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.16), transparent 38% 78%, rgba(63,0,0,.18)),
+      linear-gradient(#b63329, #72150f);
+    border-color: #68130e;
+  }
+  acidify-patch-view .studio-toggle[aria-pressed="true"] .classic-label { color: #5e5e58; }
+  acidify-patch-view .studio-toggle[aria-pressed="true"] .studio-label { color: #fff1e9; text-shadow: 0 1px #5b0c08; }
+  acidify-patch-view .stepper {
+    background: #262622;
+    border-color: #121210;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.62), 0 1px 0 rgba(255,255,255,.55);
+  }
+  acidify-patch-view .stepper button {
+    color: #e5e4da;
+    background: linear-gradient(#64635c, #383833);
+  }
+  acidify-patch-view .stepper-value {
+    color: #ff6756;
+    background: #17120f;
+    border-inline-color: #080807;
+    text-shadow: 0 0 4px rgba(255,57,37,.58);
+  }
+  acidify-patch-view .stepper-label { color: #3f403a; }
+
+  acidify-patch-view .step-group:not(:last-child)::after { display: block; }
+  acidify-patch-view .sequence-step {
+    color: #24251f;
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.42) 0, transparent 20% 77%, rgba(67,66,60,.18) 100%),
+      linear-gradient(180deg, #ebeae1 0%, #d3d2c8 46%, #b2b1a8 82%, #96968f 100%);
+    border-color: #777770;
+    box-shadow: 0 4px 2px rgba(0,0,0,.34), 0 1px 1px rgba(0,0,0,.26), inset 0 1px #fff;
+  }
+  acidify-patch-view .sequence-step:hover {
+    border-color: #66665f;
+    background: linear-gradient(180deg, #f0efe6, #c4c3b9 78%, #a5a49c);
+  }
+  acidify-patch-view .sequence-step:active,
+  acidify-patch-view .sequence-step.selected {
+    color: #1e1f1a;
+    background: linear-gradient(#aaa9a0, #d4d3ca 36%, #c4c3ba);
+    border-color: #a92720;
+    box-shadow: 0 1px 1px rgba(0,0,0,.3), inset 0 3px 5px rgba(0,0,0,.28);
+  }
+  acidify-patch-view .sequence-step.multi-selected { outline-color: rgba(165,29,23,.72); }
+  acidify-patch-view .step-led {
+    border-color: #2b0806;
+    background: radial-gradient(circle at 34% 27%, rgba(255,255,255,.22) 0 5%, transparent 9%), radial-gradient(circle, #651b15, #3c0e0b 60%, #1e0705);
+  }
+  acidify-patch-view .sequence-step.accented::before,
+  acidify-patch-view .step-note { color: #8b1b15; }
+  acidify-patch-view .sequence-step.sliding::after { color: #262721; }
+
+  acidify-patch-view .editor,
+  acidify-patch-view.studio-mode .studio-editor {
+    border-top-color: rgba(255,255,255,.6);
+    box-shadow: inset 0 1px rgba(61,61,57,.18);
+  }
+  acidify-patch-view .edit-status,
+  acidify-patch-view .keyboard,
+  acidify-patch-view .time-controls,
+  acidify-patch-view .studio-tools {
+    border-color: rgba(74,74,68,.72);
+    background:
+      linear-gradient(135deg, rgba(255,255,255,.16), transparent 46%),
+      linear-gradient(180deg, rgba(245,245,238,.12), rgba(112,112,105,.025));
+    box-shadow: inset 0 1px rgba(255,255,255,.58), inset 1px 0 rgba(255,255,255,.22), 0 1px rgba(255,255,255,.3);
+  }
+  acidify-patch-view .edit-caption { color: #55574f; }
+  acidify-patch-view .edit-readout {
+    color: #ff513b;
+    background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.05) 3px 4px), #1c100d;
+    border-color: #0a0706;
+    text-shadow: 0 0 4px #e32418, 0 0 8px rgba(227,36,24,.38);
+  }
+  acidify-patch-view .octave-indicator { color: #555750; }
+  acidify-patch-view .pitch-key {
+    color: #252620;
+    border-color: #73736d;
+    background:
+      linear-gradient(100deg, rgba(119,117,107,.2), transparent 15% 77%, rgba(75,74,69,.22)),
+      linear-gradient(180deg, #f2f0e7 0%, #e2e0d6 55%, #c0beb4 84%, #9f9e96 100%);
+  }
+  acidify-patch-view .pitch-key.black-key {
+    color: #e9e7dc;
+    border-color: #050505;
+    background:
+      linear-gradient(100deg, rgba(255,255,255,.09), transparent 24% 74%, rgba(0,0,0,.4)),
+      linear-gradient(180deg, #393934 0%, #272723 57%, #11110f 84%, #070706 100%);
+  }
+  acidify-patch-view .pitch-key.active,
+  acidify-patch-view .pitch-key.midi { color: #b42018; }
+  acidify-patch-view .function-button {
+    color: #252521;
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.38), transparent 22% 78%, rgba(68,67,62,.16)),
+      linear-gradient(180deg, #e5e3da 0%, #cbc9c0 55%, #a5a49c 100%);
+    border-color: #74736c;
+    box-shadow: 0 4px 2px rgba(0,0,0,.35), inset 0 1px #fff;
+  }
+  acidify-patch-view .function-button strong { color: #252521; }
+  acidify-patch-view .function-button small { color: #66675f; }
+  acidify-patch-view .function-button:active,
+  acidify-patch-view .function-button.active {
+    color: #a51d17;
+    background: linear-gradient(#aaa89f, #d4d2c8 44%, #c1bfb6);
+    border-color: #a42a22;
+    box-shadow: 0 1px 1px rgba(0,0,0,.25), inset 0 3px 5px rgba(0,0,0,.28);
+  }
+  acidify-patch-view .function-button.active strong { color: #a51d17; }
+
+  acidify-patch-view .studio-tool-head { color: #65675f; }
+  acidify-patch-view .studio-selection { color: #9b2019; }
+  acidify-patch-view .studio-actions button {
+    color: #e9e8df;
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.12), transparent 32% 78%, rgba(0,0,0,.28)),
+      linear-gradient(#52524c, #292925);
+    border-color: #191916;
+    box-shadow: 0 2px 2px rgba(0,0,0,.32), inset 0 1px rgba(255,255,255,.18);
+  }
+  acidify-patch-view .studio-actions button small { color: #aaa9a1; }
+  acidify-patch-view .studio-matrix {
+    background:
+      linear-gradient(110deg, rgba(255,255,255,.035), transparent 27% 75%, rgba(0,0,0,.22)),
+      linear-gradient(#242520, #151613);
+    border-color: #090a08;
+    box-shadow: inset 0 2px 7px rgba(0,0,0,.58), 0 1px rgba(255,255,255,.52);
+  }
+  acidify-patch-view .studio-lane-label { color: #85867d; }
+  acidify-patch-view .studio-ruler-group span { color: #575851; }
+  acidify-patch-view .studio-ruler-group:not(:last-child)::after { background: rgba(125,126,116,.2); }
+  acidify-patch-view .studio-cell {
+    color: #6d6e67;
+    background: linear-gradient(#30312d, #22231f);
+    border-color: #11120f;
+  }
+  acidify-patch-view .studio-cell.selected { border-color: #77302a; }
+  acidify-patch-view .studio-cell[data-kind="pitch"].active {
+    color: #ff8b79;
+    background: linear-gradient(#44312c, #2c1d19);
+  }
+  acidify-patch-view .studio-lane[data-lane="gate"] .studio-cell.active {
+    background: linear-gradient(#d4d3c9, #85867e);
+    border-color: #e0dfd5;
+  }
+  acidify-patch-view .studio-lane[data-lane="accent"] .studio-cell.active {
+    background: linear-gradient(#ed5b49, #971c13);
+    border-color: #ff7666;
+  }
+  acidify-patch-view .studio-lane[data-lane="slide"] .studio-cell.active {
+    background: linear-gradient(#d09252, #71431e);
+    border-color: #dba05c;
+  }
+  acidify-patch-view .studio-hint { color: #55564f; }
+  acidify-patch-view.studio-mode .value-label {
+    color: #ff7768;
+    background: linear-gradient(#282a27, #121311);
+    border-color: #080907;
+  }
+  acidify-patch-view .footer-mark {
+    color: #55574f;
+    text-shadow: 0 .5px rgba(255,255,255,.38);
+  }
+  @media (max-width: 700px), (max-height: 360px) {
+    acidify-patch-view .model { font-size: 10px; letter-spacing: 1.35px; }
+    acidify-patch-view .computer { font-size: 8px; letter-spacing: 1.45px; }
+    acidify-patch-view .bank-title,
+    acidify-patch-view .master-head { font-size: 8px; }
+    acidify-patch-view .mini-title { font-size: 9px; }
+    acidify-patch-view .wave-title,
+    acidify-patch-view .control-label { font-size: 10px; letter-spacing: .55px; }
+    acidify-patch-view .value-label { font-size: 9px; }
+    acidify-patch-view .program-title { font-size: 13px; }
+    acidify-patch-view .program-context { font-size: 7px; }
+    acidify-patch-view .studio-toggle { font-size: 8px; }
+    acidify-patch-view .stepper-label { font-size: 8px; }
+    acidify-patch-view .step-index,
+    acidify-patch-view .step-note { font-size: 10px; }
+    acidify-patch-view .edit-caption { font-size: 8px; }
+    acidify-patch-view .octave-indicator { font-size: 8px; }
+    acidify-patch-view .function-button strong { font-size: 9px; }
+    acidify-patch-view .function-button small { font-size: 6.5px; }
+    acidify-patch-view .studio-tool-head { font-size: 7px; }
+    acidify-patch-view .studio-selection { font-size: 9px; }
+    acidify-patch-view .studio-actions button { font-size: 11px; }
+    acidify-patch-view .studio-actions button small { font-size: 6.5px; }
+    acidify-patch-view .studio-lane-label { font-size: 7px; }
+    acidify-patch-view .studio-ruler-group span { font-size: 6px; }
+    acidify-patch-view .studio-cell { font-size: 8px; }
+    acidify-patch-view .studio-hint { font-size: 6px; }
+  }
 </style>
 <div class="chassis">
   <div class="panel">
@@ -2132,7 +2601,7 @@ class AcidifyPatchView extends HTMLElement {
         <div class="mode-box">
           <div class="mini-title">PATTERN PLAY</div>
           <span class="run-lamp"></span>
-          <div class="control run-switch" data-param="param10" data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+          <div class="control run-switch" data-param="param10" data-endpoint-id="param10" data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
             <button data-value="0">RUN / STOP</button>
             <button data-value="1" hidden>RUN</button>
           </div>
@@ -2141,7 +2610,7 @@ class AcidifyPatchView extends HTMLElement {
       <div class="tone-bank">
         <div class="bank-title">SYNTHESIS</div>
         <div class="tone-controls">
-          <div class="control waveform" data-param="param7" data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons">
+          <div class="control waveform" data-param="param7" data-endpoint-id="param7" data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons">
             <div class="wave-buttons">
               <button data-value="0" aria-label="Saw"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M2 16L9 4v12l7-12v12l7-12"/></svg></button>
               <button data-value="1" aria-label="Square"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M2 16V4h10v12h10V4h4"/></svg></button>
@@ -2171,11 +2640,11 @@ class AcidifyPatchView extends HTMLElement {
             title="Switch editor · keyboard shortcut M">
             <i></i><span class="classic-label">CLASSIC</span><span class="studio-label">STUDIO</span>
           </button>
-          <div class="control" data-param="param11" data-min="1" data-max="16" data-step="1" data-init="16" data-control="stepper">
+          <div class="control" data-param="param11" data-endpoint-id="param11" data-min="1" data-max="16" data-step="1" data-init="16" data-control="stepper">
             <div class="stepper"><button data-step="-1">−</button><span class="stepper-value">--</span><button data-step="1">+</button></div>
             <div class="stepper-label">LENGTH</div>
           </div>
-          <div class="control" data-param="param12" data-min="24" data-max="60" data-step="1" data-init="36" data-control="stepper">
+          <div class="control" data-param="param12" data-endpoint-id="param12" data-min="24" data-max="60" data-step="1" data-init="36" data-control="stepper">
             <div class="stepper"><button data-step="-1">−</button><span class="stepper-value">--</span><button data-step="1">+</button></div>
             <div class="stepper-label">ROOT</div>
           </div>
@@ -2226,7 +2695,7 @@ class AcidifyPatchView extends HTMLElement {
         </div>
       </div>
     </section>
-    <div class="footer-mark">ACIDIFY 0.4.0 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
+    <div class="footer-mark">ACIDIFY 0.4.1 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
   </div>
 </div>`;
   }

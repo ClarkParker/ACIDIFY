@@ -6,6 +6,31 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-07-25
+
+### Fixed
+
+- Nicht abgenommene Graphit-Haut durch die etablierte helle
+  ACIDIFY-Metall-/Hardware-Sprache ersetzt, ohne auf die ältere unsichere
+  Geometrie zurückzufallen.
+- Transport, Synthese und Master auf identische Ober- und Unterkanten gesetzt;
+  Accent besitzt 27 px Abstand zum Master, der Volume-Ring je 24 px Innenabstand.
+- Parameter-Echos werden abgefangen, ohne lokale Root-/Step-Zustände zu verlieren.
+- Wiederverbinden der Web-Component erzeugt keine doppelten DOM-Handler oder
+  zurückbleibenden Timer.
+- Alle zwölf globalen UI-Controls tragen die von Amorph erwarteten
+  `data-endpoint-id`-Attribute.
+
+### Changed
+
+- Classic und Studio verwenden wieder dieselbe 303-nahe Instrumentenhülle; der
+  vollständige Studio-Workflow und der 44-Parameter-Vertrag bleiben erhalten.
+- Kleine Zielgröße 590 × 290 erhält eine angepasste Typografiehierarchie.
+- Der Live-Renderer erzeugt Classic und Studio bei 1180 × 580 sowie 590 × 290
+  direkt aus demselben Quellstand.
+- UI-Smoke-Test um Dreifach-Modulausrichtung, Echo-Schutz und
+  Reconnect-Lifecycle erweitert.
+
 ## [0.4.0] - 2026-07-25
 
 ### Added

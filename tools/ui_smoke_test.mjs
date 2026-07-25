@@ -24,6 +24,7 @@ try {
 
   const counts = await page.evaluate(() => ({
     controls: document.querySelectorAll(".control[data-param]").length,
+    endpointControls: document.querySelectorAll(".control[data-endpoint-id]").length,
     sequenceSteps: document.querySelectorAll(".sequence-step").length,
     stepGroups: document.querySelectorAll(".step-group").length,
     pitchKeys: document.querySelectorAll(".pitch-key").length,
@@ -34,7 +35,8 @@ try {
     studioRulerGroups: document.querySelectorAll(".studio-ruler-group").length,
     studioActions: document.querySelectorAll("[data-studio-action]").length,
   }));
-  if (counts.controls !== 12 || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
+  if (counts.controls !== 12 || counts.endpointControls !== 12
+      || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
       || counts.stepGroups !== 4 || counts.whiteKeys !== 7 || counts.blackKeys !== 5
       || counts.studioCells !== 64 || counts.studioCellGroups !== 16
       || counts.studioRulerGroups !== 4 || counts.studioActions !== 11) {
@@ -72,8 +74,10 @@ try {
     ];
     return {
       moduleGaps: [synthesis.left - transport.right, master.left - synthesis.right],
-      synthesisMasterTopSpread: Math.abs(synthesis.top - master.top),
-      synthesisMasterBottomSpread: Math.abs(synthesis.bottom - master.bottom),
+      moduleTopSpread: Math.max(transport.top, synthesis.top, master.top)
+        - Math.min(transport.top, synthesis.top, master.top),
+      moduleBottomSpread: Math.max(transport.bottom, synthesis.bottom, master.bottom)
+        - Math.min(transport.bottom, synthesis.bottom, master.bottom),
       soundControlAxisSpread: Math.max(...controlCenters) - Math.min(...controlCenters),
       accentToMaster: master.left - accent.right,
       volumeLeftInset: volume.left - master.left,
@@ -81,8 +85,8 @@ try {
     };
   });
   if (upperPanelGeometry.moduleGaps.some(gap => gap < 12)
-      || upperPanelGeometry.synthesisMasterTopSpread > 1
-      || upperPanelGeometry.synthesisMasterBottomSpread > 1
+      || upperPanelGeometry.moduleTopSpread > 1
+      || upperPanelGeometry.moduleBottomSpread > 1
       || upperPanelGeometry.soundControlAxisSpread > 2
       || upperPanelGeometry.accentToMaster < 12
       || upperPanelGeometry.volumeLeftInset < 12
@@ -188,6 +192,17 @@ try {
   if (clearedStep.pitch !== 0 || clearedStep.flags !== 0) {
     throw new Error(`Classic clear-step failed: ${JSON.stringify(clearedStep)}`);
   }
+  await page.locator('.control[data-param="param12"] .stepper button[data-step="1"]').click();
+  const localEchoState = await page.locator("acidify-patch-view").evaluate(node => ({
+    root: node._values.get("param12"),
+    readout: node.querySelector(".edit-readout").textContent,
+    pendingEchoes: node._recentSends.length,
+  }));
+  if (localEchoState.root !== 37 || localEchoState.readout !== "08  C#2"
+      || localEchoState.pendingEchoes !== 0) {
+    throw new Error(`Parameter echo protection failed: ${JSON.stringify(localEchoState)}`);
+  }
+  await page.locator('.control[data-param="param12"] .stepper button[data-step="-1"]').click();
 
   const view = page.locator("acidify-patch-view");
   if (await view.evaluate(node => node.classList.contains("studio-mode"))) {
@@ -286,6 +301,32 @@ try {
   if (!bounds || bounds.width > 591 || bounds.height > 291) {
     throw new Error(`Responsive scaling failed: ${JSON.stringify(bounds)}`);
   }
+  const reconnect = await page.evaluate(async () => {
+    const node = document.querySelector("acidify-patch-view");
+    const connection = node.pc;
+    const originalSend = connection.sendEventOrValue;
+    let sends = 0;
+    connection.sendEventOrValue = (...args) => {
+      sends += 1;
+      return originalSend.apply(connection, args);
+    };
+    node.remove();
+    document.body.appendChild(node);
+    await new Promise(resolve => setTimeout(resolve, 30));
+    node.querySelector(".run-switch button:not([hidden])").click();
+    connection.sendEventOrValue = originalSend;
+    return {
+      sends,
+      controls: node.querySelectorAll(".control[data-param]").length,
+      endpointControls: node.querySelectorAll(".control[data-endpoint-id]").length,
+      pendingEchoes: node._recentSends.length,
+      mounted: node._mounted,
+    };
+  });
+  if (reconnect.sends !== 1 || reconnect.controls !== 12 || reconnect.endpointControls !== 12
+      || reconnect.pendingEchoes !== 0 || !reconnect.mounted) {
+    throw new Error(`Reconnect lifecycle failed: ${JSON.stringify(reconnect)}`);
+  }
 
   if (pageErrors.length) throw new Error(`UI page error: ${pageErrors.join("; ")}`);
   console.log(JSON.stringify({
@@ -297,6 +338,7 @@ try {
     studio: {
       workflow,
       clearedStep,
+      localEchoState,
       multiSelected,
       dragPaint: true,
       undo: true,
@@ -306,6 +348,7 @@ try {
       batchRest: true,
     },
     scaledBounds: bounds,
+    reconnect,
   }));
 } finally {
   await browser.close();

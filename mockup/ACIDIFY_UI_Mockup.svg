@@ -5,11 +5,11 @@
      viewBox="0 0 1180 580"
      role="img"
      aria-labelledby="title description">
-  <title id="title">ACIDIFY 0.4.0 modern performance surface</title>
+  <title id="title">ACIDIFY 0.4.1 hardware performance surface</title>
   <desc id="description">
     Canonical Classic-mode mockup rendered from the live ACIDIFY Web Component.
   </desc>
-  <rect width="1180" height="580" rx="24" fill="#0b0d11"/>
+  <rect width="1180" height="580" rx="24" fill="#b8b5aa"/>
   <image href="ACIDIFY_UI_Mockup.png"
          xlink:href="ACIDIFY_UI_Mockup.png"
          width="1180"

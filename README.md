@@ -5,7 +5,7 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **UI Release Candidate 0.4.0**. Die zweistufige Instrumentenoberfläche,
+> Status: **UI Release Candidate 0.4.1**. Die zweistufige Instrumentenoberfläche,
 > der stabile Parametervertrag und der spielbare DSP-Kern sind implementiert.
 > Für einen belastbaren akustischen Vergleich mit Originalhardware fehlen weiterhin
 > kalibrierte Hardware-Captures und Blindtests.
@@ -20,7 +20,7 @@ Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 - `docs/PARAMETERS.md` – stabiler `param1..param44`-Vertrag
 - `docs/VERSIONING.md` – verbindlicher Release- und Versionsablauf
 - `mockup/preview.html` – lokaler UI-Preview-Host
-- `tools/render_mockup.mjs` – rendert den Preview als PNG
+- `tools/render_mockup.mjs` – rendert Classic und Studio in beiden Zielgrößen als PNG
 - `tools/ui_smoke_test.mjs` – prüft Controls, Interaktionen und Skalierung
 - `tools/check_version.py` – prüft konsistente Versionsmetadaten
 
@@ -67,14 +67,14 @@ Die Studio-Werkzeuge schreiben direkt in `param13..param44`. Pattern bleiben
 dadurch vollständig kompatibel mit Amorph-Automation, Presets und dem
 bestehenden DSP.
 
-## Modern Performance Surface
+## Hardware Performance Surface
 
 Das Panel nutzt eine kleine Fibonacci-Abstandsskala (8, 13 und 21 px).
-Transport, Synthese und Master bilden drei gleich hohe, graphitfarbene
-Performance-Module. Waveform und die sechs Klangregler liegen mit dem
-Volume-Regler auf einer gemeinsamen optischen Achse. Der Output-Meter gehört
-vollständig zum Master-Modul. Zwischen allen drei Modulen liegen 13 px; keine
-Rahmen- oder Trennlinie läuft in Regler oder Schalter.
+Transport, Synthese und Master bilden drei gleich hohe Module in der etablierten
+hellen Metall-/Hardware-Sprache von ACIDIFY. Waveform und die sechs Klangregler
+liegen mit dem Volume-Regler auf einer gemeinsamen optischen Achse. Der
+Output-Meter gehört vollständig zum Master-Modul. Zwischen allen drei Modulen
+liegen 13 px; keine Rahmen- oder Trennlinie läuft in Regler oder Schalter.
 
 Die 16 Sequencer-Schritte sind als vier musikalische Vierergruppen organisiert.
 Im Classic-Editor bilden Status, Keyboard und Timing drei gleich hohe,
