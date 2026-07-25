@@ -19,33 +19,18 @@ processor AcidifyTransportEvents
     output event float internalTempoOut;
     output event float internalRunOut;
     output event float dawModeOut;
-    output event std::timeline::Tempo tempoOut;
-    output event std::timeline::TransportState transportOut;
-    output event std::timeline::Position positionOut;
+    output event float64 transportOut;
 
     int frame = 0;
 
-    void sendTempo (float bpm)
+    void sendAmorphTransport (bool playing, float64 bpm, float64 quarterNote)
     {
-        std::timeline::Tempo message;
-        message.bpm = bpm;
-        tempoOut <- message;
-    }
-
-    void sendTransport (bool playing)
-    {
-        std::timeline::TransportState state;
-        state.flags = playing ? 1 : 0;
-        transportOut <- state;
-    }
-
-    void sendPosition (float64 quarterNote)
-    {
-        std::timeline::Position position;
-        position.frameIndex = int64 (frame);
-        position.quarterNote = quarterNote;
-        position.barStartQuarterNote = floor (quarterNote * 0.25) * 4.0;
-        positionOut <- position;
+        transportOut <- playing ? 1.0 : 0.0;
+        transportOut <- bpm;
+        transportOut <- 4.0;
+        transportOut <- 4.0;
+        transportOut <- quarterNote;
+        transportOut <- 0.0;
     }
 
     void main()
@@ -64,37 +49,35 @@ processor AcidifyTransportEvents
                 internalRunOut <- 1.0f;
 
                 dawModeOut <- 1.0f;
-                sendTempo (120.0f);
-                sendTransport (true);
+                // A negative slot-4 value deliberately withholds position while
+                // still exercising Amorph BPM and Play/Stop delivery.
+                sendAmorphTransport (true, 120.0, -1.0);
             }
             else if (frame == halfSecond)
             {
-                // Tempo + transport work before the optional position endpoint
-                // appears; the matching position then locks without a phase jump.
-                sendPosition (1.0);
+                // The matching PPQ then locks without a phase jump.
+                sendAmorphTransport (true, 120.0, 1.0);
             }
             else if (frame == oneSecond)
             {
                 internalRunOut <- 0.0f;
-                sendTransport (false);
+                sendAmorphTransport (false, 120.0, 2.0);
             }
             else if (frame == oneAndQuarter)
             {
                 internalRunOut <- 1.0f;
 
-                sendTempo (180.0f);
-                sendPosition (8.5);
-                sendTransport (true);
+                sendAmorphTransport (true, 180.0, 8.5);
             }
             else if (frame == oneAndThreeQuarters)
             {
                 // Seek while playing: tick 48 must jump to pattern step 0.
-                sendPosition (12.0);
+                sendAmorphTransport (true, 180.0, 12.0);
             }
             else if (frame == twoAndQuarter)
             {
                 internalRunOut <- 0.0f;
-                sendTransport (false);
+                sendAmorphTransport (false, 180.0, 13.5);
             }
 
             frame += 1;
@@ -147,7 +130,8 @@ graph AcidifyTransportTest [[ main ]]
 
     node events = AcidifyTransportEvents;
     // Exercise the exact production graph boundary, not AcidifyCore directly.
-    // This proves that the public timeline endpoints reach the oversampled core.
+    // This proves that Amorph's public six-slot transportIn endpoint reaches the
+    // oversampled core used by the shipped patch.
     node internal = Acidify;
     node daw = Acidify;
     node fallback = Acidify;
@@ -162,11 +146,9 @@ graph AcidifyTransportTest [[ main ]]
         events.internalRunOut -> internal.param10;
 
         events.dawModeOut -> daw.param49;
-        events.tempoOut -> daw.tempoIn;
-        events.transportOut -> daw.transportStateIn;
-        events.positionOut -> daw.positionIn;
+        events.transportOut -> daw.transportIn;
 
-        // DAW mode with no host timeline must retain the internal controls.
+        // DAW mode with no host transport stream must retain the internal controls.
         events.internalTempoOut -> fallback.param9;
         events.internalRunOut -> fallback.param10;
         events.dawModeOut -> fallback.param49;
@@ -324,6 +306,7 @@ try {
     fallbackTransitions: fallback,
     checks: {
       productionGraphBoundary: true,
+      amorphSixSlotTransport: true,
       noHostManualFallback: true,
       internal120Bpm: true,
       dawNoPositionFallback: true,

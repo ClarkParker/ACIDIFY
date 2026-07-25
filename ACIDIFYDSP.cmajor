@@ -1,5 +1,5 @@
 /*
-    ACIDIFY 0.6.2 — analog-modelled 303-class bassline for Amorph.
+    ACIDIFY 0.6.3 — analog-modelled 303-class bassline for Amorph.
 
     MIDI/16-step sequencer -> oscillator -> coupling HP -> four-stage ladder
     -> coupling HP -> accent VCA -> output stage.
@@ -21,6 +21,7 @@
 processor AcidifyCore
 {
     input  event std::midi::Message midiIn;
+    input  event float64 transportIn;
     input  event std::timeline::Tempo tempoIn;
     input  event std::timeline::TransportState transportStateIn;
     input  event std::timeline::Position positionIn;
@@ -106,6 +107,11 @@ processor AcidifyCore
     bool hostPositionSeen = false;
     float hostTempo = 128.0f;
     float64 hostQuarterNote = 0.0;
+    int amorphTransportSlot = 0;
+    int amorphPlaySlot = 0;
+    int amorphTempoSlot = 1;
+    float64[6] amorphPlaySlotScore;
+    float64[6] amorphTempoSlotScore;
     bool dawTickReady = false;
     int64 lastDawTick = 0;
     float64 dawGateOffQuarterNote = 0.0;
@@ -744,9 +750,9 @@ processor AcidifyCore
 
     bool sequencerRunning()
     {
-        // A host that does not forward Cmajor timeline events must not leave the
-        // instrument dead. DAW mode hands control over as soon as a real transport
-        // event arrives; until then RUN/STOP remains a deterministic INT fallback.
+        // A host that does not send transport events must not leave the instrument
+        // dead. DAW mode hands control over as soon as a real transport event
+        // arrives; until then RUN/STOP remains a deterministic INT fallback.
         return dawSyncEnabled && hostTransportSeen ? dawPlaying : manualRunning;
     }
 
@@ -792,6 +798,37 @@ processor AcidifyCore
         reportedTempo = nextTempo;
         reportedRunning = nextRunning;
         reportedSyncFlags = nextSyncFlags;
+    }
+
+    void acceptHostTempo (float nextTempo)
+    {
+        let boundedTempo = clamp (nextTempo, 1.0f, 999.0f);
+        let changed = ! hostTempoSeen || abs (boundedTempo - hostTempo) > 0.001f;
+        hostTempo = boundedTempo;
+        hostTempoSeen = true;
+        if (changed)
+            reportClockState();
+    }
+
+    void acceptHostTransport (bool nextPlaying)
+    {
+        let changed = ! hostTransportSeen || nextPlaying != dawPlaying;
+        hostTransportSeen = true;
+        dawPlaying = nextPlaying;
+        if (changed && dawSyncEnabled)
+            resetSequencer();
+        if (changed)
+            reportClockState();
+    }
+
+    void acceptHostPosition (float64 nextQuarterNote)
+    {
+        hostQuarterNote = nextQuarterNote;
+        if (! hostPositionSeen)
+        {
+            hostPositionSeen = true;
+            reportClockState();
+        }
     }
 
     void resetSequencer()
@@ -1009,36 +1046,66 @@ processor AcidifyCore
         reportClockState();
     }
 
+    // Amorph sends its DAW playhead as a rolling six-value float64 event stream:
+    // play state, BPM, time-signature numerator, denominator, absolute PPQ, and
+    // one reserved slot. The small learner preserves compatibility with runtimes
+    // that place the binary play and tempo values in different slots.
+    event transportIn (float64 v)
+    {
+        int slot = amorphTransportSlot;
+        let isBinary = (abs (v) < 0.0001 || abs (v - 1.0) < 0.0001) ? 1.0 : 0.0;
+        let isTempo = (v >= 20.0 && v <= 300.0) ? 1.0 : 0.0;
+        amorphPlaySlotScore.at (slot) =
+            amorphPlaySlotScore.at (slot) * 0.98 + isBinary;
+        amorphTempoSlotScore.at (slot) =
+            amorphTempoSlotScore.at (slot) * 0.98 + isTempo;
+
+        if (slot == amorphTempoSlot)
+            acceptHostTempo (float (clamp (v, 20.0, 300.0)));
+        if (slot == amorphPlaySlot)
+            acceptHostTransport (abs (v - 1.0) < 0.0001);
+        if (slot == 4 && v >= 0.0 && v < 1.0e9)
+            acceptHostPosition (v);
+
+        amorphTransportSlot = (amorphTransportSlot + 1) % 6;
+        if (amorphTransportSlot == 0)
+        {
+            int bestPlay = 0;
+            float64 bestPlayScore = -1.0;
+            for (int candidate = 0; candidate < 6; candidate += 1)
+                if (amorphPlaySlotScore.at (candidate) > bestPlayScore)
+                {
+                    bestPlayScore = amorphPlaySlotScore.at (candidate);
+                    bestPlay = candidate;
+                }
+            amorphPlaySlot = bestPlay;
+
+            int bestTempo = 1;
+            float64 bestTempoScore = -1.0;
+            for (int candidate = 0; candidate < 6; candidate += 1)
+                if (candidate != amorphPlaySlot
+                    && amorphTempoSlotScore.at (candidate) > bestTempoScore)
+                {
+                    bestTempoScore = amorphTempoSlotScore.at (candidate);
+                    bestTempo = candidate;
+                }
+            amorphTempoSlot = bestTempo;
+        }
+    }
+
     event tempoIn (std::timeline::Tempo newTempo)
     {
-        let nextTempo = clamp (newTempo.bpm, 1.0f, 999.0f);
-        let changed = ! hostTempoSeen || abs (nextTempo - hostTempo) > 0.001f;
-        hostTempo = nextTempo;
-        hostTempoSeen = true;
-        if (changed)
-            reportClockState();
+        acceptHostTempo (newTempo.bpm);
     }
 
     event transportStateIn (std::timeline::TransportState newState)
     {
-        let nextPlaying = newState.isPlaying();
-        let changed = ! hostTransportSeen || nextPlaying != dawPlaying;
-        hostTransportSeen = true;
-        dawPlaying = nextPlaying;
-        if (changed && dawSyncEnabled)
-            resetSequencer();
-        if (changed)
-            reportClockState();
+        acceptHostTransport (newState.isPlaying());
     }
 
     event positionIn (std::timeline::Position newPosition)
     {
-        hostQuarterNote = newPosition.quarterNote;
-        if (! hostPositionSeen)
-        {
-            hostPositionSeen = true;
-            reportClockState();
-        }
+        acceptHostPosition (newPosition.quarterNote);
     }
 
     event midiIn (std::midi::Message message)
@@ -1085,6 +1152,11 @@ processor AcidifyCore
 
     void main()
     {
+        // The working Amorph transport protocol normally uses slot 0 for play
+        // and slot 1 for BPM. Bias the learner toward that known startup layout.
+        amorphPlaySlotScore.at (0) = 8.0;
+        amorphTempoSlotScore.at (1) = 8.0;
+
         loop
         {
             let sampleRate = float (processor.frequency);
@@ -1201,6 +1273,7 @@ processor AcidifyCore
 graph Acidify [[ main ]]
 {
     input  event std::midi::Message midiIn;
+    input  event float64 transportIn;
     input  event std::timeline::Tempo tempoIn;
     input  event std::timeline::TransportState transportStateIn;
     input  event std::timeline::Position positionIn;
@@ -1269,6 +1342,7 @@ graph Acidify [[ main ]]
     connection
     {
         midiIn -> core.midiIn;
+        transportIn -> core.transportIn;
         tempoIn -> core.tempoIn;
         transportStateIn -> core.transportStateIn;
         positionIn -> core.positionIn;

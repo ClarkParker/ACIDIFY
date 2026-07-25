@@ -1,4 +1,4 @@
-# Validierung 0.6.2
+# Validierung 0.6.3
 
 ## Automatische Prüfungen
 
@@ -6,7 +6,7 @@
 |---|---|
 | Amorph `preflight.py --strict` | bestanden |
 | DSP-Lint / UI-Lint | je 0 Fehler, 0 Warnungen |
-| DSP↔UI-Sync | 49/49 Parameter konsistent; 3 Timeline-Eingänge separat |
+| DSP↔UI-Sync | 49/49 Parameter konsistent; Amorph `transportIn` plus 3 Cmajor-Timeline-Eingänge separat |
 | Cmajor 1.0.3175 C++-Codegen | bestanden, ohne Compilerwarnung |
 | JavaScript-Syntax aller Test-/Render-Skripte | bestanden |
 | Live-Browser-Render Classic/Hoststatus-Simulation/Studio/Notenwahl/Distortion bei 1180 × 580 px | bestanden |
@@ -85,8 +85,8 @@ abgedeckt.
 Produktionsgraphen `Acidify` innerhalb desselben Cmajor-Renders:
 
 - Kanal 1: interne Uhr,
-- Kanal 2: DAW-Uhr mit typisierten Tempo-, Transport- und Positionsereignissen,
-- Kanal 3: DAW-Modus ohne jedes Host-Timeline-Ereignis; interner BPM- und
+- Kanal 2: DAW-Uhr mit Amorphs rollendem 6-Slot-`transportIn`,
+- Kanal 3: DAW-Modus ohne Host-Transportstream; interner BPM- und
   Run/Stop-Fallback.
 
 | Samplerate | INT 120 BPM | DAW 120→180 BPM | ohne Position | Stop/Start | No-Host-Fallback | Startposition / Seek |
@@ -107,13 +107,13 @@ Die dritte Instanz erhält ausschließlich `param9`, `param10` und
 `param49 = DAW`; sie trifft dieselben Step-/Stop-/Start-Grenzen wie die interne
 Referenz und belegt den spielbaren Fallback ohne Hostdaten.
 
-## Was 0.6.2 technisch belegt
+## Was 0.6.3 technisch belegt
 
 - Der Patch kompiliert und der 49-Parameter-Vertrag ist synchron.
-- Der öffentliche Produktionsgraph reicht Cmajor-Timeline-Ereignisse bis in den
-  4×-Kern; Uhr und Timeline-Logik reagieren bis 96 kHz reproduzierbar auf BPM,
-  Play/Stop, Startposition und Seek.
-- Fehlen Host-Timeline-Ereignisse, bleiben interner BPM und Run/Stop in
+- Der öffentliche Produktionsgraph reicht Amorphs dokumentierten
+  6-Slot-`transportIn` bis in den 4×-Kern; Uhr und Transportlogik reagieren bis
+  96 kHz reproduzierbar auf BPM, Play/Stop, Startposition und Seek.
+- Fehlt der Host-Transportstream, bleiben interner BPM und Run/Stop in
   DAW-Stellung reproduzierbar funktionsfähig.
 - Der Clean-Pfad enthält keine fest eingebackene Produktionsverzerrung.
 - Distortion-Bypass und Null-Mix sind innerhalb derselben Instanz
@@ -130,16 +130,15 @@ Referenz und belegt den spielbaren Fallback ohne Hostdaten.
 
 ## Realer Amorph-Hostbefund
 
-Der Test im tatsächlich geladenen Amorph-Plugin liefert weder Tempo-,
-Transport- noch Positionsereignisse. Damit funktionieren BPM-Follow und
-Play/Stop-Follow im aktuellen getesteten Runtime-Build nicht. Die grüne
-Transportmatrix oberhalb ist ein Cmajor-Produktionsgraphtest mit intern
-eingespeisten Timeline-Ereignissen; sie ist kein Ersatz für diesen Hosttest.
+Der 0.6.2-Test lieferte an den drei typisierten `std::timeline::*`-Eingängen
+keine Ereignisse. Dieser Befund wurde fälschlich als fehlende Amorph-Hostbridge
+interpretiert. Der Dev-Kit dokumentiert jedoch den separaten
+`input event float64 transportIn`, und bestehende Amorph-Plugins bestätigen den
+6-Slot-Stream praktisch. 0.6.3 verarbeitet nun genau diesen Eingang.
 
-Die Cmajor-Eingänge und ihre Verarbeitung sind korrekt. Zur Behebung muss der
-Amorph-Audiowrapper die DAW-Playhead-Daten über `Patch::sendBPM`,
-`Patch::sendTransportState` und `Patch::sendPosition` an die Patchinstanz
-weiterreichen. Diese Änderung liegt außerhalb des ACIDIFY-Patchquellcodes.
+Der grüne Produktionsgraphtest belegt die vollständige Patchverarbeitung des
+Amorph-Streamformats. Nach Installation beziehungsweise Neucompilierung von
+0.6.3 bleibt als letzter Schritt der reale DAW-Test für BPM, Play/Stop und PPQ.
 
 ## Noch nicht abgedeckt
 

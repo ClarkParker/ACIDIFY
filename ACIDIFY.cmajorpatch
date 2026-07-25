@@ -1,9 +1,9 @@
 {
   "CmajorVersion": 1,
   "ID": "com.clarkparker.acidify",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "name": "ACIDIFY",
-  "description": "Analog-modelled, timeline-aware 303-class bassline instrument with internal clock fallback for Amorph.",
+  "description": "Analog-modelled 303-class bassline instrument with Amorph DAW transport sync and internal clock fallback.",
   "category": "instrument",
   "manufacturer": "Clark Parker",
   "isInstrument": true,

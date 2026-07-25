@@ -6,6 +6,38 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-07-25
+
+### Fixed
+
+- DAW-Sync verwendet jetzt den bereits im Amorph-Dev-Kit dokumentierten
+  Hosteingang `input event float64 transportIn` statt ausschließlich auf
+  `std::timeline::*`-Ereignisse zu warten, die der getestete Amorph-Build nicht
+  an ACIDIFY lieferte.
+- Der rollende Amorph-6-Slot-Stream speist Play/Stop, BPM und absolute
+  Quarter-Note-Position in die vorhandene Sequencer-Uhr. Startposition, Loop und
+  Seek folgen damit dem DAW-Raster.
+- Ein defensiver Slot-Lerner übernimmt das in produktiven Amorph-Plugins
+  verwendete Verhalten für Play- und Tempo-Slot; die dokumentierten Slots 2–4
+  bleiben Time-Signature und PPQ.
+- Die bisherigen typisierten Cmajor-Timeline-Eingänge bleiben als zusätzlicher
+  Standardpfad erhalten.
+
+### Corrected
+
+- Die falsche Behauptung, `transportIn` sei kein belegter Amorph-Vertrag, wurde
+  aus Dev-Kit und ACIDIFY-Dokumentation entfernt. Der Eingang war bereits im
+  ursprünglichen Dev-Kit als optionaler Hosttransport dokumentiert und ist in
+  bestehenden Amorph-Plugins praktisch bestätigt.
+
+### Validated
+
+- Der öffentliche Produktionsgraph verarbeitet den realen Amorph-6-Slot-Vertrag
+  bei 44,1/48/88,2/96 kHz: 120→180 BPM, Play/Stop, Startposition und Seek.
+- Der DAW-Modus ohne Hoststream behält den internen BPM-/Run-Stop-Fallback.
+- Der installierte Amorph-Build muss nach dem Update noch einmal in der Ziel-DAW
+  geprüft werden; dieser reale Hosttest wird nicht durch den Harness ersetzt.
+
 ## [0.6.2] - 2026-07-25
 
 ### Fixed

@@ -5,13 +5,13 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **DSP/Transport Release Candidate 0.6.2**. Die fixierte
+> Status: **DSP/Transport Release Candidate 0.6.3**. Die fixierte
 > Classic-/Studio-Oberfläche wurde nur um einen kleinen `DIST`-Button mit
 > ausklappbarem Overlay sowie die kompakte `INT/DAW`-Uhrwahl erweitert.
-> Clean-Core, 49-Parameter-Vertrag, Cmajor-Timeline-Logik, sicherer
+> Clean-Core, 49-Parameter-Vertrag, Amorph-`transportIn`-Sync, sicherer
 > Internal-Fallback und drei getrennte Post-Stufen sind implementiert und
-> automatisiert geprüft. Die tatsächliche Timeline-Weitergabe bleibt eine
-> Fähigkeit des jeweiligen Amorph-Runtime-Builds. Die
+> automatisiert geprüft. Der neue Build muss für die abschließende
+> Produktbestätigung noch einmal in Amorph und der Ziel-DAW getestet werden. Die
 > Bezeichnung „AAA Clone“ bleibt bis zu kalibrierten Hardware-Captures und
 > Blindtests ausdrücklich ein Ziel, kein bereits beanspruchtes Messergebnis.
 
@@ -63,33 +63,23 @@ Notenstapel zur zuletzt noch gehaltenen Note zurück.
 
 Der kleine `INT/DAW`-Schalter im Transportmodul wählt die Taktquelle:
 
-> **Realer Hostbefund vom 25. Juli 2026:** Im getesteten Amorph-Runtime-Build
-> kommen weder BPM noch Play/Stop noch Position am Patch an. Die Anzeige
-> `DAW · INT FALLBACK` ist deshalb ausdrücklich **keine DAW-Synchronisation**,
-> sondern der weiterhin laufende interne Takt.
-
 - `INT`: Der Tempo-Regler bestimmt 40…300 BPM; `RUN / STOP` startet und stoppt
   den internen 16tel-Sequencer.
-- `DAW`: Empfangene Cmajor-Hostereignisse übernehmen ihre jeweilige Funktion.
+- `DAW`: Der im Dev-Kit dokumentierte Amorph-Eingang
+  `input event float64 transportIn` übernimmt BPM, Play/Stop und PPQ-Position.
   Host-Tempo sperrt nur den BPM-Regler, Host-Transport nur `RUN / STOP`. Sind
   beide vorhanden, folgen Tempo und Play/Stop der DAW. Liefert der Host außerdem
   die Songposition, folgen Pattern-Phase, Loop und Seek dem DAW-16tel-Raster.
-- `DAW · INT FALLBACK` bedeutet, dass der Host noch keine Cmajor-Timeline
-  weitergibt. Der Sequencer bleibt dann mit internem BPM und `RUN / STOP`
+- `DAW · INT FALLBACK` bedeutet, dass der Host noch keinen
+  Amorph-Transportstream weitergibt. Der Sequencer bleibt dann mit internem BPM und `RUN / STOP`
   vollständig bedienbar, statt stillzustehen.
 - Teilweise Hostdaten werden als `DAW … · INT RUN` beziehungsweise
   `INT … · DAW RUN` ausgewiesen; die jeweils fehlende Funktion bleibt intern.
-- Die öffentlichen Amorph-v0.99/v1-Beta-Unterlagen dokumentieren aktuell keinen
-  Timeline-Forwarding-Vertrag. Der Patch kann den Empfang eindeutig anzeigen
-  und verarbeiten, eine fehlende Runtime-Brücke aber nicht innerhalb des DSP
-  ersetzen.
 
-Cmajor erkennt die drei Eingänge anhand ihrer Typen. Damit sie im Amorph-Plugin
-tatsächlich Daten erhalten, muss der Amorph-Audiowrapper pro Hostblock seine
-Playhead-Daten über `Patch::sendBPM`, `Patch::sendTransportState` und
-`Patch::sendPosition` einspeisen. Der offizielle Cmajor-CLAP-Wrapper macht genau
-das; ohne den entsprechenden Amorph-Code kann ein Cmajor-Patch die DAW-Timeline
-nicht selbst abfragen.
+Der Stream besteht zyklisch aus sechs `float64`-Werten: Play, BPM,
+Taktart-Zähler, Taktart-Nenner, absolute Quarter-Note-Position und einem
+reservierten Slot. Die typisierten `std::timeline::*`-Eingänge bleiben zusätzlich
+für standardkonforme Cmajor-Hosts verdrahtet.
 
 `INT` ist der Initialwert von `param49`; ältere Presets behalten damit ihr
 bisheriges Verhalten.

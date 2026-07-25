@@ -7,7 +7,7 @@ und eine getrennte, für Acid-Produktionen typische Ausgangsverzerrung anbieten.
 Der Instrumentenkern bleibt auch bei ausgeschalteter Distortion vollständig
 spielbar und messbar.
 
-0.6.2 ist ein technisch geprüfter Modellkandidat. „AAA Clone“ wird erst
+0.6.3 ist ein technisch geprüfter Modellkandidat. „AAA Clone“ wird erst
 beansprucht, wenn identische Pattern mehrerer Originalgeräte kalibriert
 aufgenommen, gegen das Modell vermessen und im Blindtest bewertet wurden.
 Quellcodequalität und grüne Offline-Tests ersetzen diesen Hör- und
@@ -49,7 +49,7 @@ sondern aus dem gekoppelten Verhalten von:
 5. Vierpol-Diodenleiter und seinen Koppelnetzwerken,
 6. optionaler nachgeschalteter Produktionsverzerrung.
 
-## 3. DSP-Topologie 0.6.2
+## 3. DSP-Topologie 0.6.3
 
 ```mermaid
 flowchart TD
@@ -72,8 +72,12 @@ vierfachen `processor.frequency` berechnet.
 ### Clock und Transport
 
 - `Internal` verwendet `param9` für 40…300 BPM und `param10` für Run/Stop.
-- `DAW` verwendet die Cmajor-Typen `std::timeline::Tempo`,
-  `std::timeline::TransportState` und `std::timeline::Position`.
+- `DAW` verwendet primär den im Amorph-Dev-Kit dokumentierten
+  `input event float64 transportIn`. Der zyklische 6-Slot-Stream enthält
+  Play/Stop, BPM, Taktart und absolute PPQ-Position.
+- Die Cmajor-Typen `std::timeline::Tempo`,
+  `std::timeline::TransportState` und `std::timeline::Position` bleiben als
+  zusätzlicher Standardpfad verdrahtet.
 - Mit Position wird der aktuelle Step aus
   `floor(quarterNote × 4) modulo patternLength` abgeleitet. Dadurch folgen
   Start, Stop, Loop und Seek dem musikalischen 16tel-Raster.
@@ -82,22 +86,18 @@ vierfachen `processor.frequency` berechnet.
 - Ohne Host-Transport bleibt `param10` aktiv; ohne Host-Tempo bleibt `param9`
   aktiv. Erst ein tatsächlich empfangenes Ereignis übernimmt und sperrt die
   jeweilige interne Funktion. Dadurch bleibt DAW-Stellung auch in
-  Amorph-Builds ohne Timeline-Bridge spielbar.
+  Amorph-Builds ohne eingehenden Transportstream spielbar.
 - `param49` schaltet die Quelle append-only um und startet aus Gründen der
   Preset-Kompatibilität in `Internal`.
 
-Die typisierten Eingänge sind der standardisierte Cmajor-Patchvertrag. Der
-Produktionsgraph-Test belegt ihre Verdrahtung bis in den 4×-Kern, aber nicht die
-Weitergabe durch einen konkreten Amorph-Runtime-Build. Die öffentlichen
-Amorph-v0.99/v1-Beta-Unterlagen spezifizieren diese Hostfähigkeit derzeit nicht.
-
-Der reale Test des aktuellen Amorph-Builds am 25. Juli 2026 liefert für alle drei
-Eingänge keine Ereignisse. Damit ist die Fehlergrenze eindeutig: Der Patch
-reagiert auf eingespeiste Timeline-Daten, der getestete Amorph-Audiowrapper
-speist sie aber nicht ein. Eine funktionierende Bridge muss im Wrapper die
-Cmajor-Patchmethoden `sendBPM`, `sendTransportState` und `sendPosition` mit den
-Playhead-Daten der DAW aufrufen. Das kann nicht aus dem Cmajor-DSP heraus
-nachgebildet werden.
+Der ursprüngliche Dev-Kit enthielt bereits ausdrücklich
+`// optional host transport: input event float64 transportIn;`. Bestehende
+Amorph-Plugins belegen die zugehörige 6-Slot-Semantik praktisch. Der frühere
+ACIDIFY-Stand hörte ausschließlich auf die typisierten Cmajor-Eingänge und
+verfehlte deshalb den tatsächlichen Amorph-Transport. Der Produktionsgraphtest
+für 0.6.3 speist nun den dokumentierten `transportIn`-Endpunkt bis in den
+4×-Kern. Die abschließende Produktbestätigung erfolgt nach Neucompilierung im
+installierten Amorph-Plugin.
 
 ### VCO und Slide
 

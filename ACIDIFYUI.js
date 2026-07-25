@@ -3479,7 +3479,7 @@ class AcidifyPatchView extends HTMLElement {
         </div>
       </div>
     </section>
-    <div class="footer-mark">ACIDIFY 0.6.2 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
+    <div class="footer-mark">ACIDIFY 0.6.3 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
   </div>
   <section class="pitch-menu" role="dialog" aria-modal="false" aria-hidden="true"
     aria-labelledby="pitch-menu-title" hidden>

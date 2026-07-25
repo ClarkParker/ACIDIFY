@@ -48,12 +48,11 @@ Verhalten älterer Presets. Seit 0.6.1 dienen `param9` und `param10` in
 Host-Tempo empfangen wird; `param10`, bis Host-Transport empfangen wird. Die
 beiden Übernahmen sind unabhängig.
 
-Die typisierten Eingänge `std::timeline::Tempo`,
-`std::timeline::TransportState` und `std::timeline::Position` sind
-Host-Kontext, keine dynamischen Parameter und benötigen keine UI-Gegenstücke.
-Ihre Deklaration belegt den Cmajor-Patchvertrag, nicht die Weitergabe durch einen
-bestimmten Amorph-Runtime-Build. Der reale Amorph-Test zu 0.6.2 lieferte keinen
-dieser drei Endpunkte. Für echte DAW-Synchronisation muss der Host-Wrapper die
-Playhead-Daten über `Patch::sendBPM`, `Patch::sendTransportState` und
-`Patch::sendPosition` einspeisen. Damit sind 49 der 50 von Amorph garantierten
-dynamischen Parameter belegt.
+Der Dev-Kit-dokumentierte Eingang `input event float64 transportIn` ist
+Amorph-Hostkontext, kein dynamischer Parameter und benötigt kein
+UI-Gegenstück. Er transportiert den zyklischen 6-Slot-DAW-Stream für Play, BPM,
+Taktart und PPQ. Die typisierten Eingänge `std::timeline::Tempo`,
+`std::timeline::TransportState` und `std::timeline::Position` bleiben als
+zusätzlicher Cmajor-Standardpfad erhalten. Auch sie sind keine dynamischen
+Parameter. Damit sind weiterhin 49 der 50 von Amorph garantierten dynamischen
+Parameter belegt.
