@@ -144,9 +144,11 @@ gezeichnet und bleiben damit scharf, interaktiv und Amorph-kompatibel.
 ### Classic Surface / Studio Intelligence
 
 Die 2026-UX ist als zweite Bedienebene angelegt, nicht als neues Skin. ACIDIFY
-öffnet weiterhin in der Hardwareansicht. Ein kleiner eingelassener
-`CLASSIC / STUDIO`-Schalter ersetzt nur den unteren Keyboard-Editor temporär
-durch eine dunkle Vier-Lane-Matrix für Note, Gate, Accent und Slide.
+öffnet weiterhin in der Hardwareansicht. Ein klar lesbarer, eingelassener
+`CLASSIC / STUDIO`-Schalter in der Pattern-Kopfzeile ersetzt nur den unteren
+Keyboard-Editor temporär durch eine dunkle Vier-Lane-Matrix für Note, Gate,
+Accent und Slide. Eine Moduszeile benennt die aktive Arbeitsweise eindeutig;
+`M` dient als zusätzlicher Tastaturzugang.
 
 Der Studio-Modus ergänzt:
 
@@ -156,12 +158,17 @@ Der Studio-Modus ergänzt:
 - Undo/Redo und internen Pattern-Zwischenspeicher,
 - Copy/Paste, Rotate, Oktavtransposition, Rest und Smart-Randomize,
 - Tastaturkürzel für Undo/Redo und Copy/Paste,
-- temporäre präzise Value-Bubbles und dezente Default-Marker an Reglern.
+- temporäre präzise Value-Bubbles und dezente Default-Marker an Reglern,
+- einen Step-Ruler und vier visuell getrennte Vierergruppen in jeder Lane.
 
 Diese Funktionen benutzen ausschließlich den stabilen Parametervertrag
 `param13..param44`. Der Studio-Modus selbst ist UI-Zustand und verändert weder
 DSP noch Presetformat. Bei Rückkehr zu Classic wird wieder genau ein Step
 selektiert, sodass die historische Bedienlogik eindeutig bleibt.
+
+Classic und Studio verwenden dieselbe Step-Datenquelle. Die Classic-Funktion
+`CLEAR` setzt Pitch und Flags des gewählten Steps gezielt zurück; Gate/Rest,
+Accent und Slide bleiben drei eigenständige, eindeutig beschriftete Aktionen.
 
 ## 6. Verifikation bis AAA
 

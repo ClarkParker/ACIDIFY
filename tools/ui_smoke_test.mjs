@@ -30,11 +30,14 @@ try {
     whiteKeys: document.querySelectorAll(".pitch-key.white-key").length,
     blackKeys: document.querySelectorAll(".pitch-key.black-key").length,
     studioCells: document.querySelectorAll(".studio-cell").length,
+    studioCellGroups: document.querySelectorAll(".studio-lane .studio-cell-group").length,
+    studioRulerGroups: document.querySelectorAll(".studio-ruler-group").length,
     studioActions: document.querySelectorAll("[data-studio-action]").length,
   }));
   if (counts.controls !== 12 || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
       || counts.stepGroups !== 4 || counts.whiteKeys !== 7 || counts.blackKeys !== 5
-      || counts.studioCells !== 64 || counts.studioActions !== 11) {
+      || counts.studioCells !== 64 || counts.studioCellGroups !== 16
+      || counts.studioRulerGroups !== 4 || counts.studioActions !== 11) {
     throw new Error(`Unexpected UI element counts: ${JSON.stringify(counts)}`);
   }
 
@@ -178,6 +181,13 @@ try {
   if (!(await page.locator('.sequence-step[data-step="7"]').evaluate(node => node.classList.contains("selected")))) {
     throw new Error("Step selection failed");
   }
+  await page.locator('.pitch-key[data-pitch="2"]').click();
+  await page.locator('.function-button[data-flag="2"]').click();
+  await page.locator('[data-classic-action="clear-step"]').click();
+  const clearedStep = await page.locator("acidify-patch-view").evaluate(node => node._stepSnapshot()[7]);
+  if (clearedStep.pitch !== 0 || clearedStep.flags !== 0) {
+    throw new Error(`Classic clear-step failed: ${JSON.stringify(clearedStep)}`);
+  }
 
   const view = page.locator("acidify-patch-view");
   if (await view.evaluate(node => node.classList.contains("studio-mode"))) {
@@ -186,6 +196,23 @@ try {
   await page.locator(".studio-toggle").click();
   if (!(await view.evaluate(node => node.classList.contains("studio-mode")))) {
     throw new Error("Studio mode toggle failed");
+  }
+  const workflow = await page.evaluate(() => {
+    const toggle = document.querySelector(".studio-toggle").getBoundingClientRect();
+    const context = document.querySelector(".program-context").textContent;
+    const groups = [...document.querySelectorAll(".studio-lane[data-lane=\"gate\"] .studio-cell-group")]
+      .map(node => node.getBoundingClientRect())
+      .map(bounds => ({ left: bounds.left, right: bounds.right }));
+    return {
+      toggle: { width: toggle.width, height: toggle.height },
+      context,
+      groupGaps: groups.slice(1).map((group, index) => group.left - groups[index].right),
+    };
+  });
+  if (workflow.toggle.width < 130 || workflow.toggle.height < 28
+      || workflow.context !== "STUDIO MATRIX"
+      || workflow.groupGaps.some(gap => gap < 7)) {
+    throw new Error(`Studio workflow hierarchy failed: ${JSON.stringify(workflow)}`);
   }
 
   await page.locator('.sequence-step[data-step="3"]').click();
@@ -268,6 +295,8 @@ try {
     lowerPanelGeometry,
     cutoff: { before, after },
     studio: {
+      workflow,
+      clearedStep,
       multiSelected,
       dragPaint: true,
       undo: true,

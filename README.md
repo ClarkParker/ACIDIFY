@@ -5,10 +5,10 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **Research Prototype 0.2.3**. UI, Parametervertrag und ein spielbarer
-> DSP-Kern sind implementiert. Die Bezeichnung „AAA“ ist ein Qualitätsziel, kein
-> bereits abgeschlossener Messnachweis; dafür fehlen noch Hardware-Captures,
-> Null-/Residualtests und ein kalibrierter Hörtest gegen mehrere Originalgeräte.
+> Status: **UI Release Candidate 0.3.0**. Die zweistufige Instrumentenoberfläche,
+> der stabile Parametervertrag und der spielbare DSP-Kern sind implementiert.
+> Für einen belastbaren akustischen Vergleich mit Originalhardware fehlen weiterhin
+> kalibrierte Hardware-Captures und Blindtests.
 
 ## Inhalt
 
@@ -38,8 +38,9 @@ editieren.
 
 ## Classic Surface / Studio Intelligence
 
-ACIDIFY startet immer in der hardwaregetreuen Classic-Ansicht. Der
-`CLASSIC / STUDIO`-Schalter öffnet bei Bedarf eine zweite, moderne
+ACIDIFY startet immer in der hardwaregetreuen Classic-Ansicht. Der prominent in
+der Pattern-Kopfzeile platzierte `CLASSIC / STUDIO`-Schalter – alternativ die
+Taste `M`, solange ein UI-Control fokussiert ist – öffnet eine zweite, moderne
 Bearbeitungsebene, ohne neue DSP-Parameter einzuführen:
 
 - Shift-Auswahl und Mehrfachauswahl von Steps,
@@ -47,7 +48,8 @@ Bearbeitungsebene, ohne neue DSP-Parameter einzuführen:
 - Pitch-Änderung per Mausrad,
 - Undo/Redo sowie Copy/Paste,
 - Rotate, Oktavtransposition, Rest und dosiertes Randomize,
-- präzise temporäre Reglerwerte, Fine-Modus mit `Shift` und Default-Marker.
+- präzise temporäre Reglerwerte, Fine-Modus mit `Shift` und Default-Marker,
+- vier musikalisch gruppierte Viererblöcke mit durchgehender Step-Nummerierung.
 
 Die Studio-Werkzeuge schreiben direkt in `param13..param44`. Pattern bleiben
 dadurch vollständig kompatibel mit Amorph-Automation, Presets und dem
@@ -67,7 +69,8 @@ Die 16 Sequencer-Schritte sind als vier musikalische Vierergruppen organisiert.
 Im Classic-Editor bilden Status, Keyboard und Timing drei gleich hohe
 Modulbuchten mit jeweils 13 px Abstand. Das Keyboard verwendet die korrekte
 Klaviergeometrie aus sieben lückenlosen weißen Tasten und fünf darüberliegenden,
-schmaleren schwarzen Tasten. Die sechs Step-Funktionen sitzen in einer
+schmaleren schwarzen Tasten. `CLEAR` setzt den gewählten Step eindeutig zurück,
+statt eine zweite, missverständliche Gate-Funktion anzubieten. Die sechs Step-Funktionen sitzen in einer
 vollständig eingefassten 3 × 2-Matrix, die nicht über ihre Modulgrenzen läuft.
 
 ## Herkunft und Lizenz

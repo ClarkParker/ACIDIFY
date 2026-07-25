@@ -45,7 +45,11 @@
       sendMIDIInputEvent() {},
     };
 
-    document.body.appendChild(createPatchView(patchConnection));
+    const view = createPatchView(patchConnection);
+    document.body.appendChild(view);
+    if (new URLSearchParams(location.search).get("mode") === "studio") {
+      view._setStudioMode(true);
+    }
     let step = 0;
     setInterval(() => {
       endpointListeners.get("currentStep")?.forEach(fn => fn(step));

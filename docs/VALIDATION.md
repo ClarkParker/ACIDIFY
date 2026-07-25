@@ -1,4 +1,4 @@
-# Validierung 0.2.3
+# Validierung 0.3.0
 
 ## Automatische Prüfungen
 
@@ -20,11 +20,14 @@
 | Keyboard-Geometrie (7 weiße / 5 schwarze Tasten) | Overlay und Z-Reihenfolge bestanden |
 | Classic-UI (Dial, Toggle, Run, Step) | bestanden |
 | Studio-UI (Moduswechsel, 64 Lane-Cells, 11 Aktionen) | bestanden |
+| Studio-Workflow-Schalter | 140 × 29 px, aktive Ansicht eindeutig beschriftet |
+| Studio-Lane-Raster | 4 Lanes × 4 Gruppen × 4 Steps, je 8 px Gruppenabstand |
+| Classic `CLEAR` | setzt Pitch und Flags des gewählten Steps zurück |
 | Studio-Bereichsauswahl und Drag-Paint | bestanden |
 | Studio-Undo, Copy/Paste, Batch-Transpose und Batch-Rest | bestanden |
 | Studio-Tastaturkürzel und temporäres Reglerfeedback | bestanden |
 | Responsive UI-Skalierung (590 × 290 px) | bestanden |
-| Cmajor 1.0.3175 C++-Codegen | in 0.2.1 bestanden; DSP in 0.2.3 unverändert |
+| Cmajor 1.0.3175 C++-Codegen | in 0.2.1 bestanden; DSP in 0.3.0 unverändert |
 | MIDI→Stereo Render 44,1 kHz | 0.2.1: Peak 0,45522; RMS 0,11637; DSP unverändert |
 | MIDI→Stereo Render 48 kHz | 0.2.1: Peak 0,44916; RMS 0,14604; DSP unverändert |
 
@@ -34,15 +37,17 @@ Der UI-Rauchtest lädt die echte Web-Component, prüft Elementzahlen,
 Parameteränderung per Tastatur, Waveform-/Run-/Step-Interaktion, Classic als
 Startmodus, den Wechsel zu Studio, Shift-Bereichsauswahl, Drag-Paint über
 mehrere Accent-Zellen, Undo, Copy/Paste, Tastatur-Undo, Batch-Transpose,
-Batch-Rest, temporäres Reglerfeedback und die skalierten Panelgrenzen. Classic
+Batch-Rest, die echte Classic-Clear-Aktion, temporäres Reglerfeedback und die
+skalierten Panelgrenzen. Der Test prüft außerdem die sichtbare Größe und den
+Status des Workflow-Schalters sowie die 4 × 4-Gruppierung aller Studio-Lanes. Classic
 und Studio werden zusätzlich aus der laufenden Web-Component als getrennte
 PNG-Mockups gerendert. Geometrietests messen die Freiräume zwischen Accent-Ring,
 Master-Bucht und Volume-Ring sowie Step-Gruppen, Classic-Modulen und den
 überlagerten Keyboard-Tasten. Damit können weder geprägte Linien noch
 Nachbarbereiche bei nativer Größe in Bedienelemente laufen.
 
-0.2.3 verändert ausschließlich UI, Browser-Geometrietest, Manifestversion,
-Mockups und Dokumentation. `ACIDIFYDSP.cmajor` ist gegenüber dem bereits
+0.3.0 verändert ausschließlich UI, Preview-/Render-Harness, Browser-Geometrietest,
+Manifestversion, Mockups und Dokumentation. `ACIDIFYDSP.cmajor` ist gegenüber dem bereits
 kompilierten und gerenderten Stand 0.2.1 unverändert. Ein erneuter Compilerlauf war in der
 aktuellen Umgebung nicht möglich, weil der bereitgestellten Cmajor-Binärdatei
 `libwebkit2gtk-4.0.so.37` und `libjavascriptcoregtk-4.0.so.18` fehlen; deshalb
