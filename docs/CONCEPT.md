@@ -125,7 +125,9 @@ Designraster: 1180 × 580 px, skaliert per CSS `zoom`.
 - schwarzer Druck, rote LEDs, schwarze geriffelte Drehknöpfe,
 - Soundregler in der originaltypischen Reihenfolge,
 - linke Tempo-/Mode-Zone, rechte Volume-/Power-Zone,
-- untere Programmiersektion mit 16 Step-LEDs und tastaturähnlicher Pitch-Eingabe,
+- untere Programmiersektion mit vier gruppierten Viererblöcken,
+- korrekt geschichtetes Ein-Oktaven-Keyboard mit sieben weißen und fünf schwarzen Tasten,
+- gleich hohe Status-, Keyboard- und Timing-Module im 8/13/21-px-Abstandsraster,
 - eigene Kennzeichnung `ACIDIFY AC-303`, keine Roland-Logos.
 
 Die Materialdarstellung verwendet getrennte Licht- und Oberflächenmodelle:

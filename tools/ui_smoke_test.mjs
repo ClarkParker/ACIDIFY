@@ -25,11 +25,15 @@ try {
   const counts = await page.evaluate(() => ({
     controls: document.querySelectorAll(".control[data-param]").length,
     sequenceSteps: document.querySelectorAll(".sequence-step").length,
+    stepGroups: document.querySelectorAll(".step-group").length,
     pitchKeys: document.querySelectorAll(".pitch-key").length,
+    whiteKeys: document.querySelectorAll(".pitch-key.white-key").length,
+    blackKeys: document.querySelectorAll(".pitch-key.black-key").length,
     studioCells: document.querySelectorAll(".studio-cell").length,
     studioActions: document.querySelectorAll("[data-studio-action]").length,
   }));
   if (counts.controls !== 12 || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
+      || counts.stepGroups !== 4 || counts.whiteKeys !== 7 || counts.blackKeys !== 5
       || counts.studioCells !== 64 || counts.studioActions !== 11) {
     throw new Error(`Unexpected UI element counts: ${JSON.stringify(counts)}`);
   }
@@ -60,6 +64,52 @@ try {
       || upperPanelGeometry.volumeLeftInset < 12
       || upperPanelGeometry.volumeRightInset < 12) {
     throw new Error(`Unsafe upper-panel divider clearance: ${JSON.stringify(upperPanelGeometry)}`);
+  }
+
+  const lowerPanelGeometry = await page.evaluate(() => {
+    const rect = selector => {
+      const bounds = document.querySelector(selector)?.getBoundingClientRect();
+      if (!bounds) throw new Error(`Missing geometry target: ${selector}`);
+      return {
+        left: bounds.left,
+        right: bounds.right,
+        top: bounds.top,
+        bottom: bounds.bottom,
+        width: bounds.width,
+        height: bounds.height,
+      };
+    };
+    const groups = [...document.querySelectorAll(".step-group")].map(node => {
+      const bounds = node.getBoundingClientRect();
+      return { left: bounds.left, right: bounds.right, width: bounds.width };
+    });
+    const status = rect(".edit-status");
+    const keyboard = rect(".keyboard");
+    const timing = rect(".time-controls");
+    const c = rect('.pitch-key[data-pitch="0"]');
+    const d = rect('.pitch-key[data-pitch="2"]');
+    const cSharp = rect('.pitch-key[data-pitch="1"]');
+    return {
+      groups,
+      groupGaps: groups.slice(1).map((group, index) => group.left - groups[index].right),
+      moduleGaps: [keyboard.left - status.right, timing.left - keyboard.right],
+      moduleTopSpread: Math.max(status.top, keyboard.top, timing.top) - Math.min(status.top, keyboard.top, timing.top),
+      moduleBottomSpread: Math.max(status.bottom, keyboard.bottom, timing.bottom) - Math.min(status.bottom, keyboard.bottom, timing.bottom),
+      blackKeyOverlay: {
+        betweenCAndD: cSharp.left < c.right && cSharp.right > d.left,
+        shorterThanWhite: cSharp.height < c.height,
+        inFront: Number(getComputedStyle(document.querySelector('.pitch-key[data-pitch="1"]')).zIndex),
+      },
+    };
+  });
+  if (lowerPanelGeometry.groupGaps.some(gap => gap < 12)
+      || lowerPanelGeometry.moduleGaps.some(gap => gap < 12)
+      || lowerPanelGeometry.moduleTopSpread > 1
+      || lowerPanelGeometry.moduleBottomSpread > 1
+      || !lowerPanelGeometry.blackKeyOverlay.betweenCAndD
+      || !lowerPanelGeometry.blackKeyOverlay.shorterThanWhite
+      || lowerPanelGeometry.blackKeyOverlay.inFront < 2) {
+    throw new Error(`Unsafe lower-panel geometry: ${JSON.stringify(lowerPanelGeometry)}`);
   }
 
   const cutoff = page.locator('.control[data-param="param2"] .dial');
@@ -170,6 +220,7 @@ try {
     ok: true,
     counts,
     upperPanelGeometry,
+    lowerPanelGeometry,
     cutoff: { before, after },
     studio: {
       multiSelected,

@@ -1,4 +1,4 @@
-# Validierung 0.2.1
+# Validierung 0.2.2
 
 ## Automatische Prüfungen
 
@@ -11,15 +11,18 @@
 | JavaScript Syntax (`node --check`) | bestanden |
 | Live-Browser-Render (1180 × 580 px) | bestanden |
 | Schutzabstände Accent/Master/Volume | 13 px |
+| Vier Step-Gruppen mit 4 × 4 Steps | je 13 px Gruppenabstand |
+| Classic-Modulraster (Status/Keyboard/Timing) | gleiche Ober-/Unterkante, je 13 px Abstand |
+| Keyboard-Geometrie (7 weiße / 5 schwarze Tasten) | Overlay und Z-Reihenfolge bestanden |
 | Classic-UI (Dial, Toggle, Run, Step) | bestanden |
 | Studio-UI (Moduswechsel, 64 Lane-Cells, 11 Aktionen) | bestanden |
 | Studio-Bereichsauswahl und Drag-Paint | bestanden |
 | Studio-Undo, Copy/Paste, Batch-Transpose und Batch-Rest | bestanden |
 | Studio-Tastaturkürzel und temporäres Reglerfeedback | bestanden |
 | Responsive UI-Skalierung (590 × 290 px) | bestanden |
-| Cmajor 1.0.3175 C++-Codegen | bestanden |
-| MIDI→Stereo Render 44,1 kHz | Peak 0,45522; RMS 0,11637 |
-| MIDI→Stereo Render 48 kHz | Peak 0,44916; RMS 0,14604 |
+| Cmajor 1.0.3175 C++-Codegen | in 0.2.1 bestanden; DSP in 0.2.2 unverändert |
+| MIDI→Stereo Render 44,1 kHz | 0.2.1: Peak 0,45522; RMS 0,11637; DSP unverändert |
+| MIDI→Stereo Render 48 kHz | 0.2.1: Peak 0,44916; RMS 0,14604; DSP unverändert |
 
 Der Rauchtest rendert eine akzentuierte C2-Note für zwei Viertelnoten, prüft
 Stereoformat, endliche Samples, Nicht-Stille und Full-Scale-Sicherheit.
@@ -29,9 +32,17 @@ Startmodus, den Wechsel zu Studio, Shift-Bereichsauswahl, Drag-Paint über
 mehrere Accent-Zellen, Undo, Copy/Paste, Tastatur-Undo, Batch-Transpose,
 Batch-Rest, temporäres Reglerfeedback und die skalierten Panelgrenzen. Classic
 und Studio werden zusätzlich aus der laufenden Web-Component als getrennte
-PNG-Mockups gerendert. Ein zusätzlicher Geometrietest misst die Freiräume
-zwischen Accent-Ring, Master-Bucht und Volume-Ring, damit keine geprägte Linie
-bei nativer Größe in ein Bedienelement läuft.
+PNG-Mockups gerendert. Geometrietests messen die Freiräume zwischen Accent-Ring,
+Master-Bucht und Volume-Ring sowie Step-Gruppen, Classic-Modulen und den
+überlagerten Keyboard-Tasten. Damit können weder geprägte Linien noch
+Nachbarbereiche bei nativer Größe in Bedienelemente laufen.
+
+0.2.2 verändert ausschließlich UI, Browser-Geometrietest, Manifestversion und
+Dokumentation. `ACIDIFYDSP.cmajor` ist gegenüber dem bereits kompilierten und
+gerenderten Stand 0.2.1 unverändert. Ein erneuter Compilerlauf war in der
+aktuellen Umgebung nicht möglich, weil der bereitgestellten Cmajor-Binärdatei
+`libwebkit2gtk-4.0.so.37` und `libjavascriptcoregtk-4.0.so.18` fehlen; deshalb
+werden die Audiozahlen oben ausdrücklich als 0.2.1-Nachweis geführt.
 
 ## Bekannte Test-Harness-Grenze
 
