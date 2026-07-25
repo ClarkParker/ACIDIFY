@@ -1,0 +1,652 @@
+/*
+    ACIDIFY 0.2.1 — analog-modelled 303-class bassline for Amorph.
+
+    MIDI/16-step sequencer -> oscillator -> coupling HP -> four-stage ladder
+    -> coupling HP -> accent VCA -> output stage.
+
+    The complete core is run at 4x through the Acidify graph below. Filter
+    coefficient mapping, envelope/cutoff mapping, coupling frequencies and
+    slide constants are adapted from the MIT-licensed Open303 project:
+
+      Copyright (c) 2009 Robin Schmidt (www.rs-met.com)
+      https://github.com/RobinSchmidt/Open303
+
+    The implementation is an original Cmajor port and adaptation for Amorph.
+*/
+
+processor AcidifyCore
+{
+    input  event std::midi::Message midiIn;
+    output stream float<2> out;
+    output event float currentStep;
+    output event float meterOut;
+
+    input event float param1  [[ name: "Tuning",         min: -1.0, max: 1.0,   init: 0.0,   unit: "st" ]];
+    input event float param2  [[ name: "Cut Off Freq",   min: 0.0,  max: 1.0,   init: 0.45 ]];
+    input event float param3  [[ name: "Resonance",      min: 0.0,  max: 1.0,   init: 0.72 ]];
+    input event float param4  [[ name: "Env Mod",        min: 0.0,  max: 1.0,   init: 0.68 ]];
+    input event float param5  [[ name: "Decay",          min: 0.0,  max: 1.0,   init: 0.45 ]];
+    input event float param6  [[ name: "Accent",         min: 0.0,  max: 1.0,   init: 0.65 ]];
+    input event float param7  [[ name: "Waveform",       min: 0.0,  max: 1.0,   init: 0.0,   step: 1.0 ]];
+    input event float param8  [[ name: "Volume",         min: -36.0, max: 0.0,  init: -6.0,  unit: "dB" ]];
+    input event float param9  [[ name: "Tempo",          min: 40.0, max: 300.0, init: 128.0, unit: "bpm" ]];
+    input event float param10 [[ name: "Run",            min: 0.0,  max: 1.0,   init: 0.0,   step: 1.0 ]];
+    input event float param11 [[ name: "Pattern Length", min: 1.0,  max: 16.0,  init: 16.0,  step: 1.0 ]];
+    input event float param12 [[ name: "Root Note",      min: 24.0, max: 60.0,  init: 36.0,  step: 1.0 ]];
+
+    input event float param13 [[ name: "Step 01 Pitch", min: 0.0, max: 24.0, init: 0.0,  step: 1.0 ]];
+    input event float param14 [[ name: "Step 02 Pitch", min: 0.0, max: 24.0, init: 0.0,  step: 1.0 ]];
+    input event float param15 [[ name: "Step 03 Pitch", min: 0.0, max: 24.0, init: 7.0,  step: 1.0 ]];
+    input event float param16 [[ name: "Step 04 Pitch", min: 0.0, max: 24.0, init: 0.0,  step: 1.0 ]];
+    input event float param17 [[ name: "Step 05 Pitch", min: 0.0, max: 24.0, init: 12.0, step: 1.0 ]];
+    input event float param18 [[ name: "Step 06 Pitch", min: 0.0, max: 24.0, init: 10.0, step: 1.0 ]];
+    input event float param19 [[ name: "Step 07 Pitch", min: 0.0, max: 24.0, init: 7.0,  step: 1.0 ]];
+    input event float param20 [[ name: "Step 08 Pitch", min: 0.0, max: 24.0, init: 3.0,  step: 1.0 ]];
+    input event float param21 [[ name: "Step 09 Pitch", min: 0.0, max: 24.0, init: 0.0,  step: 1.0 ]];
+    input event float param22 [[ name: "Step 10 Pitch", min: 0.0, max: 24.0, init: 0.0,  step: 1.0 ]];
+    input event float param23 [[ name: "Step 11 Pitch", min: 0.0, max: 24.0, init: 12.0, step: 1.0 ]];
+    input event float param24 [[ name: "Step 12 Pitch", min: 0.0, max: 24.0, init: 7.0,  step: 1.0 ]];
+    input event float param25 [[ name: "Step 13 Pitch", min: 0.0, max: 24.0, init: 10.0, step: 1.0 ]];
+    input event float param26 [[ name: "Step 14 Pitch", min: 0.0, max: 24.0, init: 5.0,  step: 1.0 ]];
+    input event float param27 [[ name: "Step 15 Pitch", min: 0.0, max: 24.0, init: 3.0,  step: 1.0 ]];
+    input event float param28 [[ name: "Step 16 Pitch", min: 0.0, max: 24.0, init: 7.0,  step: 1.0 ]];
+
+    // Packed flags: gate = 1, accent = 2, slide = 4.
+    input event float param29 [[ name: "Step 01 Flags", min: 0.0, max: 7.0, init: 3.0, step: 1.0 ]];
+    input event float param30 [[ name: "Step 02 Flags", min: 0.0, max: 7.0, init: 5.0, step: 1.0 ]];
+    input event float param31 [[ name: "Step 03 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param32 [[ name: "Step 04 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param33 [[ name: "Step 05 Flags", min: 0.0, max: 7.0, init: 3.0, step: 1.0 ]];
+    input event float param34 [[ name: "Step 06 Flags", min: 0.0, max: 7.0, init: 5.0, step: 1.0 ]];
+    input event float param35 [[ name: "Step 07 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param36 [[ name: "Step 08 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param37 [[ name: "Step 09 Flags", min: 0.0, max: 7.0, init: 0.0, step: 1.0 ]];
+    input event float param38 [[ name: "Step 10 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param39 [[ name: "Step 11 Flags", min: 0.0, max: 7.0, init: 3.0, step: 1.0 ]];
+    input event float param40 [[ name: "Step 12 Flags", min: 0.0, max: 7.0, init: 5.0, step: 1.0 ]];
+    input event float param41 [[ name: "Step 13 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param42 [[ name: "Step 14 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param43 [[ name: "Step 15 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param44 [[ name: "Step 16 Flags", min: 0.0, max: 7.0, init: 5.0, step: 1.0 ]];
+
+    float tuning = 0.0f;
+    float cutoffControl = 0.45f;
+    float resonanceControl = 0.72f;
+    float envModControl = 0.68f;
+    float decayControl = 0.45f;
+    float accentControl = 0.65f;
+    int waveform = 0;
+    float volumeDb = -6.0f;
+    float tempo = 128.0f;
+    bool running = false;
+    int patternLength = 16;
+    int rootNote = 36;
+
+    int pitch01 = 0;  int pitch02 = 0;  int pitch03 = 7;  int pitch04 = 0;
+    int pitch05 = 12; int pitch06 = 10; int pitch07 = 7;  int pitch08 = 3;
+    int pitch09 = 0;  int pitch10 = 0;  int pitch11 = 12; int pitch12 = 7;
+    int pitch13 = 10; int pitch14 = 5;  int pitch15 = 3;  int pitch16 = 7;
+
+    int flags01 = 3; int flags02 = 5; int flags03 = 1; int flags04 = 1;
+    int flags05 = 3; int flags06 = 5; int flags07 = 1; int flags08 = 1;
+    int flags09 = 0; int flags10 = 1; int flags11 = 3; int flags12 = 5;
+    int flags13 = 1; int flags14 = 1; int flags15 = 1; int flags16 = 5;
+
+    float64 phase = 0.0;
+    float currentFrequency = 65.4064f;
+    float targetFrequency = 65.4064f;
+    int currentNote = -1;
+    bool gateOpen = false;
+    bool accented = false;
+
+    float filterEnvelope = 0.0f;
+    float filterEnvelopeRC = 0.0f;
+    float accentEnvelope = 0.0f;
+    float accentEnvelopeRC = 0.0f;
+    float ampEnvelope = 0.0f;
+
+    float preLowpass = 0.0f;
+    float feedbackLowpass = 0.0f;
+    float postLowpass = 0.0f;
+    float ladder1 = 0.0f;
+    float ladder2 = 0.0f;
+    float ladder3 = 0.0f;
+    float ladder4 = 0.0f;
+
+    float baseCutoff = 780.0f;
+    float envScaler = 3.5f;
+    float envOffset = 0.32f;
+    float resonanceSkewed = 0.0f;
+    float normalDecayMs = 563.0f;
+    float outputGain = 0.501187f;
+
+    float cachedRate = 0.0f;
+    float glideCoeff = 0.0f;
+    float filterAttackAlpha = 0.0f;
+    float accentAttackAlpha = 0.0f;
+    float normalDecayCoeff = 0.0f;
+    float accentDecayCoeff = 0.0f;
+    float ampAttackAlpha = 0.0f;
+    float ampBodyCoeff = 0.0f;
+    float ampReleaseCoeff = 0.0f;
+    float ampAccentReleaseCoeff = 0.0f;
+    float preHighpassAlpha = 0.0f;
+    float feedbackHighpassAlpha = 0.0f;
+    float postHighpassAlpha = 0.0f;
+    float meterAlpha = 0.0f;
+
+    int sequenceCountdown = 0;
+    int gateCountdown = 0;
+    int sequenceStep = -1;
+    int meterCountdown = 1;
+    int meterPeriod = 1;
+    float meterEnvelope = 0.0f;
+    bool modelReady = false;
+
+    float exponentialAlpha (float hz, float sampleRate)
+    {
+        let safeHz = clamp (hz, 0.001f, sampleRate * 0.45f);
+        return 1.0f - float (exp (-float64 (twoPi) * float64 (safeHz / sampleRate)));
+    }
+
+    float timeCoefficient (float milliseconds, float sampleRate)
+    {
+        let seconds = max (milliseconds * 0.001f, 0.000001f);
+        return float (exp (-1.0 / float64 (seconds * sampleRate)));
+    }
+
+    float midiFrequency (int note)
+    {
+        let bounded = clamp (note, 0, 127);
+        let base = float (std::notes::noteToFrequency (bounded));
+        let fine = float (pow (2.0, float64 (tuning / 12.0f)));
+        return base * fine;
+    }
+
+    float polyBlep (float t, float dt)
+    {
+        if (dt <= 0.0f)
+            return 0.0f;
+
+        if (t < dt)
+        {
+            let x = t / dt;
+            return x + x - x * x - 1.0f;
+        }
+
+        if (t > 1.0f - dt)
+        {
+            let x = (t - 1.0f) / dt;
+            return x * x + x + x + 1.0f;
+        }
+
+        return 0.0f;
+    }
+
+    float softClip (float x)
+    {
+        return float (tanh (float64 (x)));
+    }
+
+    int getPitch (int index)
+    {
+        if (index == 0)  return pitch01;
+        if (index == 1)  return pitch02;
+        if (index == 2)  return pitch03;
+        if (index == 3)  return pitch04;
+        if (index == 4)  return pitch05;
+        if (index == 5)  return pitch06;
+        if (index == 6)  return pitch07;
+        if (index == 7)  return pitch08;
+        if (index == 8)  return pitch09;
+        if (index == 9)  return pitch10;
+        if (index == 10) return pitch11;
+        if (index == 11) return pitch12;
+        if (index == 12) return pitch13;
+        if (index == 13) return pitch14;
+        if (index == 14) return pitch15;
+        return pitch16;
+    }
+
+    int getFlags (int index)
+    {
+        if (index == 0)  return flags01;
+        if (index == 1)  return flags02;
+        if (index == 2)  return flags03;
+        if (index == 3)  return flags04;
+        if (index == 4)  return flags05;
+        if (index == 5)  return flags06;
+        if (index == 6)  return flags07;
+        if (index == 7)  return flags08;
+        if (index == 8)  return flags09;
+        if (index == 9)  return flags10;
+        if (index == 10) return flags11;
+        if (index == 11) return flags12;
+        if (index == 12) return flags13;
+        if (index == 13) return flags14;
+        if (index == 14) return flags15;
+        return flags16;
+    }
+
+    void updateFilterMapping()
+    {
+        const float lowCutoff = 313.8152786f;
+        const float highCutoff = 2394.411987f;
+        let c = clamp (cutoffControl, 0.0f, 1.0f);
+        let e = clamp (envModControl, 0.0f, 1.0f);
+        baseCutoff = lowCutoff * float (pow (float64 (highCutoff / lowCutoff), float64 (c)));
+        let scalerLow = 3.773996325f * e + 0.736965594f;
+        let scalerHigh = 4.194548788f * e + 0.864344901f;
+        envScaler = (1.0f - c) * scalerLow + c * scalerHigh;
+        envOffset = 0.048292931f * c + 0.294391201f;
+    }
+
+    void updateResonanceMapping()
+    {
+        let r = clamp (resonanceControl, 0.0f, 1.0f);
+        resonanceSkewed = (1.0f - float (exp (-3.0 * float64 (r))))
+                        / (1.0f - float (exp (-3.0)));
+    }
+
+    void updateDecayMapping()
+    {
+        normalDecayMs = 200.0f * float (pow (10.0, float64 (clamp (decayControl, 0.0f, 1.0f))));
+        cachedRate = 0.0f;
+    }
+
+    void updateRateConstants (float sampleRate)
+    {
+        cachedRate = sampleRate;
+        glideCoeff = timeCoefficient (12.0f, sampleRate);  // Open303 scales 60 ms slide by 0.2.
+        filterAttackAlpha = 1.0f - timeCoefficient (3.0f, sampleRate);
+        accentAttackAlpha = 1.0f - timeCoefficient (15.0f, sampleRate);
+        normalDecayCoeff = timeCoefficient (normalDecayMs, sampleRate);
+        accentDecayCoeff = timeCoefficient (200.0f, sampleRate);
+        ampAttackAlpha = 1.0f - timeCoefficient (1.0f, sampleRate);
+        ampBodyCoeff = timeCoefficient (1230.0f, sampleRate);
+        ampReleaseCoeff = timeCoefficient (8.0f, sampleRate);
+        ampAccentReleaseCoeff = timeCoefficient (50.0f, sampleRate);
+        preHighpassAlpha = exponentialAlpha (44.486f, sampleRate);
+        feedbackHighpassAlpha = exponentialAlpha (150.0f, sampleRate);
+        postHighpassAlpha = exponentialAlpha (24.167f, sampleRate);
+        meterAlpha = 1.0f - timeCoefficient (12.0f, sampleRate);
+        meterPeriod = max (1, int (sampleRate * 0.03f));
+        meterCountdown = min (meterCountdown, meterPeriod);
+    }
+
+    void initialiseModel (float sampleRate)
+    {
+        updateFilterMapping();
+        updateResonanceMapping();
+        updateDecayMapping();
+        outputGain = float (std::levels::dBtoGain (float64 (volumeDb)));
+        updateRateConstants (sampleRate);
+        modelReady = true;
+    }
+
+    void resetFilter()
+    {
+        preLowpass = 0.0f;
+        feedbackLowpass = 0.0f;
+        postLowpass = 0.0f;
+        ladder1 = 0.0f;
+        ladder2 = 0.0f;
+        ladder3 = 0.0f;
+        ladder4 = 0.0f;
+    }
+
+    void triggerNote (int note, bool hasAccent)
+    {
+        let frequency = midiFrequency (note);
+        if (ampEnvelope < 0.0001f)
+        {
+            phase = 0.0;
+            resetFilter();
+        }
+        currentNote = note;
+        targetFrequency = frequency;
+        currentFrequency = frequency;
+        filterEnvelope = 1.0f;
+        accentEnvelope = hasAccent ? 1.0f : 0.0f;
+        accented = hasAccent;
+        gateOpen = true;
+    }
+
+    void slideToNote (int note, bool hasAccent)
+    {
+        currentNote = note;
+        targetFrequency = midiFrequency (note);
+        accented = hasAccent;
+        if (hasAccent)
+            accentEnvelope = max (accentEnvelope, filterEnvelope);
+        gateOpen = true;
+    }
+
+    void releaseNote()
+    {
+        gateOpen = false;
+    }
+
+    void startSequenceStep (float sampleRate)
+    {
+        let length = clamp (patternLength, 1, 16);
+        let previousFlags = sequenceStep >= 0 ? getFlags (sequenceStep) : 0;
+        sequenceStep += 1;
+        if (sequenceStep >= length)
+            sequenceStep = 0;
+
+        let flags = getFlags (sequenceStep);
+        let hasGate = (flags & 1) != 0;
+        let hasAccent = (flags & 2) != 0;
+        let previousSlide = (previousFlags & 4) != 0;
+        let stepSamples = max (1, int (sampleRate * 15.0f / max (tempo, 1.0f)));
+
+        if (hasGate)
+        {
+            let note = clamp (rootNote + getPitch (sequenceStep), 0, 127);
+            if (previousSlide && gateOpen)
+                slideToNote (note, hasAccent);
+            else
+                triggerNote (note, hasAccent);
+        }
+        else
+        {
+            releaseNote();
+        }
+
+        sequenceCountdown = stepSamples;
+        gateCountdown = (flags & 4) != 0 ? stepSamples + 1 : max (1, int (float (stepSamples) * 0.55f));
+        currentStep <- float (sequenceStep);
+    }
+
+    float processLadder (float signal, float cutoffHz, float sampleRate)
+    {
+        let boundedCutoff = clamp (cutoffHz, 20.0f, sampleRate * 0.11f);
+        let wc = float (twoPi) * boundedCutoff / sampleRate;
+        let fx = wc * 0.7071067812f / float (twoPi);
+
+        let numerator = 0.00045522346f + 6.1922189f * fx;
+        let denominator = 1.0f + 12.358354f * fx + 4.4156345f * fx * fx;
+        let b0 = numerator / max (denominator, 0.000001f);
+
+        let rawK = fx * (fx * (fx * (fx * (fx * (fx + 7198.6997f)
+                    - 5837.7917f) - 476.47308f) + 614.95611f)
+                    + 213.87126f) + 16.998792f;
+        var gain = rawK * 0.0588235294f;
+        gain = (gain - 1.0f) * resonanceSkewed + 1.0f;
+        gain *= 1.0f + resonanceSkewed;
+        let feedback = rawK * resonanceSkewed;
+
+        let feedbackSignal = feedback * ladder4;
+        feedbackLowpass += feedbackHighpassAlpha * (feedbackSignal - feedbackLowpass);
+        let feedbackHighpass = feedbackSignal - feedbackLowpass;
+
+        // Mild front-end and ladder-output saturation. The non-linear node is 4x oversampled.
+        let ladderIn = softClip (signal * 0.82f) * 1.18f - feedbackHighpass;
+        ladder1 += 2.0f * b0 * (ladderIn - ladder1 + ladder2);
+        ladder2 += b0 * (ladder1 - 2.0f * ladder2 + ladder3);
+        ladder3 += b0 * (ladder2 - 2.0f * ladder3 + ladder4);
+        ladder4 += b0 * (ladder3 - 2.0f * ladder4);
+
+        return softClip (2.0f * gain * ladder4 * 1.08f);
+    }
+
+    event param1 (float v)
+    {
+        tuning = clamp (v, -1.0f, 1.0f);
+        if (currentNote >= 0)
+            targetFrequency = midiFrequency (currentNote);
+    }
+    event param2 (float v) { cutoffControl = clamp (v, 0.0f, 1.0f); updateFilterMapping(); }
+    event param3 (float v) { resonanceControl = clamp (v, 0.0f, 1.0f); updateResonanceMapping(); }
+    event param4 (float v) { envModControl = clamp (v, 0.0f, 1.0f); updateFilterMapping(); }
+    event param5 (float v) { decayControl = clamp (v, 0.0f, 1.0f); updateDecayMapping(); }
+    event param6 (float v) { accentControl = clamp (v, 0.0f, 1.0f); }
+    event param7 (float v) { waveform = int (clamp (v, 0.0f, 1.0f)); }
+    event param8 (float v)
+    {
+        volumeDb = clamp (v, -36.0f, 0.0f);
+        outputGain = float (std::levels::dBtoGain (float64 (volumeDb)));
+    }
+    event param9 (float v) { tempo = clamp (v, 40.0f, 300.0f); }
+    event param10 (float v)
+    {
+        running = v >= 0.5f;
+        sequenceStep = -1;
+        sequenceCountdown = 0;
+        gateCountdown = 0;
+        if (! running)
+            releaseNote();
+    }
+    event param11 (float v) { patternLength = int (clamp (v, 1.0f, 16.0f)); }
+    event param12 (float v) { rootNote = int (clamp (v, 24.0f, 60.0f)); }
+
+    event param13 (float v) { pitch01 = int (clamp (v, 0.0f, 24.0f)); }
+    event param14 (float v) { pitch02 = int (clamp (v, 0.0f, 24.0f)); }
+    event param15 (float v) { pitch03 = int (clamp (v, 0.0f, 24.0f)); }
+    event param16 (float v) { pitch04 = int (clamp (v, 0.0f, 24.0f)); }
+    event param17 (float v) { pitch05 = int (clamp (v, 0.0f, 24.0f)); }
+    event param18 (float v) { pitch06 = int (clamp (v, 0.0f, 24.0f)); }
+    event param19 (float v) { pitch07 = int (clamp (v, 0.0f, 24.0f)); }
+    event param20 (float v) { pitch08 = int (clamp (v, 0.0f, 24.0f)); }
+    event param21 (float v) { pitch09 = int (clamp (v, 0.0f, 24.0f)); }
+    event param22 (float v) { pitch10 = int (clamp (v, 0.0f, 24.0f)); }
+    event param23 (float v) { pitch11 = int (clamp (v, 0.0f, 24.0f)); }
+    event param24 (float v) { pitch12 = int (clamp (v, 0.0f, 24.0f)); }
+    event param25 (float v) { pitch13 = int (clamp (v, 0.0f, 24.0f)); }
+    event param26 (float v) { pitch14 = int (clamp (v, 0.0f, 24.0f)); }
+    event param27 (float v) { pitch15 = int (clamp (v, 0.0f, 24.0f)); }
+    event param28 (float v) { pitch16 = int (clamp (v, 0.0f, 24.0f)); }
+
+    event param29 (float v) { flags01 = int (clamp (v, 0.0f, 7.0f)); }
+    event param30 (float v) { flags02 = int (clamp (v, 0.0f, 7.0f)); }
+    event param31 (float v) { flags03 = int (clamp (v, 0.0f, 7.0f)); }
+    event param32 (float v) { flags04 = int (clamp (v, 0.0f, 7.0f)); }
+    event param33 (float v) { flags05 = int (clamp (v, 0.0f, 7.0f)); }
+    event param34 (float v) { flags06 = int (clamp (v, 0.0f, 7.0f)); }
+    event param35 (float v) { flags07 = int (clamp (v, 0.0f, 7.0f)); }
+    event param36 (float v) { flags08 = int (clamp (v, 0.0f, 7.0f)); }
+    event param37 (float v) { flags09 = int (clamp (v, 0.0f, 7.0f)); }
+    event param38 (float v) { flags10 = int (clamp (v, 0.0f, 7.0f)); }
+    event param39 (float v) { flags11 = int (clamp (v, 0.0f, 7.0f)); }
+    event param40 (float v) { flags12 = int (clamp (v, 0.0f, 7.0f)); }
+    event param41 (float v) { flags13 = int (clamp (v, 0.0f, 7.0f)); }
+    event param42 (float v) { flags14 = int (clamp (v, 0.0f, 7.0f)); }
+    event param43 (float v) { flags15 = int (clamp (v, 0.0f, 7.0f)); }
+    event param44 (float v) { flags16 = int (clamp (v, 0.0f, 7.0f)); }
+
+    event midiIn (std::midi::Message message)
+    {
+        if (running)
+            return;
+
+        if (message.isNoteOn())
+        {
+            let note = message.getNoteNumber();
+            let hasAccent = message.getVelocity() >= 100;
+            if (gateOpen)
+                slideToNote (note, hasAccent);
+            else
+                triggerNote (note, hasAccent);
+        }
+        else if (message.isNoteOff() && message.getNoteNumber() == currentNote)
+        {
+            releaseNote();
+        }
+    }
+
+    void main()
+    {
+        loop
+        {
+            let sampleRate = float (processor.frequency);
+
+            if (! modelReady)
+                initialiseModel (sampleRate);
+            else if (abs (sampleRate - cachedRate) > 0.5f)
+                updateRateConstants (sampleRate);
+
+            if (running)
+            {
+                if (sequenceCountdown <= 0)
+                    startSequenceStep (sampleRate);
+
+                sequenceCountdown -= 1;
+                gateCountdown -= 1;
+                if (gateCountdown == 0)
+                    releaseNote();
+            }
+
+            currentFrequency = targetFrequency + glideCoeff * (currentFrequency - targetFrequency);
+            let phaseIncrement = clamp (currentFrequency / sampleRate, 0.0f, 0.45f);
+            phase += float64 (phaseIncrement);
+            if (phase >= 1.0)
+                phase -= 1.0;
+
+            let phaseValue = float (phase);
+            let saw = phaseValue + phaseValue - 1.0f - polyBlep (phaseValue, phaseIncrement);
+            float square = phaseValue < 0.5f ? 1.0f : -1.0f;
+            square += polyBlep (phaseValue, phaseIncrement);
+            var shiftedPhase = phaseValue + 0.5f;
+            if (shiftedPhase >= 1.0f)
+                shiftedPhase -= 1.0f;
+            square -= polyBlep (shiftedPhase, phaseIncrement);
+            square *= 0.5f;
+            let oscillator = waveform == 0 ? saw : square;
+
+            // Coupling capacitor before the ladder.
+            preLowpass += preHighpassAlpha * (oscillator - preLowpass);
+            let preFiltered = oscillator - preLowpass;
+
+            filterEnvelope *= accented ? accentDecayCoeff : normalDecayCoeff;
+            accentEnvelope *= accentDecayCoeff;
+            filterEnvelopeRC += filterAttackAlpha * (filterEnvelope - filterEnvelopeRC);
+            accentEnvelopeRC += accentAttackAlpha * (accentEnvelope - accentEnvelopeRC);
+
+            let exponent = envScaler * (filterEnvelopeRC - envOffset)
+                         + accentControl * 1.75f * accentEnvelopeRC;
+            let instantaneousCutoff = baseCutoff * float (pow (2.0, float64 (exponent)));
+            let filtered = processLadder (preFiltered, instantaneousCutoff, sampleRate);
+
+            // Output coupling capacitor.
+            postLowpass += postHighpassAlpha * (filtered - postLowpass);
+            let coupled = filtered - postLowpass;
+
+            if (gateOpen)
+            {
+                ampEnvelope += ampAttackAlpha * (1.0f - ampEnvelope);
+                ampEnvelope *= ampBodyCoeff;
+            }
+            else
+            {
+                ampEnvelope *= accented ? ampAccentReleaseCoeff : ampReleaseCoeff;
+            }
+
+            let accentGain = 1.0f + accentControl
+                           * (0.45f * filterEnvelopeRC + 3.2f * accentEnvelopeRC);
+            let voice = softClip (coupled * ampEnvelope * accentGain * 1.45f) * outputGain;
+            let sample = abs (voice) < 0.0000000001f ? 0.0f : voice;
+
+            meterEnvelope += meterAlpha * (abs (sample) - meterEnvelope);
+            meterCountdown -= 1;
+            if (meterCountdown <= 0)
+            {
+                meterOut <- clamp (meterEnvelope * 2.0f, 0.0f, 1.0f);
+                meterCountdown = meterPeriod;
+            }
+
+            out <- float<2> (sample, sample);
+            advance();
+        }
+    }
+}
+
+graph Acidify [[ main ]]
+{
+    input  event std::midi::Message midiIn;
+    output stream float<2> out;
+    output event float currentStep;
+    output event float meterOut;
+
+    input event float param1  [[ name: "Tuning",         min: -1.0, max: 1.0,   init: 0.0,   unit: "st" ]];
+    input event float param2  [[ name: "Cut Off Freq",   min: 0.0,  max: 1.0,   init: 0.45 ]];
+    input event float param3  [[ name: "Resonance",      min: 0.0,  max: 1.0,   init: 0.72 ]];
+    input event float param4  [[ name: "Env Mod",        min: 0.0,  max: 1.0,   init: 0.68 ]];
+    input event float param5  [[ name: "Decay",          min: 0.0,  max: 1.0,   init: 0.45 ]];
+    input event float param6  [[ name: "Accent",         min: 0.0,  max: 1.0,   init: 0.65 ]];
+    input event float param7  [[ name: "Waveform",       min: 0.0,  max: 1.0,   init: 0.0,   step: 1.0 ]];
+    input event float param8  [[ name: "Volume",         min: -36.0, max: 0.0,  init: -6.0,  unit: "dB" ]];
+    input event float param9  [[ name: "Tempo",          min: 40.0, max: 300.0, init: 128.0, unit: "bpm" ]];
+    input event float param10 [[ name: "Run",            min: 0.0,  max: 1.0,   init: 0.0,   step: 1.0 ]];
+    input event float param11 [[ name: "Pattern Length", min: 1.0,  max: 16.0,  init: 16.0,  step: 1.0 ]];
+    input event float param12 [[ name: "Root Note",      min: 24.0, max: 60.0,  init: 36.0,  step: 1.0 ]];
+
+    input event float param13 [[ name: "Step 01 Pitch", min: 0.0, max: 24.0, init: 0.0,  step: 1.0 ]];
+    input event float param14 [[ name: "Step 02 Pitch", min: 0.0, max: 24.0, init: 0.0,  step: 1.0 ]];
+    input event float param15 [[ name: "Step 03 Pitch", min: 0.0, max: 24.0, init: 7.0,  step: 1.0 ]];
+    input event float param16 [[ name: "Step 04 Pitch", min: 0.0, max: 24.0, init: 0.0,  step: 1.0 ]];
+    input event float param17 [[ name: "Step 05 Pitch", min: 0.0, max: 24.0, init: 12.0, step: 1.0 ]];
+    input event float param18 [[ name: "Step 06 Pitch", min: 0.0, max: 24.0, init: 10.0, step: 1.0 ]];
+    input event float param19 [[ name: "Step 07 Pitch", min: 0.0, max: 24.0, init: 7.0,  step: 1.0 ]];
+    input event float param20 [[ name: "Step 08 Pitch", min: 0.0, max: 24.0, init: 3.0,  step: 1.0 ]];
+    input event float param21 [[ name: "Step 09 Pitch", min: 0.0, max: 24.0, init: 0.0,  step: 1.0 ]];
+    input event float param22 [[ name: "Step 10 Pitch", min: 0.0, max: 24.0, init: 0.0,  step: 1.0 ]];
+    input event float param23 [[ name: "Step 11 Pitch", min: 0.0, max: 24.0, init: 12.0, step: 1.0 ]];
+    input event float param24 [[ name: "Step 12 Pitch", min: 0.0, max: 24.0, init: 7.0,  step: 1.0 ]];
+    input event float param25 [[ name: "Step 13 Pitch", min: 0.0, max: 24.0, init: 10.0, step: 1.0 ]];
+    input event float param26 [[ name: "Step 14 Pitch", min: 0.0, max: 24.0, init: 5.0,  step: 1.0 ]];
+    input event float param27 [[ name: "Step 15 Pitch", min: 0.0, max: 24.0, init: 3.0,  step: 1.0 ]];
+    input event float param28 [[ name: "Step 16 Pitch", min: 0.0, max: 24.0, init: 7.0,  step: 1.0 ]];
+
+    input event float param29 [[ name: "Step 01 Flags", min: 0.0, max: 7.0, init: 3.0, step: 1.0 ]];
+    input event float param30 [[ name: "Step 02 Flags", min: 0.0, max: 7.0, init: 5.0, step: 1.0 ]];
+    input event float param31 [[ name: "Step 03 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param32 [[ name: "Step 04 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param33 [[ name: "Step 05 Flags", min: 0.0, max: 7.0, init: 3.0, step: 1.0 ]];
+    input event float param34 [[ name: "Step 06 Flags", min: 0.0, max: 7.0, init: 5.0, step: 1.0 ]];
+    input event float param35 [[ name: "Step 07 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param36 [[ name: "Step 08 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param37 [[ name: "Step 09 Flags", min: 0.0, max: 7.0, init: 0.0, step: 1.0 ]];
+    input event float param38 [[ name: "Step 10 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param39 [[ name: "Step 11 Flags", min: 0.0, max: 7.0, init: 3.0, step: 1.0 ]];
+    input event float param40 [[ name: "Step 12 Flags", min: 0.0, max: 7.0, init: 5.0, step: 1.0 ]];
+    input event float param41 [[ name: "Step 13 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param42 [[ name: "Step 14 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param43 [[ name: "Step 15 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
+    input event float param44 [[ name: "Step 16 Flags", min: 0.0, max: 7.0, init: 5.0, step: 1.0 ]];
+
+    node core = AcidifyCore * 4;
+
+    connection
+    {
+        midiIn -> core.midiIn;
+        core.out -> out;
+        core.currentStep -> currentStep;
+        core.meterOut -> meterOut;
+
+        param1 -> core.param1;   param2 -> core.param2;
+        param3 -> core.param3;   param4 -> core.param4;
+        param5 -> core.param5;   param6 -> core.param6;
+        param7 -> core.param7;   param8 -> core.param8;
+        param9 -> core.param9;   param10 -> core.param10;
+        param11 -> core.param11; param12 -> core.param12;
+
+        param13 -> core.param13; param14 -> core.param14;
+        param15 -> core.param15; param16 -> core.param16;
+        param17 -> core.param17; param18 -> core.param18;
+        param19 -> core.param19; param20 -> core.param20;
+        param21 -> core.param21; param22 -> core.param22;
+        param23 -> core.param23; param24 -> core.param24;
+        param25 -> core.param25; param26 -> core.param26;
+        param27 -> core.param27; param28 -> core.param28;
+
+        param29 -> core.param29; param30 -> core.param30;
+        param31 -> core.param31; param32 -> core.param32;
+        param33 -> core.param33; param34 -> core.param34;
+        param35 -> core.param35; param36 -> core.param36;
+        param37 -> core.param37; param38 -> core.param38;
+        param39 -> core.param39; param40 -> core.param40;
+        param41 -> core.param41; param42 -> core.param42;
+        param43 -> core.param43; param44 -> core.param44;
+    }
+}

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ACIDIFY UI Mockup</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #20211f; }
+  </style>
+</head>
+<body>
+  <script type="module">
+    import createPatchView from "../ACIDIFYUI.js";
+
+    const defaults = new Map([
+      ["param1", 0], ["param2", .45], ["param3", .72], ["param4", .68],
+      ["param5", .45], ["param6", .65], ["param7", 0], ["param8", -6],
+      ["param9", 128], ["param10", 0], ["param11", 16], ["param12", 36],
+    ]);
+    [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7]
+      .forEach((v, i) => defaults.set(`param${13 + i}`, v));
+    [3, 5, 1, 1, 3, 5, 1, 1, 0, 1, 3, 5, 1, 1, 1, 5]
+      .forEach((v, i) => defaults.set(`param${29 + i}`, v));
+
+    const parameterListeners = new Set();
+    const endpointListeners = new Map();
+    const patchConnection = {
+      sendEventOrValue(id, value) {
+        defaults.set(id, value);
+        parameterListeners.forEach(fn => fn({ endpointID: id, value }));
+      },
+      addAllParameterListener(fn) { parameterListeners.add(fn); },
+      removeAllParameterListener(fn) { parameterListeners.delete(fn); },
+      requestParameterValue(id) {
+        queueMicrotask(() => parameterListeners.forEach(fn => fn({ endpointID: id, value: defaults.get(id) ?? 0 })));
+      },
+      addEndpointListener(id, fn) {
+        if (!endpointListeners.has(id)) endpointListeners.set(id, new Set());
+        endpointListeners.get(id).add(fn);
+      },
+      removeEndpointListener(id, fn) { endpointListeners.get(id)?.delete(fn); },
+      sendParameterGestureStart() {},
+      sendParameterGestureEnd() {},
+      sendMIDIInputEvent() {},
+    };
+
+    document.body.appendChild(createPatchView(patchConnection));
+    let step = 0;
+    setInterval(() => {
+      endpointListeners.get("currentStep")?.forEach(fn => fn(step));
+      endpointListeners.get("meterOut")?.forEach(fn => fn(.25 + .55 * Math.abs(Math.sin(step * .71))));
+      step = (step + 1) % 16;
+    }, 260);
+  </script>
+</body>
+</html>
