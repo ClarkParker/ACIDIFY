@@ -8,10 +8,12 @@ const renders = [
   { mode: "classic", width: 1180, height: 580, file: "ACIDIFY_UI_Mockup.png" },
   { mode: "sync", width: 1180, height: 580, file: "ACIDIFY_UI_DAW_Sync_Mockup.png" },
   { mode: "studio", width: 1180, height: 580, file: "ACIDIFY_UI_Studio_Mockup.png" },
+  { mode: "pitch", width: 1180, height: 580, file: "ACIDIFY_UI_Pitch_Mockup.png" },
   { mode: "distortion", width: 1180, height: 580, file: "ACIDIFY_UI_Distortion_Mockup.png" },
   { mode: "classic", width: 590, height: 290, file: "ACIDIFY_UI_Mockup_590x290.png" },
   { mode: "sync", width: 590, height: 290, file: "ACIDIFY_UI_DAW_Sync_Mockup_590x290.png" },
   { mode: "studio", width: 590, height: 290, file: "ACIDIFY_UI_Studio_Mockup_590x290.png" },
+  { mode: "pitch", width: 590, height: 290, file: "ACIDIFY_UI_Pitch_Mockup_590x290.png" },
   { mode: "distortion", width: 590, height: 290, file: "ACIDIFY_UI_Distortion_Mockup_590x290.png" },
 ];
 
@@ -35,6 +37,8 @@ try {
     await page.goto(url);
     const readySelector = render.mode === "studio"
       ? "acidify-patch-view.studio-mode .studio-matrix"
+      : render.mode === "pitch"
+        ? "acidify-patch-view .pitch-menu"
       : render.mode === "distortion"
         ? "acidify-patch-view.distortion-open .distortion-overlay"
         : "acidify-patch-view .classic-editor";

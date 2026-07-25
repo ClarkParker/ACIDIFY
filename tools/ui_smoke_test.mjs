@@ -34,6 +34,7 @@ try {
     studioCellGroups: document.querySelectorAll(".studio-lane .studio-cell-group").length,
     studioRulerGroups: document.querySelectorAll(".studio-ruler-group").length,
     studioActions: document.querySelectorAll("[data-studio-action]").length,
+    pitchChoices: document.querySelectorAll(".pitch-menu-choice").length,
     distortionTriggers: document.querySelectorAll(".distortion-trigger").length,
     distortionControls: document.querySelectorAll(".distortion-overlay .control[data-param]").length,
     distortionTypes: document.querySelectorAll(".distortion-types button").length,
@@ -43,7 +44,8 @@ try {
       || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
       || counts.stepGroups !== 4 || counts.whiteKeys !== 7 || counts.blackKeys !== 5
       || counts.studioCells !== 64 || counts.studioCellGroups !== 16
-      || counts.studioRulerGroups !== 4 || counts.studioActions !== 11
+      || counts.studioRulerGroups !== 4 || counts.studioActions !== 12
+      || counts.pitchChoices !== 25
       || counts.distortionTriggers !== 1 || counts.distortionControls !== 4
       || counts.distortionTypes !== 3 || counts.clockModes !== 2) {
     throw new Error(`Unexpected UI element counts: ${JSON.stringify(counts)}`);
@@ -200,7 +202,7 @@ try {
     .evaluate(node => node._values.get("param10"));
   await page.locator('.run-switch[data-param="param10"] button:not([hidden])')
     .evaluate(button => button.click());
-  const dawWaiting = await page.locator("acidify-patch-view").evaluate(node => ({
+  const dawFallback = await page.locator("acidify-patch-view").evaluate(node => ({
     mode: node._values.get("param49"),
     run: node._values.get("param10"),
     readout: node.querySelector(".clock-readout").textContent,
@@ -208,10 +210,40 @@ try {
     runDisabled: node.querySelector('.run-switch[data-param="param10"]').getAttribute("aria-disabled"),
     tempoDisabled: node.querySelector('.tempo-box .dial').getAttribute("aria-disabled"),
   }));
-  if (dawWaiting.mode !== 1 || dawWaiting.run !== runBeforeDawClick
-      || dawWaiting.readout !== "DAW · WAIT" || dawWaiting.runText !== "DAW FOLLOW"
-      || dawWaiting.runDisabled !== "true" || dawWaiting.tempoDisabled !== "true") {
-    throw new Error(`DAW wait state failed: ${JSON.stringify(dawWaiting)}`);
+  if (dawFallback.mode !== 1 || dawFallback.run === runBeforeDawClick
+      || dawFallback.readout !== "DAW · INT FALLBACK" || dawFallback.runText !== "RUN / STOP"
+      || dawFallback.runDisabled !== "false" || dawFallback.tempoDisabled !== "false") {
+    throw new Error(`DAW fallback state failed: ${JSON.stringify(dawFallback)}`);
+  }
+  const tempoBeforeFallbackInput = await page.locator("acidify-patch-view")
+    .evaluate(node => node._values.get("param9"));
+  await page.locator(".tempo-box .dial").evaluate(dial => {
+    dial.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+    dial.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true }));
+  });
+  const tempoAfterFallbackInput = await page.locator("acidify-patch-view")
+    .evaluate(node => node._values.get("param9"));
+  if (!(tempoAfterFallbackInput > tempoBeforeFallbackInput)) {
+    throw new Error(`DAW internal-tempo fallback failed: ${tempoBeforeFallbackInput} -> ${tempoAfterFallbackInput}`);
+  }
+  const dawLocked = await page.locator("acidify-patch-view").evaluate(node => {
+    node._tempoListener(135);
+    node._syncListener(7);
+    node._transportListener(1);
+    return {
+      readout: node.querySelector(".clock-readout").textContent,
+      running: node.querySelector(".run-lamp").classList.contains("lit"),
+      title: node.querySelector(".clock-readout").title,
+      runText: node.querySelector('.run-switch[data-param="param10"] button:not([hidden])').textContent,
+      runDisabled: node.querySelector('.run-switch[data-param="param10"]').getAttribute("aria-disabled"),
+      tempoDisabled: node.querySelector('.tempo-box .dial').getAttribute("aria-disabled"),
+    };
+  });
+  if (dawLocked.readout !== "DAW · 135 BPM" || !dawLocked.running
+      || !dawLocked.title.includes("position locked")
+      || dawLocked.runText !== "DAW FOLLOW"
+      || dawLocked.runDisabled !== "true" || dawLocked.tempoDisabled !== "true") {
+    throw new Error(`DAW lock state failed: ${JSON.stringify(dawLocked)}`);
   }
   const tempoBeforeLockedInput = await page.locator("acidify-patch-view")
     .evaluate(node => node._values.get("param9"));
@@ -223,20 +255,6 @@ try {
     .evaluate(node => node._values.get("param9"));
   if (tempoAfterLockedInput !== tempoBeforeLockedInput) {
     throw new Error(`DAW tempo lock failed: ${tempoBeforeLockedInput} -> ${tempoAfterLockedInput}`);
-  }
-  const dawLocked = await page.locator("acidify-patch-view").evaluate(node => {
-    node._tempoListener(135);
-    node._syncListener(7);
-    node._transportListener(1);
-    return {
-      readout: node.querySelector(".clock-readout").textContent,
-      running: node.querySelector(".run-lamp").classList.contains("lit"),
-      title: node.querySelector(".clock-readout").title,
-    };
-  });
-  if (dawLocked.readout !== "DAW · 135 BPM" || !dawLocked.running
-      || !dawLocked.title.includes("position locked")) {
-    throw new Error(`DAW lock state failed: ${JSON.stringify(dawLocked)}`);
   }
   await page.locator('.clock-mode button[data-value="0"]').click();
 
@@ -287,6 +305,37 @@ try {
   });
   const wheelPitch = await page.locator("acidify-patch-view").evaluate(node => node._stepPitch(7));
   if (wheelPitch !== 3) throw new Error(`Classic semitone wheel failed: ${wheelPitch}`);
+  const visibleClassicPitch = await page.locator("acidify-patch-view").evaluate(node => ({
+    note: node.querySelector('.sequence-step[data-step="7"] .step-note').textContent,
+    octave: node.querySelector('.sequence-step[data-step="7"] .step-octave').textContent,
+    indicator: node.querySelector(".octave-indicator").textContent,
+  }));
+  if (visibleClassicPitch.note !== "D♯2" || visibleClassicPitch.octave !== "+0"
+      || !visibleClassicPitch.indicator.includes("OCT +0")) {
+    throw new Error(`Classic octave visibility failed: ${JSON.stringify(visibleClassicPitch)}`);
+  }
+  await page.locator('.sequence-step[data-step="7"]').click({ button: "right" });
+  if (!(await page.locator(".pitch-menu").isVisible())) {
+    throw new Error("Classic right-click note chooser did not open");
+  }
+  await page.locator('.pitch-menu-choice[data-pitch-value="14"]').click();
+  const directClassicPitch = await page.locator("acidify-patch-view").evaluate(node => ({
+    pitch: node._stepPitch(7),
+    note: node.querySelector('.sequence-step[data-step="7"] .step-note').textContent,
+    octave: node.querySelector('.sequence-step[data-step="7"] .step-octave').textContent,
+  }));
+  if (directClassicPitch.pitch !== 14 || directClassicPitch.note !== "D3"
+      || directClassicPitch.octave !== "+1") {
+    throw new Error(`Classic direct note choice failed: ${JSON.stringify(directClassicPitch)}`);
+  }
+  await page.locator('.sequence-step[data-step="7"]').dblclick();
+  if (!(await page.locator(".pitch-menu").isVisible())) {
+    throw new Error("Classic double-click note chooser did not open");
+  }
+  await page.keyboard.press("Escape");
+  if (await page.locator(".pitch-menu").isVisible()) {
+    throw new Error("Note chooser did not close with Escape");
+  }
   await page.locator('.function-button[data-flag="2"]').click();
   await page.locator('[data-classic-action="clear-step"]').click();
   const clearedStep = await page.locator("acidify-patch-view").evaluate(node => node._stepSnapshot()[7]);
@@ -335,6 +384,56 @@ try {
   await page.locator('.sequence-step[data-step="6"]').click({ modifiers: ["Shift"] });
   const multiSelected = await page.locator(".sequence-step.multi-selected").count();
   if (multiSelected !== 4) throw new Error(`Studio range selection failed: ${multiSelected}`);
+  const beforeStudioStripWheel = await view.evaluate(node => node._stepSnapshot());
+  await page.locator('.sequence-step[data-step="4"]').evaluate(node => {
+    node.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+  });
+  const afterStudioStripWheel = await view.evaluate(node => node._stepSnapshot());
+  for (let index = 3; index <= 6; index += 1) {
+    if (afterStudioStripWheel[index].pitch !== Math.min(24, beforeStudioStripWheel[index].pitch + 1)) {
+      throw new Error(`Studio top-strip wheel failed at step ${index + 1}`);
+    }
+  }
+  await page.locator('[data-studio-action="choose-note"]').click();
+  if (!(await page.locator(".pitch-menu").isVisible())) {
+    throw new Error("Studio NOTE action did not open the note chooser");
+  }
+  const menuBounds = await page.locator(".pitch-menu").boundingBox();
+  const chassisBounds = await page.locator("acidify-patch-view .chassis").boundingBox();
+  if (!menuBounds || !chassisBounds
+      || menuBounds.x < chassisBounds.x || menuBounds.y < chassisBounds.y
+      || menuBounds.x + menuBounds.width > chassisBounds.x + chassisBounds.width
+      || menuBounds.y + menuBounds.height > chassisBounds.y + chassisBounds.height) {
+    throw new Error(`Note chooser escaped the chassis: ${JSON.stringify({ menuBounds, chassisBounds })}`);
+  }
+  await page.locator('.pitch-menu-choice[data-pitch-value="8"]').click();
+  const directStudioPitch = await view.evaluate(node => ({
+    pitches: node._stepSnapshot().slice(3, 7).map(step => step.pitch),
+    selection: node.querySelector(".studio-selection").textContent,
+  }));
+  if (directStudioPitch.pitches.some(pitch => pitch !== 8)
+      || !directStudioPitch.selection.includes("OCT +0")) {
+    throw new Error(`Studio batch note choice failed: ${JSON.stringify(directStudioPitch)}`);
+  }
+  await page.locator('.studio-cell[data-kind="pitch"][data-step="8"]').click({ button: "right" });
+  if (!(await page.locator(".pitch-menu").isVisible())) {
+    throw new Error("Studio right-click note chooser did not open");
+  }
+  await page.locator('.pitch-menu-choice[data-pitch-value="24"]').click();
+  const studioContextPitch = await view.evaluate(node => ({
+    pitch: node._stepPitch(8),
+    cell: node.querySelector('.studio-cell[data-kind="pitch"][data-step="8"]').textContent,
+    octave: node.querySelector('.sequence-step[data-step="8"] .step-octave').textContent,
+  }));
+  if (studioContextPitch.pitch !== 24 || studioContextPitch.cell !== "C4"
+      || studioContextPitch.octave !== "+2") {
+    throw new Error(`Studio right-click note choice failed: ${JSON.stringify(studioContextPitch)}`);
+  }
+  await page.locator('.studio-cell[data-kind="pitch"][data-step="9"]').dblclick();
+  if (!(await page.locator(".pitch-menu").isVisible())) {
+    throw new Error("Studio double-click note chooser did not open");
+  }
+  await page.locator(".pitch-menu-close").click();
 
   const accent8 = page.locator('.studio-cell[data-kind="accent"][data-step="8"]');
   const accent9 = page.locator('.studio-cell[data-kind="accent"][data-step="9"]');
@@ -440,8 +539,13 @@ try {
       workflow,
       clearedStep,
       wheelPitch,
+      visibleClassicPitch,
+      directClassicPitch,
       localEchoState,
       multiSelected,
+      studioStripWheel: true,
+      directStudioPitch,
+      studioContextPitch,
       dragPaint: true,
       undo: true,
       copyPaste: true,
@@ -457,7 +561,8 @@ try {
     },
     clock: {
       initial: clockInitial,
-      waiting: dawWaiting,
+      fallback: dawFallback,
+      fallbackTempoEditable: tempoAfterFallbackInput > tempoBeforeFallbackInput,
       lockedInputSuppressed: tempoAfterLockedInput === tempoBeforeLockedInput,
       locked: dawLocked,
     },

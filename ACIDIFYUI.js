@@ -234,6 +234,9 @@ class AcidifyPatchView extends HTMLElement {
     this._playingStep = -1;
     this._studioMode = false;
     this._distortionOpen = false;
+    this._pitchMenuOpen = false;
+    this._pitchMenuTargets = [];
+    this._pitchMenuReturnFocus = null;
     this._history = [];
     this._future = [];
     this._clipboard = null;
@@ -254,6 +257,8 @@ class AcidifyPatchView extends HTMLElement {
     this._studioPointerEnd = null;
     this._studioKeyDown = null;
     this._distortionKeyDown = null;
+    this._pitchMenuKeyDown = null;
+    this._pitchMenuOutsidePointer = null;
     this._midiHandler = null;
     this._recentSends = [];
     this._mounted = false;
@@ -263,6 +268,9 @@ class AcidifyPatchView extends HTMLElement {
     if (this._mounted) return;
     this._mounted = true;
     this._distortionOpen = false;
+    this._pitchMenuOpen = false;
+    this._pitchMenuTargets = [];
+    this._pitchMenuReturnFocus = null;
     this.innerHTML = this.getHTML();
     this._controls.clear();
     this._values.clear();
@@ -271,6 +279,7 @@ class AcidifyPatchView extends HTMLElement {
     this._wireSteps();
     this._wireKeyboard();
     this._wireStudio();
+    this._wirePitchMenu();
     this._wireDistortion();
     this._renderStepEditor();
     this._renderStudio();
@@ -287,10 +296,17 @@ class AcidifyPatchView extends HTMLElement {
       if (endpointID === "param9" || endpointID === "param10" || endpointID === "param49") {
         this._renderTransportState();
       }
+      if (endpointID === "param12") {
+        this._renderStepStrip();
+        this._renderStepEditor();
+        this._renderStudio();
+        if (this._pitchMenuOpen) this._refreshPitchMenu();
+      }
       if (this._isStepParam(endpointID)) {
         this._renderStepStrip();
         this._renderStepEditor();
         this._renderStudio();
+        if (this._pitchMenuOpen) this._refreshPitchMenu();
       }
     };
     this.pc.addAllParameterListener(this._paramListener);
@@ -374,6 +390,8 @@ class AcidifyPatchView extends HTMLElement {
     if (this._toastTimer) window.clearTimeout(this._toastTimer);
     if (this._studioKeyDown) this.removeEventListener("keydown", this._studioKeyDown);
     if (this._distortionKeyDown) this.removeEventListener("keydown", this._distortionKeyDown);
+    if (this._pitchMenuKeyDown) this.removeEventListener("keydown", this._pitchMenuKeyDown);
+    if (this._pitchMenuOutsidePointer) this.removeEventListener("pointerdown", this._pitchMenuOutsidePointer, true);
     if (window.__amorphProcessMidi === this._midiHandler) delete window.__amorphProcessMidi;
     this._controls.forEach(control => control.dispose?.());
     this._controls.clear();
@@ -392,6 +410,10 @@ class AcidifyPatchView extends HTMLElement {
     this._studioPointerEnd = null;
     this._studioKeyDown = null;
     this._distortionKeyDown = null;
+    this._pitchMenuKeyDown = null;
+    this._pitchMenuOutsidePointer = null;
+    this._pitchMenuTargets = [];
+    this._pitchMenuReturnFocus = null;
     this._midiHandler = null;
     this._mounted = false;
   }
@@ -455,7 +477,12 @@ class AcidifyPatchView extends HTMLElement {
           node,
           config,
           onChange: () => {
-            if (config.id === "param12") this._renderStepEditor();
+            if (config.id === "param12") {
+              this._renderStepStrip();
+              this._renderStepEditor();
+              this._renderStudio();
+              if (this._pitchMenuOpen) this._refreshPitchMenu();
+            }
           },
         });
       }
@@ -493,14 +520,31 @@ class AcidifyPatchView extends HTMLElement {
         this._renderStudio();
       });
       node.addEventListener("wheel", event => {
-        if (this._studioMode) return;
         event.preventDefault();
         const index = Number(node.dataset.step);
-        this._selectedStep = index;
-        this._selectedSteps = new Set([index]);
-        this._selectionAnchor = index;
-        this._setStepValue(index, "pitch", this._stepPitch(index) + (event.deltaY < 0 ? 1 : -1), true);
+        const offset = event.deltaY < 0 ? 1 : -1;
+        if (this._studioMode) {
+          if (!this._selectedSteps.has(index)) {
+            this._selectedStep = index;
+            this._selectedSteps = new Set([index]);
+            this._selectionAnchor = index;
+          }
+          this._transposeSelection(offset, "Step-strip pitch wheel");
+        } else {
+          this._selectedStep = index;
+          this._selectedSteps = new Set([index]);
+          this._selectionAnchor = index;
+          this._setStepValue(index, "pitch", this._stepPitch(index) + offset, true);
+        }
       }, { passive: false });
+      node.addEventListener("contextmenu", event => {
+        event.preventDefault();
+        this._openPitchMenu(Number(node.dataset.step), event.clientX, event.clientY, node);
+      });
+      node.addEventListener("dblclick", event => {
+        event.preventDefault();
+        this._openPitchMenu(Number(node.dataset.step), event.clientX, event.clientY, node);
+      });
     });
   }
 
@@ -541,7 +585,19 @@ class AcidifyPatchView extends HTMLElement {
     });
 
     this.querySelectorAll("[data-studio-action]").forEach(button => {
-      button.addEventListener("click", () => this._runStudioAction(button.dataset.studioAction));
+      button.addEventListener("click", () => {
+        if (button.dataset.studioAction === "choose-note") {
+          const box = button.getBoundingClientRect();
+          this._openPitchMenu(
+            this._selectedStep,
+            box.left + box.width / 2,
+            box.top + box.height / 2,
+            button
+          );
+        } else {
+          this._runStudioAction(button.dataset.studioAction);
+        }
+      });
     });
 
     this.querySelectorAll(".studio-cell").forEach(cell => {
@@ -549,6 +605,7 @@ class AcidifyPatchView extends HTMLElement {
       const kind = cell.dataset.kind;
       cell.addEventListener("pointerdown", event => {
         if (!this._studioMode) return;
+        if (event.button !== 0) return;
         if (kind === "pitch") {
           this._selectStudioStep(index, event);
           this._renderStepStrip();
@@ -587,6 +644,14 @@ class AcidifyPatchView extends HTMLElement {
           }
           this._transposeSelection(event.deltaY < 0 ? 1 : -1, "Pitch wheel");
         }, { passive: false });
+        cell.addEventListener("contextmenu", event => {
+          event.preventDefault();
+          this._openPitchMenu(index, event.clientX, event.clientY, cell);
+        });
+        cell.addEventListener("dblclick", event => {
+          event.preventDefault();
+          this._openPitchMenu(index, event.clientX, event.clientY, cell);
+        });
       }
     });
 
@@ -605,6 +670,7 @@ class AcidifyPatchView extends HTMLElement {
       const command = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
       if (this._distortionOpen && event.key === "Escape") return;
+      if (this._pitchMenuOpen && event.key === "Escape") return;
       if (!command && key === "m") {
         event.preventDefault();
         this._setStudioMode(!this._studioMode);
@@ -631,6 +697,130 @@ class AcidifyPatchView extends HTMLElement {
     this.addEventListener("keydown", this._studioKeyDown);
   }
 
+  _wirePitchMenu() {
+    this.querySelector(".pitch-menu-close")?.addEventListener("click", () => {
+      this._closePitchMenu();
+    });
+    this.querySelectorAll(".pitch-menu-choice").forEach(button => {
+      button.addEventListener("click", () => {
+        this._setPitchMenuChoice(Number(button.dataset.pitchValue));
+      });
+    });
+    this._pitchMenuKeyDown = event => {
+      if (!this._pitchMenuOpen || event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      this._closePitchMenu();
+    };
+    this._pitchMenuOutsidePointer = event => {
+      if (!this._pitchMenuOpen || event.target.closest(".pitch-menu")) return;
+      this._closePitchMenu(false);
+    };
+    this.addEventListener("keydown", this._pitchMenuKeyDown);
+    this.addEventListener("pointerdown", this._pitchMenuOutsidePointer, true);
+  }
+
+  _octaveLabel(pitch) {
+    return `OCT +${Math.floor(clamp(Math.round(pitch), 0, 24) / 12)}`;
+  }
+
+  _openPitchMenu(index, clientX, clientY, returnFocus) {
+    const target = clamp(Math.round(index), 0, 15);
+    if (this._studioMode && this._selectedSteps.has(target)) {
+      this._selectedStep = target;
+    } else {
+      this._selectedStep = target;
+      this._selectedSteps = new Set([target]);
+      this._selectionAnchor = target;
+    }
+    this._pitchMenuTargets = this._studioMode ? this._selectedIndices() : [target];
+    this._pitchMenuReturnFocus = returnFocus ?? null;
+    this._pitchMenuOpen = true;
+    this._renderStepStrip();
+    this._renderStepEditor();
+    this._renderStudio();
+
+    const menu = this.querySelector(".pitch-menu");
+    const chassis = this.querySelector(".chassis");
+    if (!menu || !chassis) return;
+    menu.hidden = false;
+    menu.setAttribute("aria-hidden", "false");
+    const bounds = chassis.getBoundingClientRect();
+    const scaleX = bounds.width / 1180 || 1;
+    const scaleY = bounds.height / 580 || 1;
+    const localX = (Number(clientX) - bounds.left) / scaleX;
+    const localY = (Number(clientY) - bounds.top) / scaleY;
+    const menuWidth = 394;
+    const menuHeight = 278;
+    const left = clamp(localX - menuWidth / 2, 18, 1180 - menuWidth - 18);
+    const preferredTop = localY + 12;
+    const top = preferredTop + menuHeight <= 562
+      ? preferredTop
+      : clamp(localY - menuHeight - 12, 18, 562 - menuHeight);
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    this._refreshPitchMenu();
+    queueMicrotask(() => {
+      const initialFocus = menu.querySelector(".pitch-menu-choice.active")
+        ?? menu.querySelector(".pitch-menu-choice");
+      initialFocus?.focus();
+    });
+  }
+
+  _refreshPitchMenu() {
+    if (!this._pitchMenuOpen) return;
+    const root = Math.round(this._values.get("param12") ?? 36);
+    const targets = this._pitchMenuTargets.length ? this._pitchMenuTargets : [this._selectedStep];
+    const pitches = targets.map(index => this._stepPitch(index));
+    const commonPitch = pitches.every(pitch => pitch === pitches[0]) ? pitches[0] : -1;
+    const title = this.querySelector(".pitch-menu-title");
+    if (title) {
+      title.textContent = targets.length === 1
+        ? `STEP ${String(targets[0] + 1).padStart(2, "0")} · ${noteName(root + pitches[0]).replace("#", "♯")}`
+        : `${targets.length} STEPS · ${commonPitch >= 0
+          ? noteName(root + commonPitch).replace("#", "♯")
+          : "MIXED NOTES"}`;
+    }
+    this.querySelectorAll(".pitch-menu-choice").forEach(button => {
+      const pitch = Number(button.dataset.pitchValue);
+      const absolute = noteName(root + pitch).replace("#", "♯");
+      button.querySelector("strong").textContent = absolute;
+      button.querySelector("small").textContent = this._octaveLabel(pitch);
+      button.classList.toggle("active", pitch === commonPitch);
+      button.setAttribute("aria-checked", `${pitch === commonPitch}`);
+      button.setAttribute("aria-label", `Set ${targets.length === 1 ? `step ${targets[0] + 1}` : `${targets.length} selected steps`} to ${absolute}, ${this._octaveLabel(pitch)}`);
+    });
+  }
+
+  _setPitchMenuChoice(rawPitch) {
+    const pitch = clamp(Math.round(rawPitch), 0, 24);
+    const targets = this._pitchMenuTargets.length
+      ? [...this._pitchMenuTargets]
+      : [this._selectedStep];
+    this._mutatePattern("Choose note", draft => {
+      targets.forEach(index => {
+        draft[index].pitch = pitch;
+      });
+    });
+    const root = Math.round(this._values.get("param12") ?? 36);
+    this._showStudioToast(`${noteName(root + pitch).replace("#", "♯")} · ${this._octaveLabel(pitch)}`);
+    this._closePitchMenu();
+  }
+
+  _closePitchMenu(restoreFocus = true) {
+    if (!this._pitchMenuOpen) return;
+    const focusTarget = this._pitchMenuReturnFocus;
+    this._pitchMenuOpen = false;
+    this._pitchMenuTargets = [];
+    this._pitchMenuReturnFocus = null;
+    const menu = this.querySelector(".pitch-menu");
+    if (menu) {
+      menu.hidden = true;
+      menu.setAttribute("aria-hidden", "true");
+    }
+    if (restoreFocus) focusTarget?.focus?.();
+  }
+
   _wireDistortion() {
     this.querySelector(".distortion-trigger")?.addEventListener("click", () => {
       this._setDistortionOpen(true);
@@ -653,6 +843,7 @@ class AcidifyPatchView extends HTMLElement {
 
   _setDistortionOpen(enabled) {
     this._distortionOpen = Boolean(enabled);
+    if (this._distortionOpen) this._closePitchMenu(false);
     this.classList.toggle("distortion-open", this._distortionOpen);
     const trigger = this.querySelector(".distortion-trigger");
     const scrim = this.querySelector(".distortion-scrim");
@@ -677,41 +868,57 @@ class AcidifyPatchView extends HTMLElement {
     const hasTransport = (this._hostSyncFlags & 2) !== 0;
     const hasPosition = (this._hostSyncFlags & 4) !== 0;
     const hostReady = hasTempo && hasTransport;
-    const running = dawMode ? this._transportRunning : manualRunning;
+    const runHostControlled = dawMode && hasTransport;
+    const tempoHostControlled = dawMode && hasTempo;
+    const running = runHostControlled ? this._transportRunning : manualRunning;
 
     this.querySelector(".run-lamp")?.classList.toggle("lit", running);
     const runSwitch = this.querySelector('.run-switch[data-param="param10"]');
     runSwitch?.classList.toggle("is-on", running);
-    runSwitch?.classList.toggle("daw-controlled", dawMode);
-    runSwitch?.setAttribute("aria-disabled", `${dawMode}`);
-    runSwitch?.setAttribute("title", dawMode
+    runSwitch?.classList.toggle("daw-controlled", runHostControlled);
+    runSwitch?.setAttribute("aria-disabled", `${runHostControlled}`);
+    runSwitch?.setAttribute("title", runHostControlled
       ? "Transport follows the DAW"
-      : "Start or stop the internal pattern clock");
+      : dawMode
+        ? "No DAW transport received; RUN/STOP controls the internal fallback"
+        : "Start or stop the internal pattern clock");
     const runButton = runSwitch?.querySelector('[data-value="0"]');
-    if (runButton) runButton.textContent = dawMode ? "DAW FOLLOW" : "RUN / STOP";
+    if (runButton) runButton.textContent = runHostControlled ? "DAW FOLLOW" : "RUN / STOP";
 
     const tempoBox = this.querySelector(".tempo-box");
-    tempoBox?.classList.toggle("daw-locked", dawMode);
+    tempoBox?.classList.toggle("daw-locked", tempoHostControlled);
     const tempoDial = tempoBox?.querySelector(".dial");
-    tempoDial?.setAttribute("aria-disabled", `${dawMode}`);
-    if (tempoDial) tempoDial.tabIndex = dawMode ? -1 : 0;
-    tempoBox?.setAttribute("title", dawMode
+    tempoDial?.setAttribute("aria-disabled", `${tempoHostControlled}`);
+    if (tempoDial) tempoDial.tabIndex = tempoHostControlled ? -1 : 0;
+    tempoBox?.setAttribute("title", tempoHostControlled
       ? "Tempo follows the DAW; switch to INT to edit the internal BPM"
-      : "Internal sequencer tempo");
+      : dawMode
+        ? "No DAW tempo received; this sets the internal fallback BPM"
+        : "Internal sequencer tempo");
 
     const readout = this.querySelector(".clock-readout");
     if (readout) {
-      readout.textContent = dawMode
-        ? (hostReady ? `DAW · ${effectiveTempo} BPM` : "DAW · WAIT")
-        : `INT · ${internalTempo} BPM`;
+      readout.textContent = !dawMode
+        ? `INT · ${internalTempo} BPM`
+        : hostReady
+          ? `DAW · ${effectiveTempo} BPM`
+          : hasTempo
+            ? `DAW ${effectiveTempo} · INT RUN`
+            : hasTransport
+              ? `INT ${internalTempo} · DAW RUN`
+              : "DAW · INT FALLBACK";
       readout.classList.toggle("locked", dawMode && hostReady);
       readout.classList.toggle("waiting", dawMode && !hostReady);
       readout.title = dawMode
-        ? (hasPosition
-          ? "DAW tempo, transport and timeline position locked"
-          : hostReady
-            ? "DAW tempo and transport locked; timeline position unavailable"
-            : "Waiting for DAW tempo and transport")
+        ? (hostReady
+          ? (hasPosition
+            ? "DAW tempo, transport and timeline position locked"
+            : "DAW tempo and transport locked; timeline position unavailable")
+          : hasTempo
+            ? "DAW tempo received; transport uses manual RUN/STOP fallback"
+            : hasTransport
+              ? "DAW transport received; tempo uses the internal BPM fallback"
+              : "Host sent no Cmajor timeline events; internal BPM and RUN/STOP remain active")
         : "Internal clock";
     }
   }
@@ -730,6 +937,7 @@ class AcidifyPatchView extends HTMLElement {
   }
 
   _setStudioMode(enabled) {
+    if (this._pitchMenuOpen) this._closePitchMenu(false);
     this._studioMode = Boolean(enabled);
     this.classList.toggle("studio-mode", this._studioMode);
     const toggle = this.querySelector(".studio-toggle");
@@ -922,9 +1130,13 @@ class AcidifyPatchView extends HTMLElement {
     const selected = this._selectedIndices();
     const selection = this.querySelector(".studio-selection");
     if (selection) {
+      const root = Math.round(this._values.get("param12") ?? 36);
+      const pitches = selected.map(index => this._stepPitch(index));
+      const octaves = pitches.map(pitch => Math.floor(pitch / 12));
+      const commonOctave = octaves.every(octave => octave === octaves[0]) ? octaves[0] : -1;
       selection.textContent = selected.length === 1
-        ? `STEP ${String(selected[0] + 1).padStart(2, "0")}`
-        : `${selected.length} STEPS`;
+        ? `STEP ${String(selected[0] + 1).padStart(2, "0")} · ${noteName(root + pitches[0]).replace("#", "♯")} · OCT +${octaves[0]}`
+        : `${selected.length} STEPS · ${commonOctave >= 0 ? `OCT +${commonOctave}` : "MIXED OCT"}`;
     }
     const undo = this.querySelector('[data-studio-action="undo"]');
     const redo = this.querySelector('[data-studio-action="redo"]');
@@ -957,6 +1169,7 @@ class AcidifyPatchView extends HTMLElement {
     this._renderStepStrip();
     this._renderStepEditor();
     this._renderStudio();
+    if (this._pitchMenuOpen) this._refreshPitchMenu();
     if (before) this._pushHistory(before, isPitch ? "Edit pitch" : "Edit timing");
   }
 
@@ -971,10 +1184,11 @@ class AcidifyPatchView extends HTMLElement {
       node.classList.toggle("sliding", (flags & 4) !== 0);
       const root = Math.round(this._values.get("param12") ?? 36);
       const pitch = this._stepPitch(index);
-      const absoluteNote = noteName(root + pitch);
-      node.querySelector(".step-note").textContent = NOTE_NAMES[pitch % 12];
-      node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}; click to edit, mouse wheel changes pitch`);
-      node.title = `Step ${index + 1} · ${absoluteNote} · click: select · wheel: semitone`;
+      const absoluteNote = noteName(root + pitch).replace("#", "♯");
+      node.querySelector(".step-note").textContent = absoluteNote;
+      node.querySelector(".step-octave").textContent = `+${Math.floor(pitch / 12)}`;
+      node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}, ${this._octaveLabel(pitch)}; click to edit, wheel changes semitone, right-click or double-click chooses a note`);
+      node.title = `Step ${index + 1} · ${absoluteNote} · ${this._octaveLabel(pitch)} · wheel: semitone · right/double click: choose note`;
     });
   }
 
@@ -993,7 +1207,8 @@ class AcidifyPatchView extends HTMLElement {
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", `${active}`);
     });
-    this.querySelector(".octave-indicator")?.classList.toggle("high", pitch >= 12);
+    const octave = this.querySelector(".octave-indicator");
+    if (octave) octave.textContent = `${this._octaveLabel(pitch)} · +${pitch} SEMITONES FROM ROOT`;
   }
 
   _renderStudio() {
@@ -1008,7 +1223,14 @@ class AcidifyPatchView extends HTMLElement {
       cell.classList.toggle("selected", this._selectedSteps.has(index));
       cell.classList.toggle("playing", index === this._playingStep);
       cell.setAttribute("aria-pressed", `${active}`);
-      if (kind === "pitch") cell.textContent = NOTE_NAMES[this._stepPitch(index) % 12].replace("#", "♯");
+      if (kind === "pitch") {
+        const root = Math.round(this._values.get("param12") ?? 36);
+        const pitch = this._stepPitch(index);
+        const absoluteNote = noteName(root + pitch).replace("#", "♯");
+        cell.textContent = absoluteNote;
+        cell.setAttribute("aria-label", `Step ${index + 1} note ${absoluteNote}, ${this._octaveLabel(pitch)}; wheel changes semitone, right-click or double-click chooses a note`);
+        cell.title = `${absoluteNote} · ${this._octaveLabel(pitch)} · wheel: semitone · right/double click: choose note`;
+      }
     });
     this._updateStudioToolbar();
   }
@@ -1054,8 +1276,10 @@ class AcidifyPatchView extends HTMLElement {
         ${Array.from({ length: 4 }, (_, position) => {
           const index = group * 4 + position;
           return `
-            <button class="sequence-step" data-step="${index}" aria-label="Step ${index + 1}">
-              <span class="step-led"></span><span class="step-index">${index + 1}</span><span class="step-note">--</span>
+            <button class="sequence-step" data-step="${index}" aria-label="Step ${index + 1}"
+              aria-haspopup="dialog">
+              <span class="step-led"></span><span class="step-octave">+0</span>
+              <span class="step-index">${index + 1}</span><span class="step-note">--</span>
             </button>`;
         }).join("")}
       </div>`).join("");
@@ -1078,6 +1302,7 @@ class AcidifyPatchView extends HTMLElement {
               ${Array.from({ length: 4 }, (_, position) => {
                 const index = group * 4 + position;
                 return `<button class="studio-cell" data-kind="${lane.kind}" data-step="${index}"
+                  ${lane.kind === "pitch" ? 'aria-haspopup="dialog"' : ""}
                   aria-label="Step ${index + 1} ${lane.label}" aria-pressed="false"></button>`;
               }).join("")}
             </div>`).join("")}
@@ -1090,6 +1315,11 @@ class AcidifyPatchView extends HTMLElement {
           return `<span>${String(index + 1).padStart(2, "0")}</span>`;
         }).join("")}
       </div>`).join("");
+    const pitchChoices = Array.from({ length: 25 }, (_, pitch) => `
+      <button class="pitch-menu-choice" type="button" role="radio" data-pitch-value="${pitch}"
+        aria-checked="false">
+        <strong>--</strong><small>OCT +${Math.floor(pitch / 12)}</small>
+      </button>`).join("");
 
     return `
 <style>
@@ -2662,6 +2892,10 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .sequence-step.accented::before,
   acidify-patch-view .step-note { color: #8b1b15; }
   acidify-patch-view .sequence-step.sliding::after { color: #262721; }
+  acidify-patch-view .step-octave {
+    position: absolute; right: 4px; top: 4px;
+    color: #5c5d56; font: 6px "Courier New", monospace; font-weight: 900;
+  }
 
   acidify-patch-view .editor,
   acidify-patch-view.studio-mode .studio-editor {
@@ -2685,7 +2919,11 @@ class AcidifyPatchView extends HTMLElement {
     border-color: #0a0706;
     text-shadow: 0 0 4px #e32418, 0 0 8px rgba(227,36,24,.38);
   }
-  acidify-patch-view .octave-indicator { color: #555750; }
+  acidify-patch-view .octave-indicator {
+    color: #555750; min-height: 9px;
+    font-family: "Courier New", monospace; font-weight: 900; letter-spacing: .3px;
+  }
+  acidify-patch-view .octave-indicator::after { content: none; }
   acidify-patch-view .pitch-key {
     color: #252620;
     border-color: #73736d;
@@ -2773,6 +3011,87 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .footer-mark {
     color: #55574f;
     text-shadow: 0 .5px rgba(255,255,255,.38);
+  }
+  acidify-patch-view .pitch-menu[hidden] { display: none; }
+  acidify-patch-view .pitch-menu {
+    position: absolute; z-index: 95; width: 394px; height: 278px; overflow: hidden;
+    color: #24251f; border: 1px solid #565750; border-radius: 8px;
+    background:
+      radial-gradient(ellipse at 36% -10%, rgba(255,255,255,.58), transparent 52%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, rgba(49,50,48,.025) 1px 2px, transparent 2px 5px),
+      linear-gradient(155deg, #dedfd9, #b7b8b2);
+    box-shadow:
+      0 16px 30px rgba(35,32,25,.46),
+      0 5px 10px rgba(35,32,25,.35),
+      inset 0 1px #fafaf5,
+      inset 0 -2px 4px rgba(0,0,0,.2);
+    animation: pitch-menu-enter 110ms ease-out both;
+  }
+  @keyframes pitch-menu-enter {
+    from { opacity: 0; transform: translateY(-3px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  acidify-patch-view .pitch-menu-head {
+    height: 42px; padding: 7px 8px 5px 11px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(69,69,64,.55);
+    box-shadow: 0 1px rgba(255,255,255,.55);
+  }
+  acidify-patch-view .pitch-menu-head > div {
+    min-width: 0; display: flex; flex-direction: column; gap: 2px;
+  }
+  acidify-patch-view .pitch-menu-title {
+    overflow: hidden; color: #9f1e18; font-size: 10px; letter-spacing: 1.2px;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  acidify-patch-view .pitch-menu-head span {
+    color: #62635c; font-size: 5.5px; font-weight: 900; letter-spacing: .85px;
+  }
+  acidify-patch-view .pitch-menu-close {
+    flex: 0 0 auto; width: 23px; height: 21px; border-radius: 3px; cursor: pointer;
+    color: #e8e6dd; font: 18px/17px Arial, sans-serif;
+    background: linear-gradient(#57564f, #292925);
+    border: 1px solid #1b1b18;
+    box-shadow: inset 0 1px rgba(255,255,255,.18), 0 1px rgba(255,255,255,.42);
+  }
+  acidify-patch-view .pitch-menu-grid {
+    height: 211px; padding: 7px 8px;
+    display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); gap: 4px;
+  }
+  acidify-patch-view .pitch-menu-choice {
+    min-width: 0; cursor: pointer; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    color: #e9e8df;
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.13), transparent 34% 77%, rgba(0,0,0,.25)),
+      linear-gradient(#5a5953, #292925);
+    border: 1px solid #1a1a17;
+    box-shadow: 0 2px 2px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.18);
+  }
+  acidify-patch-view .pitch-menu-choice strong {
+    font: 10px "Courier New", monospace; letter-spacing: .3px;
+  }
+  acidify-patch-view .pitch-menu-choice small {
+    color: #aaa9a1; font: 5px "Courier New", monospace; font-weight: 900;
+  }
+  acidify-patch-view .pitch-menu-choice:hover,
+  acidify-patch-view .pitch-menu-choice:focus-visible {
+    color: #ff9a87; border-color: #8f3932;
+  }
+  acidify-patch-view .pitch-menu-choice:focus-visible,
+  acidify-patch-view .pitch-menu-close:focus-visible {
+    outline: 2px solid rgba(169,32,26,.78); outline-offset: 1px;
+  }
+  acidify-patch-view .pitch-menu-choice.active {
+    color: #fff0e9; border-color: #75160f;
+    background: linear-gradient(#ae3026, #67140f);
+    box-shadow: inset 0 2px 4px rgba(52,5,2,.4), 0 0 5px rgba(181,41,33,.24);
+  }
+  acidify-patch-view .pitch-menu-choice.active small { color: #ffc0b5; }
+  acidify-patch-view .pitch-menu-foot {
+    height: 25px; padding: 5px 9px 0; border-top: 1px solid rgba(69,69,64,.35);
+    color: #666760; font-size: 5px; font-weight: 900; letter-spacing: .85px;
+    text-align: right;
   }
   acidify-patch-view .distortion-trigger {
     display: inline-flex; align-items: center; justify-content: center; gap: 3px;
@@ -3119,18 +3438,34 @@ class AcidifyPatchView extends HTMLElement {
             <button data-studio-action="select-all" title="Select all steps">16<small>ALL</small></button>
             <button data-studio-action="randomize" title="Smart-randomize selection">✣<small>RAND</small></button>
             <button data-studio-action="rest" title="Toggle gate/rest for selection">—<small>REST</small></button>
+            <button data-studio-action="choose-note" aria-haspopup="dialog"
+              title="Choose an exact note for the selected steps">♪<small>NOTE</small></button>
           </div>
           <span class="studio-toast" role="status"></span>
         </div>
         <div class="studio-matrix" aria-label="Studio step editor">
           <div class="studio-ruler"><span></span><div class="studio-lane-cells">${studioRuler}</div></div>
           ${studioLanes}
-          <span class="studio-hint">DRAG PAINT · SHIFT SELECT · WHEEL NOTE · M VIEW</span>
+          <span class="studio-hint">RIGHT/DOUBLE CLICK NOTE · WHEEL ±1 · SHIFT SELECT · M VIEW</span>
         </div>
       </div>
     </section>
-    <div class="footer-mark">ACIDIFY 0.6.0 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
+    <div class="footer-mark">ACIDIFY 0.6.1 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
   </div>
+  <section class="pitch-menu" role="dialog" aria-modal="false" aria-hidden="true"
+    aria-labelledby="pitch-menu-title" hidden>
+    <header class="pitch-menu-head">
+      <div>
+        <strong class="pitch-menu-title" id="pitch-menu-title">CHOOSE NOTE</strong>
+        <span>DIRECT STEP PITCH · ROOT-RELATIVE RANGE</span>
+      </div>
+      <button class="pitch-menu-close" type="button" aria-label="Close note chooser">×</button>
+    </header>
+    <div class="pitch-menu-grid" role="radiogroup" aria-label="Available notes">
+      ${pitchChoices}
+    </div>
+    <footer class="pitch-menu-foot">25 SEMITONES · THREE VISIBLE OCTAVE LEVELS</footer>
+  </section>
 </div>`;
   }
 }

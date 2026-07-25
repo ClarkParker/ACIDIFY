@@ -7,7 +7,7 @@ und eine getrennte, für Acid-Produktionen typische Ausgangsverzerrung anbieten.
 Der Instrumentenkern bleibt auch bei ausgeschalteter Distortion vollständig
 spielbar und messbar.
 
-0.6.0 ist ein technisch geprüfter Modellkandidat. „AAA Clone“ wird erst
+0.6.1 ist ein technisch geprüfter Modellkandidat. „AAA Clone“ wird erst
 beansprucht, wenn identische Pattern mehrerer Originalgeräte kalibriert
 aufgenommen, gegen das Modell vermessen und im Blindtest bewertet wurden.
 Quellcodequalität und grüne Offline-Tests ersetzen diesen Hör- und
@@ -49,7 +49,7 @@ sondern aus dem gekoppelten Verhalten von:
 5. Vierpol-Diodenleiter und seinen Koppelnetzwerken,
 6. optionaler nachgeschalteter Produktionsverzerrung.
 
-## 3. DSP-Topologie 0.6.0
+## 3. DSP-Topologie 0.6.1
 
 ```mermaid
 flowchart TD
@@ -79,8 +79,17 @@ vierfachen `processor.frequency` berechnet.
   Start, Stop, Loop und Seek dem musikalischen 16tel-Raster.
 - Stellt ein Host Tempo und Transport, aber keine Position bereit, läuft ein
   klar definierter Fallback ab Step 1 mit Host-BPM.
+- Ohne Host-Transport bleibt `param10` aktiv; ohne Host-Tempo bleibt `param9`
+  aktiv. Erst ein tatsächlich empfangenes Ereignis übernimmt und sperrt die
+  jeweilige interne Funktion. Dadurch bleibt DAW-Stellung auch in
+  Amorph-Builds ohne Timeline-Bridge spielbar.
 - `param49` schaltet die Quelle append-only um und startet aus Gründen der
   Preset-Kompatibilität in `Internal`.
+
+Die typisierten Eingänge sind der standardisierte Cmajor-Patchvertrag. Der
+Produktionsgraph-Test belegt ihre Verdrahtung bis in den 4×-Kern, aber nicht die
+Weitergabe durch einen konkreten Amorph-Runtime-Build. Die öffentlichen
+Amorph-v0.99/v1-Beta-Unterlagen spezifizieren diese Hostfähigkeit derzeit nicht.
 
 ### VCO und Slide
 
@@ -170,8 +179,10 @@ nur ein kleiner `DIST`-Button ergänzt. Seine LED zeigt Aktivität; ein Klick
 öffnet das Overlay. Das Overlay ist per Tastatur erreichbar, schließt mit
 Escape oder Außenklick und verändert weder Panelgröße noch Modulraster.
 Im bestehenden Transportmodul sitzt zusätzlich ein kleiner `INT/DAW`-Schalter
-mit Statuszeile. Step-Pitches sind in Classic direkt per Mausrad oder über
-Step-Auswahl, Klaviatur und Oktavtaster erreichbar.
+mit Statuszeile. Jeder Step zeigt absolute Note und relative Oktave. Step-Pitches
+sind in Classic und Studio per Mausrad, Rechtsklick, Doppelklick oder direktem
+25-Noten-Menü erreichbar; die Classic-Klaviatur und die Oktavtaster bleiben
+zusätzlich erhalten. Eine Studio-Mehrfachauswahl kann gemeinsam gesetzt werden.
 
 ## 6. Verifikation
 
@@ -181,8 +192,8 @@ Automatisiert vorhanden:
 - Cmajor-C++-Codegen,
 - Clean/Post-FX-Zweikanalmatrix bei 44,1/48/88,2/96 kHz,
 - interner Legato-/Retrigger-Test bei denselben Raten,
-- interner/DAW-Transporttest mit BPM-Wechsel, Stop/Start und Seek bei denselben
-  Raten,
+- Transporttest durch den öffentlichen Produktionsgraphen mit BPM-Wechsel,
+  Stop/Start, Seek und No-Host-Internal-Fallback bei denselben Raten,
 - Sicherheitsgrenzen, endliche Samples, Release-Tail und Sprungprüfung,
 - UI-, Echo-, Reconnect-, Overlay-, Geometrie- und Responsive-Tests.
 

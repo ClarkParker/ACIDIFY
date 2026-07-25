@@ -1,5 +1,5 @@
 /*
-    ACIDIFY 0.6.0 — analog-modelled 303-class bassline for Amorph.
+    ACIDIFY 0.6.1 — analog-modelled 303-class bassline for Amorph.
 
     MIDI/16-step sequencer -> oscillator -> coupling HP -> four-stage ladder
     -> coupling HP -> accent VCA -> output stage.
@@ -744,7 +744,10 @@ processor AcidifyCore
 
     bool sequencerRunning()
     {
-        return dawSyncEnabled ? (hostTransportSeen && dawPlaying) : manualRunning;
+        // A host that does not forward Cmajor timeline events must not leave the
+        // instrument dead. DAW mode hands control over as soon as a real transport
+        // event arrives; until then RUN/STOP remains a deterministic INT fallback.
+        return dawSyncEnabled && hostTransportSeen ? dawPlaying : manualRunning;
     }
 
     int hostSyncFlags()
@@ -950,7 +953,7 @@ processor AcidifyCore
         if (nextRunning != manualRunning)
         {
             manualRunning = nextRunning;
-            if (! dawSyncEnabled)
+            if (! dawSyncEnabled || ! hostTransportSeen)
                 resetSequencer();
         }
         reportClockState();

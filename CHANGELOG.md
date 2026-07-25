@@ -6,6 +6,42 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-07-25
+
+### Added
+
+- Direktes 25-Noten-Menü für jeden Step per Rechtsklick oder Doppelklick sowie
+  über einen sichtbaren `NOTE`-Button in Studio.
+- Dauerhafte absolute Noten- und relative Oktavanzeige (`+0/+1/+2`) auf allen
+  Step-Buttons, in der Studio-Notenzeile und im ausgewählten Step-Status.
+- Expliziter `DAW · INT FALLBACK`, wenn der Amorph-Runtime-Build keine
+  Cmajor-Timeline-Ereignisse weitergibt.
+
+### Fixed
+
+- Mausrad-Pitch auf den oberen Step-Buttons bleibt nun auch bei geöffneter
+  Studioansicht aktiv und bearbeitet eine vorhandene Mehrfachauswahl gemeinsam.
+- `RUN / STOP` und interner BPM-Regler bleiben im DAW-Modus bedienbar, solange
+  die jeweilige Hostfunktion nicht tatsächlich empfangen wurde; ein fehlender
+  Host-Bridge-Pfad lässt das Instrument nicht mehr stillstehen.
+- Transporttest läuft nun durch den öffentlichen Produktionsgraphen `Acidify`
+  statt den äußeren Timeline-Anschluss durch einen direkten Kerntest zu umgehen.
+
+### Changed
+
+- Tempo- und Transport-Lock sind unabhängig: Nur eine wirklich empfangene
+  Hostfunktion sperrt ihren internen Regler.
+- Dev-Kit-Nachweis präzisiert: `std::timeline::*` ist der gültige
+  Cmajor-Patchvertrag, aber kein Beleg dafür, dass ein bestimmter
+  Amorph-Runtime-Build die DAW-Timeline weiterreicht.
+
+### Validated
+
+- UI-Smoke-Test mit 25-Noten-Menü, Rechtsklick, Doppelklick, Studio-Mehrfachwahl,
+  sichtbaren Oktaven, Studio-Step-Mausrad, Escape und responsiven Panelgrenzen.
+- Produktionsgraph-Transportmatrix einschließlich vollständigem
+  No-Host-Internal-Fallback bei 44,1, 48, 88,2 und 96 kHz bestanden.
+
 ## [0.6.0] - 2026-07-25
 
 ### Added

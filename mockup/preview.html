@@ -52,6 +52,11 @@
     const previewMode = new URLSearchParams(location.search).get("mode");
     if (previewMode === "studio") {
       view._setStudioMode(true);
+    } else if (previewMode === "pitch") {
+      view._setStudioMode(true);
+      const target = view.querySelector('.studio-cell[data-kind="pitch"][data-step="4"]');
+      const bounds = target.getBoundingClientRect();
+      view._openPitchMenu(4, bounds.left + bounds.width / 2, bounds.top + bounds.height / 2, target);
     } else if (previewMode === "distortion") {
       patchConnection.sendEventOrValue("param45", 1);
       patchConnection.sendEventOrValue("param46", 1);

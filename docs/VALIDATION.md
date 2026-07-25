@@ -1,4 +1,4 @@
-# Validierung 0.6.0
+# Validierung 0.6.1
 
 ## Automatische Prüfungen
 
@@ -9,13 +9,13 @@
 | DSP↔UI-Sync | 49/49 Parameter konsistent; 3 Timeline-Eingänge separat |
 | Cmajor 1.0.3175 C++-Codegen | bestanden, ohne Compilerwarnung |
 | JavaScript-Syntax aller Test-/Render-Skripte | bestanden |
-| Live-Browser-Render Classic/DAW-Sync/Studio/Distortion bei 1180 × 580 px | bestanden |
-| Live-Browser-Render Classic/DAW-Sync/Studio/Distortion bei 590 × 290 px | bestanden |
+| Live-Browser-Render Classic/DAW-Sync/Studio/Notenwahl/Distortion bei 1180 × 580 px | bestanden |
+| Live-Browser-Render Classic/DAW-Sync/Studio/Notenwahl/Distortion bei 590 × 290 px | bestanden |
 | Distortion-Overlay | Open/Close, Escape, Außenklick, Fokus und Status bestanden |
 | Distortion-Parameter | Enable, drei Typen, Drive, Mix und Echo-Schutz bestanden |
 | Amorph `data-endpoint-id` an globalen Controls | 17/17 |
-| INT/DAW-UI | BPM-Anzeige, Wait/Lock, Run-Sperre und Host-Lampe bestanden |
-| Classic-Step-Pitch | Auswahl/Keyboard/Oktave und Mausrad-Halbton bestanden |
+| INT/DAW-UI | unabhängiger Tempo-/Transport-Lock, Internal-Fallback und Host-Lampe bestanden |
+| Step-Pitch | Note/Oktave, Keyboard, Rechts-/Doppelklick, 25-Noten-Menü und Mausrad bestanden |
 | Parameter-Echo-Schutz und Web-Component-Reconnect | bestanden |
 | Transport/Synthese/Master | je 13 px Abstand, identische Ober-/Unterkante |
 | Waveform/Klangregler/Volume | max. 0,5 px Achsabweichung |
@@ -24,7 +24,7 @@
 | Classic-Modulraster Status/Keyboard/Timing | gleiche Kanten, je 13 px Abstand |
 | Keyboard-Geometrie | 7 weiße / 5 schwarze Tasten bestanden |
 | Classic-Funktionsmatrix | 3 × 2, vollständig innerhalb der Modulbucht |
-| Studio-Raster und 11 Aktionen | 4 Lanes × 4 Gruppen × 4 Steps bestanden |
+| Studio-Raster und 12 Aktionen | 4 Lanes × 4 Gruppen × 4 Steps bestanden |
 | Responsive Panelgrenzen bei 590 × 290 px | bestanden |
 
 ## DSP-Audiomatrix
@@ -79,16 +79,20 @@ abgedeckt.
 
 ## Clock- und Transportmatrix
 
-`tools/dsp_transport_test.mjs` taktet zwei parallele Kerne innerhalb desselben
-Cmajor-Renders. Links läuft die interne Uhr, rechts die DAW-Uhr mit typisierten
-Tempo-, Transport- und Positionsereignissen.
+`tools/dsp_transport_test.mjs` taktet drei parallele Instanzen des öffentlichen
+Produktionsgraphen `Acidify` innerhalb desselben Cmajor-Renders:
 
-| Samplerate | INT 120 BPM | DAW 120→180 BPM | ohne Position | Stop/Start | Startposition / Seek |
-|---:|:---:|:---:|:---:|:---:|:---:|
-| 44,1 kHz | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
-| 48 kHz | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
-| 88,2 kHz | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
-| 96 kHz | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
+- Kanal 1: interne Uhr,
+- Kanal 2: DAW-Uhr mit typisierten Tempo-, Transport- und Positionsereignissen,
+- Kanal 3: DAW-Modus ohne jedes Host-Timeline-Ereignis; interner BPM- und
+  Run/Stop-Fallback.
+
+| Samplerate | INT 120 BPM | DAW 120→180 BPM | ohne Position | Stop/Start | No-Host-Fallback | Startposition / Seek |
+|---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 44,1 kHz | bestanden | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
+| 48 kHz | bestanden | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
+| 88,2 kHz | bestanden | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
+| 96 kHz | bestanden | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
 
 Bei 120 BPM liegen Internal und DAW auf denselben samplegenauen
 Step-Grenzen. Die erste halbe Sekunde erhält die DAW-Instanz bewusst nur Tempo
@@ -97,12 +101,18 @@ verursacht keinen Phasensprung. Nach einem Stop bei 1,0 s startet Internal bei S
 DAW startet bei 1,25 s mit 180 BPM und Quarter-Note 8,5 korrekt auf Step 3
 (interner Index 2). Ein Seek auf Quarter-Note 12 springt auf Step 1
 (interner Index 0). Stop setzt die sichtbare Step-Position auf inaktiv.
+Die dritte Instanz erhält ausschließlich `param9`, `param10` und
+`param49 = DAW`; sie trifft dieselben Step-/Stop-/Start-Grenzen wie die interne
+Referenz und belegt den spielbaren Fallback ohne Hostdaten.
 
-## Was 0.6.0 technisch belegt
+## Was 0.6.1 technisch belegt
 
 - Der Patch kompiliert und der 49-Parameter-Vertrag ist synchron.
-- Interne Uhr und DAW-Timeline-Logik reagieren bis 96 kHz reproduzierbar auf
-  BPM, Play/Stop, Startposition und Seek.
+- Der öffentliche Produktionsgraph reicht Cmajor-Timeline-Ereignisse bis in den
+  4×-Kern; Uhr und Timeline-Logik reagieren bis 96 kHz reproduzierbar auf BPM,
+  Play/Stop, Startposition und Seek.
+- Fehlen Host-Timeline-Ereignisse, bleiben interner BPM und Run/Stop in
+  DAW-Stellung reproduzierbar funktionsfähig.
 - Der Clean-Pfad enthält keine fest eingebackene Produktionsverzerrung.
 - Distortion-Bypass und Null-Mix sind innerhalb derselben Instanz
   sampletransparent.
@@ -111,6 +121,8 @@ DAW startet bei 1,25 s mit 180 BPM und Quarter-Note 8,5 korrekt auf Step 3
 - Legato, Retrigger, Notenpriorität und Release verhalten sich bis 96 kHz
   unterschiedlich und stabil.
 - Die zuvor fixierte Classic-/Studio-Geometrie bleibt trotz Overlay erhalten.
+- Note und Oktave sind in beiden Editoren sichtbar; Rechtsklick, Doppelklick,
+  `NOTE`-Aktion und Mausrad sind im Browser-Workflow geprüft.
 
 ## Noch nicht abgedeckt
 
@@ -118,7 +130,8 @@ DAW startet bei 1,25 s mit 180 BPM und Quarter-Note 8,5 korrekt auf Step 3
 - signalabhängige Diodenkennlinie und Gerätevarianz anhand dieser Messungen,
 - Preset-/Projekt-Reload und Automation im finalen Amorph Host,
 - tatsächliche Weitergabe von Tempo, Transport und Position durch den finalen
-  Amorph-Build in den unterstützten DAWs,
+  Amorph-Build in den unterstützten DAWs; die öffentlichen Amorph-v0.99/v1-
+  Beta-Unterlagen dokumentieren diesen Hostvertrag derzeit nicht,
 - CPU-Messung im finalen Host,
 - Hostlauf bei 176,4/192 kHz,
 - Blindtest mit Produzenten,

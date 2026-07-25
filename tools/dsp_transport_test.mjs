@@ -128,13 +128,14 @@ processor AcidifyTraceMerge
 {
     input stream float internalIn;
     input stream float dawIn;
-    output stream float<2> out;
+    input stream float fallbackIn;
+    output stream float<3> out;
 
     void main()
     {
         loop
         {
-            out <- float<2> (internalIn, dawIn);
+            out <- float<3> (internalIn, dawIn, fallbackIn);
             advance();
         }
     }
@@ -142,13 +143,17 @@ processor AcidifyTraceMerge
 
 graph AcidifyTransportTest [[ main ]]
 {
-    output stream float<2> out;
+    output stream float<3> out;
 
     node events = AcidifyTransportEvents;
-    node internal = AcidifyCore * 4;
-    node daw = AcidifyCore * 4;
+    // Exercise the exact production graph boundary, not AcidifyCore directly.
+    // This proves that the public timeline endpoints reach the oversampled core.
+    node internal = Acidify;
+    node daw = Acidify;
+    node fallback = Acidify;
     node internalTrace = AcidifyStepTrace;
     node dawTrace = AcidifyStepTrace;
+    node fallbackTrace = AcidifyStepTrace;
     node merge = AcidifyTraceMerge;
 
     connection
@@ -161,10 +166,17 @@ graph AcidifyTransportTest [[ main ]]
         events.transportOut -> daw.transportStateIn;
         events.positionOut -> daw.positionIn;
 
+        // DAW mode with no host timeline must retain the internal controls.
+        events.internalTempoOut -> fallback.param9;
+        events.internalRunOut -> fallback.param10;
+        events.dawModeOut -> fallback.param49;
+
         internal.currentStep -> internalTrace.stepIn;
         daw.currentStep -> dawTrace.stepIn;
+        fallback.currentStep -> fallbackTrace.stepIn;
         internalTrace.out -> merge.internalIn;
         dawTrace.out -> merge.dawIn;
+        fallbackTrace.out -> merge.fallbackIn;
         merge.out -> out;
     }
 }
@@ -283,7 +295,7 @@ try {
     "render",
     `--rate=${sampleRate}`,
     `--length=${Math.round(sampleRate * 3.0)}`,
-    "--channels=2",
+    "--channels=3",
     "--blockSize=128",
     `--output=${wavPath}`,
     manifestPath,
@@ -295,19 +307,24 @@ try {
   }
 
   const channels = readChannels(await readFile(wavPath));
-  if (channels.length !== 2) throw new Error(`Expected stereo trace, got ${channels.length} channels`);
+  if (channels.length !== 3) throw new Error(`Expected 3-channel trace, got ${channels.length} channels`);
   const internal = transitions(channels[0]);
   const daw = transitions(channels[1]);
+  const fallback = transitions(channels[2]);
   const internalOrigin = validate(internal, expectedInternal(), "Internal clock");
   const dawOrigin = validate(daw, expectedDaw(), "DAW clock");
+  const fallbackOrigin = validate(fallback, expectedInternal(), "DAW no-host fallback");
 
   console.log(JSON.stringify({
     ok: true,
     sampleRate,
-    rendererLatencyFrames: { internal: internalOrigin, daw: dawOrigin },
+    rendererLatencyFrames: { internal: internalOrigin, daw: dawOrigin, fallback: fallbackOrigin },
     internalTransitions: internal,
     dawTransitions: daw,
+    fallbackTransitions: fallback,
     checks: {
+      productionGraphBoundary: true,
+      noHostManualFallback: true,
       internal120Bpm: true,
       dawNoPositionFallback: true,
       daw120Bpm: true,
