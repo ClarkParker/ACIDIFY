@@ -85,6 +85,8 @@ processor AcidifyCore
     input event float param48 [[ name: "Distortion Mix",    min: 0.0, max: 1.0, init: 1.0 ]];
     input event float param49 [[ name: "Clock Mode",         min: 0.0, max: 1.0, init: 0.0, step: 1.0,
                                  text: "Internal|DAW" ]];
+    input event float param50 [[ name: "Swing",              min: 0.0, max: 100.0, init: 0.0, step: 1.0,
+                                 unit: "%" ]];
 
     float tuning = 0.0f;
     float cutoffControl = 0.45f;
@@ -99,6 +101,7 @@ processor AcidifyCore
     float distortionDrive = 0.35f;
     float distortionMix = 1.0f;
     float tempo = 128.0f;
+    float swingControl = 0.0f;
     bool manualRunning = false;
     bool dawSyncEnabled = false;
     bool dawPlaying = false;
@@ -854,6 +857,19 @@ processor AcidifyCore
         return wrapped;
     }
 
+    float64 swingDelayQuarterNote()
+    {
+        // At 100%, move the second sixteenth to the final triplet division.
+        // The pair still spans exactly one eighth note: 2/3 + 1/3.
+        return float64 (clamp (swingControl, 0.0f, 100.0f)) / 1200.0;
+    }
+
+    float stepDurationQuarterNotes (int step)
+    {
+        let delay = float (swingDelayQuarterNote());
+        return (step & 1) == 0 ? 0.25f + delay : 0.25f - delay;
+    }
+
     void startSequenceStepAt (int nextStep, float sampleRate, float bpm)
     {
         let length = clamp (patternLength, 1, 16);
@@ -864,7 +880,9 @@ processor AcidifyCore
         let hasGate = (flags & 1) != 0;
         let hasAccent = (flags & 2) != 0;
         let previousSlide = (previousFlags & 4) != 0;
-        let stepSamples = max (1, int (sampleRate * 15.0f / max (bpm, 1.0f)));
+        let stepDuration = stepDurationQuarterNotes (sequenceStep);
+        let stepSamples = max (1, int (sampleRate * 60.0f * stepDuration
+                                      / max (bpm, 1.0f) + 0.5f));
 
         if (hasGate)
         {
@@ -906,7 +924,11 @@ processor AcidifyCore
 
     void processDawClock (float sampleRate)
     {
-        let absoluteStep = int64 (floor (hostQuarterNote * 4.0));
+        let pairIndex = int64 (floor (hostQuarterNote * 2.0));
+        let pairStart = float64 (pairIndex) * 0.5;
+        let oddStepStart = pairStart + 0.25 + swingDelayQuarterNote();
+        let isOddStep = hostQuarterNote >= oddStepStart;
+        let absoluteStep = pairIndex * 2 + (isOddStep ? 1 : 0);
 
         if (! dawTickReady || absoluteStep != lastDawTick)
         {
@@ -916,7 +938,9 @@ processor AcidifyCore
 
             let flags = getFlags (sequenceStep);
             dawGateArmed = (flags & 1) != 0 && (flags & 4) == 0;
-            dawGateOffQuarterNote = (float64 (absoluteStep) + 0.5) * 0.25;
+            let stepStart = isOddStep ? oddStepStart : pairStart;
+            let stepEnd = isOddStep ? pairStart + 0.5 : oddStepStart;
+            dawGateOffQuarterNote = stepStart + (stepEnd - stepStart) * 0.5;
         }
 
         if (dawGateArmed && hostQuarterNote >= dawGateOffQuarterNote)
@@ -1049,6 +1073,7 @@ processor AcidifyCore
         }
         reportClockState();
     }
+    event param50 (float v) { swingControl = clamp (v, 0.0f, 100.0f); }
 
     // Amorph sends its DAW playhead as a rolling six-value float64 event stream:
     // play state, BPM, time-signature numerator, denominator, absolute PPQ, and
@@ -1340,6 +1365,8 @@ graph Acidify [[ main ]]
     input event float param48 [[ name: "Distortion Mix",    min: 0.0, max: 1.0, init: 1.0 ]];
     input event float param49 [[ name: "Clock Mode",         min: 0.0, max: 1.0, init: 0.0, step: 1.0,
                                  text: "Internal|DAW" ]];
+    input event float param50 [[ name: "Swing",              min: 0.0, max: 100.0, init: 0.0, step: 1.0,
+                                 unit: "%" ]];
 
     node core = AcidifyCore * 4;
 
@@ -1384,5 +1411,6 @@ graph Acidify [[ main ]]
         param45 -> core.param45; param46 -> core.param46;
         param47 -> core.param47; param48 -> core.param48;
         param49 -> core.param49;
+        param50 -> core.param50;
     }
 }

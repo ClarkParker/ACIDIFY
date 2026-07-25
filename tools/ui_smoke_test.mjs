@@ -39,12 +39,13 @@ try {
     distortionControls: document.querySelectorAll(".distortion-overlay .control[data-param]").length,
     distortionTypes: document.querySelectorAll(".distortion-types button").length,
     clockModes: document.querySelectorAll(".clock-mode button").length,
+    swingControls: document.querySelectorAll('.control[data-param="param50"]').length,
     tooltipToggles: document.querySelectorAll(".tooltip-toggle").length,
     tooltipBubbles: document.querySelectorAll(".tooltip-bubble").length,
     tooltipTargets: document.querySelectorAll("[data-tooltip]").length,
     nativeTitles: document.querySelectorAll("[title]").length,
   }));
-  if (counts.controls !== 17 || counts.endpointControls !== 17
+  if (counts.controls !== 18 || counts.endpointControls !== 18
       || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
       || counts.stepGroups !== 4 || counts.whiteKeys !== 7 || counts.blackKeys !== 5
       || counts.studioCells !== 64 || counts.studioCellGroups !== 16
@@ -52,6 +53,7 @@ try {
       || counts.pitchChoices !== 25
       || counts.distortionTriggers !== 1 || counts.distortionControls !== 4
       || counts.distortionTypes !== 3 || counts.clockModes !== 2
+      || counts.swingControls !== 1
       || counts.tooltipToggles !== 1 || counts.tooltipBubbles !== 1
       || counts.tooltipTargets < 100 || counts.nativeTitles !== 0) {
     throw new Error(`Unexpected UI element counts: ${JSON.stringify(counts)}`);
@@ -250,6 +252,19 @@ try {
   await cutoff.press("ArrowRight");
   const after = Number(await cutoff.getAttribute("aria-valuenow"));
   if (!(after > before)) throw new Error(`Keyboard dial input failed: ${before} -> ${after}`);
+
+  const swing = page.locator('.control[data-param="param50"]');
+  const swingBefore = await patchView.evaluate(node => node._values.get("param50"));
+  await swing.locator('button[data-step="1"]').click();
+  const swingAfter = await patchView.evaluate(node => ({
+    value: node._values.get("param50"),
+    display: node.querySelector('.control[data-param="param50"] .stepper-value').textContent,
+    tooltip: node.querySelector('.control[data-param="param50"]').dataset.tooltip,
+  }));
+  if (swingBefore !== 0 || swingAfter.value !== 1 || swingAfter.display !== "1%"
+      || !swingAfter.tooltip.includes("2:1 triplet")) {
+    throw new Error(`Swing control failed: ${JSON.stringify({ swingBefore, swingAfter })}`);
+  }
 
   await page.locator('.wave-buttons button[data-value="1"]').click();
   if (await page.locator('.wave-buttons button[data-value="1"]').getAttribute("aria-pressed") !== "true") {
@@ -656,7 +671,7 @@ try {
       mounted: node._mounted,
     };
   });
-  if (reconnect.sends !== 1 || reconnect.controls !== 17 || reconnect.endpointControls !== 17
+  if (reconnect.sends !== 1 || reconnect.controls !== 18 || reconnect.endpointControls !== 18
       || reconnect.pendingEchoes !== 0 || !reconnect.mounted) {
     throw new Error(`Reconnect lifecycle failed: ${JSON.stringify(reconnect)}`);
   }

@@ -20,6 +20,7 @@ processor AcidifyTransportEvents
     output event float internalRunOut;
     output event float dawModeOut;
     output event float handoffModeOut;
+    output event float swingOut;
     output event float64 transportOut;
 
     int frame = 0;
@@ -49,6 +50,7 @@ processor AcidifyTransportEvents
             {
                 internalTempoOut <- 120.0f;
                 internalRunOut <- 1.0f;
+                swingOut <- 100.0f;
 
                 dawModeOut <- 1.0f;
                 handoffModeOut <- 1.0f;
@@ -122,13 +124,16 @@ processor AcidifyTraceMerge
     input stream float dawIn;
     input stream float fallbackIn;
     input stream float handoffTempoIn;
-    output stream float<4> out;
+    input stream float internalSwingIn;
+    input stream float dawSwingIn;
+    output stream float<6> out;
 
     void main()
     {
         loop
         {
-            out <- float<4> (internalIn, dawIn, fallbackIn, handoffTempoIn);
+            out <- float<6> (internalIn, dawIn, fallbackIn, handoffTempoIn,
+                             internalSwingIn, dawSwingIn);
             advance();
         }
     }
@@ -157,7 +162,7 @@ processor AcidifyTempoTrace
 
 graph AcidifyTransportTest [[ main ]]
 {
-    output stream float<4> out;
+    output stream float<6> out;
 
     node events = AcidifyTransportEvents;
     // Exercise the exact production graph boundary, not AcidifyCore directly.
@@ -167,10 +172,14 @@ graph AcidifyTransportTest [[ main ]]
     node daw = Acidify;
     node fallback = Acidify;
     node handoff = Acidify;
+    node internalSwing = Acidify;
+    node dawSwing = Acidify;
     node internalTrace = AcidifyStepTrace;
     node dawTrace = AcidifyStepTrace;
     node fallbackTrace = AcidifyStepTrace;
     node handoffTempoTrace = AcidifyTempoTrace;
+    node internalSwingTrace = AcidifyStepTrace;
+    node dawSwingTrace = AcidifyStepTrace;
     node merge = AcidifyTraceMerge;
 
     connection
@@ -190,14 +199,26 @@ graph AcidifyTransportTest [[ main ]]
         events.handoffModeOut -> handoff.param49;
         events.transportOut -> handoff.transportIn;
 
+        events.internalTempoOut -> internalSwing.param9;
+        events.internalRunOut -> internalSwing.param10;
+        events.swingOut -> internalSwing.param50;
+
+        events.dawModeOut -> dawSwing.param49;
+        events.swingOut -> dawSwing.param50;
+        events.transportOut -> dawSwing.transportIn;
+
         internal.currentStep -> internalTrace.stepIn;
         daw.currentStep -> dawTrace.stepIn;
         fallback.currentStep -> fallbackTrace.stepIn;
         handoff.effectiveTempo -> handoffTempoTrace.tempoIn;
+        internalSwing.currentStep -> internalSwingTrace.stepIn;
+        dawSwing.currentStep -> dawSwingTrace.stepIn;
         internalTrace.out -> merge.internalIn;
         dawTrace.out -> merge.dawIn;
         fallbackTrace.out -> merge.fallbackIn;
         handoffTempoTrace.out -> merge.handoffTempoIn;
+        internalSwingTrace.out -> merge.internalSwingIn;
+        dawSwingTrace.out -> merge.dawSwingIn;
         merge.out -> out;
     }
 }
@@ -281,6 +302,40 @@ function expectedDaw() {
   ];
 }
 
+function swungSection(startTime, steps, secondsPerQuarter) {
+  const longStep = secondsPerQuarter / 3;
+  const pair = secondsPerQuarter / 2;
+  return Array.from({ length: steps }, (_, step) => ({
+    time: startTime + Math.floor(step / 2) * pair + (step % 2 ? longStep : 0),
+    step,
+  }));
+}
+
+function expectedInternalSwing() {
+  return [
+    ...swungSection(0, 8, 0.5),
+    { time: 1.0, step: -1 },
+    ...swungSection(1.25, 8, 0.5),
+    { time: 2.25, step: -1 },
+  ];
+}
+
+function expectedDawSwing() {
+  return [
+    ...swungSection(0, 8, 0.5),
+    { time: 1.0, step: -1 },
+    ...[2, 3, 4, 5, 6, 7].map((step, index) => ({
+      time: 1.25 + Math.floor(index / 2) / 6 + (index % 2 ? 1 / 9 : 0),
+      step,
+    })),
+    ...[0, 1, 2, 3, 4, 5].map((step, index) => ({
+      time: 1.75 + Math.floor(index / 2) / 6 + (index % 2 ? 1 / 9 : 0),
+      step,
+    })),
+    { time: 2.25, step: -1 },
+  ];
+}
+
 function validate(actual, expected, label) {
   if (actual.length !== expected.length) {
     throw new Error(`${label}: expected ${expected.length} transitions, got ${actual.length}: `
@@ -316,7 +371,7 @@ try {
     "render",
     `--rate=${sampleRate}`,
     `--length=${Math.round(sampleRate * 3.0)}`,
-    "--channels=4",
+    "--channels=6",
     "--blockSize=128",
     `--output=${wavPath}`,
     manifestPath,
@@ -328,14 +383,18 @@ try {
   }
 
   const channels = readChannels(await readFile(wavPath));
-  if (channels.length !== 4) throw new Error(`Expected 4-channel trace, got ${channels.length} channels`);
+  if (channels.length !== 6) throw new Error(`Expected 6-channel trace, got ${channels.length} channels`);
   const internal = transitions(channels[0]);
   const daw = transitions(channels[1]);
   const fallback = transitions(channels[2]);
   const handoffTempo = time => channels[3][Math.round(time * sampleRate)] * 300;
+  const internalSwing = transitions(channels[4]);
+  const dawSwing = transitions(channels[5]);
   const internalOrigin = validate(internal, expectedInternal(), "Internal clock");
   const dawOrigin = validate(daw, expectedDaw(), "DAW clock");
   const fallbackOrigin = validate(fallback, expectedInternal(), "DAW no-host fallback");
+  const internalSwingOrigin = validate(internalSwing, expectedInternalSwing(), "Internal swing");
+  const dawSwingOrigin = validate(dawSwing, expectedDawSwing(), "DAW swing");
   // The public 4× graph forwards status events with a fixed reporting latency,
   // so sample well inside each stable section rather than at the event edge.
   const handoffBeforeChange = handoffTempo(0.75);
@@ -354,10 +413,18 @@ try {
   console.log(JSON.stringify({
     ok: true,
     sampleRate,
-    rendererLatencyFrames: { internal: internalOrigin, daw: dawOrigin, fallback: fallbackOrigin },
+    rendererLatencyFrames: {
+      internal: internalOrigin,
+      daw: dawOrigin,
+      fallback: fallbackOrigin,
+      internalSwing: internalSwingOrigin,
+      dawSwing: dawSwingOrigin,
+    },
     internalTransitions: internal,
     dawTransitions: daw,
     fallbackTransitions: fallback,
+    internalSwingTransitions: internalSwing,
+    dawSwingTransitions: dawSwing,
     tempoHandoff: {
       beforeHostChange: handoffBeforeChange,
       duringSync: handoffDuringSync,
@@ -374,6 +441,8 @@ try {
       transportStopStart: true,
       dawSeek: true,
       hostTempoHandoff: true,
+      internalTripletSwing: true,
+      dawTripletSwing: true,
     },
   }));
 } finally {

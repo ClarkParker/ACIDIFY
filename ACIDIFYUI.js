@@ -21,6 +21,7 @@ const ACIDIFY_GLOBALS = [
   { id: "param47", type: "dial",    label: "DRIVE",        min: 0,  max: 1,   step: 0.001, init: 0.35, format: v => `${Math.round(v * 100)}` },
   { id: "param48", type: "dial",    label: "MIX",          min: 0,  max: 1,   step: 0.001, init: 1,    format: v => `${Math.round(v * 100)}%` },
   { id: "param49", type: "toggle",  label: "CLOCK",        min: 0,  max: 1,   step: 1, init: 0 },
+  { id: "param50", type: "stepper", label: "SWING",        min: 0,  max: 100, step: 1, init: 0,        format: v => `${Math.round(v)}%` },
 ];
 
 const STEP_PITCH_DEFAULTS = [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7];
@@ -54,6 +55,7 @@ const CONTROL_TOOLTIPS = {
   param47: "Sets the amount of drive applied by the selected distortion character.",
   param48: "Blends the distorted signal with the clean instrument output.",
   param49: "Selects the clock source. INT uses the internal tempo and RUN/STOP; DAW follows host tempo, transport and position.",
+  param50: "Adds swing to each pair of sixteenth notes. 0% is straight; 100% reaches a 2:1 triplet feel.",
 };
 
 function noteName(note) {
@@ -3651,6 +3653,10 @@ class AcidifyPatchView extends HTMLElement {
             title="Switch editor · keyboard shortcut M">
             <i></i><span class="classic-label">CLASSIC</span><span class="studio-label">STUDIO</span>
           </button>
+          <div class="control swing-control" data-param="param50" data-endpoint-id="param50" data-min="0" data-max="100" data-step="1" data-init="0" data-control="stepper">
+            <div class="stepper"><button data-step="-1">−</button><span class="stepper-value">--</span><button data-step="1">+</button></div>
+            <div class="stepper-label">SWING</div>
+          </div>
           <div class="control" data-param="param11" data-endpoint-id="param11" data-min="1" data-max="16" data-step="1" data-init="16" data-control="stepper">
             <div class="stepper"><button data-step="-1">−</button><span class="stepper-value">--</span><button data-step="1">+</button></div>
             <div class="stepper-label">LENGTH</div>
