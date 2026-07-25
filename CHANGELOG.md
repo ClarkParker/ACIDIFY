@@ -6,6 +6,25 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-07-26
+
+### Changed
+
+- Die vier rein dekorativen Schraubenköpfe wurden vollständig aus Markup und
+  Styles entfernt.
+- Gehäuse, Bedienpanel, helle Taster und Overlays verwenden nun eine kühlere,
+  fein gebürstete Silbermetall-Palette nach den bereitgestellten
+  Hardware-Referenzfotos statt der zuvor warmen beige-grauen Oberfläche.
+- Geometrie, Beschriftung, Parametervertrag und DSP bleiben unverändert.
+
+### Validated
+
+- Der Browserworkflow bestätigt null verbliebene `.screw`-Elemente sowie die
+  unveränderten 18 Controls, 15 Studio-Aktionen und 142 Tooltip-Ziele.
+- Zehn Live-Render bei 1180 × 580 und 590 × 290 wurden aus demselben
+  0.7.1-Quellstand neu erzeugt und visuell auf Classic, DAW-Sync, Studio,
+  Notenwahl und Distortion geprüft.
+
 ## [0.7.0] - 2026-07-26
 
 ### Added

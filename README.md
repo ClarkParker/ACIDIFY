@@ -5,12 +5,12 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **DSP/Transport Release Candidate 0.7.0**. Clean-Core,
+> Status: **DSP/Transport Release Candidate 0.7.1**. Clean-Core,
 > 50-Parameter-Vertrag, Amorph-`transportIn`-Sync, sicherer Internal-Fallback,
 > Swing und drei getrennte Post-Stufen sind implementiert und automatisiert
 > geprüft. Studio ergänzt skalenbewusstes Generate/Mutate, Reverse, Pitch Mirror
 > und eine Live-Pitch-Map. Der Nutzer hat den vorigen 0.6.4-Build in Amorph als
-> grundsätzlich passend bestätigt; der neue 0.7.0-Build muss für die
+> grundsätzlich passend bestätigt; der neue 0.7.1-Build muss für die
 > abschließende Produktbestätigung erneut in Amorph und der Ziel-DAW getestet
 > werden. Die Bezeichnung „AAA Clone“ bleibt bis zu kalibrierten
 > Hardware-Captures und Blindtests ausdrücklich ein Ziel, kein bereits
@@ -181,11 +181,13 @@ vorbehalten.
 ## Hardware Performance Surface
 
 Das Panel nutzt eine kleine Fibonacci-Abstandsskala (8, 13 und 21 px).
-Transport, Synthese und Master bilden drei gleich hohe Module in der etablierten
-hellen Metall-/Hardware-Sprache von ACIDIFY. Waveform und die sechs Klangregler
-liegen mit dem Volume-Regler auf einer gemeinsamen optischen Achse. Der
-Output-Meter gehört vollständig zum Master-Modul. Zwischen allen drei Modulen
-liegen 13 px; keine Rahmen- oder Trennlinie läuft in Regler oder Schalter.
+Transport, Synthese und Master bilden drei gleich hohe Module in einer kühlen,
+fein gebürsteten Silbermetall-Oberfläche nach den Hardware-Referenzfotos.
+Dekorative Schraubenköpfe werden nicht verwendet. Waveform und die sechs
+Klangregler liegen mit dem Volume-Regler auf einer gemeinsamen optischen Achse.
+Der Output-Meter gehört vollständig zum Master-Modul. Zwischen allen drei
+Modulen liegen 13 px; keine Rahmen- oder Trennlinie läuft in Regler oder
+Schalter.
 
 Die 16 Sequencer-Schritte sind als vier musikalische Vierergruppen organisiert.
 Im Classic-Editor bilden Status, Keyboard und Timing drei gleich hohe,

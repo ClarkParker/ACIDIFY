@@ -1758,21 +1758,6 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(180deg, transparent, rgba(57,57,53,.17));
     pointer-events: none;
   }
-  acidify-patch-view .screw {
-    position: absolute; width: 16px; height: 16px; border-radius: 50%; z-index: 5;
-    background:
-      radial-gradient(circle at 36% 29%, rgba(255,255,255,.95) 0 5%, transparent 7%),
-      conic-gradient(from 28deg, #777872, #d7d8d3, #73746f, #c7c8c3, #676863, #b8b9b4, #777872);
-    border: 1px solid #686963;
-    box-shadow: 0 1px 2px rgba(0,0,0,.46), inset 0 0 0 1px rgba(255,255,255,.22);
-  }
-  acidify-patch-view .screw::after {
-    content: ""; position: absolute; left: 2px; right: 2px; top: 6px; height: 2px;
-    border-radius: 2px; background: linear-gradient(#4a4b47, #898a84);
-    box-shadow: 0 1px rgba(255,255,255,.35); transform: rotate(-17deg);
-  }
-  acidify-patch-view .s1 { left: 12px; top: 12px; } .s2 { right: 12px; top: 12px; }
-  acidify-patch-view .s3 { left: 12px; bottom: 12px; } .s4 { right: 12px; bottom: 12px; }
   acidify-patch-view .top-strip {
     --fib-1: 8px;
     --fib-2: 13px;
@@ -2604,8 +2589,6 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(90deg, transparent, var(--acid) 22% 48%, rgba(255, 180, 84, .72) 64%, transparent);
     opacity: .7;
   }
-  acidify-patch-view .screw { display: none; }
-
   acidify-patch-view .top-strip {
     left: 22px; right: 22px; top: 20px; height: 198px;
     border: 0; box-shadow: none;
@@ -3017,15 +3000,15 @@ class AcidifyPatchView extends HTMLElement {
     right: 28px; bottom: 7px; color: #4f5a67; font-size: 5.5px; letter-spacing: 1.35px; text-shadow: none;
   }
 
-  /* Reconciled hardware surface.
-     Keeps the safer 0.4 geometry while restoring the established ACIDIFY
-     material language instead of inventing a different product identity. */
+  /* Brushed silver hardware surface.
+     Keeps the established ACIDIFY geometry while matching the cool metallic
+     material of the hardware references. */
   acidify-patch-view {
-    --line: #777a74;
-    --line-soft: rgba(55, 55, 49, .2);
-    --ink: #20211d;
-    --muted: #5d5f59;
-    --faint: #74766f;
+    --line: #707675;
+    --line-soft: rgba(54, 60, 59, .2);
+    --ink: #202321;
+    --muted: #5c625f;
+    --faint: #717775;
     --acid: #b52921;
     --acid-hot: #d33a2f;
     --amber: #bb712d;
@@ -3033,49 +3016,53 @@ class AcidifyPatchView extends HTMLElement {
     font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   }
   acidify-patch-view .chassis {
-    border: 1px solid #777268;
+    border: 1px solid #686e6d;
     border-radius: 33px 33px 27px 27px;
     background:
-      radial-gradient(ellipse at 50% -18%, rgba(255,255,255,.9) 0 12%, transparent 54%),
-      linear-gradient(90deg, rgba(255,255,255,.4) 0, transparent 2.4%, transparent 97%, rgba(40,38,31,.33) 100%),
-      repeating-linear-gradient(7deg, rgba(255,255,255,.025) 0 1px, rgba(57,54,45,.025) 1px 3px),
-      linear-gradient(180deg, #e5e1d2 0%, #d1ccbb 48%, #b5ae9c 84%, #969082 100%);
+      radial-gradient(ellipse at 50% -18%, rgba(255,255,255,.96) 0 12%, transparent 53%),
+      linear-gradient(90deg, rgba(255,255,255,.46) 0, transparent 2.5%, transparent 97%, rgba(37,42,42,.3) 100%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0 1px, rgba(44,50,49,.035) 1px 2px, transparent 2px 4px),
+      linear-gradient(180deg, #eef0ef 0%, #d5d9d8 42%, #b8bdbc 78%, #949a99 100%);
     box-shadow:
       0 30px 46px rgba(0,0,0,.46),
       0 7px 12px rgba(0,0,0,.32),
-      inset 0 3px 1px rgba(255,255,255,.82),
-      inset 0 -8px 12px rgba(61,56,44,.34),
-      inset 4px 0 5px rgba(255,255,255,.22),
-      inset -4px 0 6px rgba(60,56,48,.16);
+      inset 0 3px 1px rgba(255,255,255,.9),
+      inset 0 -8px 12px rgba(48,54,53,.34),
+      inset 4px 0 5px rgba(255,255,255,.3),
+      inset -4px 0 6px rgba(49,55,54,.18);
   }
   acidify-patch-view .chassis::before {
     left: 9px; right: 9px; top: 9px; bottom: 10px;
     border-radius: 24px 24px 18px 18px;
-    border-color: rgba(73,70,62,.42);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.74), 0 1px 0 rgba(255,255,255,.35);
+    border-color: rgba(66,72,71,.46);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.82), 0 1px 0 rgba(255,255,255,.42);
   }
   acidify-patch-view .chassis::after {
-    background: linear-gradient(180deg, rgba(72,68,57,.04), rgba(47,43,36,.28));
+    background: linear-gradient(180deg, rgba(61,67,66,.04), rgba(42,47,46,.3));
   }
   acidify-patch-view .panel {
-    border-color: #77776f;
+    border-color: #747a79;
     background:
-      radial-gradient(ellipse at 34% -12%, rgba(255,255,255,.38), transparent 47%),
-      repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, rgba(49,50,48,.025) 1px 2px, transparent 2px 5px),
-      linear-gradient(164deg, #dddeda 0%, #cacbc7 45%, #b7b8b4 100%);
+      radial-gradient(ellipse at 34% -12%, rgba(255,255,255,.52), transparent 48%),
+      linear-gradient(102deg, rgba(255,255,255,.2), transparent 19% 74%, rgba(67,73,72,.08)),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0 1px, rgba(45,51,50,.03) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg, #e5e8e7 0%, #d0d4d3 47%, #b4b9b8 100%);
     box-shadow:
-      inset 0 1px 0 #f8f8f3,
+      inset 0 1px 0 #fafcfb,
       inset 0 -2px 4px rgba(0,0,0,.25),
-      inset 1px 0 1px rgba(255,255,255,.48),
+      inset 1px 0 1px rgba(255,255,255,.58),
       0 3px 4px rgba(0,0,0,.34);
   }
   acidify-patch-view .panel::before {
-    opacity: .17;
-    mix-blend-mode: multiply;
-    background:
-      radial-gradient(circle at 16% 26%, rgba(36,34,30,.16) 0 .45px, transparent .8px),
-      radial-gradient(circle at 77% 64%, rgba(255,255,255,.32) 0 .45px, transparent .85px);
-    background-size: 13px 17px, 17px 13px;
+    opacity: .24;
+    mix-blend-mode: soft-light;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,.16) 0 1px,
+      rgba(37,43,42,.055) 1px 2px,
+      transparent 2px 4px
+    );
+    background-size: auto;
     -webkit-mask: none;
             mask: none;
   }
@@ -3084,20 +3071,18 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(90deg, transparent, rgba(181, 41, 33, .76) 25% 48%, rgba(183, 113, 45, .54) 65%, transparent);
     opacity: .52;
   }
-  acidify-patch-view .screw { display: block; }
-
   acidify-patch-view .transport-bank,
   acidify-patch-view .tone-bank,
   acidify-patch-view .volume-bank {
-    border-color: rgba(58,58,53,.72);
+    border-color: rgba(60,66,65,.72);
     background:
-      linear-gradient(135deg, rgba(255,255,255,.18), transparent 42%),
-      linear-gradient(180deg, rgba(250,250,244,.12), rgba(102,102,95,.035));
+      linear-gradient(135deg, rgba(255,255,255,.25), transparent 42%),
+      linear-gradient(180deg, rgba(252,254,253,.16), rgba(88,95,94,.04));
     box-shadow:
-      inset 0 1px rgba(255,255,255,.58),
-      inset 1px 0 rgba(255,255,255,.22),
-      0 1px rgba(255,255,255,.32),
-      0 5px 12px rgba(62,61,55,.08);
+      inset 0 1px rgba(255,255,255,.66),
+      inset 1px 0 rgba(255,255,255,.28),
+      0 1px rgba(255,255,255,.38),
+      0 5px 12px rgba(53,59,58,.09);
   }
   acidify-patch-view .brand {
     color: #1c1c19;
@@ -3241,11 +3226,11 @@ class AcidifyPatchView extends HTMLElement {
   }
 
   acidify-patch-view .program-strip {
-    border-color: rgba(67,67,61,.68);
+    border-color: rgba(66,72,71,.68);
     background:
-      linear-gradient(145deg, rgba(255,255,255,.13), transparent 42%),
-      linear-gradient(180deg, rgba(236,236,230,.32), rgba(133,134,128,.08));
-    box-shadow: inset 0 1px rgba(255,255,255,.5), 0 8px 16px rgba(63,62,56,.08);
+      linear-gradient(145deg, rgba(255,255,255,.2), transparent 42%),
+      linear-gradient(180deg, rgba(242,245,244,.34), rgba(105,112,111,.08));
+    box-shadow: inset 0 1px rgba(255,255,255,.58), 0 8px 16px rgba(53,59,58,.09);
   }
   acidify-patch-view .program-header {
     border-bottom-color: rgba(75,75,69,.58);
@@ -3258,9 +3243,9 @@ class AcidifyPatchView extends HTMLElement {
     color: #5e5e58;
     background:
       linear-gradient(180deg, rgba(255,255,255,.2), transparent 34%),
-      linear-gradient(#aaa9a1, #d5d4cb 48%, #9b9a92);
-    border-color: #66665f;
-    box-shadow: inset 0 1px #f3f2eb, inset 0 -1px rgba(43,43,39,.18), 0 1px rgba(255,255,255,.42), 0 2px 2px rgba(0,0,0,.2);
+      linear-gradient(#adb3b2, #dde1e0 48%, #979e9d);
+    border-color: #666c6b;
+    box-shadow: inset 0 1px #f7f9f8, inset 0 -1px rgba(38,44,43,.18), 0 1px rgba(255,255,255,.46), 0 2px 2px rgba(0,0,0,.2);
   }
   acidify-patch-view .studio-toggle i {
     background:
@@ -3298,19 +3283,19 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .sequence-step {
     color: #24251f;
     background:
-      linear-gradient(105deg, rgba(255,255,255,.42) 0, transparent 20% 77%, rgba(67,66,60,.18) 100%),
-      linear-gradient(180deg, #ebeae1 0%, #d3d2c8 46%, #b2b1a8 82%, #96968f 100%);
-    border-color: #777770;
+      linear-gradient(105deg, rgba(255,255,255,.48) 0, transparent 20% 77%, rgba(58,65,64,.2) 100%),
+      linear-gradient(180deg, #f0f2f1 0%, #d6dad9 46%, #b7bcbb 82%, #969d9c 100%);
+    border-color: #737978;
     box-shadow: 0 4px 2px rgba(0,0,0,.34), 0 1px 1px rgba(0,0,0,.26), inset 0 1px #fff;
   }
   acidify-patch-view .sequence-step:hover {
-    border-color: #66665f;
-    background: linear-gradient(180deg, #f0efe6, #c4c3b9 78%, #a5a49c);
+    border-color: #646a69;
+    background: linear-gradient(180deg, #f5f7f6, #c8cdcc 78%, #a5acab);
   }
   acidify-patch-view .sequence-step:active,
   acidify-patch-view .sequence-step.selected {
     color: #1e1f1a;
-    background: linear-gradient(#aaa9a0, #d4d3ca 36%, #c4c3ba);
+    background: linear-gradient(#a9afae, #d7dbda 36%, #c3c8c7);
     border-color: #a92720;
     box-shadow: 0 1px 1px rgba(0,0,0,.3), inset 0 3px 5px rgba(0,0,0,.28);
   }
@@ -3342,11 +3327,11 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .keyboard,
   acidify-patch-view .time-controls,
   acidify-patch-view .studio-tools {
-    border-color: rgba(74,74,68,.72);
+    border-color: rgba(68,74,73,.72);
     background:
-      linear-gradient(135deg, rgba(255,255,255,.16), transparent 46%),
-      linear-gradient(180deg, rgba(245,245,238,.12), rgba(112,112,105,.025));
-    box-shadow: inset 0 1px rgba(255,255,255,.58), inset 1px 0 rgba(255,255,255,.22), 0 1px rgba(255,255,255,.3);
+      linear-gradient(135deg, rgba(255,255,255,.23), transparent 46%),
+      linear-gradient(180deg, rgba(249,251,250,.16), rgba(91,98,97,.03));
+    box-shadow: inset 0 1px rgba(255,255,255,.64), inset 1px 0 rgba(255,255,255,.26), 0 1px rgba(255,255,255,.36);
   }
   acidify-patch-view .edit-caption { color: #55574f; }
   acidify-patch-view .edit-readout {
@@ -3362,10 +3347,10 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .octave-indicator::after { content: none; }
   acidify-patch-view .pitch-key {
     color: #252620;
-    border-color: #73736d;
+    border-color: #707675;
     background:
-      linear-gradient(100deg, rgba(119,117,107,.2), transparent 15% 77%, rgba(75,74,69,.22)),
-      linear-gradient(180deg, #f2f0e7 0%, #e2e0d6 55%, #c0beb4 84%, #9f9e96 100%);
+      linear-gradient(100deg, rgba(100,106,105,.2), transparent 15% 77%, rgba(62,69,68,.22)),
+      linear-gradient(180deg, #f5f7f6 0%, #e3e6e5 55%, #c5cac9 84%, #9da4a3 100%);
   }
   acidify-patch-view .pitch-key.black-key {
     color: #e9e7dc;
@@ -3379,9 +3364,9 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .function-button {
     color: #252521;
     background:
-      linear-gradient(105deg, rgba(255,255,255,.38), transparent 22% 78%, rgba(68,67,62,.16)),
-      linear-gradient(180deg, #e5e3da 0%, #cbc9c0 55%, #a5a49c 100%);
-    border-color: #74736c;
+      linear-gradient(105deg, rgba(255,255,255,.44), transparent 22% 78%, rgba(59,66,65,.17)),
+      linear-gradient(180deg, #eceeed 0%, #cdd2d1 55%, #a4abaa 100%);
+    border-color: #707675;
     box-shadow: 0 4px 2px rgba(0,0,0,.35), inset 0 1px #fff;
   }
   acidify-patch-view .function-button strong { color: #252521; }
@@ -3389,7 +3374,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .function-button:active,
   acidify-patch-view .function-button.active {
     color: #a51d17;
-    background: linear-gradient(#aaa89f, #d4d2c8 44%, #c1bfb6);
+    background: linear-gradient(#a7adac, #d6dad9 44%, #c0c5c4);
     border-color: #a42a22;
     box-shadow: 0 1px 1px rgba(0,0,0,.25), inset 0 3px 5px rgba(0,0,0,.28);
   }
@@ -3452,8 +3437,8 @@ class AcidifyPatchView extends HTMLElement {
     position: absolute; z-index: 8; left: 37px; bottom: 3px;
     width: 76px; height: 16px; padding: 1px 4px; border-radius: 4px; cursor: pointer;
     display: grid; grid-template-columns: 12px 1fr 22px; align-items: center; gap: 2px;
-    color: #4d4f49; background: linear-gradient(#d7d8d2, #aeb0a9);
-    border: 1px solid #6c6e68;
+    color: #4d5351; background: linear-gradient(#dfe2e1, #adb3b2);
+    border: 1px solid #69706e;
     box-shadow: inset 0 1px rgba(255,255,255,.66), 0 1px rgba(255,255,255,.24);
     font-size: 6px; line-height: 11px; font-weight: 900; letter-spacing: .75px;
   }
@@ -3485,11 +3470,11 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .pitch-menu[hidden] { display: none; }
   acidify-patch-view .pitch-menu {
     position: absolute; z-index: 95; width: 394px; height: 278px; overflow: hidden;
-    color: #24251f; border: 1px solid #565750; border-radius: 8px;
+    color: #242724; border: 1px solid #565d5b; border-radius: 8px;
     background:
-      radial-gradient(ellipse at 36% -10%, rgba(255,255,255,.58), transparent 52%),
-      repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, rgba(49,50,48,.025) 1px 2px, transparent 2px 5px),
-      linear-gradient(155deg, #dedfd9, #b7b8b2);
+      radial-gradient(ellipse at 36% -10%, rgba(255,255,255,.66), transparent 52%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0 1px, rgba(43,49,48,.03) 1px 2px, transparent 2px 5px),
+      linear-gradient(155deg, #e4e7e6, #b8bdbc);
     box-shadow:
       0 16px 30px rgba(35,32,25,.46),
       0 5px 10px rgba(35,32,25,.35),
@@ -3567,8 +3552,8 @@ class AcidifyPatchView extends HTMLElement {
     display: inline-flex; align-items: center; justify-content: center; gap: 3px;
     width: 40px; height: 15px; padding: 0 4px; border-radius: 3px; cursor: pointer;
     color: #4f5049; font-size: 5.5px; line-height: 1; font-weight: 900; letter-spacing: .65px;
-    background: linear-gradient(#d9d8cf, #a6a69e);
-    border: 1px solid #77776f;
+    background: linear-gradient(#e0e3e2, #a7adac);
+    border: 1px solid #737977;
     box-shadow: inset 0 1px rgba(255,255,255,.75), 0 1px rgba(255,255,255,.38);
   }
   acidify-patch-view .distortion-trigger:hover { color: #272823; }
@@ -3601,12 +3586,12 @@ class AcidifyPatchView extends HTMLElement {
   }
   acidify-patch-view .distortion-overlay {
     position: absolute; right: 22px; top: 20px; width: 514px; height: 198px;
-    overflow: hidden; border: 1px solid #595a54; border-radius: 8px;
-    color: #24251f;
+    overflow: hidden; border: 1px solid #595f5e; border-radius: 8px;
+    color: #242724;
     background:
-      radial-gradient(ellipse at 36% -10%, rgba(255,255,255,.58), transparent 52%),
-      repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, rgba(49,50,48,.025) 1px 2px, transparent 2px 5px),
-      linear-gradient(155deg, #dedfd9, #b7b8b2);
+      radial-gradient(ellipse at 36% -10%, rgba(255,255,255,.66), transparent 52%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0 1px, rgba(43,49,48,.03) 1px 2px, transparent 2px 5px),
+      linear-gradient(155deg, #e4e7e6, #b8bdbc);
     box-shadow:
       0 14px 28px rgba(35,32,25,.42),
       0 4px 9px rgba(35,32,25,.34),
@@ -3763,7 +3748,6 @@ class AcidifyPatchView extends HTMLElement {
 </style>
 <div class="chassis">
   <div class="panel">
-    <i class="screw s1"></i><i class="screw s2"></i><i class="screw s3"></i><i class="screw s4"></i>
     <section class="top-strip">
       <header class="branding">
         <div class="brand"><span class="acid">ACID</span>IFY</div>
@@ -3943,7 +3927,7 @@ class AcidifyPatchView extends HTMLElement {
       data-tooltip="Turn the English control tooltips on or off.">
       <i>?</i><span>TIPS</span><strong class="tooltip-toggle-state">ON</strong>
     </button>
-    <div class="footer-mark">ACIDIFY 0.7.0 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
+    <div class="footer-mark">ACIDIFY 0.7.1 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
   </div>
   <section class="pitch-menu" role="dialog" aria-modal="false" aria-hidden="true"
     aria-labelledby="pitch-menu-title" hidden>

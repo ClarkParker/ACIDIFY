@@ -46,6 +46,7 @@ try {
     tooltipBubbles: document.querySelectorAll(".tooltip-bubble").length,
     tooltipTargets: document.querySelectorAll("[data-tooltip]").length,
     nativeTitles: document.querySelectorAll("[title]").length,
+    screws: document.querySelectorAll(".screw").length,
   }));
   if (counts.controls !== 18 || counts.endpointControls !== 18
       || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
@@ -58,7 +59,8 @@ try {
       || counts.swingControls !== 1
       || counts.basslineVisuals !== 1 || counts.basslineNodes !== 16
       || counts.tooltipToggles !== 1 || counts.tooltipBubbles !== 1
-      || counts.tooltipTargets < 100 || counts.nativeTitles !== 0) {
+      || counts.tooltipTargets < 100 || counts.nativeTitles !== 0
+      || counts.screws !== 0) {
     throw new Error(`Unexpected UI element counts: ${JSON.stringify(counts)}`);
   }
 
