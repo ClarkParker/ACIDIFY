@@ -53,14 +53,35 @@ try {
     };
     const accent = rect('.control[data-param="param6"] .tick-ring');
     const volume = rect('.control[data-param="param8"] .tick-ring');
+    const transport = rect(".transport-bank");
+    const synthesis = rect(".tone-bank");
     const master = rect(".volume-bank");
+    const waveform = rect('.wave-buttons button[data-value="1"]');
+    const toneDials = [...document.querySelectorAll(".tone-bank .dial")].map(node => {
+      const bounds = node.getBoundingClientRect();
+      return { centerY: bounds.top + bounds.height / 2 };
+    });
+    const volumeDial = rect('.control[data-param="param8"] .dial');
+    const controlCenters = [
+      waveform.top + waveform.height / 2,
+      ...toneDials.map(dial => dial.centerY),
+      volumeDial.top + volumeDial.height / 2,
+    ];
     return {
+      moduleGaps: [synthesis.left - transport.right, master.left - synthesis.right],
+      synthesisMasterTopSpread: Math.abs(synthesis.top - master.top),
+      synthesisMasterBottomSpread: Math.abs(synthesis.bottom - master.bottom),
+      soundControlAxisSpread: Math.max(...controlCenters) - Math.min(...controlCenters),
       accentToMaster: master.left - accent.right,
       volumeLeftInset: volume.left - master.left,
       volumeRightInset: master.right - volume.right,
     };
   });
-  if (upperPanelGeometry.accentToMaster < 12
+  if (upperPanelGeometry.moduleGaps.some(gap => gap < 12)
+      || upperPanelGeometry.synthesisMasterTopSpread > 1
+      || upperPanelGeometry.synthesisMasterBottomSpread > 1
+      || upperPanelGeometry.soundControlAxisSpread > 2
+      || upperPanelGeometry.accentToMaster < 12
       || upperPanelGeometry.volumeLeftInset < 12
       || upperPanelGeometry.volumeRightInset < 12) {
     throw new Error(`Unsafe upper-panel divider clearance: ${JSON.stringify(upperPanelGeometry)}`);
@@ -86,6 +107,17 @@ try {
     const status = rect(".edit-status");
     const keyboard = rect(".keyboard");
     const timing = rect(".time-controls");
+    const functionButtons = [...document.querySelectorAll(".time-controls .function-button")].map(node => {
+      const bounds = node.getBoundingClientRect();
+      return {
+        left: bounds.left,
+        right: bounds.right,
+        top: bounds.top,
+        bottom: bounds.bottom,
+        layoutLeft: node.offsetLeft,
+        layoutTop: node.offsetTop,
+      };
+    });
     const c = rect('.pitch-key[data-pitch="0"]');
     const d = rect('.pitch-key[data-pitch="2"]');
     const cSharp = rect('.pitch-key[data-pitch="1"]');
@@ -95,6 +127,15 @@ try {
       moduleGaps: [keyboard.left - status.right, timing.left - keyboard.right],
       moduleTopSpread: Math.max(status.top, keyboard.top, timing.top) - Math.min(status.top, keyboard.top, timing.top),
       moduleBottomSpread: Math.max(status.bottom, keyboard.bottom, timing.bottom) - Math.min(status.bottom, keyboard.bottom, timing.bottom),
+      actionMatrix: {
+        width: timing.width,
+        columns: new Set(functionButtons.map(button => button.layoutLeft)).size,
+        rows: new Set(functionButtons.map(button => button.layoutTop)).size,
+        contained: functionButtons.every(button => button.left >= timing.left + 7
+          && button.right <= timing.right - 7
+          && button.top >= timing.top + 7
+          && button.bottom <= timing.bottom - 7),
+      },
       blackKeyOverlay: {
         betweenCAndD: cSharp.left < c.right && cSharp.right > d.left,
         shorterThanWhite: cSharp.height < c.height,
@@ -106,6 +147,10 @@ try {
       || lowerPanelGeometry.moduleGaps.some(gap => gap < 12)
       || lowerPanelGeometry.moduleTopSpread > 1
       || lowerPanelGeometry.moduleBottomSpread > 1
+      || lowerPanelGeometry.actionMatrix.width < 275
+      || lowerPanelGeometry.actionMatrix.columns !== 3
+      || lowerPanelGeometry.actionMatrix.rows !== 2
+      || !lowerPanelGeometry.actionMatrix.contained
       || !lowerPanelGeometry.blackKeyOverlay.betweenCAndD
       || !lowerPanelGeometry.blackKeyOverlay.shorterThanWhite
       || lowerPanelGeometry.blackKeyOverlay.inFront < 2) {

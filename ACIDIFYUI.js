@@ -919,7 +919,7 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: 0 1px 0 rgba(255,255,255,.44);
   }
   acidify-patch-view .branding {
-    position: absolute; left: 23px; top: 8px; width: 226px; height: 58px;
+    position: absolute; left: 16px; top: 8px; width: 228px; height: 58px;
   }
   acidify-patch-view .brand {
     font-family: Impact, "Arial Black", sans-serif; font-size: 29px; line-height: 30px;
@@ -931,19 +931,43 @@ class AcidifyPatchView extends HTMLElement {
     text-shadow: 0 .4px rgba(255,255,255,.26);
   }
   acidify-patch-view .computer { color: #55554e; font-size: 8px; letter-spacing: 2.4px; margin-top: 3px; }
-  acidify-patch-view .left-bank {
-    position: absolute; left: 20px; bottom: 8px; width: 245px; height: 136px;
-    display: grid; grid-template-columns: 112px 118px; gap: 10px;
+  acidify-patch-view .transport-bank,
+  acidify-patch-view .tone-bank,
+  acidify-patch-view .volume-bank {
+    border: 1px solid rgba(58,58,53,.72); border-radius: 6px;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,.13), transparent 42%),
+      linear-gradient(180deg, rgba(112,112,105,.025), rgba(255,255,255,.045));
+    box-shadow:
+      inset 0 1px rgba(255,255,255,.52),
+      inset 1px 0 rgba(255,255,255,.2),
+      0 1px rgba(255,255,255,.3);
+  }
+  acidify-patch-view .transport-bank {
+    position: absolute; left: 0; top: 75px; width: 260px; height: 116px;
+    display: grid; grid-template-columns: 104px 1fr; gap: 13px;
+    padding: 18px 10px 8px;
+  }
+  acidify-patch-view .bank-title {
+    position: absolute; left: 12px; top: 5px;
+    color: #55554e; font-size: 6.5px; line-height: 8px; font-weight: 900; letter-spacing: 1.35px;
+    text-shadow: 0 .5px rgba(255,255,255,.48);
   }
   acidify-patch-view .tempo-box, acidify-patch-view .mode-box {
-    position: relative; border-top: 1px solid #4b4b45; padding-top: 9px;
-    box-shadow: inset 0 1px rgba(255,255,255,.32);
+    position: relative; min-width: 0; padding-top: 1px;
   }
   acidify-patch-view .mini-title {
     text-align: center; font-size: 8px; font-weight: 900; letter-spacing: 1.2px;
   }
-  acidify-patch-view .left-bank .knob-control { zoom: .78; margin-top: -2px; }
-  acidify-patch-view .mode-box { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  acidify-patch-view .transport-bank .knob-control {
+    zoom: .68; width: 104px; height: 118px; margin: 2px auto 0;
+  }
+  acidify-patch-view .transport-bank .control-label { margin-top: 10px; }
+  acidify-patch-view .mode-box {
+    display: flex; flex-direction: column; align-items: center; gap: 7px;
+    border-left: 1px solid rgba(68,68,63,.45);
+    box-shadow: inset 1px 0 rgba(255,255,255,.38);
+  }
   acidify-patch-view .run-lamp, acidify-patch-view .output-lamp {
     position: relative; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #4f1a15;
     background:
@@ -967,7 +991,7 @@ class AcidifyPatchView extends HTMLElement {
       inset 0 0 2px #fff;
   }
   acidify-patch-view .run-switch {
-    width: 86px; height: 38px; padding: 5px; border-radius: 5px; cursor: pointer;
+    width: 104px; height: 38px; padding: 5px; border-radius: 5px; cursor: pointer;
     perspective: 100px;
     background:
       linear-gradient(180deg, #171714, #33332e 14%, #1c1c19 100%);
@@ -997,12 +1021,17 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: 0 1px 1px #050504, inset 0 2px 4px rgba(0,0,0,.45);
   }
   acidify-patch-view .waveform {
-    position: absolute; left: 273px; top: 24px; width: 87px; height: 62px;
-    border-left: 1px solid #55554f; border-right: 1px solid #55554f;
-    box-shadow: -1px 0 rgba(255,255,255,.32), 1px 0 rgba(255,255,255,.32);
+    position: relative; width: 82px; height: 145px;
   }
-  acidify-patch-view .wave-title { text-align: center; font-size: 8px; font-weight: 900; letter-spacing: .8px; }
-  acidify-patch-view .wave-buttons { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
+  acidify-patch-view .wave-title {
+    position: absolute; left: 0; right: 0; top: 88px;
+    text-align: center; font-size: 8.5px; font-weight: 900; letter-spacing: .7px;
+    text-shadow: 0 .5px rgba(255,255,255,.38);
+  }
+  acidify-patch-view .wave-buttons {
+    position: absolute; left: 0; right: 0; top: 22px;
+    display: flex; justify-content: center; gap: 7px;
+  }
   acidify-patch-view .wave-buttons button {
     position: relative; width: 31px; height: 31px; padding: 5px 4px; cursor: pointer; border-radius: 3px;
     background:
@@ -1028,28 +1057,39 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: 0 1px 1px rgba(0,0,0,.6), inset 0 2px 5px #0b0b09, 0 0 0 2px rgba(78,78,72,.1);
   }
   acidify-patch-view .tone-bank {
-    position: absolute; left: 373px; right: 135px; top: 11px; height: 180px;
-    display: grid; grid-template-columns: repeat(6, 94px); align-items: end; justify-items: center;
-    border-top: 1px solid #4b4b45; padding-top: 13px;
-    box-shadow: inset 0 1px rgba(255,255,255,.32);
+    position: absolute; left: 273px; top: 11px; width: 648px; height: 180px;
+    padding: 0 12px;
   }
-  acidify-patch-view .tone-bank .knob-control { width: 94px; }
+  acidify-patch-view .tone-controls {
+    position: absolute; left: 10px; right: 10px; top: 35px; bottom: 0;
+    display: grid; grid-template-columns: 82px repeat(6, minmax(0, 1fr));
+    align-items: start; justify-items: center;
+  }
+  acidify-patch-view .tone-bank .knob-control { width: 90px; }
+  acidify-patch-view .tone-bank .dial { width: 72px; height: 72px; }
+  acidify-patch-view .tone-bank .dial::before,
+  acidify-patch-view .tone-bank .dial-cap { inset: 7px; }
+  acidify-patch-view .tone-bank .tick-ring { top: -9px; width: 90px; height: 90px; }
+  acidify-patch-view .tone-bank .tick-ring::after {
+    left: 43px; transform-origin: 2px 44px;
+  }
   acidify-patch-view .volume-bank {
-    position: absolute; right: 0; top: 11px; width: 120px; height: 180px;
+    position: absolute; right: 0; top: 11px; width: 136px; height: 180px;
     display: flex; flex-direction: column; align-items: center;
-    padding-top: 18px; border: 1px solid rgba(58,58,53,.74); border-radius: 6px;
-    background:
-      linear-gradient(135deg, rgba(255,255,255,.13), transparent 42%),
-      linear-gradient(180deg, rgba(112,112,105,.035), rgba(255,255,255,.045));
-    box-shadow:
-      inset 0 1px rgba(255,255,255,.5),
-      inset 1px 0 rgba(255,255,255,.22),
-      0 1px rgba(255,255,255,.34);
+    padding-top: 35px;
   }
-  acidify-patch-view .master-title {
-    height: 8px; margin-bottom: 5px; color: #50504a;
-    font-size: 7px; line-height: 8px; font-weight: 900; letter-spacing: 1.45px;
+  acidify-patch-view .master-head {
+    position: absolute; left: 12px; right: 10px; top: 5px; height: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    color: #50504a; font-size: 6.5px; line-height: 8px; font-weight: 900; letter-spacing: 1.25px;
     text-shadow: 0 .5px rgba(255,255,255,.45);
+  }
+  acidify-patch-view .master-output {
+    display: flex; align-items: center; gap: 4px; color: #62625b;
+    font-size: 5.5px; letter-spacing: .7px;
+  }
+  acidify-patch-view .master-output .output-lamp {
+    width: 9px; height: 9px;
   }
   acidify-patch-view .volume-bank .knob-control { width: 94px; }
   acidify-patch-view .control { position: relative; }
@@ -1141,7 +1181,10 @@ class AcidifyPatchView extends HTMLElement {
     border-bottom: 1px solid #53534d; font-size: 8px; font-weight: 900; letter-spacing: 1.2px;
     box-shadow: 0 1px rgba(255,255,255,.44);
   }
-  acidify-patch-view .program-title { font-size: 11px; letter-spacing: 2.2px; }
+  acidify-patch-view .program-title {
+    display: flex; align-items: baseline; gap: 8px;
+    font-size: 11px; letter-spacing: 2.2px; white-space: nowrap;
+  }
   acidify-patch-view .program-title b { color: #a51d17; }
   acidify-patch-view .utility {
     display: flex; align-items: center; gap: 13px; height: 100%;
@@ -1204,7 +1247,6 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: inset 0 2px 4px rgba(0,0,0,.58);
   }
   acidify-patch-view .stepper-label { font-size: 7px; text-align: center; margin-top: 2px; }
-  acidify-patch-view .output-group { display: flex; align-items: center; gap: 7px; }
   acidify-patch-view .output-lamp {
     --level: 0; filter: brightness(calc(.42 + var(--level) * 2.4));
     background:
@@ -1280,7 +1322,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .step-index { display: block; margin-top: 20px; font-size: 8px; font-weight: 900; }
   acidify-patch-view .step-note { display: block; margin-top: 1px; font-size: 9px; color: #5f1713; font-weight: 900; }
   acidify-patch-view .editor {
-    height: 122px; display: grid; grid-template-columns: 134px minmax(0, 1fr) 236px; gap: 13px;
+    height: 122px; display: grid; grid-template-columns: 144px minmax(0, 1fr) 280px; gap: 13px;
     border-top: 1px solid rgba(255,255,255,.62); padding-top: 8px;
     box-shadow: inset 0 1px rgba(61,61,57,.18);
   }
@@ -1475,7 +1517,7 @@ class AcidifyPatchView extends HTMLElement {
   }
   acidify-patch-view .pitch-key span { position: absolute; bottom: 7px; left: 0; right: 0; }
   acidify-patch-view .time-controls {
-    height: 108px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+    height: 108px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
     align-content: center; padding: 8px;
     border: 1px solid rgba(74,74,68,.72); border-radius: 5px;
     background:
@@ -1487,7 +1529,7 @@ class AcidifyPatchView extends HTMLElement {
       0 1px rgba(255,255,255,.28);
   }
   acidify-patch-view .function-button {
-    height: 40px; cursor: pointer; border-radius: 4px; font-size: 7.5px; font-weight: 900; letter-spacing: .45px;
+    height: 40px; cursor: pointer; border-radius: 4px; font-size: 7px; font-weight: 900; letter-spacing: .4px;
     background:
       linear-gradient(105deg, rgba(255,255,255,.38), transparent 22% 78%, rgba(68,67,62,.16)),
       linear-gradient(180deg, #e5e3da 0%, #cbc9c0 55%, #a5a49c 100%);
@@ -1520,7 +1562,8 @@ class AcidifyPatchView extends HTMLElement {
         <div class="model">AC-303 BASS LINE</div>
         <div class="computer">COMPUTER CONTROLLED</div>
       </header>
-      <div class="left-bank">
+      <div class="transport-bank">
+        <div class="bank-title">TRANSPORT</div>
         <div class="tempo-box">
           <div class="mini-title">TEMPO</div>
           ${dial("param9")}
@@ -1534,18 +1577,24 @@ class AcidifyPatchView extends HTMLElement {
           </div>
         </div>
       </div>
-      <div class="control waveform" data-param="param7" data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons">
-        <div class="wave-title">WAVEFORM</div>
-        <div class="wave-buttons">
-          <button data-value="0" aria-label="Saw"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M2 16L9 4v12l7-12v12l7-12"/></svg></button>
-          <button data-value="1" aria-label="Square"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M2 16V4h10v12h10V4h4"/></svg></button>
+      <div class="tone-bank">
+        <div class="bank-title">SYNTHESIS</div>
+        <div class="tone-controls">
+          <div class="control waveform" data-param="param7" data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons">
+            <div class="wave-buttons">
+              <button data-value="0" aria-label="Saw"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M2 16L9 4v12l7-12v12l7-12"/></svg></button>
+              <button data-value="1" aria-label="Square"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M2 16V4h10v12h10V4h4"/></svg></button>
+            </div>
+            <div class="wave-title">WAVEFORM</div>
+          </div>
+          ${dial("param1")}${dial("param2")}${dial("param3")}${dial("param4")}${dial("param5")}${dial("param6")}
         </div>
       </div>
-      <div class="tone-bank">
-        ${dial("param1")}${dial("param2")}${dial("param3")}${dial("param4")}${dial("param5")}${dial("param6")}
-      </div>
       <div class="volume-bank">
-        <div class="master-title">MASTER</div>
+        <div class="master-head">
+          <span>MASTER</span>
+          <span class="master-output"><span class="output-lamp"></span>OUT</span>
+        </div>
         ${dial("param8")}
       </div>
     </section>
@@ -1565,7 +1614,6 @@ class AcidifyPatchView extends HTMLElement {
             <div class="stepper"><button data-step="-1">−</button><span class="stepper-value">--</span><button data-step="1">+</button></div>
             <div class="stepper-label">ROOT</div>
           </div>
-          <div class="output-group"><span class="output-lamp"></span><span>OUTPUT</span></div>
         </div>
       </div>
       <div class="step-row">${steps}</div>

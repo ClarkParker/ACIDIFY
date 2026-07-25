@@ -1,4 +1,4 @@
-# Validierung 0.2.2
+# Validierung 0.2.3
 
 ## Automatische Prüfungen
 
@@ -10,9 +10,13 @@
 | DSP↔UI-Sync | 44/44 Parameter konsistent |
 | JavaScript Syntax (`node --check`) | bestanden |
 | Live-Browser-Render (1180 × 580 px) | bestanden |
-| Schutzabstände Accent/Master/Volume | 13 px |
+| Makromodule Transport/Synthese/Master | je 13 px Abstand |
+| Synthese-/Master-Achsen | identische Ober-/Unterkante |
+| Waveform/Klangregler/Volume | max. 1,5 px Achsabweichung |
+| Schutzabstände Accent/Master/Volume | mindestens 21 px |
 | Vier Step-Gruppen mit 4 × 4 Steps | je 13 px Gruppenabstand |
 | Classic-Modulraster (Status/Keyboard/Timing) | gleiche Ober-/Unterkante, je 13 px Abstand |
+| Classic-Funktionsmatrix | 3 × 2, vollständig innerhalb der Modulbucht |
 | Keyboard-Geometrie (7 weiße / 5 schwarze Tasten) | Overlay und Z-Reihenfolge bestanden |
 | Classic-UI (Dial, Toggle, Run, Step) | bestanden |
 | Studio-UI (Moduswechsel, 64 Lane-Cells, 11 Aktionen) | bestanden |
@@ -37,9 +41,9 @@ Master-Bucht und Volume-Ring sowie Step-Gruppen, Classic-Modulen und den
 überlagerten Keyboard-Tasten. Damit können weder geprägte Linien noch
 Nachbarbereiche bei nativer Größe in Bedienelemente laufen.
 
-0.2.2 verändert ausschließlich UI, Browser-Geometrietest, Manifestversion und
-Dokumentation. `ACIDIFYDSP.cmajor` ist gegenüber dem bereits kompilierten und
-gerenderten Stand 0.2.1 unverändert. Ein erneuter Compilerlauf war in der
+0.2.3 verändert ausschließlich UI, Browser-Geometrietest, Manifestversion,
+Mockups und Dokumentation. `ACIDIFYDSP.cmajor` ist gegenüber dem bereits
+kompilierten und gerenderten Stand 0.2.1 unverändert. Ein erneuter Compilerlauf war in der
 aktuellen Umgebung nicht möglich, weil der bereitgestellten Cmajor-Binärdatei
 `libwebkit2gtk-4.0.so.37` und `libjavascriptcoregtk-4.0.so.18` fehlen; deshalb
 werden die Audiozahlen oben ausdrücklich als 0.2.1-Nachweis geführt.

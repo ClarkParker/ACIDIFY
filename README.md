@@ -5,7 +5,7 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **Research Prototype 0.2.2**. UI, Parametervertrag und ein spielbarer
+> Status: **Research Prototype 0.2.3**. UI, Parametervertrag und ein spielbarer
 > DSP-Kern sind implementiert. Die Bezeichnung „AAA“ ist ein Qualitätsziel, kein
 > bereits abgeschlossener Messnachweis; dafür fehlen noch Hardware-Captures,
 > Null-/Residualtests und ein kalibrierter Hörtest gegen mehrere Originalgeräte.
@@ -56,16 +56,19 @@ bestehenden DSP.
 ## Panel-Raster
 
 Das Panel nutzt eine kleine Fibonacci-Abstandsskala (8, 13 und 21 px).
-Klangregler, Waveform und Master-Bucht besitzen dadurch feste Schutzzonen;
-geprägte Trennlinien laufen nicht in Regler oder Schalter. Volume sitzt als klar
-erkennbare Master-Sektion in einer eigenen, eingelassenen Bucht, während die
-sechs klangformenden Regler eine zusammenhängende Bank bleiben.
+Transport, Synthese und Master sind als drei vollständige, eingelassene Module
+aufgebaut. Waveform und die sechs Klangregler bilden eine gemeinsame
+Synthese-Bucht; ihre Bedienmittelpunkte liegen mit dem Volume-Regler auf
+derselben optischen Achse. Der Output-Meter gehört nun zum Master-Modul statt
+mit den Pattern-Werkzeugen zu konkurrieren. Zwischen allen drei Modulbuchten
+liegen 13 px, und geprägte Linien laufen nicht in Regler oder Schalter.
 
 Die 16 Sequencer-Schritte sind als vier musikalische Vierergruppen organisiert.
 Im Classic-Editor bilden Status, Keyboard und Timing drei gleich hohe
 Modulbuchten mit jeweils 13 px Abstand. Das Keyboard verwendet die korrekte
 Klaviergeometrie aus sieben lückenlosen weißen Tasten und fünf darüberliegenden,
-schmaleren schwarzen Tasten.
+schmaleren schwarzen Tasten. Die sechs Step-Funktionen sitzen in einer
+vollständig eingefassten 3 × 2-Matrix, die nicht über ihre Modulgrenzen läuft.
 
 ## Herkunft und Lizenz
 
