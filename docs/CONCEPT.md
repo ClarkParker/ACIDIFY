@@ -11,7 +11,7 @@ reproduzieren:
 - Accent, der Filter und Lautstärke gemeinsam beeinflusst,
 - feste, musikalisch erkennbare Slide-Charakteristik,
 - 16-Step-Sequencer mit Gate, Accent und Slide pro Schritt,
-- haptisch wirkendes, proportionsgetreues Silber/Beige-Panel.
+- eigenständige, dunkle Performance-Oberfläche mit klarer 303-DNA.
 
 Die erste Version ist bewusst eine **messbare Grundlage**. „AAA“ wird erst dann
 beansprucht, wenn Referenzaufnahmen mehrerer Originalgeräte bei identischen
@@ -121,19 +121,19 @@ private Datenbrücke zwischen UI und DSP.
 
 Designraster: 1180 × 580 px, skaliert per CSS `zoom`.
 
-- warmgraues ABS-Gehäuse und gebürstete Silberplatte,
-- schwarzer Druck, rote LEDs, schwarze geriffelte Drehknöpfe,
+- graphitfarbenes Chassis mit klar getrennten Performance-Modulen,
+- helle Funktionsbeschriftung, rote LEDs und schwarze geriffelte Drehknöpfe,
 - Soundregler in der originaltypischen Reihenfolge,
-- linke Tempo-/Mode-Zone, rechte Volume-/Power-Zone,
+- gleich hohe Zonen für Transport, Synthese und Master,
 - untere Programmiersektion mit vier gruppierten Viererblöcken,
 - korrekt geschichtetes Ein-Oktaven-Keyboard mit sieben weißen und fünf schwarzen Tasten,
 - gleich hohe Status-, Keyboard- und Timing-Module im 8/13/21-px-Abstandsraster,
 - eigene Kennzeichnung `ACIDIFY AC-303`, keine Roland-Logos.
 
 Die Materialdarstellung verwendet getrennte Licht- und Oberflächenmodelle:
-Formkanten und Naht des ABS-Gehäuses, feine unregelmäßige Körnung auf der
-Metallplatte, geriffelte Spritzgussflanken an den Potikappen, gefasste LED-Linsen
-sowie eingelassene Taster mit sichtbarem Hub. Die Bedienelemente verändern beim
+Formkanten des dunklen Chassis, eine dezente technische Rasterstruktur,
+geriffelte Spritzgussflanken an den Potikappen, gefasste LED-Linsen sowie
+eingelassene Taster mit sichtbarem Hub. Die Bedienelemente verändern beim
 Drücken nicht nur ihre Farbe, sondern auch Höhe, Schatten und Innenlicht.
 Drehregler unterstützen Pointer, Mausrad, Doppelklick sowie Pfeiltasten,
 `Home` und `End`.

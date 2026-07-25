@@ -6,11 +6,24 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-25
+
 ### Added
 
 - Verbindliche Release- und Versionierungsregeln.
 - Automatische Konsistenzprüfung für Manifest, README, Changelog und
   Validierungsdokument.
+
+### Changed
+
+- Vollständige moderne Performance-Oberfläche in Graphit statt der bisherigen
+  beige-grauen Prototypen-Haut.
+- Transport, Synthese und Master als drei gleich hohe Module mit 13 px Abstand.
+- Volume und Output vollständig in das Master-Modul integriert.
+- Klangregler, Waveform und Volume auf einer gemeinsamen optischen Achse.
+- Sequencer, Classic-Editor und Studio-Matrix auf ein einheitliches dunkles
+  Produkt- und Interaktionssystem umgestellt.
+- Produktversion direkt auf der Oberfläche sichtbar gemacht.
 
 ## [0.3.0] - 2026-07-25
 

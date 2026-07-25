@@ -5,7 +5,7 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **UI Release Candidate 0.3.0**. Die zweistufige Instrumentenoberfläche,
+> Status: **UI Release Candidate 0.4.0**. Die zweistufige Instrumentenoberfläche,
 > der stabile Parametervertrag und der spielbare DSP-Kern sind implementiert.
 > Für einen belastbaren akustischen Vergleich mit Originalhardware fehlen weiterhin
 > kalibrierte Hardware-Captures und Blindtests.
@@ -67,23 +67,23 @@ Die Studio-Werkzeuge schreiben direkt in `param13..param44`. Pattern bleiben
 dadurch vollständig kompatibel mit Amorph-Automation, Presets und dem
 bestehenden DSP.
 
-## Panel-Raster
+## Modern Performance Surface
 
 Das Panel nutzt eine kleine Fibonacci-Abstandsskala (8, 13 und 21 px).
-Transport, Synthese und Master sind als drei vollständige, eingelassene Module
-aufgebaut. Waveform und die sechs Klangregler bilden eine gemeinsame
-Synthese-Bucht; ihre Bedienmittelpunkte liegen mit dem Volume-Regler auf
-derselben optischen Achse. Der Output-Meter gehört nun zum Master-Modul statt
-mit den Pattern-Werkzeugen zu konkurrieren. Zwischen allen drei Modulbuchten
-liegen 13 px, und geprägte Linien laufen nicht in Regler oder Schalter.
+Transport, Synthese und Master bilden drei gleich hohe, graphitfarbene
+Performance-Module. Waveform und die sechs Klangregler liegen mit dem
+Volume-Regler auf einer gemeinsamen optischen Achse. Der Output-Meter gehört
+vollständig zum Master-Modul. Zwischen allen drei Modulen liegen 13 px; keine
+Rahmen- oder Trennlinie läuft in Regler oder Schalter.
 
 Die 16 Sequencer-Schritte sind als vier musikalische Vierergruppen organisiert.
-Im Classic-Editor bilden Status, Keyboard und Timing drei gleich hohe
-Modulbuchten mit jeweils 13 px Abstand. Das Keyboard verwendet die korrekte
-Klaviergeometrie aus sieben lückenlosen weißen Tasten und fünf darüberliegenden,
-schmaleren schwarzen Tasten. `CLEAR` setzt den gewählten Step eindeutig zurück,
-statt eine zweite, missverständliche Gate-Funktion anzubieten. Die sechs Step-Funktionen sitzen in einer
-vollständig eingefassten 3 × 2-Matrix, die nicht über ihre Modulgrenzen läuft.
+Im Classic-Editor bilden Status, Keyboard und Timing drei gleich hohe,
+eigenständige Module mit jeweils 13 px Abstand. Das Keyboard verwendet die
+korrekte Klaviergeometrie aus sieben lückenlosen weißen Tasten und fünf
+darüberliegenden, schmaleren schwarzen Tasten. `CLEAR` setzt den gewählten Step
+eindeutig zurück. Die sechs Step-Funktionen sitzen in einer vollständig
+eingefassten 3 × 2-Matrix. Studio verwendet dieselbe Oberfläche und wechselt
+nur den Editor in das präzise Vier-Lane-Raster.
 
 ## Herkunft und Lizenz
 

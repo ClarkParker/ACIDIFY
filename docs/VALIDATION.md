@@ -1,4 +1,4 @@
-# Validierung 0.3.0
+# Validierung 0.4.0
 
 ## Automatische Prüfungen
 
@@ -12,15 +12,15 @@
 | Live-Browser-Render (1180 × 580 px) | bestanden |
 | Makromodule Transport/Synthese/Master | je 13 px Abstand |
 | Synthese-/Master-Achsen | identische Ober-/Unterkante |
-| Waveform/Klangregler/Volume | max. 1,5 px Achsabweichung |
-| Schutzabstände Accent/Master/Volume | mindestens 21 px |
+| Waveform/Klangregler/Volume | max. 0,5 px Achsabweichung |
+| Schutzabstände Accent/Master/Volume | mindestens 24 px |
 | Vier Step-Gruppen mit 4 × 4 Steps | je 13 px Gruppenabstand |
 | Classic-Modulraster (Status/Keyboard/Timing) | gleiche Ober-/Unterkante, je 13 px Abstand |
 | Classic-Funktionsmatrix | 3 × 2, vollständig innerhalb der Modulbucht |
 | Keyboard-Geometrie (7 weiße / 5 schwarze Tasten) | Overlay und Z-Reihenfolge bestanden |
 | Classic-UI (Dial, Toggle, Run, Step) | bestanden |
 | Studio-UI (Moduswechsel, 64 Lane-Cells, 11 Aktionen) | bestanden |
-| Studio-Workflow-Schalter | 140 × 29 px, aktive Ansicht eindeutig beschriftet |
+| Studio-Workflow-Schalter | 156 × 32 px, aktive Ansicht eindeutig beschriftet |
 | Studio-Lane-Raster | 4 Lanes × 4 Gruppen × 4 Steps, je 8 px Gruppenabstand |
 | Classic `CLEAR` | setzt Pitch und Flags des gewählten Steps zurück |
 | Studio-Bereichsauswahl und Drag-Paint | bestanden |
@@ -46,8 +46,8 @@ Master-Bucht und Volume-Ring sowie Step-Gruppen, Classic-Modulen und den
 überlagerten Keyboard-Tasten. Damit können weder geprägte Linien noch
 Nachbarbereiche bei nativer Größe in Bedienelemente laufen.
 
-0.3.0 verändert ausschließlich UI, Preview-/Render-Harness, Browser-Geometrietest,
-Manifestversion, Mockups und Dokumentation. `ACIDIFYDSP.cmajor` ist gegenüber dem bereits
+0.4.0 verändert ausschließlich UI, Manifestversion, Mockups und Dokumentation.
+`ACIDIFYDSP.cmajor` ist gegenüber dem bereits
 kompilierten und gerenderten Stand 0.2.1 unverändert. Ein erneuter Compilerlauf war in der
 aktuellen Umgebung nicht möglich, weil der bereitgestellten Cmajor-Binärdatei
 `libwebkit2gtk-4.0.so.37` und `libjavascriptcoregtk-4.0.so.18` fehlen; deshalb
