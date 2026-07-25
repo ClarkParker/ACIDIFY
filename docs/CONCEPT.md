@@ -7,7 +7,7 @@ und eine getrennte, für Acid-Produktionen typische Ausgangsverzerrung anbieten.
 Der Instrumentenkern bleibt auch bei ausgeschalteter Distortion vollständig
 spielbar und messbar.
 
-0.6.3 ist ein technisch geprüfter Modellkandidat. „AAA Clone“ wird erst
+0.6.4 ist ein technisch geprüfter Modellkandidat. „AAA Clone“ wird erst
 beansprucht, wenn identische Pattern mehrerer Originalgeräte kalibriert
 aufgenommen, gegen das Modell vermessen und im Blindtest bewertet wurden.
 Quellcodequalität und grüne Offline-Tests ersetzen diesen Hör- und
@@ -49,7 +49,7 @@ sondern aus dem gekoppelten Verhalten von:
 5. Vierpol-Diodenleiter und seinen Koppelnetzwerken,
 6. optionaler nachgeschalteter Produktionsverzerrung.
 
-## 3. DSP-Topologie 0.6.3
+## 3. DSP-Topologie 0.6.4
 
 ```mermaid
 flowchart TD
@@ -87,6 +87,10 @@ vierfachen `processor.frequency` berechnet.
   aktiv. Erst ein tatsächlich empfangenes Ereignis übernimmt und sperrt die
   jeweilige interne Funktion. Dadurch bleibt DAW-Stellung auch in
   Amorph-Builds ohne eingehenden Transportstream spielbar.
+- Bei aktivem Sync wird das Hosttempo in den sichtbaren Regler und `param9`
+  gespiegelt. Beim Rückschalten auf `Internal` übernimmt der DSP ebenfalls den
+  letzten Hostwert; danach stehen 0,1-BPM-Schritte beziehungsweise 0,01 BPM mit
+  `Shift` für gezielte manuelle Drifts zur Verfügung.
 - `param49` schaltet die Quelle append-only um und startet aus Gründen der
   Preset-Kompatibilität in `Internal`.
 
@@ -94,8 +98,9 @@ Der ursprüngliche Dev-Kit enthielt bereits ausdrücklich
 `// optional host transport: input event float64 transportIn;`. Bestehende
 Amorph-Plugins belegen die zugehörige 6-Slot-Semantik praktisch. Der frühere
 ACIDIFY-Stand hörte ausschließlich auf die typisierten Cmajor-Eingänge und
-verfehlte deshalb den tatsächlichen Amorph-Transport. Der Produktionsgraphtest
-für 0.6.3 speist nun den dokumentierten `transportIn`-Endpunkt bis in den
+verfehlte deshalb den tatsächlichen Amorph-Transport. Der seit 0.6.3 vorhandene
+Produktionsgraphtest speist den dokumentierten
+`transportIn`-Endpunkt bis in den
 4×-Kern. Die abschließende Produktbestätigung erfolgt nach Neucompilierung im
 installierten Amorph-Plugin.
 

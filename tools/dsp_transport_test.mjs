@@ -19,6 +19,7 @@ processor AcidifyTransportEvents
     output event float internalTempoOut;
     output event float internalRunOut;
     output event float dawModeOut;
+    output event float handoffModeOut;
     output event float64 transportOut;
 
     int frame = 0;
@@ -39,6 +40,7 @@ processor AcidifyTransportEvents
         let oneSecond = int (float (processor.frequency));
         let oneAndQuarter = int (float (processor.frequency) * 1.25f);
         let oneAndThreeQuarters = int (float (processor.frequency) * 1.75f);
+        let twoSeconds = int (float (processor.frequency) * 2.0f);
         let twoAndQuarter = int (float (processor.frequency) * 2.25f);
 
         loop
@@ -49,6 +51,7 @@ processor AcidifyTransportEvents
                 internalRunOut <- 1.0f;
 
                 dawModeOut <- 1.0f;
+                handoffModeOut <- 1.0f;
                 // A negative slot-4 value deliberately withholds position while
                 // still exercising Amorph BPM and Play/Stop delivery.
                 sendAmorphTransport (true, 120.0, -1.0);
@@ -73,6 +76,12 @@ processor AcidifyTransportEvents
             {
                 // Seek while playing: tick 48 must jump to pattern step 0.
                 sendAmorphTransport (true, 180.0, 12.0);
+            }
+            else if (frame == twoSeconds)
+            {
+                // Releasing DAW sync must retain the last received host BPM as
+                // the new internal-tempo baseline.
+                handoffModeOut <- 0.0f;
             }
             else if (frame == twoAndQuarter)
             {
@@ -112,13 +121,35 @@ processor AcidifyTraceMerge
     input stream float internalIn;
     input stream float dawIn;
     input stream float fallbackIn;
-    output stream float<3> out;
+    input stream float handoffTempoIn;
+    output stream float<4> out;
 
     void main()
     {
         loop
         {
-            out <- float<3> (internalIn, dawIn, fallbackIn);
+            out <- float<4> (internalIn, dawIn, fallbackIn, handoffTempoIn);
+            advance();
+        }
+    }
+}
+
+processor AcidifyTempoTrace
+{
+    input event float tempoIn;
+    output stream float out;
+    float tempo = 0.0f;
+
+    event tempoIn (float nextTempo)
+    {
+        tempo = nextTempo;
+    }
+
+    void main()
+    {
+        loop
+        {
+            out <- tempo / 300.0f;
             advance();
         }
     }
@@ -126,7 +157,7 @@ processor AcidifyTraceMerge
 
 graph AcidifyTransportTest [[ main ]]
 {
-    output stream float<3> out;
+    output stream float<4> out;
 
     node events = AcidifyTransportEvents;
     // Exercise the exact production graph boundary, not AcidifyCore directly.
@@ -135,9 +166,11 @@ graph AcidifyTransportTest [[ main ]]
     node internal = Acidify;
     node daw = Acidify;
     node fallback = Acidify;
+    node handoff = Acidify;
     node internalTrace = AcidifyStepTrace;
     node dawTrace = AcidifyStepTrace;
     node fallbackTrace = AcidifyStepTrace;
+    node handoffTempoTrace = AcidifyTempoTrace;
     node merge = AcidifyTraceMerge;
 
     connection
@@ -153,12 +186,18 @@ graph AcidifyTransportTest [[ main ]]
         events.internalRunOut -> fallback.param10;
         events.dawModeOut -> fallback.param49;
 
+        events.internalTempoOut -> handoff.param9;
+        events.handoffModeOut -> handoff.param49;
+        events.transportOut -> handoff.transportIn;
+
         internal.currentStep -> internalTrace.stepIn;
         daw.currentStep -> dawTrace.stepIn;
         fallback.currentStep -> fallbackTrace.stepIn;
+        handoff.effectiveTempo -> handoffTempoTrace.tempoIn;
         internalTrace.out -> merge.internalIn;
         dawTrace.out -> merge.dawIn;
         fallbackTrace.out -> merge.fallbackIn;
+        handoffTempoTrace.out -> merge.handoffTempoIn;
         merge.out -> out;
     }
 }
@@ -277,7 +316,7 @@ try {
     "render",
     `--rate=${sampleRate}`,
     `--length=${Math.round(sampleRate * 3.0)}`,
-    "--channels=3",
+    "--channels=4",
     "--blockSize=128",
     `--output=${wavPath}`,
     manifestPath,
@@ -289,13 +328,28 @@ try {
   }
 
   const channels = readChannels(await readFile(wavPath));
-  if (channels.length !== 3) throw new Error(`Expected 3-channel trace, got ${channels.length} channels`);
+  if (channels.length !== 4) throw new Error(`Expected 4-channel trace, got ${channels.length} channels`);
   const internal = transitions(channels[0]);
   const daw = transitions(channels[1]);
   const fallback = transitions(channels[2]);
+  const handoffTempo = time => channels[3][Math.round(time * sampleRate)] * 300;
   const internalOrigin = validate(internal, expectedInternal(), "Internal clock");
   const dawOrigin = validate(daw, expectedDaw(), "DAW clock");
   const fallbackOrigin = validate(fallback, expectedInternal(), "DAW no-host fallback");
+  // The public 4× graph forwards status events with a fixed reporting latency,
+  // so sample well inside each stable section rather than at the event edge.
+  const handoffBeforeChange = handoffTempo(0.75);
+  const handoffDuringSync = handoffTempo(1.8);
+  const handoffAfterRelease = handoffTempo(2.7);
+  if (Math.abs(handoffBeforeChange - 120) > 0.02
+      || Math.abs(handoffDuringSync - 180) > 0.02
+      || Math.abs(handoffAfterRelease - 180) > 0.02) {
+    throw new Error(`DAW tempo handoff failed: ${JSON.stringify({
+      handoffBeforeChange,
+      handoffDuringSync,
+      handoffAfterRelease,
+    })}`);
+  }
 
   console.log(JSON.stringify({
     ok: true,
@@ -304,6 +358,11 @@ try {
     internalTransitions: internal,
     dawTransitions: daw,
     fallbackTransitions: fallback,
+    tempoHandoff: {
+      beforeHostChange: handoffBeforeChange,
+      duringSync: handoffDuringSync,
+      afterSyncRelease: handoffAfterRelease,
+    },
     checks: {
       productionGraphBoundary: true,
       amorphSixSlotTransport: true,
@@ -314,6 +373,7 @@ try {
       daw180Bpm: true,
       transportStopStart: true,
       dawSeek: true,
+      hostTempoHandoff: true,
     },
   }));
 } finally {

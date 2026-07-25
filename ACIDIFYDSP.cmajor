@@ -1,5 +1,5 @@
 /*
-    ACIDIFY 0.6.3 — analog-modelled 303-class bassline for Amorph.
+    ACIDIFY 0.6.4 — analog-modelled 303-class bassline for Amorph.
 
     MIDI/16-step sequencer -> oscillator -> coupling HP -> four-stage ladder
     -> coupling HP -> accent VCA -> output stage.
@@ -40,7 +40,7 @@ processor AcidifyCore
     input event float param6  [[ name: "Accent",         min: 0.0,  max: 1.0,   init: 0.65 ]];
     input event float param7  [[ name: "Waveform",       min: 0.0,  max: 1.0,   init: 0.0,   step: 1.0 ]];
     input event float param8  [[ name: "Volume",         min: -36.0, max: 0.0,  init: -6.0,  unit: "dB" ]];
-    input event float param9  [[ name: "Tempo",          min: 40.0, max: 300.0, init: 128.0, unit: "bpm" ]];
+    input event float param9  [[ name: "Tempo",          min: 40.0, max: 300.0, init: 128.0, step: 0.01, unit: "bpm" ]];
     input event float param10 [[ name: "Run",            min: 0.0,  max: 1.0,   init: 0.0,   step: 1.0 ]];
     input event float param11 [[ name: "Pattern Length", min: 1.0,  max: 16.0,  init: 16.0,  step: 1.0 ]];
     input event float param12 [[ name: "Root Note",      min: 24.0, max: 60.0,  init: 36.0,  step: 1.0 ]];
@@ -806,6 +806,8 @@ processor AcidifyCore
         let changed = ! hostTempoSeen || abs (boundedTempo - hostTempo) > 0.001f;
         hostTempo = boundedTempo;
         hostTempoSeen = true;
+        if (dawSyncEnabled)
+            tempo = clamp (boundedTempo, 40.0f, 300.0f);
         if (changed)
             reportClockState();
     }
@@ -1040,6 +1042,8 @@ processor AcidifyCore
         let nextMode = v >= 0.5f;
         if (nextMode != dawSyncEnabled)
         {
+            if (! nextMode && hostTempoSeen)
+                tempo = clamp (hostTempo, 40.0f, 300.0f);
             dawSyncEnabled = nextMode;
             resetSequencer();
         }
@@ -1292,7 +1296,7 @@ graph Acidify [[ main ]]
     input event float param6  [[ name: "Accent",         min: 0.0,  max: 1.0,   init: 0.65 ]];
     input event float param7  [[ name: "Waveform",       min: 0.0,  max: 1.0,   init: 0.0,   step: 1.0 ]];
     input event float param8  [[ name: "Volume",         min: -36.0, max: 0.0,  init: -6.0,  unit: "dB" ]];
-    input event float param9  [[ name: "Tempo",          min: 40.0, max: 300.0, init: 128.0, unit: "bpm" ]];
+    input event float param9  [[ name: "Tempo",          min: 40.0, max: 300.0, init: 128.0, step: 0.01, unit: "bpm" ]];
     input event float param10 [[ name: "Run",            min: 0.0,  max: 1.0,   init: 0.0,   step: 1.0 ]];
     input event float param11 [[ name: "Pattern Length", min: 1.0,  max: 16.0,  init: 16.0,  step: 1.0 ]];
     input event float param12 [[ name: "Root Note",      min: 24.0, max: 60.0,  init: 36.0,  step: 1.0 ]];

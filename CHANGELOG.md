@@ -6,6 +6,35 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.6.4] - 2026-07-25
+
+### Added
+
+- Englische Tooltips für Hauptregler, Transport, Step-Zustände, Classic- und
+  Studio-Werkzeuge sowie Distortion-Bedienung.
+- Kleiner globaler `? TIPS ON/OFF`-Schalter; die UI-Einstellung wird
+  bestmöglich im eingebetteten Webview gespeichert und benötigt keinen neuen
+  DSP-Parameter.
+
+### Changed
+
+- Bei aktivem DAW-Sync folgt die sichtbare Tempo-Reglerstellung dem empfangenen
+  Hosttempo und spiegelt den Wert in `param9`.
+- Beim Ausschalten von DAW-Sync bleibt das letzte Hosttempo im DSP und in der UI
+  als manueller Ausgangswert erhalten.
+- Manuelles Tempo lässt sich mit Mausrad oder Pfeiltasten in 0,1-BPM-Schritten
+  und mit `Shift` in 0,01-BPM-Schritten einstellen.
+
+### Validated
+
+- Browserworkflow prüft DAW-Wert 135,27 BPM, Regler-/Parameter-Spiegelung,
+  Eingabesperre während Sync, wertgleichen Übergang auf `INT` und anschließende
+  Feinänderung auf 135,38 BPM.
+- Englischer Tooltip, globales On/Off, 136 Tooltip-Ziele und vollständiges
+  Entfernen nicht abschaltbarer nativer `title`-Tooltips geprüft.
+- Der Produktionsgraph hält nach 120→180 BPM beim Abschalten von Sync weiterhin
+  180 BPM; der Test läuft über den öffentlichen `Acidify`-Graph.
+
 ## [0.6.3] - 2026-07-25
 
 ### Fixed

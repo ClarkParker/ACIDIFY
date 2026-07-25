@@ -5,7 +5,7 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **DSP/Transport Release Candidate 0.6.3**. Die fixierte
+> Status: **DSP/Transport Release Candidate 0.6.4**. Die fixierte
 > Classic-/Studio-Oberfläche wurde nur um einen kleinen `DIST`-Button mit
 > ausklappbarem Overlay sowie die kompakte `INT/DAW`-Uhrwahl erweitert.
 > Clean-Core, 49-Parameter-Vertrag, Amorph-`transportIn`-Sync, sicherer
@@ -70,6 +70,11 @@ Der kleine `INT/DAW`-Schalter im Transportmodul wählt die Taktquelle:
   Host-Tempo sperrt nur den BPM-Regler, Host-Transport nur `RUN / STOP`. Sind
   beide vorhanden, folgen Tempo und Play/Stop der DAW. Liefert der Host außerdem
   die Songposition, folgen Pattern-Phase, Loop und Seek dem DAW-16tel-Raster.
+- Solange Host-Tempo anliegt, folgt auch die sichtbare Stellung des
+  Tempo-Reglers dem DAW-Wert und spiegelt ihn in `param9`. Beim Wechsel zurück
+  auf `INT` bleibt dieser letzte Hostwert als manueller Ausgangspunkt erhalten.
+  Mausrad und Pfeiltasten ändern anschließend 0,1 BPM; mit gedrückter
+  `Shift`-Taste sind 0,01-BPM-Schritte möglich.
 - `DAW · INT FALLBACK` bedeutet, dass der Host noch keinen
   Amorph-Transportstream weitergibt. Der Sequencer bleibt dann mit internem BPM und `RUN / STOP`
   vollständig bedienbar, statt stillzustehen.
@@ -83,6 +88,14 @@ für standardkonforme Cmajor-Hosts verdrahtet.
 
 `INT` ist der Initialwert von `param49`; ältere Presets behalten damit ihr
 bisheriges Verhalten.
+
+## English Tooltips
+
+Alle bedienbaren Hauptfunktionen, Step-Zustände und Studio-Werkzeuge besitzen
+englische Tooltips. Der kleine Schalter `? TIPS ON/OFF` unten links aktiviert
+oder deaktiviert sie global. Die Einstellung ist reine UI-Hilfe, belegt keinen
+weiteren Amorph-Parameter und wird – soweit der eingebettete Host
+`localStorage` erlaubt – für die nächste UI-Instanz gespeichert.
 
 ## Tonhöhe einzelner Steps
 

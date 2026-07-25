@@ -1,4 +1,4 @@
-# Validierung 0.6.3
+# Validierung 0.6.4
 
 ## Automatische Prüfungen
 
@@ -14,7 +14,9 @@
 | Distortion-Overlay | Open/Close, Escape, Außenklick, Fokus und Status bestanden |
 | Distortion-Parameter | Enable, drei Typen, Drive, Mix und Echo-Schutz bestanden |
 | Amorph `data-endpoint-id` an globalen Controls | 17/17 |
-| INT/DAW-UI | unabhängiger Tempo-/Transport-Lock, Internal-Fallback und Host-Lampe bestanden |
+| INT/DAW-UI | Tempo-Spiegelung, wertgleicher DAW→INT-Übergang, unabhängiger Transport-Lock, Internal-Fallback und Host-Lampe bestanden |
+| Tempo-Fine-Control | 0,1 BPM normal und 0,01 BPM mit `Shift` bestanden |
+| Englische Tooltips | 136 Ziele, Anzeige, On/Off und 0 verbleibende native `title`-Tooltips bestanden |
 | Step-Pitch | Note/Oktave, Keyboard, Rechts-/Doppelklick, 25-Noten-Menü und Mausrad bestanden |
 | Step-Zustände | Accent/Slide einzeln und gemeinsam als 18 × 18 px Badges bestanden |
 | Step-Zustände bei 590 × 290 | Accent/Slide effektiv je 9 × 9 px bestanden |
@@ -81,20 +83,22 @@ abgedeckt.
 
 ## Clock- und Transportmatrix
 
-`tools/dsp_transport_test.mjs` taktet drei parallele Instanzen des öffentlichen
+`tools/dsp_transport_test.mjs` taktet vier parallele Instanzen des öffentlichen
 Produktionsgraphen `Acidify` innerhalb desselben Cmajor-Renders:
 
 - Kanal 1: interne Uhr,
 - Kanal 2: DAW-Uhr mit Amorphs rollendem 6-Slot-`transportIn`,
 - Kanal 3: DAW-Modus ohne Host-Transportstream; interner BPM- und
-  Run/Stop-Fallback.
+  Run/Stop-Fallback,
+- Kanal 4: effektives Tempo einer DAW-Instanz vor, während und nach dem
+  Rückschalten auf `Internal`.
 
-| Samplerate | INT 120 BPM | DAW 120→180 BPM | ohne Position | Stop/Start | No-Host-Fallback | Startposition / Seek |
-|---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| 44,1 kHz | bestanden | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
-| 48 kHz | bestanden | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
-| 88,2 kHz | bestanden | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
-| 96 kHz | bestanden | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
+| Samplerate | INT 120 BPM | DAW 120→180 BPM | DAW→INT bleibt 180 | ohne Position | Stop/Start | No-Host-Fallback | Startposition / Seek |
+|---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 44,1 kHz | bestanden | bestanden | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
+| 48 kHz | bestanden | bestanden | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
+| 88,2 kHz | bestanden | bestanden | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
+| 96 kHz | bestanden | bestanden | bestanden | bestanden | bestanden | bestanden | Step 2 / Step 0 |
 
 Bei 120 BPM liegen Internal und DAW auf denselben samplegenauen
 Step-Grenzen. Die erste halbe Sekunde erhält die DAW-Instanz bewusst nur Tempo
@@ -106,8 +110,11 @@ DAW startet bei 1,25 s mit 180 BPM und Quarter-Note 8,5 korrekt auf Step 3
 Die dritte Instanz erhält ausschließlich `param9`, `param10` und
 `param49 = DAW`; sie trifft dieselben Step-/Stop-/Start-Grenzen wie die interne
 Referenz und belegt den spielbaren Fallback ohne Hostdaten.
+Die vierte Instanz beginnt intern bei 120 BPM, folgt im DAW-Modus dem Wechsel
+auf 180 BPM und hält nach dem Rückschalten auf `Internal` weiterhin 180 BPM.
+Damit ist der Tempo-Handoff im DSP unabhängig von der geöffneten UI belegt.
 
-## Was 0.6.3 technisch belegt
+## Was 0.6.4 technisch belegt
 
 - Der Patch kompiliert und der 49-Parameter-Vertrag ist synchron.
 - Der öffentliche Produktionsgraph reicht Amorphs dokumentierten
@@ -115,6 +122,9 @@ Referenz und belegt den spielbaren Fallback ohne Hostdaten.
   96 kHz reproduzierbar auf BPM, Play/Stop, Startposition und Seek.
 - Fehlt der Host-Transportstream, bleiben interner BPM und Run/Stop in
   DAW-Stellung reproduzierbar funktionsfähig.
+- Bei vorhandenem Hosttempo folgen Regler und `param9` dem DAW-Wert; beim
+  Abschalten von Sync bleibt derselbe Wert im DSP erhalten und lässt sich
+  anschließend mit 0,1/0,01 BPM fein verändern.
 - Der Clean-Pfad enthält keine fest eingebackene Produktionsverzerrung.
 - Distortion-Bypass und Null-Mix sind innerhalb derselben Instanz
   sampletransparent.
@@ -127,6 +137,8 @@ Referenz und belegt den spielbaren Fallback ohne Hostdaten.
   `NOTE`-Aktion und Mausrad sind im Browser-Workflow geprüft.
 - Accent und Slide bleiben in Original- und Halbgröße sowie bei gemeinsamem
   Zustand visuell unterscheidbar.
+- Die englischen Tooltips sind vollständig per kleinem UI-Schalter deaktivierbar
+  und führen keinen neuen DSP-Parameter ein.
 
 ## Realer Amorph-Hostbefund
 
@@ -134,11 +146,12 @@ Der 0.6.2-Test lieferte an den drei typisierten `std::timeline::*`-Eingängen
 keine Ereignisse. Dieser Befund wurde fälschlich als fehlende Amorph-Hostbridge
 interpretiert. Der Dev-Kit dokumentiert jedoch den separaten
 `input event float64 transportIn`, und bestehende Amorph-Plugins bestätigen den
-6-Slot-Stream praktisch. 0.6.3 verarbeitet nun genau diesen Eingang.
+6-Slot-Stream praktisch. Seit 0.6.3 verarbeitet ACIDIFY genau diesen Eingang.
 
 Der grüne Produktionsgraphtest belegt die vollständige Patchverarbeitung des
 Amorph-Streamformats. Nach Installation beziehungsweise Neucompilierung von
-0.6.3 bleibt als letzter Schritt der reale DAW-Test für BPM, Play/Stop und PPQ.
+0.6.4 bleibt als letzter Schritt der reale DAW-Test für BPM, Play/Stop, PPQ und
+den sichtbaren Tempo-Handoff.
 
 ## Noch nicht abgedeckt
 

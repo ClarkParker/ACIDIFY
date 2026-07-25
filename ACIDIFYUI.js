@@ -12,7 +12,7 @@ const ACIDIFY_GLOBALS = [
   { id: "param6",  type: "dial",    label: "ACCENT",       min: 0,  max: 1,   step: 0.001, init: 0.65, format: v => `${Math.round(v * 100)}` },
   { id: "param7",  type: "toggle",  label: "WAVEFORM",     min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param8",  type: "dial",    label: "VOLUME",       min: -36, max: 0,  step: 0.1, init: -6,    format: v => `${v.toFixed(1)} dB` },
-  { id: "param9",  type: "dial",    label: "TEMPO",        min: 40, max: 300, step: 1, init: 128,     format: v => `${Math.round(v)} BPM` },
+  { id: "param9",  type: "dial",    label: "TEMPO",        min: 40, max: 300, step: 0.01, coarseStep: 0.1, init: 128, format: formatTempo },
   { id: "param10", type: "toggle",  label: "RUN",          min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param11", type: "stepper", label: "LENGTH",       min: 1,  max: 16,  step: 1, init: 16,      format: v => `${Math.round(v)}` },
   { id: "param12", type: "stepper", label: "ROOT",         min: 24, max: 60,  step: 1, init: 36,      format: v => noteName(Math.round(v)) },
@@ -35,6 +35,26 @@ const STEP_FLAG_IDS = [
 ];
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const DISTORTION_NAMES = ["PURE", "MACKIE", "PHONO"];
+const TOOLTIP_STORAGE_KEY = "acidify.tooltips.enabled";
+const CONTROL_TOOLTIPS = {
+  param1: "Fine-tunes the instrument by one semitone up or down. Drag or use the arrow keys; hold Shift for finer movement. Double-click to reset.",
+  param2: "Sets the filter cutoff frequency. Higher values make the sound brighter. Hold Shift while dragging for finer movement.",
+  param3: "Sets filter resonance around the cutoff frequency. Higher values increase the characteristic acid peak.",
+  param4: "Controls how strongly the filter envelope moves the cutoff frequency.",
+  param5: "Sets the filter-envelope decay time.",
+  param6: "Sets the global intensity of accented steps and high-velocity MIDI notes.",
+  param7: "Selects the oscillator waveform: sawtooth or the modelled 303-style square wave.",
+  param8: "Sets the final output level in decibels.",
+  param9: "Sets the internal clock tempo. Wheel or arrow keys change 0.1 BPM; hold Shift for 0.01 BPM. In DAW mode the knob follows the host tempo.",
+  param10: "Starts or stops the internal pattern clock. In DAW mode this follows host transport when available.",
+  param11: "Sets the active pattern length from 1 to 16 steps.",
+  param12: "Sets the MIDI root note used by the 16-step pattern.",
+  param45: "Turns the optional post-output distortion stage on or off.",
+  param46: "Selects the distortion character: Pure, Mackie or Phono.",
+  param47: "Sets the amount of drive applied by the selected distortion character.",
+  param48: "Blends the distorted signal with the clean instrument output.",
+  param49: "Selects the clock source. INT uses the internal tempo and RUN/STOP; DAW follows host tempo, transport and position.",
+};
 
 function noteName(note) {
   const n = Math.max(0, Math.min(127, Math.round(Number(note) || 0)));
@@ -45,6 +65,12 @@ function clamp(value, min, max) {
   const n = Number(value);
   if (!Number.isFinite(n)) return min;
   return Math.min(max, Math.max(min, n));
+}
+
+function formatTempo(value) {
+  const rounded = Math.round(clamp(value, 0, 999) * 100) / 100;
+  const decimals = Number.isInteger(rounded) ? 0 : Number.isInteger(rounded * 10) ? 1 : 2;
+  return `${rounded.toFixed(decimals)} BPM`;
 }
 
 class DialControl {
@@ -97,18 +123,22 @@ class DialControl {
     this.onWheel = e => {
       e.preventDefault();
       if (this.isDisabled()) return;
-      const increment = this.config.step || (this.config.max - this.config.min) / 100;
+      const increment = e.shiftKey
+        ? (this.config.fineStep || this.config.step || (this.config.max - this.config.min) / 100)
+        : (this.config.coarseStep || this.config.step || (this.config.max - this.config.min) / 100);
       this.pc.sendParameterGestureStart?.(this.config.id);
       this.showFeedback();
-      this.setValue(this.value + (e.deltaY < 0 ? increment : -increment) * (e.shiftKey ? 0.2 : 1), true);
+      this.setValue(this.value + (e.deltaY < 0 ? increment : -increment), true);
       this.pc.sendParameterGestureEnd?.(this.config.id);
     };
     this.onKeyDown = e => {
       if (this.isDisabled()) return;
-      const increment = this.config.step || (this.config.max - this.config.min) / 100;
+      const increment = e.shiftKey
+        ? (this.config.fineStep || this.config.step || (this.config.max - this.config.min) / 100)
+        : (this.config.coarseStep || this.config.step || (this.config.max - this.config.min) / 100);
       let next = null;
-      if (e.key === "ArrowUp" || e.key === "ArrowRight") next = this.value + increment * (e.shiftKey ? 0.2 : 1);
-      if (e.key === "ArrowDown" || e.key === "ArrowLeft") next = this.value - increment * (e.shiftKey ? 0.2 : 1);
+      if (e.key === "ArrowUp" || e.key === "ArrowRight") next = this.value + increment;
+      if (e.key === "ArrowDown" || e.key === "ArrowLeft") next = this.value - increment;
       if (e.key === "Home") next = this.config.min;
       if (e.key === "End") next = this.config.max;
       if (next === null) return;
@@ -146,7 +176,7 @@ class DialControl {
     if (this.dragging && !notify) return;
     const { min, max, step } = this.config;
     let value = clamp(raw, min, max);
-    if (step > 0) value = Math.round(value / step) * step;
+    if (step > 0) value = Number((Math.round(value / step) * step).toFixed(8));
     value = clamp(value, min, max);
     this.value = value;
     const norm = (value - min) / (max - min || 1);
@@ -254,6 +284,14 @@ class AcidifyPatchView extends HTMLElement {
     this._effectiveTempo = 128;
     this._transportRunning = false;
     this._hostSyncFlags = 0;
+    this._tooltipsEnabled = this._loadTooltipPreference();
+    this._tooltipTimer = null;
+    this._tooltipTarget = null;
+    this._tooltipToggleClick = null;
+    this._tooltipPointerOver = null;
+    this._tooltipPointerOut = null;
+    this._tooltipFocusIn = null;
+    this._tooltipFocusOut = null;
     this._studioPointerEnd = null;
     this._studioKeyDown = null;
     this._distortionKeyDown = null;
@@ -281,6 +319,7 @@ class AcidifyPatchView extends HTMLElement {
     this._wireStudio();
     this._wirePitchMenu();
     this._wireDistortion();
+    this._wireTooltips();
     this._renderStepEditor();
     this._renderStudio();
 
@@ -392,7 +431,13 @@ class AcidifyPatchView extends HTMLElement {
     if (this._distortionKeyDown) this.removeEventListener("keydown", this._distortionKeyDown);
     if (this._pitchMenuKeyDown) this.removeEventListener("keydown", this._pitchMenuKeyDown);
     if (this._pitchMenuOutsidePointer) this.removeEventListener("pointerdown", this._pitchMenuOutsidePointer, true);
+    if (this._tooltipToggleClick) this.querySelector(".tooltip-toggle")?.removeEventListener("click", this._tooltipToggleClick);
+    if (this._tooltipPointerOver) this.removeEventListener("pointerover", this._tooltipPointerOver);
+    if (this._tooltipPointerOut) this.removeEventListener("pointerout", this._tooltipPointerOut);
+    if (this._tooltipFocusIn) this.removeEventListener("focusin", this._tooltipFocusIn);
+    if (this._tooltipFocusOut) this.removeEventListener("focusout", this._tooltipFocusOut);
     if (window.__amorphProcessMidi === this._midiHandler) delete window.__amorphProcessMidi;
+    this._hideTooltip();
     this._controls.forEach(control => control.dispose?.());
     this._controls.clear();
     this._values.clear();
@@ -412,10 +457,135 @@ class AcidifyPatchView extends HTMLElement {
     this._distortionKeyDown = null;
     this._pitchMenuKeyDown = null;
     this._pitchMenuOutsidePointer = null;
+    this._tooltipToggleClick = null;
+    this._tooltipPointerOver = null;
+    this._tooltipPointerOut = null;
+    this._tooltipFocusIn = null;
+    this._tooltipFocusOut = null;
+    this._tooltipTarget = null;
     this._pitchMenuTargets = [];
     this._pitchMenuReturnFocus = null;
     this._midiHandler = null;
     this._mounted = false;
+  }
+
+  _loadTooltipPreference() {
+    try {
+      return window.localStorage.getItem(TOOLTIP_STORAGE_KEY) !== "false";
+    } catch {
+      return true;
+    }
+  }
+
+  _wireTooltips() {
+    Object.entries(CONTROL_TOOLTIPS).forEach(([id, text]) => {
+      const node = this.querySelector(`.control[data-param="${id}"]`);
+      if (node) node.dataset.tooltip = text;
+    });
+    this.querySelectorAll("[title]").forEach(node => {
+      if (!node.dataset.tooltip) node.dataset.tooltip = node.getAttribute("title") || "";
+      node.removeAttribute("title");
+    });
+    this.querySelectorAll("button[aria-label]").forEach(node => {
+      if (!node.dataset.tooltip) node.dataset.tooltip = node.getAttribute("aria-label") || "";
+    });
+
+    const toggle = this.querySelector(".tooltip-toggle");
+    this._tooltipToggleClick = () => this._setTooltipsEnabled(!this._tooltipsEnabled, true);
+    toggle?.addEventListener("click", this._tooltipToggleClick);
+
+    this._tooltipPointerOver = event => {
+      const target = this._findTooltipTarget(event.target);
+      if (!target || target === this._findTooltipTarget(event.relatedTarget)) return;
+      this._scheduleTooltip(target, 360);
+    };
+    this._tooltipPointerOut = event => {
+      const target = this._findTooltipTarget(event.target);
+      if (!target || target === this._findTooltipTarget(event.relatedTarget)) return;
+      if (this._tooltipTarget === target) this._hideTooltip();
+    };
+    this._tooltipFocusIn = event => {
+      const target = this._findTooltipTarget(event.target);
+      if (target) this._scheduleTooltip(target, 120);
+    };
+    this._tooltipFocusOut = event => {
+      const target = this._findTooltipTarget(event.target);
+      if (!target || target === this._findTooltipTarget(event.relatedTarget)) return;
+      if (this._tooltipTarget === target) this._hideTooltip();
+    };
+    this.addEventListener("pointerover", this._tooltipPointerOver);
+    this.addEventListener("pointerout", this._tooltipPointerOut);
+    this.addEventListener("focusin", this._tooltipFocusIn);
+    this.addEventListener("focusout", this._tooltipFocusOut);
+    this._setTooltipsEnabled(this._tooltipsEnabled, false);
+  }
+
+  _findTooltipTarget(node) {
+    if (!(node instanceof Element)) return null;
+    const target = node.closest("[data-tooltip]");
+    return target && this.contains(target) ? target : null;
+  }
+
+  _setTooltipsEnabled(enabled, persist) {
+    this._tooltipsEnabled = Boolean(enabled);
+    this.classList.toggle("tooltips-off", !this._tooltipsEnabled);
+    const toggle = this.querySelector(".tooltip-toggle");
+    toggle?.setAttribute("aria-pressed", `${this._tooltipsEnabled}`);
+    toggle?.setAttribute("aria-label", `Tooltips ${this._tooltipsEnabled ? "on" : "off"}; click to turn them ${this._tooltipsEnabled ? "off" : "on"}`);
+    const state = toggle?.querySelector(".tooltip-toggle-state");
+    if (state) state.textContent = this._tooltipsEnabled ? "ON" : "OFF";
+    if (!this._tooltipsEnabled) this._hideTooltip();
+    if (persist) {
+      try {
+        window.localStorage.setItem(TOOLTIP_STORAGE_KEY, `${this._tooltipsEnabled}`);
+      } catch {
+        // Some embedded or file-based hosts intentionally disable local storage.
+      }
+    }
+  }
+
+  _scheduleTooltip(target, delay) {
+    if (!this._tooltipsEnabled || !target?.dataset.tooltip) return;
+    if (this._tooltipTimer) window.clearTimeout(this._tooltipTimer);
+    this._tooltipTarget = target;
+    this._tooltipTimer = window.setTimeout(() => {
+      this._tooltipTimer = null;
+      this._showTooltip(target);
+    }, delay);
+  }
+
+  _showTooltip(target) {
+    if (!this._tooltipsEnabled || !target?.isConnected || this._tooltipTarget !== target) return;
+    const bubble = this.querySelector(".tooltip-bubble");
+    const chassis = this.querySelector(".chassis");
+    const text = target.dataset.tooltip?.trim();
+    if (!bubble || !chassis || !text) return;
+    bubble.textContent = text;
+    bubble.hidden = false;
+
+    const chassisBounds = chassis.getBoundingClientRect();
+    const targetBounds = target.getBoundingClientRect();
+    const scaleX = chassisBounds.width / 1180 || 1;
+    const scaleY = chassisBounds.height / 580 || 1;
+    const targetLeft = (targetBounds.left - chassisBounds.left) / scaleX;
+    const targetTop = (targetBounds.top - chassisBounds.top) / scaleY;
+    const targetWidth = targetBounds.width / scaleX;
+    const targetHeight = targetBounds.height / scaleY;
+    let left = targetLeft + targetWidth / 2 - bubble.offsetWidth / 2;
+    let top = targetTop - bubble.offsetHeight - 10;
+    if (top < 10) top = targetTop + targetHeight + 10;
+    left = clamp(left, 10, 1180 - bubble.offsetWidth - 10);
+    top = clamp(top, 10, 580 - bubble.offsetHeight - 10);
+    bubble.style.left = `${left}px`;
+    bubble.style.top = `${top}px`;
+  }
+
+  _hideTooltip() {
+    if (this._tooltipTimer) window.clearTimeout(this._tooltipTimer);
+    this._tooltipTimer = null;
+    this._tooltipTarget = null;
+    const bubble = this.querySelector(".tooltip-bubble");
+    if (bubble) bubble.hidden = true;
   }
 
   _sendParameter(endpointID, rawValue) {
@@ -789,6 +959,7 @@ class AcidifyPatchView extends HTMLElement {
       button.classList.toggle("active", pitch === commonPitch);
       button.setAttribute("aria-checked", `${pitch === commonPitch}`);
       button.setAttribute("aria-label", `Set ${targets.length === 1 ? `step ${targets[0] + 1}` : `${targets.length} selected steps`} to ${absolute}, ${this._octaveLabel(pitch)}`);
+      button.dataset.tooltip = `Set ${targets.length === 1 ? `step ${targets[0] + 1}` : `${targets.length} selected steps`} to ${absolute} (${this._octaveLabel(pitch)}).`;
     });
   }
 
@@ -859,17 +1030,31 @@ class AcidifyPatchView extends HTMLElement {
     }
   }
 
+  _mirrorHostTempoToParameter() {
+    const control = this._controls.get("param9");
+    const config = ACIDIFY_GLOBALS.find(item => item.id === "param9");
+    if (!control || !config || control.dragging) return null;
+    control.setValue(clamp(this._effectiveTempo, config.min, config.max), false);
+    const mirroredTempo = control.value;
+    const storedTempo = Number(this._values.get("param9"));
+    if (!Number.isFinite(storedTempo) || Math.abs(storedTempo - mirroredTempo) > 0.0001) {
+      this._sendParameter("param9", mirroredTempo);
+    }
+    return mirroredTempo;
+  }
+
   _renderTransportState() {
     const dawMode = Number(this._values.get("param49") ?? 0) >= 0.5;
     const manualRunning = Number(this._values.get("param10") ?? 0) >= 0.5;
-    const internalTempo = Math.round(Number(this._values.get("param9") ?? 128));
-    const effectiveTempo = Math.round(dawMode ? this._effectiveTempo : internalTempo);
     const hasTempo = (this._hostSyncFlags & 1) !== 0;
     const hasTransport = (this._hostSyncFlags & 2) !== 0;
     const hasPosition = (this._hostSyncFlags & 4) !== 0;
     const hostReady = hasTempo && hasTransport;
     const runHostControlled = dawMode && hasTransport;
     const tempoHostControlled = dawMode && hasTempo;
+    const mirroredTempo = tempoHostControlled ? this._mirrorHostTempoToParameter() : null;
+    const internalTempo = Number(mirroredTempo ?? this._values.get("param9") ?? 128);
+    const effectiveTempo = Number(dawMode && hasTempo ? this._effectiveTempo : internalTempo);
     const running = runHostControlled ? this._transportRunning : manualRunning;
 
     this.querySelector(".run-lamp")?.classList.toggle("lit", running);
@@ -877,11 +1062,11 @@ class AcidifyPatchView extends HTMLElement {
     runSwitch?.classList.toggle("is-on", running);
     runSwitch?.classList.toggle("daw-controlled", runHostControlled);
     runSwitch?.setAttribute("aria-disabled", `${runHostControlled}`);
-    runSwitch?.setAttribute("title", runHostControlled
+    if (runSwitch) runSwitch.dataset.tooltip = runHostControlled
       ? "Transport follows the DAW"
       : dawMode
         ? "No DAW transport received; RUN/STOP controls the internal fallback"
-        : "Start or stop the internal pattern clock");
+        : CONTROL_TOOLTIPS.param10;
     const runButton = runSwitch?.querySelector('[data-value="0"]');
     if (runButton) runButton.textContent = runHostControlled ? "DAW FOLLOW" : "RUN / STOP";
 
@@ -890,26 +1075,26 @@ class AcidifyPatchView extends HTMLElement {
     const tempoDial = tempoBox?.querySelector(".dial");
     tempoDial?.setAttribute("aria-disabled", `${tempoHostControlled}`);
     if (tempoDial) tempoDial.tabIndex = tempoHostControlled ? -1 : 0;
-    tempoBox?.setAttribute("title", tempoHostControlled
-      ? "Tempo follows the DAW; switch to INT to edit the internal BPM"
+    if (tempoBox) tempoBox.dataset.tooltip = tempoHostControlled
+      ? "Tempo follows the DAW and is mirrored to this knob. Switch to INT to keep the current BPM and make fine manual adjustments."
       : dawMode
         ? "No DAW tempo received; this sets the internal fallback BPM"
-        : "Internal sequencer tempo");
+        : CONTROL_TOOLTIPS.param9;
 
     const readout = this.querySelector(".clock-readout");
     if (readout) {
       readout.textContent = !dawMode
-        ? `INT · ${internalTempo} BPM`
+        ? `INT · ${formatTempo(internalTempo)}`
         : hostReady
-          ? `DAW · ${effectiveTempo} BPM`
+          ? `DAW · ${formatTempo(effectiveTempo)}`
           : hasTempo
-            ? `DAW ${effectiveTempo} · INT RUN`
+            ? `DAW ${formatTempo(effectiveTempo)} · INT RUN`
             : hasTransport
-              ? `INT ${internalTempo} · DAW RUN`
+              ? `INT ${formatTempo(internalTempo)} · DAW RUN`
               : "DAW · INT FALLBACK";
       readout.classList.toggle("locked", dawMode && hostReady);
       readout.classList.toggle("waiting", dawMode && !hostReady);
-      readout.title = dawMode
+      readout.dataset.tooltip = dawMode
         ? (hostReady
           ? (hasPosition
             ? "DAW tempo, transport and timeline position locked"
@@ -930,7 +1115,9 @@ class AcidifyPatchView extends HTMLElement {
     const trigger = this.querySelector(".distortion-trigger");
     trigger?.classList.toggle("active", enabled);
     trigger?.setAttribute("aria-label", `Distortion ${enabled ? `${name} enabled` : "disabled"}; open controls`);
-    trigger?.setAttribute("title", `Distortion · ${enabled ? name : "OFF"}`);
+    if (trigger) trigger.dataset.tooltip = enabled
+      ? `${name} distortion is active. Click to open the distortion controls.`
+      : "Distortion is bypassed. Click to open the distortion controls.";
     const status = this.querySelector(".distortion-status");
     if (status) status.textContent = enabled ? `${name} ACTIVE` : "TRUE BYPASS";
     this.querySelector(".distortion-led")?.classList.toggle("lit", enabled);
@@ -943,6 +1130,9 @@ class AcidifyPatchView extends HTMLElement {
     const toggle = this.querySelector(".studio-toggle");
     toggle?.setAttribute("aria-pressed", `${this._studioMode}`);
     toggle?.setAttribute("aria-label", this._studioMode ? "Return to Classic mode" : "Open Studio edit mode");
+    if (toggle) toggle.dataset.tooltip = this._studioMode
+      ? "Return to the Classic step-programming view. Keyboard shortcut: M."
+      : "Open the Studio matrix for multi-step editing. Keyboard shortcut: M.";
     const modeStatus = this.querySelector(".program-context");
     if (modeStatus) modeStatus.textContent = this._studioMode ? "STUDIO MATRIX" : "CLASSIC PROGRAMMING";
     this.querySelector(".classic-editor")?.setAttribute("aria-hidden", `${this._studioMode}`);
@@ -1193,7 +1383,7 @@ class AcidifyPatchView extends HTMLElement {
       node.querySelector(".step-note").textContent = absoluteNote;
       node.querySelector(".step-octave").textContent = `+${Math.floor(pitch / 12)}`;
       node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}; click to edit, wheel changes semitone, right-click or double-click chooses a note`);
-      node.title = `Step ${index + 1} · ${absoluteNote} · ${this._octaveLabel(pitch)} · ${states} · wheel: semitone · right/double click: choose note`;
+      node.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}. Wheel changes one semitone; right-click or double-click opens direct note selection.`;
     });
   }
 
@@ -1234,7 +1424,12 @@ class AcidifyPatchView extends HTMLElement {
         const absoluteNote = noteName(root + pitch).replace("#", "♯");
         cell.textContent = absoluteNote;
         cell.setAttribute("aria-label", `Step ${index + 1} note ${absoluteNote}, ${this._octaveLabel(pitch)}; wheel changes semitone, right-click or double-click chooses a note`);
-        cell.title = `${absoluteNote} · ${this._octaveLabel(pitch)} · wheel: semitone · right/double click: choose note`;
+        cell.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${this._octaveLabel(pitch)}. Wheel changes one semitone; right-click or double-click opens direct note selection.`;
+      } else {
+        const label = kind === "gate" ? "Gate" : kind === "accent" ? "Accent" : "Slide";
+        const state = active ? "on" : "off";
+        cell.setAttribute("aria-label", `Step ${index + 1} ${label}, ${state}`);
+        cell.dataset.tooltip = `${label} is ${state} for step ${index + 1}. Click or drag across the lane to change it.`;
       }
     });
     this._updateStudioToolbar();
@@ -3041,6 +3236,40 @@ class AcidifyPatchView extends HTMLElement {
     color: #55574f;
     text-shadow: 0 .5px rgba(255,255,255,.38);
   }
+  acidify-patch-view .tooltip-toggle {
+    position: absolute; z-index: 8; left: 37px; bottom: 3px;
+    width: 76px; height: 16px; padding: 1px 4px; border-radius: 4px; cursor: pointer;
+    display: grid; grid-template-columns: 12px 1fr 22px; align-items: center; gap: 2px;
+    color: #4d4f49; background: linear-gradient(#d7d8d2, #aeb0a9);
+    border: 1px solid #6c6e68;
+    box-shadow: inset 0 1px rgba(255,255,255,.66), 0 1px rgba(255,255,255,.24);
+    font-size: 6px; line-height: 11px; font-weight: 900; letter-spacing: .75px;
+  }
+  acidify-patch-view .tooltip-toggle > i {
+    width: 10px; height: 10px; border-radius: 50%; font-style: normal;
+    display: grid; place-items: center; color: #f6f3e8; background: #55564f;
+    font-size: 7px; line-height: 10px; letter-spacing: 0;
+  }
+  acidify-patch-view .tooltip-toggle-state {
+    height: 11px; border-radius: 2px; color: #fff2ed; background: linear-gradient(#b92e24, #74150f);
+    box-shadow: inset 0 1px rgba(255,255,255,.15); text-align: center;
+  }
+  acidify-patch-view .tooltip-toggle[aria-pressed="false"] .tooltip-toggle-state {
+    color: #a9aaa4; background: linear-gradient(#4b4c47, #292a27);
+  }
+  acidify-patch-view .tooltip-toggle:focus-visible {
+    outline: 2px solid rgba(169,32,26,.82); outline-offset: 2px;
+  }
+  acidify-patch-view .tooltip-bubble[hidden] { display: none; }
+  acidify-patch-view .tooltip-bubble {
+    position: absolute; z-index: 140; width: max-content; max-width: 260px;
+    padding: 8px 10px; border-radius: 5px; pointer-events: none;
+    color: #f1efe5; background: rgba(27, 28, 25, .96);
+    border: 1px solid rgba(228, 225, 211, .28);
+    box-shadow: 0 8px 18px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.06);
+    font: 700 9px/1.35 "Helvetica Neue", Arial, sans-serif;
+    letter-spacing: .12px; text-align: left; white-space: normal;
+  }
   acidify-patch-view .pitch-menu[hidden] { display: none; }
   acidify-patch-view .pitch-menu {
     position: absolute; z-index: 95; width: 394px; height: 278px; overflow: hidden;
@@ -3441,12 +3670,12 @@ class AcidifyPatchView extends HTMLElement {
         </div>
         <div class="keyboard"><div class="keyboard-keys">${pitchKeys}</div></div>
         <div class="time-controls">
-          <button class="function-button" data-transpose="-12"><strong>OCT −</strong><small>TRANSPOSE</small></button>
-          <button class="function-button" data-transpose="12"><strong>OCT +</strong><small>TRANSPOSE</small></button>
-          <button class="function-button" data-flag="1"><strong>GATE</strong><small>REST / ON</small></button>
-          <button class="function-button" data-flag="2"><strong>ACCENT</strong><small>DYNAMICS</small></button>
-          <button class="function-button" data-flag="4"><strong>SLIDE</strong><small>LEGATO</small></button>
-          <button class="function-button" data-classic-action="clear-step"><strong>CLEAR</strong><small>THIS STEP</small></button>
+          <button class="function-button" data-transpose="-12" title="Transpose the selected step down one octave."><strong>OCT −</strong><small>TRANSPOSE</small></button>
+          <button class="function-button" data-transpose="12" title="Transpose the selected step up one octave."><strong>OCT +</strong><small>TRANSPOSE</small></button>
+          <button class="function-button" data-flag="1" title="Toggle the selected step between Gate and Rest."><strong>GATE</strong><small>REST / ON</small></button>
+          <button class="function-button" data-flag="2" title="Toggle Accent for the selected step."><strong>ACCENT</strong><small>DYNAMICS</small></button>
+          <button class="function-button" data-flag="4" title="Toggle Slide into the next active step."><strong>SLIDE</strong><small>LEGATO</small></button>
+          <button class="function-button" data-classic-action="clear-step" title="Reset the selected step to its default pitch and timing state."><strong>CLEAR</strong><small>THIS STEP</small></button>
         </div>
       </div>
       <div class="studio-editor" aria-hidden="true">
@@ -3479,7 +3708,11 @@ class AcidifyPatchView extends HTMLElement {
         </div>
       </div>
     </section>
-    <div class="footer-mark">ACIDIFY 0.6.3 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
+    <button class="tooltip-toggle" type="button" aria-pressed="true"
+      data-tooltip="Turn the English control tooltips on or off.">
+      <i>?</i><span>TIPS</span><strong class="tooltip-toggle-state">ON</strong>
+    </button>
+    <div class="footer-mark">ACIDIFY 0.6.4 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
   </div>
   <section class="pitch-menu" role="dialog" aria-modal="false" aria-hidden="true"
     aria-labelledby="pitch-menu-title" hidden>
@@ -3495,6 +3728,7 @@ class AcidifyPatchView extends HTMLElement {
     </div>
     <footer class="pitch-menu-foot">25 SEMITONES · THREE VISIBLE OCTAVE LEVELS</footer>
   </section>
+  <div class="tooltip-bubble" role="tooltip" hidden></div>
 </div>`;
   }
 }

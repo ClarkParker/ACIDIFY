@@ -13,7 +13,7 @@ Parameter werden ausschließlich angehängt.
 | `param6` | Accent | 0…1 | 0.65 |
 | `param7` | Waveform | 0 Saw / 1 Square | 0 |
 | `param8` | Volume | −36…0 dB | −6 |
-| `param9` | Tempo | 40…300 BPM | 128 |
+| `param9` | Tempo | 40…300 BPM, 0,01 BPM Auflösung | 128 |
 | `param10` | Run | 0/1 | 0 |
 | `param11` | Pattern Length | 1…16 | 16 |
 | `param12` | Root Note | MIDI 24…60 | 36 |
@@ -47,6 +47,11 @@ Verhalten älterer Presets. Seit 0.6.1 dienen `param9` und `param10` in
 `DAW`-Stellung außerdem als sichere Fallbacks: `param9` bleibt wirksam, bis
 Host-Tempo empfangen wird; `param10`, bis Host-Transport empfangen wird. Die
 beiden Übernahmen sind unabhängig.
+
+Seit 0.6.4 spiegelt die UI ein empfangenes DAW-Tempo bei aktivem Sync zusätzlich
+in `param9`; der DSP hält denselben Wert intern fest. Beim Wechsel zurück auf
+`Internal` bleibt deshalb das letzte Hosttempo erhalten. Die normale
+UI-Schrittweite beträgt 0,1 BPM, mit `Shift` 0,01 BPM.
 
 Der Dev-Kit-dokumentierte Eingang `input event float64 transportIn` ist
 Amorph-Hostkontext, kein dynamischer Parameter und benötigt kein

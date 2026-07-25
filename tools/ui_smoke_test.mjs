@@ -39,6 +39,10 @@ try {
     distortionControls: document.querySelectorAll(".distortion-overlay .control[data-param]").length,
     distortionTypes: document.querySelectorAll(".distortion-types button").length,
     clockModes: document.querySelectorAll(".clock-mode button").length,
+    tooltipToggles: document.querySelectorAll(".tooltip-toggle").length,
+    tooltipBubbles: document.querySelectorAll(".tooltip-bubble").length,
+    tooltipTargets: document.querySelectorAll("[data-tooltip]").length,
+    nativeTitles: document.querySelectorAll("[title]").length,
   }));
   if (counts.controls !== 17 || counts.endpointControls !== 17
       || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
@@ -47,7 +51,9 @@ try {
       || counts.studioRulerGroups !== 4 || counts.studioActions !== 12
       || counts.pitchChoices !== 25
       || counts.distortionTriggers !== 1 || counts.distortionControls !== 4
-      || counts.distortionTypes !== 3 || counts.clockModes !== 2) {
+      || counts.distortionTypes !== 3 || counts.clockModes !== 2
+      || counts.tooltipToggles !== 1 || counts.tooltipBubbles !== 1
+      || counts.tooltipTargets < 100 || counts.nativeTitles !== 0) {
     throw new Error(`Unexpected UI element counts: ${JSON.stringify(counts)}`);
   }
 
@@ -205,6 +211,36 @@ try {
     throw new Error(`Unsafe lower-panel geometry: ${JSON.stringify(lowerPanelGeometry)}`);
   }
 
+  const patchView = page.locator("acidify-patch-view");
+  await patchView.evaluate(node => node._setTooltipsEnabled(true, false));
+  await page.locator('.control[data-param="param2"] .dial').hover();
+  await page.waitForTimeout(430);
+  const tooltipOn = await patchView.evaluate(node => ({
+    enabled: node._tooltipsEnabled,
+    pressed: node.querySelector(".tooltip-toggle").getAttribute("aria-pressed"),
+    state: node.querySelector(".tooltip-toggle-state").textContent,
+    visible: !node.querySelector(".tooltip-bubble").hidden,
+    text: node.querySelector(".tooltip-bubble").textContent,
+  }));
+  if (!tooltipOn.enabled || tooltipOn.pressed !== "true" || tooltipOn.state !== "ON"
+      || !tooltipOn.visible || !tooltipOn.text.includes("filter cutoff")) {
+    throw new Error(`English tooltip display failed: ${JSON.stringify(tooltipOn)}`);
+  }
+  await page.locator(".tooltip-toggle").click();
+  await page.locator('.control[data-param="param3"] .dial').hover();
+  await page.waitForTimeout(430);
+  const tooltipOff = await patchView.evaluate(node => ({
+    enabled: node._tooltipsEnabled,
+    pressed: node.querySelector(".tooltip-toggle").getAttribute("aria-pressed"),
+    state: node.querySelector(".tooltip-toggle-state").textContent,
+    visible: !node.querySelector(".tooltip-bubble").hidden,
+  }));
+  if (tooltipOff.enabled || tooltipOff.pressed !== "false" || tooltipOff.state !== "OFF"
+      || tooltipOff.visible) {
+    throw new Error(`Tooltip On/Off switch failed: ${JSON.stringify(tooltipOff)}`);
+  }
+  await page.locator(".tooltip-toggle").click();
+
   const cutoff = page.locator('.control[data-param="param2"] .dial');
   const before = Number(await cutoff.getAttribute("aria-valuenow"));
   await cutoff.focus();
@@ -260,22 +296,36 @@ try {
     throw new Error(`DAW internal-tempo fallback failed: ${tempoBeforeFallbackInput} -> ${tempoAfterFallbackInput}`);
   }
   const dawLocked = await page.locator("acidify-patch-view").evaluate(node => {
-    node._tempoListener(135);
+    const originalSend = node.pc.sendEventOrValue;
+    let mirrorSends = 0;
+    node.pc.sendEventOrValue = (id, value) => {
+      if (id === "param9") mirrorSends += 1;
+      return originalSend.call(node.pc, id, value);
+    };
+    node._tempoListener(135.27);
     node._syncListener(7);
+    for (let repeat = 0; repeat < 8; repeat += 1) node._tempoListener(135.27);
     node._transportListener(1);
+    node.pc.sendEventOrValue = originalSend;
     return {
       readout: node.querySelector(".clock-readout").textContent,
       running: node.querySelector(".run-lamp").classList.contains("lit"),
-      title: node.querySelector(".clock-readout").title,
+      tooltip: node.querySelector(".clock-readout").dataset.tooltip,
       runText: node.querySelector('.run-switch[data-param="param10"] button:not([hidden])').textContent,
       runDisabled: node.querySelector('.run-switch[data-param="param10"]').getAttribute("aria-disabled"),
       tempoDisabled: node.querySelector('.tempo-box .dial').getAttribute("aria-disabled"),
+      dialTempo: Number(node.querySelector('.tempo-box .dial').getAttribute("aria-valuenow")),
+      parameterTempo: node._values.get("param9"),
+      mirrorSends,
     };
   });
-  if (dawLocked.readout !== "DAW · 135 BPM" || !dawLocked.running
-      || !dawLocked.title.includes("position locked")
+  if (dawLocked.readout !== "DAW · 135.27 BPM" || !dawLocked.running
+      || !dawLocked.tooltip.includes("position locked")
       || dawLocked.runText !== "DAW FOLLOW"
-      || dawLocked.runDisabled !== "true" || dawLocked.tempoDisabled !== "true") {
+      || dawLocked.runDisabled !== "true" || dawLocked.tempoDisabled !== "true"
+      || Math.abs(dawLocked.dialTempo - 135.27) > 0.0001
+      || Math.abs(dawLocked.parameterTempo - 135.27) > 0.0001
+      || dawLocked.mirrorSends !== 1) {
     throw new Error(`DAW lock state failed: ${JSON.stringify(dawLocked)}`);
   }
   const tempoBeforeLockedInput = await page.locator("acidify-patch-view")
@@ -290,6 +340,33 @@ try {
     throw new Error(`DAW tempo lock failed: ${tempoBeforeLockedInput} -> ${tempoAfterLockedInput}`);
   }
   await page.locator('.clock-mode button[data-value="0"]').click();
+  const tempoHandoff = await page.locator("acidify-patch-view").evaluate(node => ({
+    mode: node._values.get("param49"),
+    parameterTempo: node._values.get("param9"),
+    dialTempo: Number(node.querySelector('.tempo-box .dial').getAttribute("aria-valuenow")),
+    tempoDisabled: node.querySelector('.tempo-box .dial').getAttribute("aria-disabled"),
+    tooltip: node.querySelector(".tempo-box").dataset.tooltip,
+  }));
+  if (tempoHandoff.mode !== 0 || tempoHandoff.tempoDisabled !== "false"
+      || Math.abs(tempoHandoff.parameterTempo - 135.27) > 0.0001
+      || Math.abs(tempoHandoff.dialTempo - 135.27) > 0.0001
+      || !tempoHandoff.tooltip.includes("0.1 BPM")) {
+    throw new Error(`DAW-to-internal tempo handoff failed: ${JSON.stringify(tempoHandoff)}`);
+  }
+  await page.locator(".tempo-box .dial").evaluate(dial => {
+    dial.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+    dial.dispatchEvent(new KeyboardEvent("keydown", {
+      key: "ArrowRight",
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    }));
+  });
+  const fineTempo = await page.locator("acidify-patch-view")
+    .evaluate(node => node._values.get("param9"));
+  if (Math.abs(fineTempo - 135.38) > 0.0001) {
+    throw new Error(`Fine manual tempo adjustment failed: ${fineTempo}`);
+  }
 
   const distortionTrigger = page.locator(".distortion-trigger");
   if (await distortionTrigger.evaluate(node => node.classList.contains("active"))) {
@@ -620,7 +697,10 @@ try {
       fallbackTempoEditable: tempoAfterFallbackInput > tempoBeforeFallbackInput,
       lockedInputSuppressed: tempoAfterLockedInput === tempoBeforeLockedInput,
       locked: dawLocked,
+      handoff: tempoHandoff,
+      fineTempo,
     },
+    tooltips: { on: tooltipOn, off: tooltipOff },
     scaledBounds: bounds,
     reconnect,
   }));
