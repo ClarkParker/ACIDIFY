@@ -15,11 +15,23 @@ Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 - `ACIDIFY.cmajorpatch` – Amorph-Manifest
 - `ACIDIFYDSP.cmajor` – MIDI-Instrument, Sequencer und 4×-DSP
 - `ACIDIFYUI.js` – selbständige, skalierbare Web-Component ohne Abhängigkeiten
+- `CHANGELOG.md` – vollständige Versionshistorie
 - `docs/CONCEPT.md` – Produkt-, UI- und DSP-Konzept mit Quellen
 - `docs/PARAMETERS.md` – stabiler `param1..param44`-Vertrag
+- `docs/VERSIONING.md` – verbindlicher Release- und Versionsablauf
 - `mockup/preview.html` – lokaler UI-Preview-Host
 - `tools/render_mockup.mjs` – rendert den Preview als PNG
 - `tools/ui_smoke_test.mjs` – prüft Controls, Interaktionen und Skalierung
+- `tools/check_version.py` – prüft konsistente Versionsmetadaten
+
+## Versionierung
+
+Die Produktversion in `ACIDIFY.cmajorpatch` ist die verbindliche Quelle.
+Jeder Release-Stand muss gleichzeitig im [Changelog](CHANGELOG.md) dokumentiert
+sein und mit README sowie Validierungsdokument übereinstimmen. Die Prüfung
+`python3 tools/check_version.py` läuft zusätzlich bei jedem Push und Pull
+Request über GitHub Actions. Der vollständige Ablauf steht in
+[docs/VERSIONING.md](docs/VERSIONING.md).
 
 ## Start
 
