@@ -49,7 +49,7 @@ try {
       || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
       || counts.stepGroups !== 4 || counts.whiteKeys !== 7 || counts.blackKeys !== 5
       || counts.studioCells !== 64 || counts.studioCellGroups !== 16
-      || counts.studioRulerGroups !== 4 || counts.studioActions !== 12
+      || counts.studioRulerGroups !== 4 || counts.studioActions !== 15
       || counts.pitchChoices !== 25
       || counts.distortionTriggers !== 1 || counts.distortionControls !== 4
       || counts.distortionTypes !== 3 || counts.clockModes !== 2
@@ -492,17 +492,31 @@ try {
   }
   const workflow = await page.evaluate(() => {
     const toggle = document.querySelector(".studio-toggle").getBoundingClientRect();
+    const tools = document.querySelector(".studio-tools").getBoundingClientRect();
+    const matrix = document.querySelector(".studio-matrix").getBoundingClientRect();
+    const scale = document.querySelector(".studio-scale").getBoundingClientRect();
+    const actionRows = new Set(
+      [...document.querySelectorAll(".studio-actions button")].map(node => Math.round(node.offsetTop))
+    );
     const context = document.querySelector(".program-context").textContent;
     const groups = [...document.querySelectorAll(".studio-lane[data-lane=\"gate\"] .studio-cell-group")]
       .map(node => node.getBoundingClientRect())
       .map(bounds => ({ left: bounds.left, right: bounds.right }));
     return {
       toggle: { width: toggle.width, height: toggle.height },
+      tools: { width: tools.width, right: tools.right },
+      matrix: { width: matrix.width, left: matrix.left },
+      scale: { width: scale.width, height: scale.height },
+      actionRows: actionRows.size,
       context,
       groupGaps: groups.slice(1).map((group, index) => group.left - groups[index].right),
     };
   });
   if (workflow.toggle.width < 130 || workflow.toggle.height < 28
+      || workflow.tools.width < 390 || workflow.matrix.width < 620
+      || workflow.matrix.left - workflow.tools.right < 12
+      || workflow.scale.width < 100 || workflow.scale.height < 15
+      || workflow.actionRows !== 2
       || workflow.context !== "STUDIO MATRIX"
       || workflow.groupGaps.some(gap => gap < 7)) {
     throw new Error(`Studio workflow hierarchy failed: ${JSON.stringify(workflow)}`);
@@ -617,6 +631,91 @@ try {
   await page.locator('[data-studio-action="undo"]').click();
   await page.locator('[data-studio-action="undo"]').click();
 
+  await page.locator('.sequence-step[data-step="0"]').click();
+  await page.locator('.sequence-step[data-step="3"]').click({ modifiers: ["Shift"] });
+  const smartEditBefore = await view.evaluate(node => {
+    const draft = node._stepSnapshot();
+    [0, 3, 7, 12].forEach((pitch, index) => {
+      draft[index] = { pitch, flags: [1, 3, 5, 7][index] };
+    });
+    node._applySnapshot(draft, true);
+    return node._stepSnapshot();
+  });
+
+  await page.locator('[data-studio-action="reverse"]').click();
+  const afterReverse = await view.evaluate(node => node._stepSnapshot());
+  for (let index = 0; index < 4; index += 1) {
+    const source = smartEditBefore[3 - index];
+    if (afterReverse[index].pitch !== source.pitch || afterReverse[index].flags !== source.flags) {
+      throw new Error(`Studio reverse failed at step ${index + 1}`);
+    }
+  }
+  await page.locator('[data-studio-action="undo"]').click();
+
+  await page.locator('[data-studio-action="pitch-mirror"]').click();
+  const afterMirror = await view.evaluate(node => node._stepSnapshot());
+  const mirroredPitches = [12, 9, 5, 0];
+  if (afterMirror.slice(0, 4).some((step, index) =>
+    step.pitch !== mirroredPitches[index] || step.flags !== smartEditBefore[index].flags
+  )) {
+    throw new Error(`Studio pitch mirror failed: ${JSON.stringify(afterMirror.slice(0, 4))}`);
+  }
+  await page.locator('[data-studio-action="undo"]').click();
+
+  const initialScale = await page.locator(".studio-scale strong").textContent();
+  await page.locator(".studio-scale").click();
+  await page.locator(".studio-scale").click();
+  const selectedScale = await page.locator(".studio-scale strong").textContent();
+  if (initialScale !== "MIN PENTA" || selectedScale !== "MAJOR") {
+    throw new Error(`Studio scale selector failed: ${initialScale} -> ${selectedScale}`);
+  }
+
+  await view.evaluate(() => {
+    window.__acidifyOriginalRandom = Math.random;
+    Math.random = () => .4;
+  });
+  await page.locator('[data-studio-action="generate"]').click();
+  await view.evaluate(() => {
+    Math.random = window.__acidifyOriginalRandom;
+    delete window.__acidifyOriginalRandom;
+  });
+  const generated = await view.evaluate(node => node._stepSnapshot());
+  const majorScale = new Set([0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21, 23, 24]);
+  if (generated.slice(0, 4).some(step => !majorScale.has(step.pitch)
+      || ((step.flags & 1) === 0 && step.flags !== 0))
+      || !generated.slice(0, 4).some(step => (step.flags & 1) !== 0)) {
+    throw new Error(`Scale-aware Generate failed: ${JSON.stringify(generated.slice(0, 4))}`);
+  }
+  await page.locator('[data-studio-action="undo"]').click();
+  const afterGenerateUndo = await view.evaluate(node => node._stepSnapshot());
+  if (JSON.stringify(afterGenerateUndo) !== JSON.stringify(smartEditBefore)) {
+    throw new Error("Generate did not integrate with Undo");
+  }
+
+  await view.evaluate(() => {
+    window.__acidifyOriginalRandom = Math.random;
+    Math.random = () => .2;
+  });
+  await page.locator('[data-studio-action="mutate"]').click();
+  await view.evaluate(() => {
+    Math.random = window.__acidifyOriginalRandom;
+    delete window.__acidifyOriginalRandom;
+  });
+  const mutated = await view.evaluate(node => node._stepSnapshot());
+  const mutatedIndices = [0, 1, 2, 3].filter(index =>
+    mutated[index].pitch !== smartEditBefore[index].pitch
+      || mutated[index].flags !== smartEditBefore[index].flags
+  );
+  if (mutatedIndices.length < 1
+      || mutatedIndices.some(index => !majorScale.has(mutated[index].pitch))) {
+    throw new Error(`Scale-aware Mutate failed: ${JSON.stringify(mutated.slice(0, 4))}`);
+  }
+  await page.locator('[data-studio-action="undo"]').click();
+  const afterMutateUndo = await view.evaluate(node => node._stepSnapshot());
+  if (JSON.stringify(afterMutateUndo) !== JSON.stringify(smartEditBefore)) {
+    throw new Error("Mutate did not integrate with Undo");
+  }
+
   await cutoff.focus();
   await cutoff.press("ArrowRight");
   if (!(await cutoff.locator("..").evaluate(node => node.classList.contains("value-visible")))) {
@@ -633,11 +732,11 @@ try {
     const chassis = document.querySelector(".chassis").getBoundingClientRect();
     const scale = chassis.width / 1180;
     const accentStyle = getComputedStyle(
-      document.querySelector('.sequence-step[data-step="0"]'),
+      document.querySelector(".sequence-step.accented"),
       "::before"
     );
     const slideStyle = getComputedStyle(
-      document.querySelector('.sequence-step[data-step="1"]'),
+      document.querySelector(".sequence-step.sliding"),
       "::after"
     );
     return {
@@ -646,7 +745,9 @@ try {
       slidePixels: Number.parseFloat(slideStyle.width) * scale,
     };
   });
-  if (compactBadges.accentPixels < 9 || compactBadges.slidePixels < 9) {
+  if (!Number.isFinite(compactBadges.accentPixels)
+      || !Number.isFinite(compactBadges.slidePixels)
+      || compactBadges.accentPixels < 9 || compactBadges.slidePixels < 9) {
     throw new Error(`Step-state badges became too small at 590×290: ${JSON.stringify(compactBadges)}`);
   }
   const reconnect = await page.evaluate(async () => {
@@ -702,6 +803,12 @@ try {
       keyboardUndo: true,
       batchTranspose: true,
       batchRest: true,
+      reverse: afterReverse.slice(0, 4),
+      pitchMirror: afterMirror.slice(0, 4),
+      generationScale: selectedScale,
+      generated: generated.slice(0, 4),
+      mutated: mutated.slice(0, 4),
+      smartEditUndo: true,
     },
     distortion: {
       state: distortionState,

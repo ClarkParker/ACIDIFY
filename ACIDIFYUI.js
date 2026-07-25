@@ -36,6 +36,12 @@ const STEP_FLAG_IDS = [
 ];
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const DISTORTION_NAMES = ["PURE", "MACKIE", "PHONO"];
+const GENERATION_SCALES = [
+  { id: "minor-pentatonic", label: "MIN PENTA", degrees: [0, 3, 5, 7, 10] },
+  { id: "minor", label: "MINOR", degrees: [0, 2, 3, 5, 7, 8, 10] },
+  { id: "major", label: "MAJOR", degrees: [0, 2, 4, 5, 7, 9, 11] },
+  { id: "chromatic", label: "CHROMA", degrees: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+];
 const TOOLTIP_STORAGE_KEY = "acidify.tooltips.enabled";
 const CONTROL_TOOLTIPS = {
   param1: "Fine-tunes the instrument by one semitone up or down. Drag or use the arrow keys; hold Shift for finer movement. Double-click to reset.",
@@ -272,6 +278,7 @@ class AcidifyPatchView extends HTMLElement {
     this._history = [];
     this._future = [];
     this._clipboard = null;
+    this._generationScaleIndex = 0;
     this._paintState = null;
     this._paramListener = null;
     this._stepListener = null;
@@ -756,6 +763,12 @@ class AcidifyPatchView extends HTMLElement {
       this._setStudioMode(!this._studioMode);
     });
 
+    this.querySelector(".studio-scale")?.addEventListener("click", () => {
+      this._generationScaleIndex = (this._generationScaleIndex + 1) % GENERATION_SCALES.length;
+      this._updateStudioToolbar();
+      this._showStudioToast(`SCALE · ${this._generationScale().label}`);
+    });
+
     this.querySelectorAll("[data-studio-action]").forEach(button => {
       button.addEventListener("click", () => {
         if (button.dataset.studioAction === "choose-note") {
@@ -1236,6 +1249,41 @@ class AcidifyPatchView extends HTMLElement {
     });
   }
 
+  _generationScale() {
+    return GENERATION_SCALES[this._generationScaleIndex] || GENERATION_SCALES[0];
+  }
+
+  _scalePitches() {
+    const pitches = [];
+    const degrees = this._generationScale().degrees;
+    for (let octave = 0; octave < 2; octave += 1) {
+      degrees.forEach(degree => pitches.push(octave * 12 + degree));
+    }
+    pitches.push(24);
+    return [...new Set(pitches)].filter(pitch => pitch >= 0 && pitch <= 24).sort((a, b) => a - b);
+  }
+
+  _nearestScalePitch(rawPitch) {
+    const pitch = clamp(Math.round(rawPitch), 0, 24);
+    return this._scalePitches().reduce((nearest, candidate) =>
+      Math.abs(candidate - pitch) < Math.abs(nearest - pitch) ? candidate : nearest
+    );
+  }
+
+  _adjacentScalePitch(rawPitch, direction) {
+    const scale = this._scalePitches();
+    const nearest = this._nearestScalePitch(rawPitch);
+    const index = scale.indexOf(nearest);
+    return scale[clamp(index + (direction < 0 ? -1 : 1), 0, scale.length - 1)];
+  }
+
+  _generatedScalePitch() {
+    const scale = this._scalePitches();
+    // Bias generation toward the lower octave while retaining the full range.
+    const shaped = Math.pow(Math.random(), 1.35);
+    return scale[Math.min(scale.length - 1, Math.floor(shaped * scale.length))];
+  }
+
   _runStudioAction(action) {
     const selected = this._selectedIndices();
     if (action === "undo") {
@@ -1289,13 +1337,68 @@ class AcidifyPatchView extends HTMLElement {
           draft[index] = source[sourcePosition];
         });
       });
-    } else if (action === "randomize") {
-      this._mutatePattern("Smart randomize", draft => {
-        selected.forEach(index => {
-          draft[index].pitch = Math.floor(Math.random() * 25);
-          draft[index].flags = 1 | (Math.random() < .28 ? 2 : 0) | (Math.random() < .2 ? 4 : 0);
+    } else if (action === "reverse") {
+      const targets = selected.length > 1 ? selected : Array.from({ length: 16 }, (_, index) => index);
+      this._mutatePattern("Reverse", draft => {
+        const source = targets.map(index => ({ ...draft[index] })).reverse();
+        targets.forEach((index, position) => {
+          draft[index] = source[position];
         });
       });
+      this._showStudioToast("ORDER REVERSED");
+    } else if (action === "pitch-mirror") {
+      const targets = selected.length > 1 ? selected : Array.from({ length: 16 }, (_, index) => index);
+      this._mutatePattern("Pitch mirror", draft => {
+        const pitches = targets.map(index => draft[index].pitch);
+        const low = Math.min(...pitches);
+        const high = Math.max(...pitches);
+        targets.forEach(index => {
+          draft[index].pitch = low + high - draft[index].pitch;
+        });
+      });
+      this._showStudioToast("PITCH CONTOUR MIRRORED");
+    } else if (action === "generate") {
+      this._mutatePattern(`Generate ${this._generationScale().label}`, draft => {
+        selected.forEach(index => {
+          const gate = Math.random() < .84;
+          const accent = gate && Math.random() < .28;
+          const slide = gate && Math.random() < .2;
+          draft[index].pitch = this._generatedScalePitch();
+          draft[index].flags = (gate ? 1 : 0) | (accent ? 2 : 0) | (slide ? 4 : 0);
+        });
+        if (selected.every(index => (draft[index].flags & 1) === 0))
+          draft[selected[0]].flags |= 1;
+      });
+      this._showStudioToast(`GENERATED · ${this._generationScale().label}`);
+    } else if (action === "mutate") {
+      this._mutatePattern(`Mutate ${this._generationScale().label}`, draft => {
+        let changed = false;
+        selected.forEach(index => {
+          const before = { ...draft[index] };
+          if (Math.random() < .35) {
+            const direction = Math.random() < .5 ? -1 : 1;
+            draft[index].pitch = this._adjacentScalePitch(draft[index].pitch, direction);
+          }
+          if (Math.random() < .1) draft[index].flags ^= 1;
+          if ((draft[index].flags & 1) !== 0) {
+            if (Math.random() < .18) draft[index].flags ^= 2;
+            if (Math.random() < .12) draft[index].flags ^= 4;
+          } else {
+            draft[index].flags &= 1;
+          }
+          if (before.pitch !== draft[index].pitch || before.flags !== draft[index].flags)
+            changed = true;
+        });
+        if (!changed) {
+          const index = selected[0];
+          const direction = draft[index].pitch >= 12 ? -1 : 1;
+          let next = this._adjacentScalePitch(draft[index].pitch, direction);
+          if (next === draft[index].pitch)
+            next = this._adjacentScalePitch(draft[index].pitch, -direction);
+          draft[index].pitch = next;
+        }
+      });
+      this._showStudioToast(`MUTATED · ${this._generationScale().label}`);
     } else if (action === "rest") {
       this._mutatePattern("Toggle rest", draft => {
         const makeGate = selected.every(index => (draft[index].flags & 1) === 0);
@@ -1320,6 +1423,14 @@ class AcidifyPatchView extends HTMLElement {
 
   _updateStudioToolbar() {
     const selected = this._selectedIndices();
+    const scale = this._generationScale();
+    const scaleButton = this.querySelector(".studio-scale");
+    const scaleValue = scaleButton?.querySelector("strong");
+    if (scaleValue) scaleValue.textContent = scale.label;
+    if (scaleButton) {
+      scaleButton.setAttribute("aria-label", `Generation scale ${scale.label}; click for next scale`);
+      scaleButton.dataset.tooltip = `Generate and Mutate currently use the root-relative ${scale.label} scale. Click to choose the next scale.`;
+    }
     const selection = this.querySelector(".studio-selection");
     if (selection) {
       const root = Math.round(this._values.get("param12") ?? 36);
@@ -1939,6 +2050,7 @@ class AcidifyPatchView extends HTMLElement {
     color: #fff1e9; text-shadow: 0 1px #5b0c08;
   }
   acidify-patch-view .studio-toggle:focus-visible,
+  acidify-patch-view .studio-scale:focus-visible,
   acidify-patch-view .stepper button:focus-visible,
   acidify-patch-view .sequence-step:focus-visible,
   acidify-patch-view .function-button:focus-visible,
@@ -2071,7 +2183,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view.studio-mode .classic-editor { display: none; }
   acidify-patch-view.studio-mode .studio-editor {
     position: relative; height: 122px; padding-top: 8px;
-    display: grid; grid-template-columns: 292px 1fr; gap: 13px;
+    display: grid; grid-template-columns: 404px 1fr; gap: 13px;
     border-top: 1px solid rgba(255,255,255,.62);
     box-shadow: inset 0 1px rgba(61,61,57,.18);
     animation: studio-enter 140ms ease-out both;
@@ -2096,8 +2208,18 @@ class AcidifyPatchView extends HTMLElement {
     font-size: 6px; letter-spacing: 1px; color: #65655e;
   }
   acidify-patch-view .studio-selection { color: #9b2019; font-size: 8px; letter-spacing: 1.25px; }
+  acidify-patch-view .studio-scale {
+    height: 16px; min-width: 105px; padding: 0 6px; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between; gap: 7px;
+    border: 1px solid #1a1a17; border-radius: 3px;
+    color: #b9b8af; background: linear-gradient(#55544e, #292925);
+    box-shadow: inset 0 1px rgba(255,255,255,.16), 0 1px rgba(255,255,255,.32);
+    font-size: 5px; font-weight: 900; letter-spacing: .55px;
+  }
+  acidify-patch-view .studio-scale strong { color: #ff9a89; font-size: 5.5px; letter-spacing: .45px; }
+  acidify-patch-view .studio-scale:active { transform: translateY(1px); }
   acidify-patch-view .studio-actions {
-    display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; align-content: start;
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; align-content: start;
   }
   acidify-patch-view .studio-actions button {
     height: 34px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -2684,7 +2806,7 @@ class AcidifyPatchView extends HTMLElement {
     border-top: 1px solid var(--line-soft); box-shadow: none;
   }
   acidify-patch-view .editor { grid-template-columns: 160px minmax(0, 1fr) 288px; }
-  acidify-patch-view.studio-mode .studio-editor { grid-template-columns: 306px 1fr; }
+  acidify-patch-view.studio-mode .studio-editor { grid-template-columns: 404px 1fr; }
   acidify-patch-view .edit-status,
   acidify-patch-view .keyboard,
   acidify-patch-view .time-controls,
@@ -3688,7 +3810,10 @@ class AcidifyPatchView extends HTMLElement {
         <div class="studio-tools">
           <div class="studio-tool-head">
             <strong class="studio-selection">STEP 01</strong>
-            <span>SMART EDIT</span>
+            <button class="studio-scale" type="button" aria-label="Generation scale Minor Pentatonic; click for next scale"
+              data-tooltip="Generate and Mutate currently use the root-relative Minor Pentatonic scale. Click to choose the next scale.">
+              <span>SCALE</span><strong>MIN PENTA</strong>
+            </button>
           </div>
           <div class="studio-actions">
             <button data-studio-action="undo" title="Undo (Ctrl/Cmd+Z)">↶<small>UNDO</small></button>
@@ -3697,10 +3822,13 @@ class AcidifyPatchView extends HTMLElement {
             <button data-studio-action="paste" title="Paste steps">▣<small>PASTE</small></button>
             <button data-studio-action="rotate-left" title="Rotate selection left">◀<small>ROTATE</small></button>
             <button data-studio-action="rotate-right" title="Rotate selection right">▶<small>ROTATE</small></button>
+            <button data-studio-action="reverse" title="Reverse the selected step order">⇄<small>REVERSE</small></button>
+            <button data-studio-action="pitch-mirror" title="Mirror pitches inside their current range">◇<small>MIRROR</small></button>
             <button data-studio-action="transpose-down" title="Transpose octave down">−12<small>OCT</small></button>
             <button data-studio-action="transpose-up" title="Transpose octave up">+12<small>OCT</small></button>
             <button data-studio-action="select-all" title="Select all steps">16<small>ALL</small></button>
-            <button data-studio-action="randomize" title="Smart-randomize selection">✣<small>RAND</small></button>
+            <button data-studio-action="generate" title="Generate a new scale-aware phrase">✣<small>GENERATE</small></button>
+            <button data-studio-action="mutate" title="Mutate the phrase gently within the selected scale">≈<small>MUTATE</small></button>
             <button data-studio-action="rest" title="Toggle gate/rest for selection">—<small>REST</small></button>
             <button data-studio-action="choose-note" aria-haspopup="dialog"
               title="Choose an exact note for the selected steps">♪<small>NOTE</small></button>
