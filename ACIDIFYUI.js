@@ -2040,7 +2040,7 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: 0 0 5px #ff2918, 0 0 10px rgba(255,41,24,.52), inset 0 0 2px #fff;
   }
   acidify-patch-view .sequence-step.accented::before {
-    content: "A"; position: absolute; left: 3px; bottom: 2px; z-index: 2;
+    content: "A"; position: absolute; left: 3px; top: 17px; z-index: 2;
     width: 18px; height: 18px; display: grid; place-items: center;
     border: 1px solid #6d100b; border-radius: 4px;
     color: #fff8f2; background: linear-gradient(180deg, #e75243, #981b14);
@@ -2049,7 +2049,7 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: 0 0 0 1px rgba(255,255,255,.3), 0 1px 3px rgba(60,4,2,.42);
   }
   acidify-patch-view .sequence-step.sliding::after {
-    content: "↗"; position: absolute; right: 3px; bottom: 2px; z-index: 2;
+    content: "↗"; position: absolute; right: 3px; top: 17px; z-index: 2;
     width: 18px; height: 18px; display: grid; place-items: center;
     border: 1px solid #70520b; border-radius: 4px;
     color: #261800; background: linear-gradient(180deg, #ffe17a, #d89d22);

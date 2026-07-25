@@ -69,6 +69,7 @@ try {
         height: Number.parseFloat(style.height),
         fontSize: Number.parseFloat(style.fontSize),
         background: style.backgroundImage,
+        top: Number.parseFloat(style.top),
       };
     };
     return {
@@ -85,6 +86,8 @@ try {
       || stepBadges.slide.width < 18 || stepBadges.slide.height < 18
       || stepBadges.accent.fontSize < 12 || stepBadges.slide.fontSize < 15
       || stepBadges.accent.background === "none" || stepBadges.slide.background === "none"
+      || stepBadges.accent.top < 15 || stepBadges.accent.top > 19
+      || stepBadges.slide.top < 15 || stepBadges.slide.top > 19
       || !stepBadges.combinedLabel.includes("Accent")
       || !stepBadges.combinedLabel.includes("Slide")) {
     throw new Error(`Step-state badges are not prominent or accessible: ${JSON.stringify(stepBadges)}`);
