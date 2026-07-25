@@ -24,7 +24,7 @@
 | Studio-Undo, Copy/Paste, Batch-Transpose und Batch-Rest | bestanden |
 | Studio-Tastaturkürzel und temporäres Reglerfeedback | bestanden |
 | Responsive UI-Skalierung (590 × 290 px) | bestanden |
-| Cmajor 1.0.3175 C++-Codegen | in 0.2.1 bestanden; DSP in 0.2.2 unverändert |
+| Cmajor 1.0.3175 C++-Codegen | in 0.2.1 bestanden; DSP in 0.2.3 unverändert |
 | MIDI→Stereo Render 44,1 kHz | 0.2.1: Peak 0,45522; RMS 0,11637; DSP unverändert |
 | MIDI→Stereo Render 48 kHz | 0.2.1: Peak 0,44916; RMS 0,14604; DSP unverändert |
 
