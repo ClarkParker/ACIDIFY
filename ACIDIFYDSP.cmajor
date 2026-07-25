@@ -1,5 +1,5 @@
 /*
-    ACIDIFY 0.6.1 — analog-modelled 303-class bassline for Amorph.
+    ACIDIFY 0.6.2 — analog-modelled 303-class bassline for Amorph.
 
     MIDI/16-step sequencer -> oscillator -> coupling HP -> four-stage ladder
     -> coupling HP -> accent VCA -> output stage.

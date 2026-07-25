@@ -1185,10 +1185,15 @@ class AcidifyPatchView extends HTMLElement {
       const root = Math.round(this._values.get("param12") ?? 36);
       const pitch = this._stepPitch(index);
       const absoluteNote = noteName(root + pitch).replace("#", "♯");
+      const states = [
+        (flags & 1) !== 0 ? "Gate" : "Rest",
+        (flags & 2) !== 0 ? "Accent" : "",
+        (flags & 4) !== 0 ? "Slide" : "",
+      ].filter(Boolean).join(", ");
       node.querySelector(".step-note").textContent = absoluteNote;
       node.querySelector(".step-octave").textContent = `+${Math.floor(pitch / 12)}`;
-      node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}, ${this._octaveLabel(pitch)}; click to edit, wheel changes semitone, right-click or double-click chooses a note`);
-      node.title = `Step ${index + 1} · ${absoluteNote} · ${this._octaveLabel(pitch)} · wheel: semitone · right/double click: choose note`;
+      node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}; click to edit, wheel changes semitone, right-click or double-click chooses a note`);
+      node.title = `Step ${index + 1} · ${absoluteNote} · ${this._octaveLabel(pitch)} · ${states} · wheel: semitone · right/double click: choose note`;
     });
   }
 
@@ -1840,10 +1845,22 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: 0 0 5px #ff2918, 0 0 10px rgba(255,41,24,.52), inset 0 0 2px #fff;
   }
   acidify-patch-view .sequence-step.accented::before {
-    content: "A"; position: absolute; left: 5px; bottom: 4px; color: #a91e17; font-size: 7px; font-weight: 900;
+    content: "A"; position: absolute; left: 3px; bottom: 2px; z-index: 2;
+    width: 18px; height: 18px; display: grid; place-items: center;
+    border: 1px solid #6d100b; border-radius: 4px;
+    color: #fff8f2; background: linear-gradient(180deg, #e75243, #981b14);
+    font-size: 12px; line-height: 1; font-weight: 950;
+    text-shadow: 0 1px #5b0b07;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.3), 0 1px 3px rgba(60,4,2,.42);
   }
   acidify-patch-view .sequence-step.sliding::after {
-    content: "↗"; position: absolute; right: 5px; bottom: 3px; color: #222; font-size: 10px; font-weight: 900;
+    content: "↗"; position: absolute; right: 3px; bottom: 2px; z-index: 2;
+    width: 18px; height: 18px; display: grid; place-items: center;
+    border: 1px solid #70520b; border-radius: 4px;
+    color: #261800; background: linear-gradient(180deg, #ffe17a, #d89d22);
+    font-size: 15px; line-height: 1; font-weight: 950;
+    text-shadow: 0 1px rgba(255,255,255,.5);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.34), 0 1px 3px rgba(51,36,0,.38);
   }
   acidify-patch-view .sequence-step.rest { opacity: .55; }
   acidify-patch-view .step-index { display: block; margin-top: 20px; font-size: 8px; font-weight: 900; }
@@ -2453,8 +2470,14 @@ class AcidifyPatchView extends HTMLElement {
     background: radial-gradient(circle at 34% 28%, #fff7dc 0 8%, #ff796b 16%, #ff3e31 48%, #8c120c 76%);
     box-shadow: 0 0 6px var(--acid), 0 0 13px rgba(255, 78, 62, .4);
   }
-  acidify-patch-view .sequence-step.accented::before { color: var(--acid-hot); }
-  acidify-patch-view .sequence-step.sliding::after { color: var(--amber); }
+  acidify-patch-view .sequence-step.accented::before {
+    color: #fff8f2; background: linear-gradient(180deg, #ff6858, #b9231a);
+    border-color: #7b1711; box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 0 9px rgba(255,78,62,.34);
+  }
+  acidify-patch-view .sequence-step.sliding::after {
+    color: #221500; background: linear-gradient(180deg, #ffd96b, #bf821a);
+    border-color: #75500d; box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 0 8px rgba(226,166,48,.27);
+  }
   acidify-patch-view .step-note { color: var(--acid-hot); }
   acidify-patch-view .sequence-step.rest { opacity: .42; }
 
@@ -2889,9 +2912,15 @@ class AcidifyPatchView extends HTMLElement {
     border-color: #2b0806;
     background: radial-gradient(circle at 34% 27%, rgba(255,255,255,.22) 0 5%, transparent 9%), radial-gradient(circle, #651b15, #3c0e0b 60%, #1e0705);
   }
-  acidify-patch-view .sequence-step.accented::before,
   acidify-patch-view .step-note { color: #8b1b15; }
-  acidify-patch-view .sequence-step.sliding::after { color: #262721; }
+  acidify-patch-view .sequence-step.accented::before {
+    color: #fff8f2; background: linear-gradient(180deg, #d94336, #8b1711);
+    border-color: #6d100b; box-shadow: 0 0 0 1px rgba(255,255,255,.3), 0 1px 3px rgba(60,4,2,.42);
+  }
+  acidify-patch-view .sequence-step.sliding::after {
+    color: #261800; background: linear-gradient(180deg, #ffe17a, #d89d22);
+    border-color: #70520b; box-shadow: 0 0 0 1px rgba(255,255,255,.34), 0 1px 3px rgba(51,36,0,.38);
+  }
   acidify-patch-view .step-octave {
     position: absolute; right: 4px; top: 4px;
     color: #5c5d56; font: 6px "Courier New", monospace; font-weight: 900;
@@ -3450,7 +3479,7 @@ class AcidifyPatchView extends HTMLElement {
         </div>
       </div>
     </section>
-    <div class="footer-mark">ACIDIFY 0.6.1 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
+    <div class="footer-mark">ACIDIFY 0.6.2 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
   </div>
   <section class="pitch-menu" role="dialog" aria-modal="false" aria-hidden="true"
     aria-labelledby="pitch-menu-title" hidden>

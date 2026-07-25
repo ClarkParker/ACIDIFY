@@ -1,4 +1,4 @@
-# Validierung 0.6.1
+# Validierung 0.6.2
 
 ## Automatische Prüfungen
 
@@ -9,13 +9,15 @@
 | DSP↔UI-Sync | 49/49 Parameter konsistent; 3 Timeline-Eingänge separat |
 | Cmajor 1.0.3175 C++-Codegen | bestanden, ohne Compilerwarnung |
 | JavaScript-Syntax aller Test-/Render-Skripte | bestanden |
-| Live-Browser-Render Classic/DAW-Sync/Studio/Notenwahl/Distortion bei 1180 × 580 px | bestanden |
-| Live-Browser-Render Classic/DAW-Sync/Studio/Notenwahl/Distortion bei 590 × 290 px | bestanden |
+| Live-Browser-Render Classic/Hoststatus-Simulation/Studio/Notenwahl/Distortion bei 1180 × 580 px | bestanden |
+| Live-Browser-Render Classic/Hoststatus-Simulation/Studio/Notenwahl/Distortion bei 590 × 290 px | bestanden |
 | Distortion-Overlay | Open/Close, Escape, Außenklick, Fokus und Status bestanden |
 | Distortion-Parameter | Enable, drei Typen, Drive, Mix und Echo-Schutz bestanden |
 | Amorph `data-endpoint-id` an globalen Controls | 17/17 |
 | INT/DAW-UI | unabhängiger Tempo-/Transport-Lock, Internal-Fallback und Host-Lampe bestanden |
 | Step-Pitch | Note/Oktave, Keyboard, Rechts-/Doppelklick, 25-Noten-Menü und Mausrad bestanden |
+| Step-Zustände | Accent/Slide einzeln und gemeinsam als 18 × 18 px Badges bestanden |
+| Step-Zustände bei 590 × 290 | Accent/Slide effektiv je 9 × 9 px bestanden |
 | Parameter-Echo-Schutz und Web-Component-Reconnect | bestanden |
 | Transport/Synthese/Master | je 13 px Abstand, identische Ober-/Unterkante |
 | Waveform/Klangregler/Volume | max. 0,5 px Achsabweichung |
@@ -105,7 +107,7 @@ Die dritte Instanz erhält ausschließlich `param9`, `param10` und
 `param49 = DAW`; sie trifft dieselben Step-/Stop-/Start-Grenzen wie die interne
 Referenz und belegt den spielbaren Fallback ohne Hostdaten.
 
-## Was 0.6.1 technisch belegt
+## Was 0.6.2 technisch belegt
 
 - Der Patch kompiliert und der 49-Parameter-Vertrag ist synchron.
 - Der öffentliche Produktionsgraph reicht Cmajor-Timeline-Ereignisse bis in den
@@ -123,6 +125,21 @@ Referenz und belegt den spielbaren Fallback ohne Hostdaten.
 - Die zuvor fixierte Classic-/Studio-Geometrie bleibt trotz Overlay erhalten.
 - Note und Oktave sind in beiden Editoren sichtbar; Rechtsklick, Doppelklick,
   `NOTE`-Aktion und Mausrad sind im Browser-Workflow geprüft.
+- Accent und Slide bleiben in Original- und Halbgröße sowie bei gemeinsamem
+  Zustand visuell unterscheidbar.
+
+## Realer Amorph-Hostbefund
+
+Der Test im tatsächlich geladenen Amorph-Plugin liefert weder Tempo-,
+Transport- noch Positionsereignisse. Damit funktionieren BPM-Follow und
+Play/Stop-Follow im aktuellen getesteten Runtime-Build nicht. Die grüne
+Transportmatrix oberhalb ist ein Cmajor-Produktionsgraphtest mit intern
+eingespeisten Timeline-Ereignissen; sie ist kein Ersatz für diesen Hosttest.
+
+Die Cmajor-Eingänge und ihre Verarbeitung sind korrekt. Zur Behebung muss der
+Amorph-Audiowrapper die DAW-Playhead-Daten über `Patch::sendBPM`,
+`Patch::sendTransportState` und `Patch::sendPosition` an die Patchinstanz
+weiterreichen. Diese Änderung liegt außerhalb des ACIDIFY-Patchquellcodes.
 
 ## Noch nicht abgedeckt
 

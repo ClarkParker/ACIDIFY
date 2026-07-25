@@ -51,6 +51,39 @@ try {
     throw new Error(`Unexpected UI element counts: ${JSON.stringify(counts)}`);
   }
 
+  const stepBadges = await page.evaluate(() => {
+    const accentStep = document.querySelector('.sequence-step[data-step="0"]');
+    const slideStep = document.querySelector('.sequence-step[data-step="1"]');
+    const combinedStep = document.querySelector('.sequence-step[data-step="5"]');
+    const read = (node, pseudo) => {
+      const style = getComputedStyle(node, pseudo);
+      return {
+        content: style.content.replaceAll('"', ""),
+        width: Number.parseFloat(style.width),
+        height: Number.parseFloat(style.height),
+        fontSize: Number.parseFloat(style.fontSize),
+        background: style.backgroundImage,
+      };
+    };
+    return {
+      accent: read(accentStep, "::before"),
+      slide: read(slideStep, "::after"),
+      combinedAccent: read(combinedStep, "::before"),
+      combinedSlide: read(combinedStep, "::after"),
+      combinedLabel: combinedStep.getAttribute("aria-label"),
+    };
+  });
+  if (stepBadges.accent.content !== "A" || stepBadges.slide.content !== "↗"
+      || stepBadges.combinedAccent.content !== "A" || stepBadges.combinedSlide.content !== "↗"
+      || stepBadges.accent.width < 18 || stepBadges.accent.height < 18
+      || stepBadges.slide.width < 18 || stepBadges.slide.height < 18
+      || stepBadges.accent.fontSize < 12 || stepBadges.slide.fontSize < 15
+      || stepBadges.accent.background === "none" || stepBadges.slide.background === "none"
+      || !stepBadges.combinedLabel.includes("Accent")
+      || !stepBadges.combinedLabel.includes("Slide")) {
+    throw new Error(`Step-state badges are not prominent or accessible: ${JSON.stringify(stepBadges)}`);
+  }
+
   const upperPanelGeometry = await page.evaluate(() => {
     const rect = selector => {
       const bounds = document.querySelector(selector)?.getBoundingClientRect();
@@ -501,6 +534,26 @@ try {
   if (!bounds || bounds.width > 591 || bounds.height > 291) {
     throw new Error(`Responsive scaling failed: ${JSON.stringify(bounds)}`);
   }
+  const compactBadges = await page.evaluate(() => {
+    const chassis = document.querySelector(".chassis").getBoundingClientRect();
+    const scale = chassis.width / 1180;
+    const accentStyle = getComputedStyle(
+      document.querySelector('.sequence-step[data-step="0"]'),
+      "::before"
+    );
+    const slideStyle = getComputedStyle(
+      document.querySelector('.sequence-step[data-step="1"]'),
+      "::after"
+    );
+    return {
+      scale,
+      accentPixels: Number.parseFloat(accentStyle.width) * scale,
+      slidePixels: Number.parseFloat(slideStyle.width) * scale,
+    };
+  });
+  if (compactBadges.accentPixels < 9 || compactBadges.slidePixels < 9) {
+    throw new Error(`Step-state badges became too small at 590×290: ${JSON.stringify(compactBadges)}`);
+  }
   const reconnect = await page.evaluate(async () => {
     const node = document.querySelector("acidify-patch-view");
     const connection = node.pc;
@@ -532,6 +585,8 @@ try {
   console.log(JSON.stringify({
     ok: true,
     counts,
+    stepBadges,
+    compactBadges,
     upperPanelGeometry,
     lowerPanelGeometry,
     cutoff: { before, after },

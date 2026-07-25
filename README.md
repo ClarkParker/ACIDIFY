@@ -5,7 +5,7 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **DSP/Transport Release Candidate 0.6.1**. Die fixierte
+> Status: **DSP/Transport Release Candidate 0.6.2**. Die fixierte
 > Classic-/Studio-Oberfläche wurde nur um einen kleinen `DIST`-Button mit
 > ausklappbarem Overlay sowie die kompakte `INT/DAW`-Uhrwahl erweitert.
 > Clean-Core, 49-Parameter-Vertrag, Cmajor-Timeline-Logik, sicherer
@@ -63,6 +63,11 @@ Notenstapel zur zuletzt noch gehaltenen Note zurück.
 
 Der kleine `INT/DAW`-Schalter im Transportmodul wählt die Taktquelle:
 
+> **Realer Hostbefund vom 25. Juli 2026:** Im getesteten Amorph-Runtime-Build
+> kommen weder BPM noch Play/Stop noch Position am Patch an. Die Anzeige
+> `DAW · INT FALLBACK` ist deshalb ausdrücklich **keine DAW-Synchronisation**,
+> sondern der weiterhin laufende interne Takt.
+
 - `INT`: Der Tempo-Regler bestimmt 40…300 BPM; `RUN / STOP` startet und stoppt
   den internen 16tel-Sequencer.
 - `DAW`: Empfangene Cmajor-Hostereignisse übernehmen ihre jeweilige Funktion.
@@ -78,6 +83,13 @@ Der kleine `INT/DAW`-Schalter im Transportmodul wählt die Taktquelle:
   Timeline-Forwarding-Vertrag. Der Patch kann den Empfang eindeutig anzeigen
   und verarbeiten, eine fehlende Runtime-Brücke aber nicht innerhalb des DSP
   ersetzen.
+
+Cmajor erkennt die drei Eingänge anhand ihrer Typen. Damit sie im Amorph-Plugin
+tatsächlich Daten erhalten, muss der Amorph-Audiowrapper pro Hostblock seine
+Playhead-Daten über `Patch::sendBPM`, `Patch::sendTransportState` und
+`Patch::sendPosition` einspeisen. Der offizielle Cmajor-CLAP-Wrapper macht genau
+das; ohne den entsprechenden Amorph-Code kann ein Cmajor-Patch die DAW-Timeline
+nicht selbst abfragen.
 
 `INT` ist der Initialwert von `param49`; ältere Presets behalten damit ihr
 bisheriges Verhalten.
@@ -98,6 +110,10 @@ Studio bietet dieselbe direkte Auswahl per Rechts-/Doppelklick auf der
 Menü alle gewählten Steps gemeinsam. Das Mausrad funktioniert sowohl in der
 `NOTE`-Zeile als auch weiterhin auf den oberen Step-Buttons. `ROOT` transponiert
 das gesamte Pattern, während jeder Step seinen Offset von 0…24 Halbtönen behält.
+
+Accent und Slide werden direkt auf den oberen Step-Tastern als große
+Zustandsbadges dargestellt: rotes `A` für Accent und gelber Diagonalpfeil für
+Slide. Sind beide aktiv, bleiben beide Badges gleichzeitig sichtbar.
 
 ## Distortion Stage
 

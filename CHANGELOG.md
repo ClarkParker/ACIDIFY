@@ -6,6 +6,35 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-07-25
+
+### Fixed
+
+- Accent und Slide sind auf jedem Step als kontrastreiche 18 × 18 px große
+  Zustandsbadges sichtbar. Rot markiert Accent, Gelb mit Diagonalpfeil markiert
+  Slide; beide bleiben auf demselben Step gleichzeitig erkennbar.
+- Bei der kleinsten geprüften Panelgröße 590 × 290 bleiben beide Badges mit
+  effektiv 9 × 9 px sichtbar, statt zu kaum lesbaren Kleinstglyphen zu schrumpfen.
+- Step-Tooltips und Screenreader-Texte nennen Gate/Rest, Accent und Slide jetzt
+  vollständig.
+
+### Corrected
+
+- Der reale Amorph-Hosttest wird ausdrücklich als fehlgeschlagen dokumentiert:
+  Der getestete Runtime-Build liefert weder BPM noch Play/Stop noch Position an
+  die vorhandenen Cmajor-Timeline-Eingänge.
+- `DAW · INT FALLBACK` wird nicht mehr als DAW-Sync interpretiert. Der
+  Cmajor-Graph ist für Timeline-Ereignisse korrekt verdrahtet; die fehlende
+  Hostbridge muss jedoch in Amorph selbst BPM, Transport und Position an den
+  Patch senden.
+
+### Validated
+
+- Browserworkflow einschließlich gleichzeitiger Accent-/Slide-Badges,
+  Zustandsbeschreibung und unveränderter Interaktionen bestanden.
+- Badgegröße: 18 × 18 px bei 1180 × 580 und effektiv 9 × 9 px bei 590 × 290.
+- Alle zehn Live-Render wurden aus dem 0.6.2-Quellstand neu erzeugt.
+
 ## [0.6.1] - 2026-07-25
 
 ### Added

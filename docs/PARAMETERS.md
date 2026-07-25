@@ -52,5 +52,8 @@ Die typisierten Eingänge `std::timeline::Tempo`,
 `std::timeline::TransportState` und `std::timeline::Position` sind
 Host-Kontext, keine dynamischen Parameter und benötigen keine UI-Gegenstücke.
 Ihre Deklaration belegt den Cmajor-Patchvertrag, nicht die Weitergabe durch einen
-bestimmten Amorph-Runtime-Build. Damit sind 49 der 50 von Amorph garantierten
+bestimmten Amorph-Runtime-Build. Der reale Amorph-Test zu 0.6.2 lieferte keinen
+dieser drei Endpunkte. Für echte DAW-Synchronisation muss der Host-Wrapper die
+Playhead-Daten über `Patch::sendBPM`, `Patch::sendTransportState` und
+`Patch::sendPosition` einspeisen. Damit sind 49 der 50 von Amorph garantierten
 dynamischen Parameter belegt.

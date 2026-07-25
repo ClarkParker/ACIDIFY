@@ -7,7 +7,7 @@ und eine getrennte, für Acid-Produktionen typische Ausgangsverzerrung anbieten.
 Der Instrumentenkern bleibt auch bei ausgeschalteter Distortion vollständig
 spielbar und messbar.
 
-0.6.1 ist ein technisch geprüfter Modellkandidat. „AAA Clone“ wird erst
+0.6.2 ist ein technisch geprüfter Modellkandidat. „AAA Clone“ wird erst
 beansprucht, wenn identische Pattern mehrerer Originalgeräte kalibriert
 aufgenommen, gegen das Modell vermessen und im Blindtest bewertet wurden.
 Quellcodequalität und grüne Offline-Tests ersetzen diesen Hör- und
@@ -49,7 +49,7 @@ sondern aus dem gekoppelten Verhalten von:
 5. Vierpol-Diodenleiter und seinen Koppelnetzwerken,
 6. optionaler nachgeschalteter Produktionsverzerrung.
 
-## 3. DSP-Topologie 0.6.1
+## 3. DSP-Topologie 0.6.2
 
 ```mermaid
 flowchart TD
@@ -90,6 +90,14 @@ Die typisierten Eingänge sind der standardisierte Cmajor-Patchvertrag. Der
 Produktionsgraph-Test belegt ihre Verdrahtung bis in den 4×-Kern, aber nicht die
 Weitergabe durch einen konkreten Amorph-Runtime-Build. Die öffentlichen
 Amorph-v0.99/v1-Beta-Unterlagen spezifizieren diese Hostfähigkeit derzeit nicht.
+
+Der reale Test des aktuellen Amorph-Builds am 25. Juli 2026 liefert für alle drei
+Eingänge keine Ereignisse. Damit ist die Fehlergrenze eindeutig: Der Patch
+reagiert auf eingespeiste Timeline-Daten, der getestete Amorph-Audiowrapper
+speist sie aber nicht ein. Eine funktionierende Bridge muss im Wrapper die
+Cmajor-Patchmethoden `sendBPM`, `sendTransportState` und `sendPosition` mit den
+Playhead-Daten der DAW aufrufen. Das kann nicht aus dem Cmajor-DSP heraus
+nachgebildet werden.
 
 ### VCO und Slide
 
@@ -183,6 +191,8 @@ mit Statuszeile. Jeder Step zeigt absolute Note und relative Oktave. Step-Pitche
 sind in Classic und Studio per Mausrad, Rechtsklick, Doppelklick oder direktem
 25-Noten-Menü erreichbar; die Classic-Klaviatur und die Oktavtaster bleiben
 zusätzlich erhalten. Eine Studio-Mehrfachauswahl kann gemeinsam gesetzt werden.
+Accent und Slide erscheinen als getrennte 18 × 18 px große, farb- und
+formcodierte Badges; beide können gleichzeitig angezeigt werden.
 
 ## 6. Verifikation
 
