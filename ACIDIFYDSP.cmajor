@@ -1027,16 +1027,15 @@ processor AcidifyCore
     // wie er gemessen wurde.
     float processLadder (float signal, float cutoffHz, float sampleRate)
     {
-        // Der Modellparameter fuehrt nicht den hoerbaren Eckpunkt, sondern
-        // liegt darueber. Gemessen bei Schaltplan-Kondensatoren, tools/bench/zdf:
-        // Parameter 1610 -> Spitze 1197 Hz bei k = 14. Skalar 1,345, kalibriert
-        // bei k = 14, also bei der Vorgabe-Resonanz 0,72. Das Verhaeltnis
-        // haengt schwach von k ab (1,26 bei k = 16,5 … 1,44 bei k = 12);
-        // es ist eine Einheitenumrechnung, keine Verhaltensanpassung.
-        const float peakToParameter = 1.345f;
-
-        let bounded = clamp (cutoffHz * peakToParameter,
-                             20.0f, min (20000.0f, sampleRate * 0.45f));
+        // Nach dem Schleifenumbau braucht es KEINE Umrechnung mehr: Mit dem
+        // Koppelnetz in der Rueckkopplung faellt die hoerbare Resonanzspitze
+        // praktisch auf den Modellparameter. Gemessen bei Resonanz 0,72,
+        // noetiger Faktor 0,963 / 0,990 / 1,003 / 1,009 bei 300 / 700 / 1500 /
+        // 3000 Hz — Abweichung unter einem Halbton ueber vier Oktaven.
+        //
+        // Vorher stand hier 1,345, kalibriert am Kern OHNE Schleifenkopplung.
+        // Nach dem Umbau schob dieser Skalar den Cutoff um 34,5 % zu hoch.
+        let bounded = clamp (cutoffHz, 20.0f, min (20000.0f, sampleRate * 0.45f));
 
         let T  = 1.0 / float64 (sampleRate);
         let wd = float64 (twoPi) * float64 (bounded);
