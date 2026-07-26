@@ -6,6 +6,22 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-26
+
+### Added
+
+- **Viertes begrenzendes Paar auf `y4`** (oberes Transistorpaar der Leiter,
+  Stinchcombes `d = 1` in `H_tb` — der Ausgangsstrom läuft hindurch). Anschwinggrenze
+  unverändert auf die Stelle (2,66796875 / 1,02734375), Klirr 47,98 / 17,60 / 6,90 %,
+  Faltung unverändert −62,9 dB.
+
+### Fixed
+
+- Accent-Quelle `Q36`: Stromquellen-Hypothese am Schaltbild **widerlegt**
+  (Emitter direkt an +12 V, `R145` am Kollektor, `C72` stützt die Basis).
+  `4.0` bleibt der eine gefittete VCA-Wert; die VCO-Rechteckschwelle bleibt
+  absichtlich (Messung an echter Hardware).
+
 ### Removed
 
 - **Der Faktor 2 am Filterausgang** — ersatzlos, und damit ist die letzte
@@ -666,6 +682,10 @@ vollständigen Repository-Commit. `0.2.0` führte den modernen Studio-Workflow
 ein. Sie werden hier ausdrücklich als historische Vorstufen festgehalten,
 besitzen aber keinen eigenen Commit-Anker im Repository.
 
+[0.11.0]: https://github.com/ClarkParker/ACIDIFY/commit/edbc3755b605b344bf17f0d51f2e4e82c3939a6d
+[0.10.0]: https://github.com/ClarkParker/ACIDIFY/commit/39381b827720a49d87b185bf4d52827e0be5d9d3
+[0.9.0]: https://github.com/ClarkParker/ACIDIFY/commit/2bd55ed0920978c5c8f29d33f299ef2f045378d0
+[0.8.0]: https://github.com/ClarkParker/ACIDIFY/commit/01cf8231d2871ea38058616ccba8aff2abc8da0c
 [0.4.0]: https://github.com/ClarkParker/ACIDIFY/commit/cd309ef5b4f527619a30ea19bfe8b9b6beef47b4
 [0.7.2]: https://github.com/ClarkParker/ACIDIFY/commit/e43de58cd8f4523e39e4854dfec24d400f564ed9
 [0.7.1]: https://github.com/ClarkParker/ACIDIFY/commit/ffeb05dde01a59a628af894b806b4e58722d3711

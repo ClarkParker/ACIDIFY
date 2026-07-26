@@ -1229,12 +1229,11 @@ processor AcidifyCore
         // (47,6 % statt 42,0 % bei 300 Hz). Die Nichtlinearitaet ist also nicht
         // schwaecher, sie sitzt nur am richtigen Ort. Kein Oversampling noetig.
         //
-        // OFFEN: Stinchcombe nennt „at the top of the ladder a single pair of
-        // transistors ... which effectively act like a single diode in each
-        // arm" (sein d = 1). Ob der Ausgang durch dieses obere Paar laeuft und
-        // damit ein viertes Mal begrenzt wird, ist aus den vorliegenden Quellen
-        // nicht entschieden. Es traefe y4, also das am staerksten gefilterte
-        // Signal — Aliasing waere davon kaum zu erwarten.
+        // Das OBERE Paar begrenzt ein viertes Mal, auf y4: Stinchcombes d = 1
+        // steht in H_tb — das Transistorpaar oben ist Teil der Leiter, der
+        // Ausgangsstrom laeuft hindurch (deshalb skaliert sein -d/H mit d).
+        // y4 ist das am staerksten gefilterte Signal, Faltung bleibt minimal
+        // (Pruefstein 7 wacht darueber).
         //
         // Der Massstab `drive` gilt fuer alle Paare, weil alle am selben
         // Steuerstrom haengen; dass C101 = 18 nF die vierte Ecke verschiebt,
@@ -1284,7 +1283,8 @@ processor AcidifyCore
             let y4i = ((t3 / drive) * 0.5 - zdfS4) * alpha4 + zdfS4;
             let d4i = alpha4 * 0.5 * (1.0 - t3 * t3) * d3i;
 
-            u -= (u + A * y4i + R) / (1.0 + A * d4i);
+            let t4 = tanh (y4i * drive);
+            u -= (u + A * (t4 / drive) + R) / (1.0 + A * (1.0 - t4 * t4) * d4i);
         }
 
         let in1 = u * gam1 + S2 + S1 * G2;
@@ -1306,8 +1306,8 @@ processor AcidifyCore
         let y4 = v4 + zdfS4;
         zdfS4 += 2.0 * v4;
 
-        // Koppelnetz nachfuehren (Vorwaertspfad).
-        var v = y4;
+        // Koppelnetz nachfuehren (Vorwaertspfad); Ausgang durch das obere Paar.
+        var v = tanh (y4 * drive) / drive;
         for (wrap<5> i)
         {
             let y = coupleB0[i] * v + coupleB1[i] * coupleX1[i] - coupleA1[i] * coupleY1[i];
@@ -1748,14 +1748,12 @@ processor AcidifyCore
                 // Der Term `0.45f * filterEnvelope` hatte damit kein Bauteil
                 // hinter sich und ist entfallen.
                 //
-                // Der Accent dagegen speist: Q36 haengt mit dem Emitter an
-                // +12 V und der Basis an einem festen Teiler R142/R143 mit C72,
-                // ist also eine ueber den 4066 geschaltete Stromquelle. Ihr
-                // Kollektor treibt ueber D35 und R133 = 2,2 k den Emitterknoten
-                // von Q31, wo R131 = 220 k den Huellkurvenanteil liefert.
-                // Leitwertverhaeltnis dort 220/2,2 = 100; der Faktor 4.0 bleibt
-                // aber stehen, weil der Pegel der Accent-Quelle nicht belegt ist
-                // und `accentVcaRC` eine normierte Groesse ohne Volt-Bezug.
+                // Der Accent dagegen speist ueber D35/R133 = 2,2 k in den
+                // Q31-Knoten (R131 = 220 k traegt die Huellkurve). Die
+                // Stromquellen-Hypothese fuer Q36 ist am Schaltbild WIDERLEGT:
+                // Emitter direkt an +12 V, R145 haengt am Kollektor, C72
+                // stuetzt die Basis gegen die Schiene. Wohin R145 fuehrt, geben
+                // die Quellen nicht her — 4.0 bleibt der eine gefittete Wert.
                 ampControl += 4.0f * accentVcaRC;
             }
             else
