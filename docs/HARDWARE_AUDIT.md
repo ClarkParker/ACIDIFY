@@ -38,7 +38,7 @@ unten stehenden Lücken.
 | 4 | Resonanzgrenze | handverlöteter Widerstand, **knapp unter** Anschwingen | 2,7 % Reserve am oberen Ende, nirgends Anschwingen | ✅ |
 | 5 | Koppelnetzwerk | **fünf** Hochpassgruppen, um den Kern verteilt | fünf Gruppen, **in der Resonanzschleife** | ✅ |
 | 6 | Anschwingen | nur bei mittleren und hohen Frequenzen | Reserve 132 % @ 150 Hz gegen 2,7 % @ 8 kHz | ✅ |
-| 7 | Leiterbauteile | 2SC945 als Dioden, **gepaarte Paare kritisch** | keine Bauteilstreuung modelliert | ❌ |
+| 7 | Leiterbauteile | 2SC945 als Dioden, **gepaarte Paare kritisch** | Sollwerte modelliert; Streuung ist kein Ziel | ✅ |
 | 8 | 8-Hz-Spitze | Spitze im hergeleiteten Verlauf | Spitze bei ~9 Hz, +12,7 dB über 4 Hz | ✅ |
 
 Punkt 8 mit Einschränkung: Stinchcombes **Spitze** steht in seiner hergeleiteten
@@ -606,3 +606,49 @@ Die 2,5 kHz sind damit eine **belegte Randbedingung**, an der sich die
 Neuherleitung der Cutoff-Abbildung messen lassen muss — nicht eine Konstante,
 die man einzeln austauscht. Das untere Ende der Reglerspanne ist in keiner
 Quelle genannt; `313,8 Hz` bleibt unbelegt.
+
+
+---
+
+## Punkt 7 war falsch gestellt
+
+Der Eintrag verlangte, „Bauteilstreuung" zu modellieren, weil die
+Transistorpaarung im Nachbau als kritisch gilt. Das ist ein Fehlschluss, und er
+stand von Anfang an in diesem Dokument.
+
+Ein Bauteil hat einen **Sollwert**. Die Toleranz ist ein Fertigungsmangel, und
+die Selektion ist da, um ihn zu **beseitigen**. Bergmans „matched pairs are
+critical" ist eine Anweisung an Nachbauer, den Sollzustand zu erreichen — kein
+Beleg, dass der Klang von der Abweichung lebt. Eine Streuung zu modellieren
+hiesse, ein schlechter gefertigtes Gerät zu modellieren, nicht ein echteres.
+
+**Erledigt, indem die Forderung fallengelassen wird.** ACIDIFY rechnet die
+Sollwerte 33/33/33/18 nF, und das ist richtig.
+
+### Was aus der Recherche bleibt — eine Empfindlichkeitsangabe
+
+Die Toleranzen sind belegt: alle Kondensatorcodes der Stückliste enden auf `K`,
+also ±10 % (`2A333K`, `2A183K`). Die Transistorpaarung gibt Bergman mit **0,3 mV**
+Vbe-Differenz an, Matcher-Schaltungen mit ±1,5 mV.
+
+Gemessen (`tools/bench/spread`, zehn Ziehungen, jeder Kondensator unabhängig
+±10 %):
+
+| | Spanne |
+|---|---|
+| Resonanzspitze | 732,4 … 808,6 Hz = **171 Cent** |
+| Spitzenhöhe | +8,80 … +10,01 dB |
+
+Und der Vergleich, der die Bastlerweisheit umdreht:
+
+| | Abweichung |
+|---|---:|
+| Transistorpaarung 0,3 mV → `exp(0,3/26)` | **1,16 %** |
+| Kondensatoren `K` | **±10 %** |
+
+Die Kondensatoren dominieren um fast das Zehnfache. Die Paarung sichert den
+**Arbeitspunkt** der Leiter, nicht die Lage der Eckfrequenzen — dort entscheidet
+die Kondensatorgüte. Das ist eine Aussage über Fertigung, nicht über Klangdesign.
+
+Quellen: [Eddy Bergman, TB-303-VCF-Nachbau](https://www.eddybergman.com/2025/03/TB303-VCF.html) ·
+x0xb0x-Fabrikationshandbuch, Stücklisten mit Bauteilcodes.

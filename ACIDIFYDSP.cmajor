@@ -1092,10 +1092,29 @@ processor AcidifyCore
         let wa = (2.0 / T) * tan (wd * T * 0.5);   // bilineare Vorverzerrung
         let g  = wa * T * 0.5;
 
-        let g1 = g;
-        let g2 = g;
-        let g3 = g;
-        let g4 = g * (33.0 / 18.0);                // C101 = 18 nF
+        // Leiterkondensatoren: C98 = C99 = C100 = 33 nF, C101 = 18 nF.
+        //
+        // Das sind die SOLLWERTE, und sie sind das Ziel — nicht ein Idealfall.
+        // Die Stueckliste nennt +-10 % (`2A333K`, `2A183K`), aber Toleranz ist
+        // ein Fertigungsmangel, den die Selektion beseitigen soll, kein Merkmal
+        // des Instruments. Eine Streuung zu modellieren hiesse, ein schlechter
+        // gefertigtes Geraet zu modellieren.
+        //
+        // Empfindlichkeit, gemessen (tools/bench/spread, zehn Ziehungen):
+        // +-10 % an allen vier Kondensatoren verschieben die Resonanzspitze um
+        // **171 Cent** und die Spitzenhoehe um 1,2 dB. Das sagt, wie eng die
+        // Bauteile sein muessen — nicht, dass Abweichung hineingehoert.
+        //
+        // Zum Vergleich die Transistorpaarung, die im Nachbau als kritisch
+        // gilt: 0,3 mV Vbe-Differenz sind exp(0,3/26) = 1,16 % Stromabweichung.
+        // Die Kondensatoren daneben stehen mit +-10 %. Die Paarung sichert also
+        // den Arbeitspunkt der Leiter, nicht die Lage der Eckfrequenzen.
+        const float64 cap1 = 33.0, cap2 = 33.0, cap3 = 33.0, cap4 = 18.0;
+
+        let g1 = g * (33.0 / cap1);
+        let g2 = g * (33.0 / cap2);
+        let g3 = g * (33.0 / cap3);
+        let g4 = g * (33.0 / cap4);
 
         let G4 = 0.5 * g4 / (1.0 + g4);
         let G3 = 0.5 * g3 / (1.0 + g3 - 0.5 * g3 * G4);
