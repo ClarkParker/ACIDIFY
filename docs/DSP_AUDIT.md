@@ -34,6 +34,13 @@ damit eine Fit-Entscheidung, kein Bauteil.
 **Maximum** stehen, nicht bloß „weniger Absenkung". Ein flacher Verlauf wäre
 ebenfalls falsch.
 
+> **Dieser Prüfstein war falsch.** Siehe „Koppelnetz eingebaut" am Ende: Aus
+> Stinchcombes Übertragungsfunktion folgt, dass das Koppelnetz bei Resonanz
+> null **kein** Maximum bei 8 Hz hat — es steigt monoton. Die Spitze ist eine
+> Resonanzspitze und entsteht erst dadurch, dass die Rückkopplung das
+> Koppelnetz **einschließt**. Der Prüfstein hätte also nur bestehen können,
+> wenn ich gleichzeitig die Struktur geändert hätte.
+
 ---
 
 ## 2. Ein möglicher Rest desselben Fehlers, den `dc2fa7b` behoben hat
@@ -366,3 +373,92 @@ Smoke-Peak 0,907 → **0,910**, RMS 0,0692 → 0,0437 — der Kern hat den echte
 Durchlassbereichseinbruch, den der Fit nicht hatte. `preflight --strict`
 sauber, `dsp_matrix_test` 11/11 `ok` mit höchstem Effekt-Peak **0,9124**,
 `dsp_articulation_test` `ok`.
+
+
+---
+
+## Koppelnetz eingebaut — und mein eigener Prüfstein widerlegt
+
+Stinchcombe gibt die vollständige Übertragungsfunktion an
+([„A Comprehensive TB-303 Diode Ladder Filter Model"](https://www.timstinchcombe.co.uk/index.php?pge=diode2)):
+
+```
+H(s) = 1.06 s³ (s+109.9)(s+34.0)(s+7.41)
+     / [ L(s)(s+97.5)(s+38.5)(s+4.45)(s+578.1)(s+20.0)(s+7.41)
+         + 18.7 k s⁴ (s+46.5)(s+4.40) ]
+```
+
+Damit lässt sich das Koppelnetz **herausrechnen** statt schätzen. Bei `k = 0`
+fällt der Kern `L(s)` heraus, und es bleibt:
+
+```
+C(s) = 1.06 s³ (s+109.9)(s+34.0) / [(s+97.5)(s+38.5)(s+4.45)(s+578.1)(s+20.0)]
+```
+
+**Fünf Pole, fünf Nullstellen** — genau Stinchcombes „basically five sets of
+these". Pole bei 0,708 / 3,18 / 6,13 / 15,52 / 92,0 Hz, Nullstellen dreifach
+bei DC plus 5,41 und 17,49 Hz.
+
+Eingebaut als Kaskade aus fünf Gliedern erster Ordnung, bilinear transformiert.
+Das gebündelte Open303-Netz (Allpass 14,008 Hz, Hochpass 24,167 Hz, Notch
+7,5164 Hz) ist entfallen, ebenso der 44,486-Hz-Vorhochpass — `C(s)` deckt alle
+fünf Gruppen ab, beides zusammen würde doppeln. Der Kern ist linear, die
+Reihenfolge im Signalweg also gleichgültig.
+
+### Übertragung geprüft
+
+| f / Hz | 2 | 8 | 20 | 65,4 | 200 | 1000 |
+|---|---:|---:|---:|---:|---:|---:|
+| analytisch `C(s)` | −38,685 | −20,941 | −12,727 | −4,192 | −0,323 | +0,470 |
+| digitale Kaskade | −38,685 | −20,941 | −12,727 | −4,192 | −0,323 | +0,470 |
+
+Größte Abweichung über den ganzen Bereich: **0,0001 dB**.
+
+### Die Korrektur bei 8 Hz
+
+| | 8 Hz |
+|---|---:|
+| ACIDIFY vorher (Open303-Notch) | −41,94 dB |
+| Stinchcombes Netz | **−20,94 dB** |
+
+**21 dB** zu tief. Das war der größte Einzelfehler im Frequenzgang.
+
+### Mein Prüfstein ist gescheitert — und das ist der Ertrag
+
+Oben unter Punkt 1 hatte ich geschrieben: „Nach der Änderung muss bei 8 Hz ein
+**Maximum** stehen." Aus der Übertragungsfunktion folgt das Gegenteil. `C(s)`
+hat ausschließlich **reelle** Pole und Nullstellen — eine solche Kaskade kann
+gar kein Maximum erzeugen, sie steigt monoton. Bei Resonanz null gibt es keine
+8-Hz-Spitze.
+
+Die Spitze steckt im Term `18.7 k s⁴ (s+46.5)(s+4.40)` **im Nenner** — sie
+entsteht erst, wenn die Rückkopplung das Koppelnetz **einschließt**. Genau das
+meint Audit-Punkt 5 mit „um den Filterkern **verteilt**, nicht gebündelt".
+
+**Damit steht der verbleibende strukturelle Mangel klar benannt:** ACIDIFY legt
+`C(s)` **hinter** den Kern. Für den Frequenzgang bei fester Resonanz ist das
+äquivalent, für die Schleife nicht. Solange die fünf Gruppen nicht zwischen den
+Leiterstufen sitzen, **kann** die 8-Hz-Spitze nicht entstehen — unabhängig
+davon, wie gut das Netz sonst stimmt.
+
+### Und eine Quellenkorrektur
+
+Der bisherige Audit-Eintrag stützte die 8-Hz-Spitze auf Stinchcombes Satz, sie
+sei „a large contributing factor to the sound of the TB-303 overall". Der
+Satz davor schränkt ein:
+
+> „I took some measurements from my **TBX-303 clone**, and the test set-up I was
+> using was **adding just enough capacitive load** to enable the filter to
+> oscillate comfortably at around 8Hz."
+
+Die *Spitze* ist real — sie steht in seiner hergeleiteten Übertragungsfunktion.
+Das *Anschwingen bei 8 Hz* stammt dagegen von einem **Klon mit zusätzlicher
+kapazitiver Last aus dem Messaufbau**. Beides zu vermengen würde die Aussage
+überdehnen. Die Frequenzangabe „8 Hz" trägt damit weniger Gewicht als die
+Existenz der Spitze.
+
+### Pegel
+
+Smoke-Peak 0,910 → **0,888**, RMS 0,0437 → 0,0435. `preflight --strict` sauber,
+`dsp_matrix_test` 11/11 `ok` mit höchstem Effekt-Peak **0,9395**,
+`dsp_articulation_test` `ok`, `dsp_transport_test` 12/12 `ok`.

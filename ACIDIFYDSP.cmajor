@@ -150,12 +150,14 @@ processor AcidifyCore
     float accentCapVoltage = 0.0f;
     float accentVcaRC = 0.0f;
 
-    float preHighpassInput = 0.0f;
-    float preHighpassOutput = 0.0f;
     float feedbackHighpassInput = 0.0f;
     float feedbackHighpassOutput = 0.0f;
-    float postHighpassInput = 0.0f;
-    float postHighpassOutput = 0.0f;
+    // Koppelnetz nach Stinchcombe: fuenf Gruppen, je ein Pol und eine Nullstelle.
+    float64[5] coupleX1;
+    float64[5] coupleY1;
+    float64[5] coupleB0;
+    float64[5] coupleB1;
+    float64[5] coupleA1;
     float64 zdfS1 = 0.0;
     float64 zdfS2 = 0.0;
     float64 zdfS3 = 0.0;
@@ -187,30 +189,13 @@ processor AcidifyCore
     float ampReleaseCoeff = 0.0f;
     float ampAccentReleaseCoeff = 0.0f;
     float accentVcaAlpha = 0.0f;
-    float preHighpassPole = 0.0f;
-    float preHighpassGain = 0.0f;
     float feedbackHighpassPole = 0.0f;
     float feedbackHighpassGain = 0.0f;
-    float postHighpassPole = 0.0f;
-    float postHighpassGain = 0.0f;
     float meterAlpha = 0.0f;
     float parameterSmoothingAlpha = 1.0f;
     float distortionSmoothingAlpha = 1.0f;
 
-    float64 allpassB0 = 0.0;
-    float64 allpassA1 = 0.0;
-    float64 allpassX1 = 0.0;
-    float64 allpassY1 = 0.0;
 
-    float64 notchB0 = 1.0;
-    float64 notchB1 = 0.0;
-    float64 notchB2 = 0.0;
-    float64 notchA1 = 0.0;
-    float64 notchA2 = 0.0;
-    float64 notchX1 = 0.0;
-    float64 notchX2 = 0.0;
-    float64 notchY1 = 0.0;
-    float64 notchY2 = 0.0;
 
     float64 ampB0 = 1.0;
     float64 ampB1 = 0.0;
@@ -312,27 +297,12 @@ processor AcidifyCore
         return float (tanh (float64 (x)));
     }
 
+    // Nur noch der 200-Hz-Entklicker fuer die VCA-Steuerspannung. Allpass,
+    // Notch und Hochpass des gebuendelten Open303-Ausgangsnetzes sind durch
+    // updateCouplingCoefficients ersetzt.
     void updateOutputNetworkCoefficients (float sampleRate)
     {
         let rate = max (float64 (sampleRate), 1.0);
-
-        // Open303 output network: 14.008 Hz one-pole allpass.
-        let allpassT = tan (float64 (pi) * 14.008 / rate);
-        allpassB0 = (allpassT - 1.0) / (allpassT + 1.0);
-        allpassA1 = -allpassB0;
-
-        // Open303 output network: 7.5164 Hz, 4.7-octave band reject.
-        let notchW = float64 (twoPi) * 7.5164 / rate;
-        let notchS = sin (notchW);
-        let notchC = cos (notchW);
-        let safeS = abs (notchS) < 1.0e-12 ? 1.0e-12 : notchS;
-        let notchAlpha = notchS * sinh (0.5 * log (2.0) * 4.7 * notchW / safeS);
-        let notchScale = 1.0 / (1.0 + notchAlpha);
-        notchB0 = notchScale;
-        notchB1 = -2.0 * notchC * notchScale;
-        notchB2 = notchScale;
-        notchA1 = 2.0 * notchC * notchScale;
-        notchA2 = (notchAlpha - 1.0) * notchScale;
 
         // Open303's 200 Hz Butterworth de-clicker for the VCA control signal.
         let ampK = tan (float64 (pi) * 200.0 / rate);
@@ -397,26 +367,58 @@ processor AcidifyCore
         riaaA2 = d2 / d0;
     }
 
-    float processAllpass (float signal)
+    // Koppelnetz aus Stinchcombes vollstaendiger Uebertragungsfunktion
+    // (timstinchcombe.co.uk, „A Comprehensive TB-303 Diode Ladder Filter Model"):
+    //
+    //   H(s) = 1.06 s^3 (s+109.9)(s+34.0)(s+7.41)
+    //          / [ L(s)(s+97.5)(s+38.5)(s+4.45)(s+578.1)(s+20.0)(s+7.41)
+    //              + 18.7 k s^4 (s+46.5)(s+4.40) ]
+    //
+    // Bei k = 0 faellt der Kern L(s) heraus und es bleibt genau das Koppelnetz:
+    //
+    //   C(s) = 1.06 s^3 (s+109.9)(s+34.0)
+    //          / [(s+97.5)(s+38.5)(s+4.45)(s+578.1)(s+20.0)]
+    //
+    // Fuenf Pole und fuenf Nullstellen — Stinchcombes „basically five sets of
+    // these" Koppelkondensatoren, eine Gruppe je Abschnitt. Ersetzt das
+    // gebuendelte Open303-Netz aus Allpass 14,008 Hz, Hochpass 24,167 Hz und
+    // Notch 7,5164 Hz. Der Notch war der groesste Einzelfehler im Frequenzgang:
+    // er lag bei 8 Hz 21 dB unter dem hergeleiteten Netz.
+    void updateCouplingCoefficients (float sampleRate)
     {
-        let x = float64 (signal);
-        let y = allpassB0 * x + allpassX1 + allpassA1 * allpassY1;
-        allpassX1 = x;
-        allpassY1 = y;
-        return float (y);
+        let K = 2.0 * max (float64 (sampleRate), 1.0);   // bilineare Transformation
+        // Paarung beliebig, das Produkt ist dasselbe; hier nach Groesse sortiert.
+        float64[5] zeros = (0.0, 0.0, 0.0, 109.9, 34.0);
+        float64[5] poles = (4.45, 20.0, 38.5, 578.1, 97.5);
+
+        for (wrap<5> i)
+        {
+            let a = zeros[i];
+            let b = poles[i];
+            let n = 1.0 / (K + b);
+            coupleB0[i] = (K + a) * n;
+            coupleB1[i] = (a - K) * n;
+            coupleA1[i] = (b - K) * n;
+        }
+        // Durchlassverstaerkung 1.06 auf die erste Stufe.
+        coupleB0[0] *= 1.06;
+        coupleB1[0] *= 1.06;
     }
 
-    float processNotch (float signal)
+    float processCoupling (float signal)
     {
-        let x = float64 (signal);
-        let y = notchB0 * x + notchB1 * notchX1 + notchB2 * notchX2
-              + notchA1 * notchY1 + notchA2 * notchY2;
-        notchX2 = notchX1;
-        notchX1 = x;
-        notchY2 = notchY1;
-        notchY1 = y;
-        return float (y);
+        var v = float64 (signal);
+        for (wrap<5> i)
+        {
+            let y = coupleB0[i] * v + coupleB1[i] * coupleX1[i] - coupleA1[i] * coupleY1[i];
+            coupleX1[i] = v;
+            coupleY1[i] = y;
+            v = y;
+        }
+        return float (v);
     }
+
+
 
     float processAmpSmoother (float signal)
     {
@@ -639,16 +641,13 @@ processor AcidifyCore
         ampAccentReleaseCoeff = timeCoefficient (50.0f, sampleRate);
         // 47k * 0.033uF RC between the accent switch and VCA summing node.
         accentVcaAlpha = exponentialAlpha (102.616f, sampleRate);
-        preHighpassPole = float (exp (-float64 (twoPi) * 44.486 / float64 (sampleRate)));
-        preHighpassGain = 0.5f * (1.0f + preHighpassPole);
         feedbackHighpassPole = float (exp (-float64 (twoPi) * 150.0 / float64 (sampleRate)));
         feedbackHighpassGain = 0.5f * (1.0f + feedbackHighpassPole);
-        postHighpassPole = float (exp (-float64 (twoPi) * 24.167 / float64 (sampleRate)));
-        postHighpassGain = 0.5f * (1.0f + postHighpassPole);
         meterAlpha = 1.0f - timeCoefficient (12.0f, sampleRate);
         parameterSmoothingAlpha = 1.0f - timeCoefficient (5.0f, sampleRate);
         distortionSmoothingAlpha = 1.0f - timeCoefficient (20.0f, sampleRate);
         updateOutputNetworkCoefficients (sampleRate);
+        updateCouplingCoefficients (sampleRate);
         updateMackityCoefficients (sampleRate);
         updateRiaaCoefficients (sampleRate);
         meterPeriod = max (1, int (sampleRate * 0.03f));
@@ -1396,11 +1395,11 @@ processor AcidifyCore
             square303 *= 0.5f;
             let oscillator = saw + (square303 - saw) * waveformBlend;
 
-            // Coupling capacitor before the ladder.
-            let preFiltered = preHighpassGain * (oscillator - preHighpassInput)
-                            + preHighpassPole * preHighpassOutput;
-            preHighpassInput = oscillator;
-            preHighpassOutput = preFiltered;
+            // Der frueher hier stehende 44,486-Hz-Vorhochpass entfaellt: Er war
+            // Open303s Modell der Eingangskopplung, und Stinchcombes C(s) deckt
+            // alle fuenf Koppelgruppen ab. Beide zusammen wuerden doppeln.
+            // Der Kern ist linear, die Reihenfolge im Signalweg also gleichgueltig.
+            let preFiltered = oscillator;
 
             filterEnvelope *= accented ? accentDecayCoeff : normalDecayCoeff;
             filterEnvelopeRC += filterAttackAlpha * (filterEnvelope - filterEnvelopeRC);
@@ -1413,13 +1412,8 @@ processor AcidifyCore
             let instantaneousCutoff = baseCutoff * float (pow (2.0, float64 (exponent)));
             let filtered = processLadder (preFiltered, instantaneousCutoff, sampleRate);
 
-            // Full Open303 output coupling network.
-            let allPassed = processAllpass (filtered);
-            let postFiltered = postHighpassGain * (allPassed - postHighpassInput)
-                             + postHighpassPole * postHighpassOutput;
-            postHighpassInput = allPassed;
-            postHighpassOutput = postFiltered;
-            let coupled = processNotch (postFiltered);
+            // Koppelnetz nach Stinchcombe statt des gebuendelten Open303-Netzes.
+            let coupled = processCoupling (filtered);
 
             if (gateOpen)
             {
