@@ -668,3 +668,42 @@ Gemessen, spektraler Schwerpunkt:
 | Cutoff = 0,5 | EnvMod 0,0 | 0,5 | 1,0 |
 |---|---:|---:|---:|
 | | 482,9 Hz | 593,9 Hz | 728,5 Hz |
+
+
+---
+
+## BA662A-Pinbelegung — der Blocker ist weg
+
+Aus dem **Roland-100M-Servicehandbuch** (Textquelle, kein Scan):
+
+| Pin | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---|---|---|---|---|---|---|---|---|---|
+| | CV1 | −IN1 | +IN1 | CV2 (Puffer) | −V | OUT1 | IN2 | OUT2 | +V |
+
+Der BA662 ist OTA **und** Puffer in einem Gehäuse; Pin 4 steuert den Puffer.
+
+Damit stimmt die bisherige Verfolgung: `R121`/`R122` liegen auf **Pin 3 = +IN1**,
+also am Audioeingang — richtig modelliert. **Pin 1 = CV1** führt den Steuerstrom.
+
+### Was damit feststeht
+
+- `Q31` (2SA733P, PNP) ist die Steuerstromquelle an Pin 1.
+- Emitterwiderstand **`R131` = 220 kΩ** nach +12 V, Basis an `C42` (VCA-Hüllkurve).
+- Der Accent speist über `D35` + **`R133` = 2,2 kΩ** in **denselben Emitterknoten**.
+- Leitwertverhältnis am Knoten: **220 / 2,2 = 100**.
+
+### Was es nicht löst
+
+`ampControl` ist im Modell ein **dimensionsloser Verstärkungsfaktor**, kein
+Strom. Das Verhältnis 100 : 1 lässt sich nicht einfach für `4.0 / 0.45 = 8,9`
+einsetzen — die beiden Größen sind nicht dieselbe Art von Zahl.
+
+Der saubere Weg ist ein **Umbau statt eines Tauschs**: die Stufe in echten
+Einheiten rechnen — Steuerstrom `I_abc` aus `(12 V − V_E)/R131` plus dem
+Accent-Anteil über `R133`, daraus die OTA-Steilheit `g_m = I_abc/(2·V_t)`, und
+der Ausgang als `g_m · tanh(v_in/(2·V_t)) · R_last`. Das ersetzt `0.45`, `4.0`,
+`0.42` **und** `otaDrive` in einem Zug durch Bauteilwerte, die alle schon
+geprüft sind (`partcheck.py`).
+
+Offen bleibt dabei nur der Arbeitspunkt von `Q31` — die Basisspannung an `C42`
+in Volt. Sie folgt aus der Hüllkurvenamplitude, die im Modell normiert ist.
