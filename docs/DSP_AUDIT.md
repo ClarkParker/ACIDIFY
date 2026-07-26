@@ -1,11 +1,12 @@
 # Durchsicht des gesamten DSP
 
-Vollständige Prüfung von `ACIDIFYDSP.cmajor` gegen die Schaltung, Stand
-`af40320`. Getrennt geführt nach **gemessen**, **abgeleitet** und **Verdacht** —
-ein Verdacht ist hier kein Befund.
+Vollständige Prüfung von `ACIDIFYDSP.cmajor` gegen die Schaltung. Getrennt
+geführt nach **gemessen**, **abgeleitet** und **Verdacht** — ein Verdacht ist
+hier kein Befund.
 
-Gegenprobe zu allem Folgenden: `preflight --strict` sauber, `smoke_test`
-`peak = 0,69247`, `dsp_matrix_test` 11/11, `dsp_articulation_test` `ok`.
+Die Durchsicht entstand am Stand `af40320`; der Abschnitt „Reso-Comp eingebaut"
+am Ende hält die daraus folgende Änderung fest. Punkte 1, 2, 4 und 5 sind
+davon unberührt.
 
 ---
 
@@ -65,6 +66,10 @@ Wert stehen; ihn „zur Sicherheit" anzupassen wäre Raten.
 ---
 
 ## 3. Der VCA ist weiterhin ein Multiplizierer mit freien Konstanten
+
+> **Teilweise erledigt.** Der zweite Summenzweig ist eingebaut, siehe
+> „Reso-Comp eingebaut" am Ende dieses Dokuments. Die Multiplikation und die
+> drei freien Konstanten bestehen weiter.
 
 ```cmajor
 ampControl += 0.45f * filterEnvelope + 4.0f * accentVcaRC;
@@ -133,9 +138,8 @@ ergibt die Standard-Einpol-Allpassform) und die Hochpässe
 
 ## Rangfolge nach dieser Durchsicht
 
-1. **Reso-Comp-Zweig am VCA** (Punkt 3) — Zuordnung ist jetzt verfolgt, die
-   Bauteilwerte liegen vor, und der Zusatzprüfstein „bei Resonanz null trägt er
-   nichts bei" macht ihn widerlegbar.
+1. ~~**Reso-Comp-Zweig am VCA**~~ — **erledigt**, siehe unten. Beide Prüfsteine
+   bestanden.
 2. **OTA-Kennlinie statt Multiplikation** (Punkt 3) — Voraussetzung dafür, dass
    die drei freien Konstanten durch Bauteile ersetzt werden können.
 3. **Filterkern** (Punkt 4) — geprüft und wartend.
@@ -143,3 +147,79 @@ ergibt die Standard-Einpol-Allpassform) und die Hochpässe
    sie braucht erst die fünf Hochpassgruppen aus Stinchcombes Zerlegung.
 5. **Accent-Decay klären** (Punkt 2) — billig zu messen, sobald eine Referenz
    vorliegt.
+
+
+---
+
+## Reso-Comp eingebaut — gemessen
+
+Umgesetzt als das, was die Netzverfolgung zeigt: **zwei Summenzweige am
+VCA-Eingang**, nicht eine Verstärkung im Filter.
+
+Dafür musste Open303s eingebaute Pegelkorrektur aus `processLadder` **raus** —
+sonst wird doppelt kompensiert. Der Vergleich der beiden Gesetze:
+
+| Cutoff | Open303-Makeup, r=0→1 | Topologie `1 + 2,2·r` |
+|---:|---:|---:|
+| 300 Hz | +6,50 dB | +10,10 dB |
+| 1000 Hz | +7,55 dB | +10,10 dB |
+| 2400 Hz | +9,47 dB | +10,10 dB |
+| 5000 Hz | +12,48 dB | +10,10 dB |
+
+**Der strukturelle Punkt liegt in der Spalte, nicht in den Zahlen.** Das
+Open303-Makeup hängt vom **Cutoff** ab, weil `rawK` von der Eckfrequenz
+abhängt. `R121` und `R122` sind feste Widerstände — die Schaltung *kann* diese
+Abhängigkeit nicht haben. Das Makeup war an dieser Stelle nicht nur ungenau,
+es hatte eine Abhängigkeit, für die es kein Bauteil gibt.
+
+Bei `r = 0` ist das alte Makeup für jeden Cutoff exakt `2,0`; der Faktor bleibt
+deshalb im Filter stehen, und der Tausch ist dort pegelneutral.
+
+### Die zwei Prüfsteine, die das Modell hätten widerlegen können
+
+**1 — Bei Resonanz null darf der Zweig nichts beitragen.** Gemessen gegen den
+Stand davor, Note erst nach 0,3 s, damit die 5-ms-Parameterglättung
+eingeschwungen ist:
+
+| | Peak | RMS |
+|---|---:|---:|
+| vorher | 0,74925601 | 0,09491204 |
+| nachher | 0,74925172 | **0,09491204** |
+
+RMS auf acht Stellen identisch. Der Peak-Rest von 4,3·10⁻⁶ ist Fließkomma: Die
+Glättung läuft asymptotisch gegen null, erreicht es nie exakt, und die beiden
+Gesetze haben bei `ε → 0` verschiedene Steigungen. **Bestanden.**
+
+**2 — Der Durchlassbereich muss weiter absinken, nur weniger.** RMS über den
+Reglerweg, Cutoff-Parameter 0,55, Velocity 90 (kein Accent):
+
+| Resonanz | vorher | nachher |
+|---:|---:|---:|
+| 0,0 | 0,088583 | 0,088639 |
+| 0,5 | 0,033974 | 0,045800 |
+| 1,0 | 0,028562 | 0,042561 |
+| **r=0 → r=1** | **−9,83 dB** | **−6,38 dB** |
+
+Der Einbruch bleibt, er ist nur kleiner. **Bestanden.** Wäre er verschwunden,
+wäre die Kompensation zu groß angesetzt gewesen — und ein Faktor, der ihn
+flach macht, wäre Anpassen an die Testschwelle.
+
+### Was dabei bewusst **nicht** gemacht wurde
+
+- Der Skalar `0.42f` in der Ausgangsstufe bleibt unverändert. Er gehört zur
+  Ausgangsstufe und wird mit der OTA-Kennlinie ersetzt, nicht vorher
+  nachgezogen.
+- Die **unterschiedlichen Hochpassecken** der beiden Zweige — `R121`/`C21`
+  ergibt 72 Hz, `R122`/`C22` ergibt 159 Hz — sind **noch nicht** modelliert.
+  Der Kompensationszweig ist in der Schaltung also bassärmer als der
+  Filterzweig. Das gehört zusammen mit dem Koppelnetzwerk gemacht, weil sich
+  sonst der vorhandene 24,167-Hz-Hochpass und die echten Zweigecken doppeln.
+- Nur **eine** neue Zahl kam hinzu: das Verhältnis `2,2 = 220 k / 100 k`. Sie
+  ist abgelesen, nicht eingestellt.
+
+### Pegel
+
+Peak steigt bei der Vorgabe-Resonanz 0,72 von 0,692 auf 0,921, weil dort das
+neue Gesetz über dem alten liegt. Alle Grenzen halten: `dsp_matrix_test`
+11/11 `ok` mit höchstem Effekt-Peak 0,9339, Artikulation `ok`, Transport
+12/12 `ok`.

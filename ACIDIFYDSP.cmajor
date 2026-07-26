@@ -989,10 +989,23 @@ processor AcidifyCore
         let rawK = fx * (fx * (fx * (fx * (fx * (fx + 7198.6997f)
                     - 5837.7917f) - 476.47308f) + 614.95611f)
                     + 213.87126f) + 16.998792f;
-        var gain = rawK * 0.0588235294f;
-        gain = (gain - 1.0f) * resonanceSkewed + 1.0f;
-        gain *= 1.0f + resonanceSkewed;
         let feedback = rawK * resonanceSkewed;
+
+        // Die resonanzabhaengige Pegelkorrektur sass frueher hier, als
+        // Open303-Makeup `(1+r) * ((rawK*0.0588 - 1)*r + 1)`. Sie ist entfernt,
+        // weil sie in der Schaltung nicht im Filter sitzt: Der Ausgleich
+        // entsteht am VCA-Eingang aus zwei Summenzweigen (R121/R122), siehe
+        // resonanceCompensation() und docs/HARDWARE_AUDIT.md.
+        //
+        // Der Unterschied ist messbar und strukturell: Das Makeup war
+        // cutoff-abhaengig (+6,5 dB bei 300 Hz, +12,5 dB bei 5 kHz ueber den
+        // Reglerweg), weil `rawK` von der Eckfrequenz abhaengt. R121 und R122
+        // sind feste Widerstaende — die Schaltung kann diese Abhaengigkeit gar
+        // nicht haben.
+        //
+        // Bei r = 0 ist das alte Makeup fuer jeden Cutoff exakt 2,0; der
+        // Faktor bleibt deshalb hier stehen und der Tausch ist dort
+        // pegelneutral.
 
         let feedbackSignal = feedback * ladder4;
         let feedbackHighpass = feedbackHighpassGain
@@ -1009,7 +1022,33 @@ processor AcidifyCore
         ladder3 += b0 * (ladder2 - 2.0f * ladder3 + ladder4);
         ladder4 += b0 * (ladder3 - 2.0f * ladder4);
 
-        return 2.0f * gain * ladder4;
+        return 2.0f * ladder4;
+    }
+
+    // Die beiden Summenzweige am Eingang des VCA (IC15 BA662A, Pin 3), aus dem
+    // Serviceplan verfolgt (tools/bench/nettrace.py):
+    //
+    //   R121 = 220 k  am FESTEN ENDE von VR4  -> resonanzunabhaengig
+    //   R122 = 100 k  am SCHLEIFER  von VR4   -> proportional zur Reglerstellung
+    //
+    // Beide summieren als Leitwerte, das Verhaeltnis ist 220/100 = 2,2. VR4 ist
+    // ein lineares B-Poti, die Schleiferspannung also `Signal * Stellung`.
+    // Auf den Zweig am festen Ende normiert:
+    //
+    //   Faktor = 1 + 2,2 * Stellung
+    //
+    // Der Ausgleich laeuft damit MIT der Resonanz mit, ohne dass er angekoppelt
+    // wird — der zweite Potiabgriff erzeugt ihn. Bei Resonanz null ist der
+    // Faktor exakt 1: Der Kompensationszweig traegt dann nichts bei. Das ist
+    // der Pruefstein, an dem dieses Modell scheitern koennte.
+    //
+    // Er hebt den Einbruch NICHT auf: Die Kompensation folgt der Stellung
+    // linear, der Einbruch der Form 1/(1+k). Zwei verschiedene Gesetze, also
+    // bleibt sie teilweise — ein 303 duennt bei hoher Resonanz hoerbar aus.
+    float resonanceCompensation()
+    {
+        const float branchRatio = 2.2f;   // R121 / R122 = 220 k / 100 k
+        return 1.0f + branchRatio * clamp (resonanceSkewed, 0.0f, 1.0f);
     }
 
     event param1 (float v)
@@ -1298,7 +1337,11 @@ processor AcidifyCore
             }
             ampControl = processAmpSmoother (max (ampControl, 0.0f));
 
-            let cleanVoice = coupled * ampControl * 0.42f * outputGain;
+            // Zwei Summenzweige am VCA-Eingang statt einer Verstaerkung im
+            // Filter. Der Skalar 0.42f bleibt unveraendert stehen — er gehoert
+            // zur Ausgangsstufe und wird erst mit der OTA-Kennlinie ersetzt.
+            let vcaInput = coupled * resonanceCompensation();
+            let cleanVoice = vcaInput * ampControl * 0.42f * outputGain;
             let voice = processDistortion (cleanVoice);
             let sample = abs (voice) < 0.0000000001f ? 0.0f : voice;
 
