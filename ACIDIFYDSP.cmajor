@@ -651,7 +651,15 @@ processor AcidifyCore
         glideCoeff = timeCoefficient (22.0f, sampleRate);
         filterAttackAlpha = 1.0f - timeCoefficient (3.0f, sampleRate);
         normalDecayCoeff = timeCoefficient (normalDecayMs, sampleRate);
-        accentDecayCoeff = timeCoefficient (200.0f, sampleRate);
+        // Accent-Decay: dieselbe Zahl aus derselben Zeichnung wie das Minimum
+        // des normalen Decay — also ebenfalls eine 10-%-Zeit, nicht tau.
+        // Bestaetigt aus Bauteilwerten: VR6 ist als Rheostat gegen Masse ueber
+        // IC12 (4066) geschaltet (mit tools/bench/nettrace.py verfolgt), und der
+        // Bereich 200 ms … 2,5 s ist mit C62 = 1 uF nur unter der 10-%-Lesart
+        // erreichbar — sie verlangt 86,9 k … 1085,7 k, also 998,9 k Spanne bei
+        // VR6 = 1 M und 86,9 k fest (ENV-Stueckliste: R138 68k + 22k = 90k).
+        // Die tau-Lesart braeuchte 2300 k Spanne, die VR6 nicht hat.
+        accentDecayCoeff = timeCoefficient (200.0f / float (log (10.0)), sampleRate);
         // VCA-Huellkurve aus der Schaltung: C42 = 1 uF laedt ueber R123 = 1,5 M
         // nach +12 V; Q31 ist ein PNP, steigende Basisspannung sperrt ihn, das
         // Aufladen IST also der Decay. tau = 1,5 M * 1 uF = 1500 ms.
