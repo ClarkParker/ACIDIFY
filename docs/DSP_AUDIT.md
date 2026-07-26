@@ -532,3 +532,29 @@ Prototyp nicht enthalten. Nach dieser Messung ist aber klar, **wofür** er dort
 stand: als grobe Näherung genau dieses Effekts. Die Entfernung war richtig, sie
 hat aber eine Näherung eines echten Verhaltens mitgenommen. Das ist kein Grund,
 sie zurückzunehmen — der richtige Ersatz ist die Struktur, nicht der Fit.
+
+---
+
+## Nachtest: Anschwinggrenze ist jetzt frequenzabhängig
+
+Der Test, der vor dem Schleifenumbau flach ausfiel, nach dem Umbau wiederholt.
+Grenze als Vielfaches des vollen Reglerwegs (1,0 = Regler am Anschlag):
+
+| Eckfrequenz | 150 Hz | 400 Hz | 1000 Hz | 3000 Hz | 8000 Hz |
+|---|---:|---:|---:|---:|---:|
+| Grenze | 2,316 | 1,379 | 1,145 | 1,145 | **1,027** |
+| Reserve | 132 % | 38 % | 15 % | 15 % | **2,7 %** |
+
+Vorher: 19,63 bei **jeder** Eckfrequenz, also keine Abhängigkeit.
+
+Zwei Aussagen Whittles fallen damit gleichzeitig aus der Struktur an:
+
+- „The filter will only self oscillate at **mid and high** frequencies" — die
+  Reserve schrumpft von 132 % bei 150 Hz auf 2,7 % bei 8 kHz.
+- „just under that required for **self-oscillation**" — bei Vollausschlag
+  schwingt er nirgends an, liegt am oberen Ende aber nur 2,7 % darunter.
+
+Beides ohne getrimmte Zahl: `kMax = 18,7/1,06` stammt aus Stinchcombes
+Übertragungsfunktion, nicht aus einer Anpassung an dieses Ergebnis. Der Test
+hätte scheitern können — eine Reserve von 2,7 % am oberen Ende war nicht
+vorhersagbar, sie ist herausgekommen.
