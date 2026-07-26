@@ -283,16 +283,129 @@ sind im Aus-Zustand kaum vom Hintergrund zu unterscheiden.
 
 ---
 
-## 5. Priorisierung
+## 5. Gegenprobe an der Hardware
 
-**Klangtreue zuerst** — kleine Eingriffe, große Wirkung, alle gegen die Referenz
-belegbar:
+Abschnitt 1 vergleicht gegen Open303 — also gegen ein Softwaremodell. Die
+eigentliche Frage ist aber, ob der Aufbau die **Schaltung** abbildet. Dafür sind
+zwei Quellen maßgeblich: Tim Stinchcombes Analyse des Filters und Robin Whittles
+Devil-Fish-Dokumentation der Accent-Schaltung.
+
+### H1 — Die Accent-Sweep-Schaltung fehlt vollständig
+
+Das ist der wichtigste Befund der ganzen Prüfung.
+
+In der Hardware ist Accent kein einfacher Hüllkurvenzuschlag, sondern ein
+passives RC-Netzwerk, das **von der zweiten Ebene des Resonanz-Potis** gesteuert
+wird ([Whittle](https://www.firstpr.com.au/rwi/dfish/303-unique.html)):
+
+> „a diode and a 47k resistor in series driving the ACW end of a 100k pot, and a
+> 1uF capacitor (to ground) hanging off the CW end"
+
+Der Schleifer geht über einen 100-k-Mischwiderstand auf einen der beiden
+Summenknoten für die Filterfrequenz. Daraus folgt dreierlei:
+
+**a) Der Accent-Charakter hängt am Resonanzregler.** Ganz links liegt im
+Wesentlichen die ungefilterte MEG-Spannung am Filter — ein direkter Impuls. Ganz
+rechts glättet der 1-µF-Kondensator diesen Impuls, während er über Diode und
+47 k lädt. Genau daraus entsteht der „acidee wow"-Sweep.
+
+**b) Aufeinanderfolgende Accents summieren sich.**
+
+> „Since the capacitor has not discharged fully from the one before, the second
+> and subsequent response curves go *higher*."
+
+**c) Die MEG-Spannung wirkt doppelt** — zusätzlich zur Filterfrequenz auch auf
+den VCA-Steuerstrom, dort über ein RC-Glied aus 47 k und 0,033 µF (≈ 1,55 ms),
+das den Anschlag leicht weichzeichnet.
+
+ACIDIFY bildet keinen dieser drei Punkte ab:
+
+```cmajor
+accentEnvelope = hasAccent ? 1.0f : 0.0f;      // harter Reset, keine Ladung
+accentEnvelope *= accentDecayCoeff;            // feste 200 ms, unabhängig von Resonanz
+exponent = envScaler * (...) + accentControl * 1.75f * accentEnvelopeRC;
+                                               // kein Resonanzterm
+```
+
+Der Reset auf `0.0f` bei unbetonten Noten ist dabei die deutlichste Abweichung:
+In der Schaltung entlädt sich der Kondensator weiter, in ACIDIFY ist er sofort
+leer. Damit fehlt die charakteristische Steigerung über eine Accent-Folge —
+also genau das, was eine 303-Linie nach vorn treibt.
+
+**Wichtig:** Open303 hat dieselbe Lücke (`if (accentGain > 0.0) tmp2 = mainEnvOut;`,
+`rc2` fest bei 15 ms, kein Resonanzterm). Ein treuerer Open303-Port behebt das
+also **nicht**. Hier liegt die Chance, über die Vorlage hinauszugehen.
+
+### H2 — Koppelnetzwerk stark vereinfacht
+
+Stinchcombe findet in der Schaltung „basically five sets" von Hochpasswirkungen
+durch Koppelkondensatoren, **verteilt um den Filterkern**, sowie eine
+Übertragungsfunktion aus vierter Ordnung Tiefpass plus sechs weiteren Polen und
+Nullstellen. Open303 fasst das zu vier Stufen zusammen (highpass1, allpass,
+highpass2, notch), ACIDIFY zu zwei.
+
+### H3 — Die 18 dB sind eine Näherung, kein Entwurfsziel
+
+Stinchcombe zeigt, dass der Filter **vierpolig** ist und die verbreitete
+18-dB-Angabe daher rührt, dass er sich über weite Teile des Hörbereichs so
+verhält. Meine Messung von −18 bis −19 dB/Okt im Bereich 2×…4× Cutoff passt
+dazu. Kein Mangel — aber die Zahl ist ein Verhalten, keine Vorgabe.
+
+### H4 — Die 8-Hz-Spitze
+
+Stinchcombe hält die tieffrequente Resonanzspitze bei ~8 Hz für real und
+vermutet, sie sei „a large contributing factor to the sound of the TB-303
+overall". Gemessen am fertigen ACIDIFY-Ausgang liegt bei 8 Hz jedoch nichts
+(−111,8 dB gegenüber dem Grundton); der einzige Tieftonanteil ist die
+Gleichspannung bei 1 Hz (−57,5 dB). Der 24-Hz-Ausgangshochpass entfernt den
+Bereich, statt ihn zu formen — die fehlenden `allpass`- und `notch`-Stufen aus
+A1 sind genau die, die ihn in der Referenz modellieren.
+
+Einschränkung, die ich nicht überdehnen will: Ein gehaltener Ton mit 65 Hz
+Grundfrequenz regt 8 Hz ohnehin kaum an. Die Wirkung liegt im Einschwingen und
+in der Phase. Belegen ließe sie sich erst durch einen A/B-Vergleich nach
+Einbau der Stufen.
+
+### Was daraus folgt
+
+Auf die Frage, ob der Aufbau die Hardware widerspiegelt: **im Signalweg ja, im
+Accent-Zweig nein.** Oszillator → Koppelhochpass → Leiterfilter → Koppelhochpass
+→ VCA → Ausgang ist die richtige Kette, und die Filterflanke stimmt. Der
+Accent-Zweig ist dagegen ein linearer Hüllkurvenzuschlag statt der
+resonanzgesteuerten, ladungsspeichernden RC-Schaltung der Vorlage.
+
+---
+
+## 6. Was übernommen statt neu gebaut werden kann
+
+| Zweck | Quelle | Lizenz | Aufwand |
+|---|---|---|---|
+| Verzerrerstufe | Airwindows `Focus` | MIT | Kennlinien sind 2–4 Zeilen, zustandslos |
+| Ausgangsstufen A1 | Open303 `allpass`/`notch` | MIT | Werte bekannt, Einpol/Biquad |
+| `ampDeClicker` A2 | Open303 | MIT | Biquad-Tiefpass 200 Hz |
+| Accent-Sweep H1 | Devil-Fish-Beschreibung | Schaltungsbeschreibung | RC-Netzwerk, ~15 Zeilen |
+
+Für H1 gibt es bewusst keinen Code zum Übernehmen — weil kein bekanntes freies
+Modell ihn abbildet. Die Schaltungsbeschreibung *ist* hier die Spezifikation:
+Diode, 47 k, 1 µF, 100-k-Poti als Blende zwischen „roher Impuls" und
+„geglätteter Sweep", Ladung bleibt über Notengrenzen erhalten.
+
+---
+
+## 7. Priorisierung
+
+**H1 zuerst** — die Accent-Sweep-Schaltung. Sie ist der einzige Punkt, an dem
+ACIDIFY über Open303 hinausgehen kann, und sie betrifft den prägendsten Teil des
+Klangs: Ladung über Notengrenzen halten, Zeitkonstante und Glättung an den
+Resonanzregler koppeln, Doppelwirkung auf Filter und VCA.
+
+**Dann die Referenzabweichungen** — klein, belegbar, in dieser Reihenfolge:
 
 1. A5 — Accent-Amplitudenkopplung wie in der Referenz verdrahten
 2. A4 — `rc1` auf 0, Filteranschlag freilegen
 3. A2 — `ampDeClicker` ergänzen
 4. Resonanzkennlinie strecken und Maximum anheben
-5. A1 — `allpass` und `notch` ergänzen
+5. A1 — `allpass` und `notch` ergänzen (adressiert zugleich H4 und den DC-Anteil)
 6. A3 — Oszillatorpolarität
 
 **Dann die Verzerrerstufe** auf Basis von Airwindows `Focus`.
