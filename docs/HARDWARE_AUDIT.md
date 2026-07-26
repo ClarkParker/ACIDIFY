@@ -30,16 +30,29 @@ unten stehenden Lücken.
 
 ## Ergebnis
 
-| # | Stufe | Original laut Quelle | Stand 0.7.2 | |
+| # | Stufe | Original laut Quelle | Stand heute | |
 |---|---|---|---|---|
-| 1 | Accent-Sweep | RC-Netz an der zweiten Poti-Ebene, Ladung bleibt über Notengrenzen | Knotenanalyse mit Leitwerten, Diodenzustand, Kondensatorstrom | ✅ |
-| 2 | Ausgangs-Koppelstufen | Allpass, Notch, Hochpass | vorhanden | ✅ |
-| 3 | Filterordnung | vierpolig, im Hörbereich ~18 dB/Okt | Polynomfit, konstant 18 dB/Okt | ⚠️ |
-| 4 | Resonanzgrenze | handverlöteter Widerstand, **knapp unter** Anschwingen | erreicht die Grenze nicht, Kalibrierpunkt k ≈ 19,4 | ❌ |
-| 5 | Koppelnetzwerk | **fünf** Hochpassgruppen um den Filterkern verteilt | zu vier Stufen zusammengefasst, nicht verteilt | ❌ |
-| 6 | Anschwingen | nur bei mittleren und hohen Frequenzen | überhaupt nicht möglich | ❌ |
-| 7 | Leiterbauteile | 2SC945 als Dioden verschaltet, **gepaarte Paare kritisch** | keine Bauteilstreuung modelliert | ❌ |
-| 8 | 8-Hz-Spitze | real, laut Stinchcombe klangprägend | am Ausgang −111 dB, faktisch entfernt | ❌ |
+| 1 | Accent-Sweep | RC-Netz an der zweiten Poti-Ebene | Knotenanalyse; Poti auf belegte 50 k korrigiert | ✅ |
+| 2 | Ausgangs-Koppelstufen | Allpass, Notch, Hochpass | ersetzt durch Stinchcombes hergeleitetes Netz | ✅ |
+| 3 | Filterordnung | vierpolig, im Hörbereich ~18 dB/Okt | ZDF-Kern, gemessen −14,8 / −19,6 / −22,7 dB/Okt | ✅ |
+| 4 | Resonanzgrenze | handverlöteter Widerstand, **knapp unter** Anschwingen | 2,7 % Reserve am oberen Ende, nirgends Anschwingen | ✅ |
+| 5 | Koppelnetzwerk | **fünf** Hochpassgruppen, um den Kern verteilt | fünf Gruppen, **in der Resonanzschleife** | ✅ |
+| 6 | Anschwingen | nur bei mittleren und hohen Frequenzen | Reserve 132 % @ 150 Hz gegen 2,7 % @ 8 kHz | ✅ |
+| 7 | Leiterbauteile | 2SC945 als Dioden, **gepaarte Paare kritisch** | keine Bauteilstreuung modelliert | ❌ |
+| 8 | 8-Hz-Spitze | Spitze im hergeleiteten Verlauf | Spitze bei ~9 Hz, +12,7 dB über 4 Hz | ✅ |
+
+Punkt 8 mit Einschränkung: Stinchcombes **Spitze** steht in seiner hergeleiteten
+Übertragungsfunktion und ist damit belegt. Seine Angabe „bei 8 Hz" stammt
+dagegen aus einer Messung an einem **Klon mit zusätzlicher kapazitiver Last aus
+dem Messaufbau** — die Frequenzangabe trägt weniger als die Existenz der Spitze.
+
+**Was bleibt:** Punkt 7, und ausserhalb dieser acht Punkte die noch
+gefitteten Blöcke — VCO, MEG-Attack und Release-Zeiten, die Cutoff- und
+Env-Mod-Abbildung sowie die drei VCA-Steuerkonstanten. Dazu `otaDrive` als
+einzige ungestützte Konstante im VCA.
+
+Die Abschnitte „Die Lücken im Einzelnen" darunter beschreiben den Stand **vor**
+diesen Änderungen und bleiben als Verlaufsprotokoll stehen.
 
 ---
 
