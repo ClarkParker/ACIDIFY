@@ -9,6 +9,15 @@ Quellen mit Belegkraft:
 - **Robin Whittle**, [Devil-Fish-Dokumentation zur Accent-Schaltung](https://www.firstpr.com.au/rwi/dfish/303-unique.html)
   und [Devil-Fish-Handbuch](https://www.firstpr.com.au/rwi/dfish/)
 - **Eddy Bergman**, [Nachbau des TB-303-VCF](https://www.eddybergman.com/2025/03/TB303-VCF.html)
+- **Limor Fried**, x0xb0x — quelloffener lizenzierter Nachbau:
+  Fabrikationshandbuch und Mainboard-Schaltplan, Werte im Klartext
+  (Zugriff und Prüfsumme unter „Bessere Quelle als Pixellesen")
+
+Noch nicht ausgewertet, vorgemerkt für die Mod-/Varianten-Arbeit:
+[TB-303-Archiv auf machines.hyperreal.org](http://machines.hyperreal.org/manufacturers/Roland/TB-303/)
+— Sammlung von Mod-Unterlagen. Für den Serienstand ist sie **keine** Quelle:
+Mods beschreiben absichtliche Abweichungen von der Schaltung, und der
+Kalibrierpunkt dieses Projekts ist gerade der **unmodifizierte** 303.
 
 Open303 ist hier **keine** Quelle. Es ist selbst ein Modell und teilt mehrere der
 unten stehenden Lücken.
@@ -114,7 +123,9 @@ Ehrlichkeitshalber getrennt geführt:
   Stinchcombes annotiertem VCF-Ausschnitt markiert, die Einzelwerte je Gruppe
   habe ich noch nicht vollständig zugeordnet.
 - **VCO-Topologie** im Detail — Sägezahnkern und Rechteckableitung.
-- **VCA-Topologie.** Whittle beschreibt nur den Accent-Zulauf (47 k / 0,033 µF).
+- ~~**VCA-Topologie.**~~ Erledigt: Werte und Summenknoten stehen unter
+  „Aus dem x0xb0x abgelesen". **Offen bleibt allein die Zuordnung**, welcher der
+  beiden Zweige „from Filter" und welcher „from Reso. Comp." führt.
 - **Ausgangsübertrager.** Weder bestätigt noch widerlegt. Ein DAC existiert im
   303, erzeugt aber die Pitch-Steuerspannung (1–5 V), nicht Audio — der
   Audioweg ist durchgehend analog.
@@ -230,10 +241,140 @@ beiden gescheiterten Einbauversuche haben genau das falsch angenommen.
 
 Der **[x0xb0x](https://ladyada.net/make/x0xb0x/)** von Limor Fried ist ein
 quelloffener, dokumentierter und lizenzierter Nachbau des 303. Sein
-Fabrikationshandbuch und die VCA-/VCF-Seiten führen Bauteilwerte im Klartext.
-Das ist die belastbare Grundlage für die verbleibenden Werte — der direkte
-Abruf lief in dieser Sitzung auf HTTP 403, das Handbuch liegt aber als PDF
-vor: `ladyada.net/wiki/_media/x0x/x0xb0xfabmanual.pdf`.
+Fabrikationshandbuch und der Mainboard-Schaltplan führen Bauteilwerte im
+Klartext.
+
+**Zugriff.** `ladyada.net` liegt hinter Cloudflare und antwortet auf direkte
+Abrufe mit HTTP 403 (Challenge-Seite, nicht die Datei). Beide Dokumente sind
+über das Internet Archive erreichbar:
+
+- Handbuch: `web.archive.org/web/2018id_/http://ladyada.net/wiki/_media/x0x/x0xb0xfabmanual.pdf`
+  (49 Seiten)
+- Schaltplan: `web.archive.org/web/2018id_/http://www.ladyada.net/media/x0xb0x/mainboard_beta.png`
+  (3152 × 4074, „Mainboard Beta Release 3/8/2005, © 2005 Limor Fried")
+
+Die über das Archiv geholte Handbuchfassung ist **byteidentisch** mit der vom
+Projektinhaber beigestellten Kopie — gleiche Länge, gleicher SHA-256
+(`5872b63ab542ca5d…`). Der Archivweg ist damit belegt, nicht bloß angenommen.
 
 Quellen: [x0xb0x im Open Music Labs Wiki](http://wiki.openmusiclabs.com/wiki/x0xb0x) ·
 [BA662A gegen BA6110 im x0xb0x](https://www.subatomicglue.com/x0xl0g/ba662a-analysis/)
+
+---
+
+## Aus dem x0xb0x abgelesen
+
+Zwei unabhängige Belegstellen: die Stückliste des VCA-Abschnitts
+(Handbuch S. 23–26; S. 27 beginnt „Headphone & Mixer", die Abschnittsgrenze ist
+also geprüft) und der Mainboard-Schaltplan.
+
+### Die beiden Summenzweige — Werte
+
+| Bauteil | Wert | Quelle |
+|---|---|---|
+| **R121** | **220 kΩ 5 %** | Stückliste S. 25 + Schaltplan |
+| **R122** | **100 kΩ 5 %** | Stückliste S. 25 + Schaltplan |
+| **C20** | **10 nF** (`.01uF`, 2A103K) | Stückliste S. 25 + Schaltplan |
+| **C21** | **10 nF** (`.01uF`, 2A103K) | Stückliste S. 25 + Schaltplan |
+| R124 | 2,2 kΩ | Schaltplan |
+| C37 | 10 µF / 16 V | Schaltplan |
+| IC15A / IC15B | BA662A / BA6110 (9-SIP) | Stückliste S. 26 |
+
+Der x0xb0x nennt die Kondensatoren **C20 und C21**, nicht C21/C22 — er ist ein
+Redesign mit eigener Nummerierung. Die **Werte** stimmen mit der
+TB-303-Zeichnung überein (zwei mal 10 nF), die Bezeichner nicht durchgehend.
+
+### Die Topologie — abgelesen, nicht angenommen
+
+Im Schaltplan ist `IC15` als **zwei Symbole eines 9-Pin-SIP** gezeichnet
+(Pins 1–6 am OTA-Kern, 7–9 an der Ausgangsstufe). Beide RC-Zweige liegen mit
+ihrem **linken Ende am selben Knoten: Pin 3**. An demselben Knoten hängen
+`R124 = 2,2 kΩ` und `C37 = 10 µF` gegen Masse — Arbeitspunkt und Entkopplung.
+
+```
+   ──[ R121 220k ]──| C21 10n |──┐
+                                 ├── Pin 3 (IC15)   ── R124 2k2 ─┬─ C37 10µ ─ GND
+   ──[ R122 100k ]──| C20 10n |──┘                                └─ …
+```
+
+Damit ist der zweite Summenzweig **im Schaltplan bestätigt**, nicht erschlossen:
+zwei wechselspannungsgekoppelte Zweige, die in denselben OTA-Eingang summieren.
+Die Gewichtung liegt in den Leitwerten, also `1/220k : 1/100k = 1 : 2,2`
+(**6,85 dB**). Die Hochpassecken der Zweige liegen bei
+`1/(2π·220k·10n) = 72 Hz` und `1/(2π·100k·10n) = 159 Hz` — beide im Audioband,
+beide unterhalb des Grundtonbereichs.
+
+Ebenfalls abgelesen: Der BA6110-Pfad braucht `Q1–Q4` als vorgeschalteten
+Stromspiegel, der BA662A-Pfad nicht (Handbuch S. 23: „If you decide to go with
+a BA662, do not solder in Q1-4!"). Zwei verschiedene Eingangsstufen für
+denselben Steckplatz — die Eingangskennlinie ist also auch im Nachbau eine
+bewusste Entscheidung.
+
+### Was damit **nicht** geklärt ist
+
+**Welcher Zweig „from Filter" ist und welcher „from Reso. Comp."** Die
+Zuordnung steht in der TD-3-Beschriftung, nicht im x0xb0x; die beiden
+Leitungen laufen im x0xb0x-Plan über lange, mehrfach gekreuzte Strecken, und
+Pixelverfolgung über solche Distanzen ist genau die Fehlerquelle, die dieses
+Projekt schon zweimal bezahlt hat. **Nicht geraten.**
+
+Die Folge ist keine Kleinigkeit: Die Zuordnung entscheidet, ob der
+Kompensationszweig 6,85 dB **stärker** oder **schwächer** als der Filterzweig
+einkoppelt.
+
+### Befund, der das Ziel korrigiert
+
+Ein **festes** Verhältnis von 2,2 kann keinen **resonanzabhängigen**
+Pegelverlust von 24 dB ausgleichen. Das ist keine Messung, sondern ein
+Abzählargument: 6,85 dB fester Versatz gegen 24 dB veränderlichen Einbruch.
+
+Dazu kommt: Der Einbruch ist für **jede** gegengekoppelte Tiefpassstruktur
+unvermeidlich. Aus `H_zu = H / (1 + k·H)` folgt im Durchlassbereich
+(`H ≈ 1`) unmittelbar `H_zu ≈ 1/(1+k)`. Das gilt für den ZDF-Prototyp **und für
+die echte Schaltung**. Der Serien-303 dünnt bei hoher Resonanz hörbar aus —
+das ist Schaltungsverhalten, kein Modellfehler.
+
+Damit ist die Formulierung „**auszugleichen sind ~24 dB**" als Ziel falsch.
+Richtig ist: Der Zweig ist eine **feste, teilweise** Vorwärtseinkopplung. Er
+soll den Einbruch **nicht** aufheben. Ein Modell, das ihn aufhebt, hat die
+Schaltung nicht getroffen — und zwei freie Parameter gegen die
+`dsp_matrix_test`-Schwelle zu stellen wäre wieder Anpassen ans Messergebnis.
+
+**Der Prüfstein für Anlauf 3:** Nach dem Einbau muss der Durchlassbereich bei
+maximaler Resonanz **immer noch messbar absinken**, nur weniger als 24 dB.
+Kommt er flach heraus, ist die Kompensation zu groß angesetzt.
+
+### Potentiometer — unabhängig bestätigt und ein Widerspruch
+
+Aus der Stückliste, alle Kennlinien im Klartext:
+
+| Regler | x0xb0x | ACIDIFY / TB-303-Zeichnung | |
+|---|---|---|---|
+| VR4 Resonance | **50 kΩ B (linear), _dual_** | 50 k (B) linear | ✅ |
+| VR6 Env Decay | 1 MΩ A (log), _dual_ | 1 M (A) log | ✅ |
+| VR7 Accent | 50 kΩ B (linear) | 50 k (B) linear | ✅ |
+| VR3 Cutoff | 50 kΩ **D** (log) | 50 k (A) log | ⚠️ |
+| VR5 Env Mod | 50 kΩ **D** (log) | 50 k (A) log | ⚠️ |
+
+Zwei Bestätigungen, die zählen:
+
+1. **VR4 ist linear.** Damit ist die Linearisierung aus `e676bd8` aus einer
+   zweiten, unabhängigen Quelle belegt.
+2. **VR4 ist ein _duales_ Poti.** Das ist die zweite Ebene, die Whittle für den
+   Accent-Sweep beschreibt — die Architektur von `processAccentSweep` ist damit
+   im Grundsatz bestätigt und nicht nur plausibel. Passend dazu steht im
+   Resonanzbereich des Plans `R46 = 47 kΩ`, also der Wert, den Whittle für den
+   Zulauf nennt.
+
+**Der Widerspruch:** Whittle beschreibt für den TB-303 ein **100-kΩ**-Poti („a
+diode and a 47k resistor in series driving the ACW end of a **100k** pot"),
+der x0xb0x verbaut **50 kΩ**. `processAccentSweep` rechnet mit 100 kΩ, folgt
+also Whittle. Das ist nicht gleichgültig: Die Potisektion lädt den 1-µF-
+Kondensator, die Zeitkonstante hängt direkt am Wert — bei 50 kΩ wäre sie halb
+so groß. Da der x0xb0x ein Redesign mit Substitutionen ist, haben Whittle und
+die Servicezeichnung für eine **TB-303**-Emulation Vorrang; ACIDIFY bleibt
+deshalb bei 100 kΩ. Der Konflikt ist hier festgehalten, nicht stillschweigend
+entschieden — er gehört an einem lesbaren Serviceplan geklärt.
+
+Dieselbe Vorsicht bei VR3/VR5: Der x0xb0x nutzt D-Kennlinien, die
+TB-303-Zeichnung nennt A. ACIDIFY folgt der Zeichnung.

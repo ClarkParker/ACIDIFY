@@ -251,6 +251,36 @@ VCA-Ansteuerung bauen, statt als Verstärkung in den Filter. Erst dann kann der
 Kern eingesetzt werden. Er selbst ist gemessen und stabil und braucht keine
 Änderung.
 
+### Nachtrag — die Werte sind abgelesen, und sie korrigieren das Ziel
+
+Erledigt über den x0xb0x-Schaltplan und dessen Stückliste; Werte, Summenknoten
+und Quellenprüfung stehen in
+[`HARDWARE_AUDIT.md`](HARDWARE_AUDIT.md#aus-dem-x0xb0x-abgelesen).
+Kurz: `R121 = 220 kΩ`, `R122 = 100 kΩ`, `C20 = C21 = 10 nF`, beide Zweige
+summieren in **Pin 3 von IC15** (BA662A/BA6110, 9-SIP).
+
+Damit steht die Gewichtung fest: `1/220k : 1/100k = 1 : 2,2`, also **6,85 dB**
+— ein **fester** Versatz.
+
+**Das widerlegt die Formulierung oben.** „Die Frage ist nicht ob kompensiert
+wird, sondern wie viel" unterstellt, der Zweig hebe den Einbruch auf. Ein fester
+Versatz von 6,85 dB kann einen **resonanzabhängigen** Einbruch von 25 dB nicht
+aufheben — das ist ein Abzählargument, keine Messung. Und
+`H_zu = H/(1 + k·H)` erzwingt `H_zu ≈ 1/(1+k)` im Durchlassbereich für **jede**
+gegengekoppelte Tiefpassstruktur, also auch für die echte Schaltung.
+
+Der Zweig ist eine **feste, teilweise** Vorwärtseinkopplung. Er soll den
+Einbruch nicht aufheben — der 303 dünnt bei hoher Resonanz hörbar aus, und das
+ist Schaltungsverhalten.
+
+**Prüfstein für Anlauf 3:** Nach dem Einbau muss der Durchlassbereich bei
+maximaler Resonanz **immer noch messbar absinken**, nur weniger als 25 dB.
+Kommt er flach heraus, ist die Kompensation zu groß — und ein Faktor, der ihn
+flach macht, wäre erneut Anpassen an die Testschwelle.
+
+**Offen und nicht geraten:** welcher der beiden Zweige „from Filter" führt und
+welcher „from Reso. Comp.". Das entscheidet die Richtung der 6,85 dB.
+
 
 ---
 
