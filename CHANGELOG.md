@@ -15,6 +15,12 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Fixed
 
+- `tools/ui_smoke_test.mjs` und `tools/render_mockup.mjs` starteten Chromium nur
+  dann mit `--allow-file-access-from-files`, wenn `ACIDIFY_CHROMIUM_PATH` gesetzt
+  war. Mit dem von Playwright mitgelieferten Browser blockierte Chromium deshalb
+  das ES-Modul über `file://`, und beide Werkzeuge liefen in einen Timeout. Das
+  Flag wird jetzt immer gesetzt; die Sandbox-Flags bleiben auf ein extern
+  vorgegebenes Binary beschränkt.
 - Fehlender Commit-Link für 0.4.0 im Changelog ergänzt.
 - Versionsprüfung läuft jetzt tatsächlich bei jedem Push, nicht nur auf `main`.
 - `docs/VALIDATION.md`: Audiozahlen für 0.4.0 neu gemessen; die Notiz zur

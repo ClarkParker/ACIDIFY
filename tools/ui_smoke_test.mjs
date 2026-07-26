@@ -7,12 +7,19 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const executablePath = process.env.ACIDIFY_CHROMIUM_PATH;
 const { chromium } = require("playwright");
 
+// preview.html lädt ACIDIFYUI.js als ES-Modul über file://. Chromium blockiert
+// solche Anfragen als cross-origin, solange dieses Flag fehlt — unabhängig davon,
+// ob das mitgelieferte oder ein externes Binary startet.
+const launchArgs = ["--allow-file-access-from-files"];
+
+// Nur nötig, wenn ein fremdes Binary gestartet wird (z. B. als root im Container).
+if (executablePath)
+  launchArgs.push("--no-sandbox", "--disable-setuid-sandbox", "--single-process");
+
 const browser = await chromium.launch({
   headless: true,
   executablePath: executablePath || undefined,
-  args: executablePath
-    ? ["--no-sandbox", "--disable-setuid-sandbox", "--single-process", "--allow-file-access-from-files"]
-    : [],
+  args: launchArgs,
 });
 
 try {

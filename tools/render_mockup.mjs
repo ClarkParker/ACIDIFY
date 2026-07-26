@@ -10,12 +10,16 @@ const studioOutput = path.join(root, "mockup", "ACIDIFY_UI_Studio_Mockup.png");
 try {
   const { chromium } = require("playwright");
   const executablePath = process.env.ACIDIFY_CHROMIUM_PATH;
+  // Siehe tools/ui_smoke_test.mjs: das ES-Modul über file:// braucht dieses Flag
+  // immer, die Sandbox-Flags nur bei einem extern vorgegebenen Binary.
+  const launchArgs = ["--allow-file-access-from-files"];
+  if (executablePath)
+    launchArgs.push("--no-sandbox", "--disable-setuid-sandbox", "--single-process");
+
   const browser = await chromium.launch({
     headless: true,
     executablePath: executablePath || undefined,
-    args: executablePath
-      ? ["--no-sandbox", "--disable-setuid-sandbox", "--single-process", "--allow-file-access-from-files"]
-      : [],
+    args: launchArgs,
   });
   const page = await browser.newPage({ viewport: { width: 1180, height: 580 }, deviceScaleFactor: 1 });
   const pageErrors = [];

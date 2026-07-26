@@ -54,13 +54,19 @@ node tools/smoke_test.mjs /path/to/cmaj 48000
 node tools/ui_smoke_test.mjs
 ```
 
-Der UI-Rauchtest benötigt Playwright. Ist kein von Playwright mitgeliefertes
-Chromium vorhanden, zeigt `ACIDIFY_CHROMIUM_PATH` auf ein vorhandenes Binary:
+Der UI-Rauchtest benötigt Playwright und einen Chromium-Build:
 
 ```bash
 npm install playwright
-ACIDIFY_CHROMIUM_PATH=/pfad/zu/chrome node tools/ui_smoke_test.mjs
+npx playwright install chromium
+node tools/ui_smoke_test.mjs
 ```
+
+Ist kein von Playwright mitgeliefertes Chromium vorhanden, zeigt
+`ACIDIFY_CHROMIUM_PATH` auf ein vorhandenes Binary. Beide Tools starten den
+Browser immer mit `--allow-file-access-from-files`, weil `mockup/preview.html`
+die UI als ES-Modul über `file://` lädt und Chromium solche Anfragen sonst als
+cross-origin blockiert.
 
 MIDI-Noten spielen den Synth direkt. Velocity ab 100 aktiviert Accent. Überlappende
 Noten gleiten mit der festen 303-Slide-Zeit. Der interne Sequencer wird mit
