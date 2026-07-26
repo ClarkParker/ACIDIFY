@@ -1,0 +1,104 @@
+// Der Leiterfilter aus ACIDIFYDSP.cmajor, woertlich uebernommen, aber als
+// eigenstaendiger Prozessor mit Stream-Eingang. Zweck: saubere Messung der
+// Uebertragungsfunktion ohne Oszillator, Huellkurven und Ausgangsstufe.
+// LIN = ohne softClip (echte lineare Antwort), NL = mit softClip wie im Original.
+
+processor Impulse
+{
+    output stream float out;
+    int frame = 0;
+    void main()
+    {
+        loop
+        {
+            out <- (frame == 64) ? 1.0f : 0.0f;
+            frame += 1;
+            advance();
+        }
+    }
+}
+
+processor Ladder
+{
+    input stream float in;
+    output stream float out;
+
+    float feedbackLowpass = 0.0f;
+    float ladder1 = 0.0f, ladder2 = 0.0f, ladder3 = 0.0f, ladder4 = 0.0f;
+    float resonanceSkewed = 0.0f;
+    float feedbackHighpassAlpha = 0.0f;
+
+    float exponentialAlpha (float hz, float sampleRate)
+    {
+        let safeHz = clamp (hz, 0.001f, sampleRate * 0.45f);
+        return 1.0f - float (exp (-float64 (twoPi) * float64 (safeHz / sampleRate)));
+    }
+
+    float softClip (float x) { return float (tanh (float64 (x))); }
+
+    void main()
+    {
+        let sampleRate = float (processor.frequency);
+        feedbackHighpassAlpha = exponentialAlpha (150.0f, sampleRate);
+
+        let r = RESONANCE;
+        resonanceSkewed = (1.0f - float (exp (-3.0 * float64 (r))))
+                        / (1.0f - float (exp (-3.0)));
+
+        loop
+        {
+            let cutoffHz = CUTOFF;
+            let boundedCutoff = clamp (cutoffHz, 20.0f, sampleRate * 0.11f);
+            let wc = float (twoPi) * boundedCutoff / sampleRate;
+            let fx = wc * 0.7071067812f / float (twoPi);
+
+            let numerator = 0.00045522346f + 6.1922189f * fx;
+            let denominator = 1.0f + 12.358354f * fx + 4.4156345f * fx * fx;
+            let b0 = numerator / max (denominator, 0.000001f);
+
+            let rawK = fx * (fx * (fx * (fx * (fx * (fx + 7198.6997f)
+                        - 5837.7917f) - 476.47308f) + 614.95611f)
+                        + 213.87126f) + 16.998792f;
+            var gain = rawK * 0.0588235294f;
+            gain = (gain - 1.0f) * resonanceSkewed + 1.0f;
+            gain *= 1.0f + resonanceSkewed;
+            let feedback = rawK * resonanceSkewed;
+
+            let feedbackSignal = feedback * ladder4;
+            feedbackLowpass += feedbackHighpassAlpha * (feedbackSignal - feedbackLowpass);
+            let feedbackHighpass = feedbackSignal - feedbackLowpass;
+
+            let signal = in * DRIVE;
+            let ladderIn = NLIN (signal * 0.82f) * 1.18f - feedbackHighpass;
+            ladder1 += 2.0f * b0 * (ladderIn - ladder1 + ladder2);
+            ladder2 += b0 * (ladder1 - 2.0f * ladder2 + ladder3);
+            ladder3 += b0 * (ladder2 - 2.0f * ladder3 + ladder4);
+            ladder4 += b0 * (ladder3 - 2.0f * ladder4);
+
+            out <- NLOUT (2.0f * gain * ladder4 * 1.08f) / DRIVE;
+            advance();
+        }
+    }
+}
+
+graph Filt [[ main ]]
+{
+    output stream float<2> out;
+    node src = Impulse;
+    node f = Ladder * 4;
+    node mix = Combine;
+    connection
+    {
+        src.out -> f.in;
+        f.out -> mix.wet;
+        src.out -> mix.dry;
+        mix.out -> out;
+    }
+}
+
+processor Combine
+{
+    input stream float dry, wet;
+    output stream float<2> out;
+    void main() { loop { out <- float<2> (dry, wet); advance(); } }
+}
