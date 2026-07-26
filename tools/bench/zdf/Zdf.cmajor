@@ -1,0 +1,138 @@
+// Topologie-hergeleitete Diodenleiter (ZDF/TPT nach Zavalishin, Herleitung
+// Pirkle AN-6). Referenzumsetzung: Faust vaeffects `diodeLadder`, Eric Tarr,
+// MIT-style STK-4.3.
+//
+// Der Punkt gegenüber dem bisherigen Polynomfit: Die Stufenverstärkungen
+// G4..G1 hängen rekursiv voneinander ab. Das IST die fehlende Entkopplung der
+// Diodenleiter — sie wird nicht nachgebildet, sie fällt aus der Topologie an.
+//
+// Abweichung von der Faust-Vorlage: dort steht in der Rueckkopplungssumme fuer
+// die zweite Stufe SG3; der Pfad von Stufe 2 zum Ausgang laeuft aber ueber
+// G3*G4 = SG2. Hier steht SG2.
+
+processor Impulse
+{
+    output stream float out;
+    int frame = 0;
+    void main()
+    {
+        loop
+        {
+            out <- (frame == 64) ? AMPLITUDE : 0.0f;
+            frame += 1;
+            advance();
+        }
+    }
+}
+
+processor DiodeLadder
+{
+    input stream float in;
+    output stream float out;
+
+    float64 s1 = 0.0, s2 = 0.0, s3 = 0.0, s4 = 0.0;
+
+    void main()
+    {
+        let sampleRate = float64 (processor.frequency);
+        let T = 1.0 / sampleRate;
+
+        // Bilineare Vorverzerrung, damit die Eckfrequenz digital stimmt.
+        let wd = twoPi * float64 (CUTOFF);
+        let wa = (2.0 / T) * tan (wd * T * 0.5);
+        let g  = wa * T * 0.5;
+
+        // Rekursive Stufenverstaerkungen: jede haengt von der darunter ab.
+        let G4 = 0.5 * g / (1.0 + g);
+        let G3 = 0.5 * g / (1.0 + g - 0.5 * g * G4);
+        let G2 = 0.5 * g / (1.0 + g - 0.5 * g * G3);
+        let G1 =       g / (1.0 + g -       g * G2);
+
+        let bigGamma = G1 * G2 * G3 * G4;
+
+        let SG1 = G4 * G3 * G2;
+        let SG2 = G4 * G3;
+        let SG3 = G4;
+        let SG4 = 1.0;
+
+        let k = float64 (RESONANCE);
+
+        let alpha  = g / (1.0 + g);
+        let alpha0 = 1.0 / (1.0 + k * bigGamma);
+
+        let gam1 = 1.0 + G1 * G2;
+        let gam2 = 1.0 + G2 * G3;
+        let gam3 = 1.0 + G3 * G4;
+        let gam4 = 1.0;
+
+        let a1 = 1.0, a2 = 0.5, a3 = 0.5, a4 = 0.5;
+
+        let B1 = 1.0 / (1.0 + g -       g * G2);
+        let B2 = 1.0 / (1.0 + g - 0.5 * g * G3);
+        let B3 = 1.0 / (1.0 + g - 0.5 * g * G4);
+        let B4 = 1.0 / (1.0 + g);
+
+        let d1 = g, d2 = 0.5 * g, d3 = 0.5 * g;
+
+        loop
+        {
+            let x = float64 (in);
+
+            // Zustandsbeitraege, von unten nach oben aufgesammelt.
+            let S4 = s4 * B4;
+            let S3 = (S4 * d3 + s3) * B3;
+            let S2 = (S3 * d2 + s2) * B2;
+            let S1 = (S2 * d1 + s1) * B1;
+
+            let sigma = S1 * SG1 + S2 * SG2 + S3 * SG3 + S4 * SG4;
+
+            // Zero-delay-Feedback in einem Schritt aufgeloest.
+            let u = (x - k * sigma) * alpha0;
+
+            let in1 = u * gam1 + S2 + S1 * G2;
+            let v1 = (in1 * a1 - s1) * alpha;
+            let y1 = v1 + s1;
+            s1 += 2.0 * v1;
+
+            let in2 = y1 * gam2 + S3 + S2 * G3;
+            let v2 = (in2 * a2 - s2) * alpha;
+            let y2 = v2 + s2;
+            s2 += 2.0 * v2;
+
+            let in3 = y2 * gam3 + S4 + S3 * G4;
+            let v3 = (in3 * a3 - s3) * alpha;
+            let y3 = v3 + s3;
+            s3 += 2.0 * v3;
+
+            let in4 = y3 * gam4;
+            let v4 = (in4 * a4 - s4) * alpha;
+            let y4 = v4 + s4;
+            s4 += 2.0 * v4;
+
+            out <- float (y4);
+            advance();
+        }
+    }
+}
+
+processor Combine
+{
+    input stream float dry, wet;
+    output stream float<2> out;
+    void main() { loop { out <- float<2> (dry, wet); advance(); } }
+}
+
+graph Zdf [[ main ]]
+{
+    output stream float<2> out;
+    node src = Impulse;
+    node f = DiodeLadder * 4;
+    node mix = Combine;
+    connection
+    {
+        src.out -> f.in;
+        src.out -> mix.dry;
+        f.out -> mix.wet;
+        mix.out -> out;
+    }
+}

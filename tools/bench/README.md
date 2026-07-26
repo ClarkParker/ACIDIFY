@@ -48,3 +48,17 @@ node tools/bench/ui_audit.mjs
 
 Ein lauffähiger `cmaj` und Playwright. Der Pfad zum Compiler steht in
 `bench.py` (`CMAJ`) und `filtermeas.py`.
+
+## `zdf/Zdf.cmajor` und `zdfmeas.py`
+
+Topologie-hergeleiteter Diodenleiterfilter (ZDF/TPT) als isolierter Prototyp,
+plus Impulsantwort-Messung. Ergebnisse und Kalibrierdaten stehen in
+[`docs/FILTER_TOPOLOGY.md`](../../docs/FILTER_TOPOLOGY.md).
+
+**Noch nicht im DSP eingebaut** — `ACIDIFYDSP.cmajor` nutzt weiterhin den
+Open303-Polynomfit.
+
+```bash
+python3 -c "import sys; sys.path.insert(0,'tools/bench'); import zdfmeas as Z; \
+  ir,_=Z.measure(1610, 16.5); print(max(Z.resp(ir,48000), key=lambda p:p[1]))"
+```
