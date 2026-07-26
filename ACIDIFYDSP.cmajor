@@ -1051,6 +1051,44 @@ processor AcidifyCore
         return 1.0f + branchRatio * clamp (resonanceSkewed, 0.0f, 1.0f);
     }
 
+    // IC15 = BA662A, ein Operational Transconductance Amplifier. Seine
+    // Verstaerkung setzt ein Steuerstrom, und die Eingangs-Differenzstufe ist
+    // bipolar — die Kennlinie ist damit
+    //
+    //   I_aus = I_abc * tanh (v_ein / (2 * Vt)),   2*Vt = 52 mV bei Raumtemp.
+    //
+    // Der Steuerstrom bleibt der bisherige `ampControl`-Pfad. Neu ist die
+    // Kennlinie: ACIDIFY hat bisher schlicht multipliziert.
+    //
+    // Aussteuerung am Eingang: Der Summenknoten liegt ueber `R124 = 2,2 k`
+    // (mit C37 als Wechselspannungsmasse) an der Referenz, die Zweige kommen
+    // ueber `R121 = 220 k`. Der Knoten teilt also auf 2,2/220 = 1/100 herunter
+    // — genau das haelt den OTA im quasilinearen Bereich.
+    //
+    // WICHTIG, offen: Der absolute Spannungsmassstab ist NICHT belegt. Hier
+    // steht die Annahme, dass Vollaussteuerung im Modell 1 V Spitze am Poti
+    // entspricht (2 V ss) — die Groessenordnung, bei der die BA662-Literatur
+    // merkliche Verzerrung nennt. `otaDrive` ist damit die einzige ungestuetzte
+    // Zahl in dieser Stufe. Sie wird NICHT gegen eine Testschwelle nachgezogen;
+    // sie gehoert an einer Pegelmessung am Geraet belegt. Siehe docs/DSP_AUDIT.md.
+    const float otaDrive = 0.1923f;   // (2,2/220) * 1 V / 52 mV
+
+    float processOta (float signal)
+    {
+        // Beide Summenzweige liegen am selben Eingang, der Kompensationszweig
+        // steuert den OTA also mit aus.
+        //
+        // WIDERLEGT: Ich hatte daraus vorhergesagt, die Kennlinie kruemme sich
+        // bei hoher Resonanz staerker. Gemessen ist es umgekehrt — die
+        // Kompression ist bei Resonanz NULL am groessten (-0,60 dB Peak) und
+        // faellt zu voller Resonanz auf -0,13 dB. Grund: `signal` selbst
+        // bricht mit der Resonanz um mehr ein, als der Faktor (1 + 2,2 r)
+        // hinzufuegt. Das Produkt — und nur das steuert den OTA aus — sinkt.
+        // Die Topologie ist davon unberuehrt; falsch war der Zusatzschluss.
+        let x = signal * otaDrive * resonanceCompensation();
+        return float (tanh (float64 (x))) / otaDrive;
+    }
+
     event param1 (float v)
     {
         tuning = clamp (v, -1.0f, 1.0f);
@@ -1340,7 +1378,7 @@ processor AcidifyCore
             // Zwei Summenzweige am VCA-Eingang statt einer Verstaerkung im
             // Filter. Der Skalar 0.42f bleibt unveraendert stehen — er gehoert
             // zur Ausgangsstufe und wird erst mit der OTA-Kennlinie ersetzt.
-            let vcaInput = coupled * resonanceCompensation();
+            let vcaInput = processOta (coupled);
             let cleanVoice = vcaInput * ampControl * 0.42f * outputGain;
             let voice = processDistortion (cleanVoice);
             let sample = abs (voice) < 0.0000000001f ? 0.0f : voice;

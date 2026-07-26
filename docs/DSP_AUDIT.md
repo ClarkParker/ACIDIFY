@@ -223,3 +223,78 @@ Peak steigt bei der Vorgabe-Resonanz 0,72 von 0,692 auf 0,921, weil dort das
 neue Gesetz über dem alten liegt. Alle Grenzen halten: `dsp_matrix_test`
 11/11 `ok` mit höchstem Effekt-Peak 0,9339, Artikulation `ok`, Transport
 12/12 `ok`.
+
+---
+
+## OTA-Kennlinie eingebaut — und eine widerlegte Vorhersage
+
+`IC15` ist ein **BA662A**, ein Operational Transconductance Amplifier. Die
+Eingangs-Differenzstufe ist bipolar, die Kennlinie also
+
+```
+I_aus = I_abc · tanh( v_ein / (2·Vt) ),      2·Vt = 52 mV
+```
+
+Der Steuerstrompfad bleibt der bisherige `ampControl`. Neu ist die **Kennlinie**
+— ACIDIFY hat bis hierher schlicht multipliziert.
+
+Die Aussteuerung folgt aus dem Summenknoten: `R124 = 2,2 kΩ` (mit `C37` als
+Wechselspannungsmasse) gegen `R121 = 220 kΩ` teilt auf **1/100** herunter.
+Genau das hält den OTA im quasilinearen Bereich — der Teiler ist kein Zufall.
+
+Belegt aus der Bauteilliteratur: Steuerstrom bis **1,5 mA**, Steilheit um
+**9600 µS**, und **2 V ss** am Eingangsnetz erzeugen merkliche Verzerrung.
+
+### Die eine ungestützte Zahl
+
+`otaDrive = 0,1923 = (2,2/220) · 1 V / 52 mV`
+
+Darin steckt die **Annahme**, dass Vollaussteuerung im Modell 1 V Spitze am
+Poti entspricht. Der absolute Spannungsmaßstab ist **nicht belegt**. Sie ist
+die einzige ungestützte Zahl dieser Stufe, sie wurde nach der Messung **nicht
+nachgezogen**, und sie gehört an einer Pegelmessung am Gerät belegt.
+
+**Und die Messung macht sie zusätzlich verdächtig:** Aus der gemessenen
+Kompression von −0,60 dB bei Resonanz null folgt `tanh(x)/x = 0,933`, also
+`x ≈ 0,52` — und damit ein Spitzenwert von `coupled` um **2,7** statt 1,0. Die
+Annahme „Vollaussteuerung = 1 V Spitze" bedeutet dann rund **2,7 V Spitze** am
+Poti, deutlich über den 2 V ss, bei denen die Literatur merkliche Verzerrung
+ansetzt. Der OTA steht hier also vermutlich zu weit im Knick. Nicht korrigiert,
+weil jede Korrektur ohne Beleg ein Tunen gegen die eigene Messung wäre.
+
+### Die Vorhersage, die gescheitert ist
+
+Ich hatte aus der Topologie gefolgert: Weil der Kompensationszweig am selben
+Eingang liegt, steuert er den OTA mit aus — also müsse die Kennlinie sich bei
+**hoher** Resonanz stärker krümmen.
+
+Gemessen, OTA-Stand gegen den linearen Stand davor:
+
+| Resonanz | linear | mit OTA | Kompression |
+|---:|---:|---:|---:|
+| 0,0 | 0,706010 | 0,658631 | **−0,60 dB** |
+| 0,5 | 0,336367 | 0,331188 | −0,14 dB |
+| 1,0 | 0,332430 | 0,327360 | −0,13 dB |
+
+**Genau umgekehrt.** Die Kompression ist bei Resonanz **null** am größten.
+
+Der Grund ist der Pegeleinbruch, den derselbe Abschnitt weiter oben behandelt:
+Das Filtersignal bricht mit steigender Resonanz um mehr ein, als der Faktor
+`(1 + 2,2 r)` hinzufügt. Ausgesteuert wird der OTA vom **Produkt** — und das
+sinkt. Die rohe Filterausgangsgröße fällt über den Reglerweg um rund das
+6,8-fache, der Kompensationsfaktor steigt nur um 3,2.
+
+**Was daraus folgt und was nicht.** Die Topologie ist unberührt: Beide Zweige
+liegen am selben Eingang, das bleibt richtig und ist verfolgt. Falsch war mein
+**Zusatzschluss**, der den Pegeleinbruch übersah. Der Kommentar im Quelltext
+ist entsprechend berichtigt.
+
+Der Test hat getan, wozu er da war — er konnte scheitern, und er ist
+gescheitert. Hätte ich stattdessen „mehr Kompression bei hoher Resonanz"
+gemessen und abgehakt, wäre der Fehler stehen geblieben.
+
+### Pegel
+
+Smoke-Peak 0,921 → **0,907** (der OTA komprimiert). `preflight --strict`
+sauber, `dsp_matrix_test` 11/11 `ok` mit höchstem Effekt-Peak **0,9339**,
+`dsp_articulation_test` `ok`.
