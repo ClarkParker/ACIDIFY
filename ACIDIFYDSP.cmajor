@@ -1585,7 +1585,21 @@ processor AcidifyCore
                 let aAlpha = accentVcaSource > accentVcaRC ? accentVcaRiseAlpha
                                                            : accentVcaFallAlpha;
                 accentVcaRC += aAlpha * (accentVcaSource - accentVcaRC);
-                ampControl += 0.45f * filterEnvelope + 4.0f * accentVcaRC;
+                // Verfolgt: Der MEG-Knoten laeuft von IC12A ueber Q41 zu VR5
+                // (Env Mod) und erreicht den VCA-Steuerknoten NICHT — die
+                // Filterhuellkurve speist den VCA in der Schaltung nicht.
+                // Der Term `0.45f * filterEnvelope` hatte damit kein Bauteil
+                // hinter sich und ist entfallen.
+                //
+                // Der Accent dagegen speist: Q36 haengt mit dem Emitter an
+                // +12 V und der Basis an einem festen Teiler R142/R143 mit C72,
+                // ist also eine ueber den 4066 geschaltete Stromquelle. Ihr
+                // Kollektor treibt ueber D35 und R133 = 2,2 k den Emitterknoten
+                // von Q31, wo R131 = 220 k den Huellkurvenanteil liefert.
+                // Leitwertverhaeltnis dort 220/2,2 = 100; der Faktor 4.0 bleibt
+                // aber stehen, weil der Pegel der Accent-Quelle nicht belegt ist
+                // und `accentVcaRC` eine normierte Groesse ohne Volt-Bezug.
+                ampControl += 4.0f * accentVcaRC;
             }
             else
             {
