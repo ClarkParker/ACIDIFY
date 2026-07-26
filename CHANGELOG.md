@@ -6,6 +6,23 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-07-26
+
+### Fixed
+
+- **VCA-Release gemessen statt hergeleitet.** Whittle, DF-Handbuch, über den
+  Serien-303: „the decay at the end of an unaccented note was about 16 ms —
+  8 ms of normal volume and 8 ms of linear decay". Das widerlegt die 77 ms aus
+  der Abschaltanalyse (ihr fehlte der schnelle Entladepfad). Unaccentiert jetzt
+  8 ms Halten + 8 ms lineare Rampe; Accent-Release 50 ms (Open303, aus
+  Aufnahmen eines echten 303). Alle Tests grün.
+
+### Changed
+
+- `docs/MODS.md` ist jetzt die **GUI-Übergabe**: pro Mod Schaltungsbasis,
+  konkrete DSP-Änderung (Konstante/Funktion) und benötigtes GUI-Element.
+  Kein Mod ist eingebaut — sechs sind Konstantentausch-fertig.
+
 ## [1.0.0] - 2026-07-26
 
 ### Added

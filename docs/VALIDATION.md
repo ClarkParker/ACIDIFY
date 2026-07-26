@@ -1,3 +1,13 @@
+# Validierung 1.0.1
+
+## 1.0.1
+
+VCA-Release auf Whittles Messung umgestellt (8 ms Halten + 8 ms linear,
+Accent 50 ms aus Open303). Filterkern unangetastet: `hardware_checks` 11/11,
+`smoke_test` 0,34552, Matrix 11/11, Artikulation, Transport 12/12.
+
+---
+
 # Validierung 1.0.0
 
 ## 1.0.0
