@@ -6,6 +6,33 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Removed
+
+- **Der Faktor 2 am Filterausgang** — ersatzlos, und damit ist die letzte
+  gemeinsame Unbekannte zu. Stinchcombes Leiterkern ist
+  `L(s) = s⁴/ωc⁴ + 2^(11/4)s³/ωc³ + 10√2 s²/ωc² + 2^(13/4)s/ωc + 1`, also
+  **L(0) = 1**; bei `k = 0` ist `H(s) = C(s)/L(s)`, und `C(s)` läuft oberhalb
+  der Koppelecken gegen **1,06**. Der Durchlassbereich des ganzen Filters ist
+  damit 1,06, nicht 2,12. Nachgemessen mit geöffneter Cutoff-Klemme bei 384 kHz:
+  Modell/|C| = 1,6834 / 1,9432 / 1,9904 / **1,9987** bei f_c = 20 / 50 / 100 /
+  150 kHz — die Leiter hat Gleichspannungsverstärkung 1 wie `1/L(s)`, der
+  Faktor 2 hatte kein Gegenstück in der Übertragungsfunktion.
+
+### Changed
+
+- `otaDrive` **0,1923 → 0,4971**, jetzt abgeleitet statt geraten:
+  `(2,2/220) · 2,585 V / 52 mV`. Vorher steckte darin die Annahme „Vollaussteuerung
+  = 1 V Spitze am Poti"; der Spannungsmaßstab steht jetzt über den belegten
+  VCO-Hub fest (5,17 Vss auf 2,0 Modelleinheiten ss → 2,585 V je Einheit) und
+  gilt seit dem Wegfall des Faktors 2 durchgehend bis zum Summenknoten.
+- Ausgangspegel dadurch rund **6 dB leiser** (Smoke-Peak 0,676 → 0,335). Das ist
+  Folge der Ableitung, nicht eine Pegelentscheidung: 0,335 · 2,585 V ≈ 0,87 V
+  liegt im plausiblen Bereich eines 303-Ausgangs.
+- OTA-Kompression neu vermessen (Cutoff 0,7, gegen denselben Lauf mit linearer
+  Stufe): **−0,39 / −0,18 / −0,19 dB** bei Resonanz 0 / 0,5 / 1,0. Der früher
+  festgehaltene Befund — Kompression bei Resonanz **null** am größten — bestätigt
+  sich unter dem neuen Maßstab.
+
 ### Added
 
 - **Diodensättigung im Leiterkern**, an allen vier Paaren:

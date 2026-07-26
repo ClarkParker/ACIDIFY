@@ -1300,14 +1300,30 @@ processor AcidifyCore
             w = y;
         }
 
-        // Der Faktor 2 ist kein Bauteil, sondern der Spannungsmassstab des
-        // Modells: Er und `otaDrive` kodieren gemeinsam EINE Unbekannte —
-        // wieviel Volt am Poti einer Modelleinheit entsprechen. Getrennt
-        // stehen sie nur, weil sie an verschiedenen Stellen wirken; zusammen
-        // sind sie eine Zahl, nicht zwei. Belegbar erst mit einer Pegelmessung
-        // am Geraet. Die Kleinsignalverstaerkung des VCA ist davon unabhaengig
-        // (der Massstab kuerzt sich dort heraus).
-        return 2.0f * float (v);
+        // Hier stand ein Faktor 2. Er ist ersatzlos weg, und das ist belegt,
+        // nicht geschaetzt: Stinchcombes L(s) ist
+        //
+        //   L(s) = s^4/wc^4 + 2^(11/4) s^3/wc^3 + 10*sqrt(2) s^2/wc^2
+        //          + 2^(13/4) s/wc + 1
+        //
+        // also **L(0) = 1**. Bei k = 0 ist H(s) = C(s)/L(s), und C(s) laeuft
+        // oberhalb der Koppelecken gegen 1,06. Der Durchlassbereich des ganzen
+        // Filters ist damit 1,06 — nicht 2,12.
+        //
+        // Nachgemessen mit geoeffneter Cutoff-Klemme bei 384 kHz, Signal
+        // 1000 Hz, damit die Leiter wirklich flach ist:
+        //
+        //   f_c =  20 kHz -> Modell/|C| = 1,6834
+        //   f_c =  50 kHz -> 1,9432
+        //   f_c = 100 kHz -> 1,9904
+        //   f_c = 150 kHz -> 1,9987
+        //
+        // Die Leiter hat also Gleichspannungsverstaerkung 1 wie 1/L(s), und der
+        // Faktor 2 war reine Zugabe ohne Gegenstueck in der Uebertragungs-
+        // funktion. Damit ist die letzte gemeinsame Unbekannte zu: Der
+        // Spannungsmassstab haengt jetzt am belegten VCO-Hub (2,585 V je
+        // Modelleinheit), und `otaDrive` faellt daraus ab statt geraten zu sein.
+        return float (v);
     }
 
     // Die beiden Summenzweige am Eingang des VCA (IC15 BA662A, Pin 3), aus dem
@@ -1382,13 +1398,18 @@ processor AcidifyCore
     // ueber `R121 = 220 k`. Der Knoten teilt also auf 2,2/220 = 1/100 herunter
     // — genau das haelt den OTA im quasilinearen Bereich.
     //
-    // WICHTIG, offen: Der absolute Spannungsmassstab ist NICHT belegt. Hier
-    // steht die Annahme, dass Vollaussteuerung im Modell 1 V Spitze am Poti
-    // entspricht (2 V ss) — die Groessenordnung, bei der die BA662-Literatur
-    // merkliche Verzerrung nennt. `otaDrive` ist damit die einzige ungestuetzte
-    // Zahl in dieser Stufe. Sie wird NICHT gegen eine Testschwelle nachgezogen;
-    // sie gehoert an einer Pegelmessung am Geraet belegt. Siehe docs/DSP_AUDIT.md.
-    const float otaDrive = 0.1923f;   // (2,2/220) * 1 V / 52 mV
+    // FRUEHER OFFEN, JETZT BELEGT. Hier stand die Annahme, Vollaussteuerung
+    // entspreche 1 V Spitze am Poti — die Groessenordnung, bei der die
+    // BA662-Literatur merkliche Verzerrung nennt. Geraten war daran der
+    // Spannungsmassstab. Der steht inzwischen fest:
+    //
+    //   VCO-Hub 10,5 − 5,33 = 5,17 Vss (x0x-VCF-Mods) auf 2,0 Modelleinheiten
+    //   ss  ->  1 Modelleinheit = 2,585 V Spitze
+    //
+    // und weil der Faktor 2 am Filterausgang entfallen ist (Stinchcombe:
+    // L(0) = 1, Durchlassbereich 1,06), gilt derselbe Massstab durchgehend bis
+    // zum Summenknoten. Kein freier Parameter mehr in dieser Stufe.
+    const float otaDrive = 0.4971f;   // (2,2/220) * 2,585 V / 52 mV
 
     float processOta (float signal)
     {
@@ -1397,8 +1418,11 @@ processor AcidifyCore
         //
         // WIDERLEGT: Ich hatte daraus vorhergesagt, die Kennlinie kruemme sich
         // bei hoher Resonanz staerker. Gemessen ist es umgekehrt — die
-        // Kompression ist bei Resonanz NULL am groessten (-0,60 dB Peak) und
-        // faellt zu voller Resonanz auf -0,13 dB. Grund: `signal` selbst
+        // Kompression ist bei Resonanz NULL am groessten und faellt zu voller
+        // Resonanz ab. Nachgemessen mit dem neuen Spannungsmassstab, Cutoff 0,7,
+        // Note 36, gegen denselben Lauf mit linearer Stufe:
+        // -0,39 dB / -0,18 dB / -0,19 dB bei Resonanz 0 / 0,5 / 1,0.
+        // Grund: `signal` selbst
         // bricht mit der Resonanz um mehr ein, als der Faktor (1 + 2,2 r)
         // hinzufuegt. Das Produkt — und nur das steuert den OTA aus — sinkt.
         // Die Topologie ist davon unberuehrt; falsch war der Zusatzschluss.

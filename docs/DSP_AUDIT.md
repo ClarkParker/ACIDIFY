@@ -252,7 +252,25 @@ Genau das hält den OTA im quasilinearen Bereich — der Teiler ist kein Zufall.
 Belegt aus der Bauteilliteratur: Steuerstrom bis **1,5 mA**, Steilheit um
 **9600 µS**, und **2 V ss** am Eingangsnetz erzeugen merkliche Verzerrung.
 
-### Die eine ungestützte Zahl
+### Die eine ungestützte Zahl — inzwischen gestützt
+
+> **Erledigt.** Der Abschnitt bleibt als Protokoll stehen; der Stand darunter
+> galt bis `1.0.0-rc2`. `otaDrive` ist jetzt **0,4971 = (2,2/220) · 2,585 V /
+> 52 mV** und abgeleitet, nicht angenommen. Zwei Belege haben das geschlossen:
+>
+> 1. **Der Spannungsmaßstab** steht über den VCO-Hub fest — x0x-VCF-Mods,
+>    „The VCO output is from 5.33v to ~10.5v", beides Absolutwerte auf der
+>    5,333-V-Vorspannung, also 5,17 Vss auf 2,0 Modelleinheiten ss →
+>    **2,585 V je Modelleinheit**.
+> 2. **Der Faktor 2 am Filterausgang ist entfallen.** Stinchcombes `L(0) = 1`,
+>    `C(s) → 1,06`, also Durchlassbereich 1,06 statt 2,12; nachgemessen
+>    Modell/|C| → 1,9987. Damit gilt derselbe Maßstab durchgehend bis zum
+>    Summenknoten, und beide Zahlen sind nicht mehr aneinander gekoppelt.
+>
+> Die unten geäußerte Sorge — der OTA stehe „zu weit im Knick" — hat sich damit
+> teilweise bestätigt und teilweise erledigt: Der Pegel am Poti liegt jetzt bei
+> rund 2,8 V ss, also in der Größenordnung der 2 V ss aus der Literatur, und die
+> gemessene Kompression ist auf **−0,39 dB** bei Resonanz null zurückgegangen.
 
 `otaDrive = 0,1923 = (2,2/220) · 1 V / 52 mV`
 
@@ -723,6 +741,12 @@ das den Knick der Kennlinie setzt.
 Damit sind von den ursprünglich 14 gefitteten Konstanten noch **fünf** übrig:
 `0.45`, `4.0` (Accent/Hüllkurve-Aufteilung), `otaDrive`, die
 VCO-Rechteckschwelle und der Aufräumfaktor `2.0f`.
+
+> **Stand jetzt: zwei.** `0.45` ist mit dem Wegfall des Hüllkurventerms am VCA
+> entfallen, `otaDrive` und `2.0f` sind abgeleitet (siehe oben). Übrig sind
+> `4.0` — die Accent-Höhe, weiter ohne Bauteil dahinter — und die
+> VCO-Rechteckschwelle, die **absichtlich** bleibt: sie stammt aus einer Messung
+> an einem echten 303, und gemessene Hardware schlägt geschätzte Schaltung.
 
 **`0.45` und `4.0` bleiben offen**, weil nicht geklärt ist, ob `Q36` — die
 Quelle hinter `D35`/`R133` — vom Gate oder vom Accent getrieben wird. Ohne das
