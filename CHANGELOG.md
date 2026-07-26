@@ -6,6 +6,42 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-26
+
+### Changed
+
+- **Koppelnetz liegt jetzt in der Resonanzschleife.** Der Rückkopplungspfad
+  `Bfb(s) = (18.7/1.06)·k·s(s+46.5)(s+4.40)/[(s+109.9)(s+34.0)(s+7.41)]` fällt
+  aus Stinchcombes Übertragungsfunktion an; beide Kaskaden gehen in die
+  ZDF-Auflösung ein statt davorzuhängen. `kMax` kommt damit ebenfalls aus der
+  Übertragungsfunktion (18,7/1,06) statt aus einer eigenen Anschwingmessung.
+- **VCA-Summenknoten** mit beiden Zweigen und deren eigenen Hochpassecken:
+  Filterzweig `R121+R124 = 222,2 k` mit `C21 = 10 nF` → 71,6 Hz, Comp-Zweig
+  `R122+R124 = 102,2 k` mit `C22 = 10 nF` → 155,7 Hz.
+- **VCA-Hüllkurve** aus `R123 = 1,5 M` und `C42 = 1 µF` → 1500 ms statt
+  Open303s 1230 ms.
+- **Slide** aus DAC-Impedanz 100 k und 0,22 µF → 22 ms statt Open303s 12 ms.
+
+### Fixed
+
+- Zwei belegte Hardwareverhalten, die vorher nachweislich fehlten, treten jetzt
+  auf: kein Anschwingen bei 200/1000/5000 Hz Eckfrequenz **und** eine
+  Tieftonspitze bei ~9 Hz (−7,0 dB gegen −19,7 dB bei 4 Hz). Beide sind nicht
+  hineingeschrieben, sie fallen aus der Struktur an.
+- Poti-Kennlinien gegen Rolands eigene Teileliste geprüft: RESONANCE
+  `K162T00W-50kB ×2` (dual, linear — vierte unabhängige Bestätigung),
+  CUT OFF FREQ und ENV MOD `50kA`. Der x0xb0x-D-Kennlinienbefund war eine
+  Substitution des Nachbaus.
+
+### Known
+
+- Weiterhin Open303-Fits: VCO, MEG-Attack, Release-Zeiten, Accent-Decay,
+  Cutoff-/Env-Mod-Kennlinien und die VCA-Steuerkonstanten `0.45`, `4.0`, `0.42`.
+- `otaDrive` bleibt die einzige ungestützte Konstante im VCA.
+- Kein Vergleich gegen ein reales Gerät. Das ist der Abschlussschritt, nicht
+  eine Voraussetzung — die obigen Punkte sind aus dem Serviceplan herleitbar.
+
+
 ## [0.8.0] - 2026-07-26
 
 ### Changed

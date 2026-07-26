@@ -5,12 +5,12 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **DSP/Transport Release Candidate 0.8.0**. Clean-Core,
+> Status: **DSP/Transport Release Candidate 0.9.0**. Clean-Core,
 > 50-Parameter-Vertrag, Amorph-`transportIn`-Sync, sicherer Internal-Fallback,
 > Swing und drei getrennte Post-Stufen sind implementiert und automatisiert
 > geprüft. Studio ergänzt skalenbewusstes Generate/Mutate, Reverse, Pitch Mirror
 > und eine Live-Pitch-Map. Der Nutzer hat den vorigen 0.6.4-Build in Amorph als
-> grundsätzlich passend bestätigt; der neue 0.8.0-Build muss für die
+> grundsätzlich passend bestätigt; der neue 0.9.0-Build muss für die
 > abschließende Produktbestätigung erneut in Amorph und der Ziel-DAW getestet
 > werden. Die Bezeichnung „AAA Clone“ bleibt bis zu kalibrierten
 > Hardware-Captures und Blindtests ausdrücklich ein Ziel, kein bereits

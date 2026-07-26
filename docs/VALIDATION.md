@@ -1,3 +1,18 @@
+# Validierung 0.9.0
+
+## 0.9.0
+
+| Prüfung | Ergebnis |
+|---|---|
+| `preflight.py --strict` | sauber |
+| `smoke_test` | peak 0,85534 |
+| `dsp_matrix_test` | 11/11 `ok`, höchster Effekt-Peak 0,9384 |
+| `dsp_articulation_test` | `ok` |
+| Kein Anschwingen bei 200 / 1000 / 5000 Hz, volle Resonanz | Tail 0,00001 … 0,00004 |
+| Tieftonspitze bei voller Resonanz | −7,0 dB @ 9 Hz gegen −19,7 dB @ 4 Hz |
+
+---
+
 # Validierung 0.8.0
 
 ## 0.8.0 — Hardwareabgleich
