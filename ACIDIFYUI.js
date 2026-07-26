@@ -22,6 +22,17 @@ const ACIDIFY_GLOBALS = [
   { id: "param48", type: "dial",    label: "MIX",          min: 0,  max: 1,   step: 0.001, init: 1,    format: v => `${Math.round(v * 100)}%` },
   { id: "param49", type: "toggle",  label: "CLOCK",        min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param50", type: "stepper", label: "SWING",        min: 0,  max: 100, step: 1, init: 0,        format: v => `${Math.round(v)}%` },
+  // MOD-Overlay (Layout folgt in Claude Design). Defaults = Serienstand,
+  // Toggles schalten je Mod klar ein/aus, Amounts in 0,001er-Schritten.
+  { id: "param51", type: "toggle",  label: "OD",           min: 0,  max: 1,   step: 1, init: 0 },
+  { id: "param52", type: "dial",    label: "OD AMT",       min: 0,  max: 1,   step: 0.001, init: 0.3,  format: v => `${(Math.pow(66.6, v)).toFixed(1)}x` },
+  { id: "param53", type: "toggle",  label: "RESO BOOST",   min: 0,  max: 1,   step: 1, init: 0 },
+  { id: "param54", type: "toggle",  label: "CUTOFF 5K",    min: 0,  max: 1,   step: 1, init: 0 },
+  { id: "param55", type: "toggle",  label: "ENV X3",       min: 0,  max: 1,   step: 1, init: 0 },
+  { id: "param56", type: "toggle",  label: "SLIDE MOD",    min: 0,  max: 1,   step: 1, init: 0 },
+  { id: "param57", type: "dial",    label: "SLIDE TIME",   min: 0,  max: 1,   step: 0.001, init: 0,    format: v => `${Math.round(22 + 110 * v)}ms` },
+  { id: "param58", type: "toggle",  label: "SOFT ATK",     min: 0,  max: 1,   step: 1, init: 0 },
+  { id: "param59", type: "dial",    label: "ATK TIME",     min: 0,  max: 1,   step: 0.001, init: 0.25, format: v => `${(0.5 * Math.pow(60, v)).toFixed(1)}ms` },
 ];
 
 const STEP_PITCH_DEFAULTS = [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7];
@@ -62,6 +73,15 @@ const CONTROL_TOOLTIPS = {
   param48: "Blends the distorted signal with the clean instrument output.",
   param49: "Selects the clock source. INT uses the internal tempo and RUN/STOP; DAW follows host tempo, transport and position.",
   param50: "Adds swing to each pair of sixteenth notes. 0% is straight; 100% reaches a 2:1 triplet feel.",
+  param51: "Devil Fish filter overdrive on/off. Off is the stock 303 input level.",
+  param52: "Overdrive amount, 1x to 66.6x the stock ladder drive (R62 220k down to 3.3k).",
+  param53: "x0x resonance boost (R97 10k to 8.2k): enables self-oscillation at the top of the resonance range.",
+  param54: "Extends the cutoff maximum from 2.5 kHz to 5 kHz (Devil Fish).",
+  param55: "Triples the Env Mod range (Devil Fish).",
+  param56: "Devil Fish slide-time control on/off. Off is the stock 22 ms slide.",
+  param57: "Slide time, 22 ms (stock) to 132 ms (500k pot in series with the DAC resistance).",
+  param58: "Devil Fish soft attack on/off. Off is the stock instant VCA start.",
+  param59: "VCA attack time, 0.5 ms to 30 ms (Devil Fish range).",
 };
 
 function noteName(note) {

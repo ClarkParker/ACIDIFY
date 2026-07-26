@@ -1,3 +1,15 @@
+# Validierung 1.1.0
+
+## 1.1.0
+
+MOD-Sektion (param51…59). Defaults bit-identisch zum Serienstand
+(Smoke-Peak 0,34552). Wirkungsnachweise pro Mod gemessen (Crest, Schwerpunkt,
+Selbstoszillation, Slide-Frequenz, Attack-Energie — Werte in `docs/MODS.md`).
+`hardware_checks` 11/11, Matrix 11/11, Artikulation, Transport 12/12,
+`preflight`: nur die dokumentierte Parameterzahl-Warnung (59 > 50, bewusst).
+
+---
+
 # Validierung 1.0.1
 
 ## 1.0.1

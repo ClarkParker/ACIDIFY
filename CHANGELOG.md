@@ -6,6 +6,30 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-26
+
+### Added
+
+- **MOD-Sektion, fünf Mods eingebaut** (`param51`…`param59`), alle Defaults =
+  Serienstand, Smoke-Peak bit-identisch 0,34552 bei Mods aus. Jeder Mod hat ein
+  klares Enable; Amounts wirken nur bei Enable = an (A/B-Vergleich per Toggle):
+  - **DF Filter Overdrive** 1…66,6× (`R62` 220k→3,3k) — Faktor auf den
+    hergeleiteten Leiter-Drive. Nachweis: Crest 12,16 → 10,79 bei 66,6×.
+  - **Resonance Boost** (x0x: `R97` 10k→8,2k ⇒ k×1,2195) — Selbstoszillation
+    bei voller Resonanz nachgewiesen.
+  - **Cutoff Range** 2,5 → 5 kHz (DF). Nachweis: Schwerpunkt 2975 → 5074 Hz.
+  - **Env Mod ×3** (DF).
+  - **Slide Time** 22…132 ms (DF, 500k-Poti in Reihe). Nachweis: 252 → 156 Hz
+    kurz nach Slide-Start.
+  - **Soft Attack** 0,5…30 ms (DF), am VCA-Steuerknoten, wirkt auf Hüllkurve
+    UND Accent gemeinsam. Nachweis: Attack-Energie 1,71 → 0,47. Der erste
+    Einbau multiplizierte nur die Hüllkurve und liess den Accent vorbei —
+    an der Messung aufgeflogen und korrigiert.
+  - UI-Einträge in `ACIDIFY_GLOBALS` registriert (Anzeige in ×/ms),
+    preflight-konsistent (59 Parameter, dokumentierte Warnung — „50 ist die
+    sichere Linie, field-tested bis 80+" — bewusst akzeptiert). Das
+    Overlay-Layout folgt in Claude Design; `docs/MODS.md` ist die Übergabe.
+
 ## [1.0.1] - 2026-07-26
 
 ### Fixed

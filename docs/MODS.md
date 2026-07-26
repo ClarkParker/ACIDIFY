@@ -1,39 +1,44 @@
-# MODs — Übergabe an die GUI-Session (Claude Design)
+# MODs — eingebaut, Übergabe an Claude Design
 
-**Stand: KEIN Mod ist im DSP eingebaut.** ACIDIFY 1.0.x bildet den
-unmodifizierten Serien-303 ab; das war die Vorgabe („für später"). Dieses
-Dokument ist die Übergabe: Pro Mod steht, was die Schaltung sagt, welche
-DSP-Änderung nötig ist (Datei/Konstante) und welches GUI-Element fehlt.
-Jeder neue Regler bricht den 50-Parameter-Vertrag — das ist die zentrale
-Design-Entscheidung der GUI-Session.
+**Stand 1.1.0: Fünf Mods sind im DSP eingebaut und gemessen.** Alle Defaults =
+Serienstand (Smoke-Peak bit-identisch 0,34552 bei allen Mods aus). Jeder Mod hat
+ein klares Enable; Amount-Regler wirken nur bei Enable = an, damit man
+Einstellungen vorhalten und per Toggle A/B-vergleichen kann.
 
-## Einbaufertig (DSP-Änderung ist ein Konstantentausch)
+## Parameter für das Mod-Overlay
 
-| Mod | Schaltungsbasis | DSP-Änderung | GUI-Bedarf |
-|---|---|---|---|
-| **Filter Overdrive** (Devil Fish) | `R62` 220 k → 3,3 k, stufenlos = 1…66,6-fache Übersteuerung der Leiter | `ladderDriveRef` in `processLadder` mit Faktor 1…66,6 multiplizieren — exakt die vorhandene Konstante | 1 Knob (log), Default 1× |
-| **Resonance Boost** (x0x-Wiki: `R97` 10 k → 8,2 k, „just like a 303", „self resonance at the (very) top end") | Rückkopplungswiderstand kleiner → k um 10/8,2 = 1,22 höher | `kMax` in `processLadder` × 1,22 → 21,5, liegt **über** der Anschwinggrenze 19,5: Selbstoszillation oben wird real | 1 Toggle |
-| **Erweiterter Cutoff** (Devil Fish) | Maximum 5 kHz statt 2,5 kHz („an octave above") | `highCutoff` in `updateFilterMapping` 2500 → 5000 | Toggle oder Range-Schalter |
-| **Env Mod ×3** (Devil Fish) | „The Env Mod pot range has been tripled and made to include no Envelope Modulation" | `octaves`-Spanne ×3, Nullpunkt einschließen | erweiterte Skala am bestehenden Regler |
-| **Slide Time** (Devil Fish) | Serie: τ = 22 ms fest (100 k DAC × 0,22 µF); DF macht den Widerstand regelbar | `glideCoeff`-τ als Parameter statt Konstante | 1 Knob |
-| **Gerätestreuung / Varianten** | Kondensatoren ±10 % (Codes `2A333K`…), gemessen: ±10 % an den Leiter-Caps = **171 Cent** Resonanzverschiebung | `cap1…cap4` in `processLadder` — vier Zahlen, ein Edit | Produktentscheidung: pro Instanz/Preset/Note gewürfelt? Ziehung speichern? Verteilung (selektierte Ware hat ein Loch in der Mitte)? |
+| Param | Name | Typ | Default | Wirkung | Wirkungsnachweis |
+|---|---|---|---|---|---|
+| `param51` | Overdrive | Toggle | **Aus** | DF Filter Overdrive (R62 220k→3,3k) | Crest 12,16 → 10,79 bei 66,6× |
+| `param52` | Overdrive Amount | 0…1, Schritt 0,001 | 0,3 (= 3,5×) | Faktor = 66,6^v auf den Leiter-Drive | — |
+| `param53` | Resonance Boost | Toggle | **Aus** | x0x R97 10k→8,2k ⇒ k×1,2195 | Selbstoszillation bei voller Resonanz: nachgewiesen |
+| `param54` | Cutoff Range | Toggle | **Aus** | Maximum 2,5 kHz → 5 kHz (DF) | Schwerpunkt 2975 → 5074 Hz |
+| `param55` | Env Mod ×3 | Toggle | **Aus** | Env-Mod-Spanne verdreifacht (DF) | — |
+| `param56` | Slide Time | Toggle | **Aus** | DF-Slide-Poti in Reihe zum 100k-DAC | f nach Slide-Start 252 → 156 Hz |
+| `param57` | Slide Time Amount | 0…1, Schritt 0,001 | 0 (= 22 ms) | τ = 22 + 110·v ms (bis 132 ms, 500k-Poti) | — |
+| `param58` | Soft Attack | Toggle | **Aus** | DF Soft Attack am VCA-Steuerknoten (wirkt auf Hüllkurve UND Accent) | Attack-Energie 1,71 → 0,47 |
+| `param59` | Soft Attack Amount | 0…1, Schritt 0,001 | 0,25 (= 1,4 ms) | τ = 0,5·60^v ms (0,5…30 ms, DF-Spanne) | — |
 
-## Braucht DSP-Arbeit (mehr als Konstantentausch)
+Anzeigeformate stehen schon in `ACIDIFYUI.js` (`ACIDIFY_GLOBALS`): Overdrive
+als `x`-Faktor, Slide/Attack in ms. Die Einträge sind registriert und
+preflight-konsistent; **das Overlay-Layout ist der Part von Claude Design** —
+die Controls bauen sich automatisch, sobald DOM-Knoten mit
+`data-param="param51"`… existieren (`_buildControls` überspringt Einträge ohne
+Knoten).
 
-| Mod | Basis | Aufwand |
-|---|---|---|
-| **Soft Attack** (Devil Fish) | VCA-Attack 0,5…30 ms regelbar statt fest | Attack-Stufe in die VCA-Hüllkurve (Halte-/Rampenlogik existiert seit 1.0.1) |
-| **Muffler/Bass** (Devil Fish) | 32 Hz: −5 dB Serie → −1 dB DF (Ausgangskopplung) | Koppel-Hochpass am Ausgang parametrisieren |
-| **VCF External In** (x0x-Wiki) | Externes Audio in die Leiter | neuer Audio-Eingang im Graph |
+Hinweis Preflight: 59 Parameter lösen die dokumentierte Warnung aus („Amorph
+documents 50 as the supported limit. More is field-tested to work (a shipped
+plugin runs 80+)"). Bewusst akzeptiert.
 
-## Messwerte für die Varianten-Funktion (belegt)
+## Nicht eingebaut (Design-/Produktentscheidung nötig)
 
-- Kondensatoren ±10 % (`K`-Codes), Widerstände ±5 %, Transistorpaarung 0,3 mV Vbe = 1,16 % Strom
-- Die Caps dominieren die Paarung um ~10× — Streuung ohne Cap-Variation träfe die falsche Größe
-- 10 Ziehungen ±10 %: Resonanzspitze 732…809 Hz (171 Cent), Höhe +8,8…+10,0 dB (`tools/bench/spread`)
+| Mod | Grund |
+|---|---|
+| **Gerätestreuung / Varianten** (±10 % Caps = 171 Cent, `tools/bench/spread`) | Würfel-Semantik ist Produktfrage: pro Instanz/Preset/Note? Ziehung speichern? DSP-seitig sind es vier Konstanten (`cap1…cap4`) |
+| **Muffler/Bass** (DF: 32 Hz −5 dB → −1 dB) | Ausgangskopplung noch nicht als eigene Stufe modelliert |
+| **VCF External In** (x0x) | braucht neuen Audio-Eingang im Graph |
 
-## Unausgewertet
+## Quellen
 
-[TB-303-Archiv (hyperreal)](http://machines.hyperreal.org/manufacturers/Roland/TB-303/) ·
-weitere Devil-Fish-Funktionen (Accent-Sweep-Regler, Gate-LED u. a.), nur wo das
-Handbuch das Original beschreibt auch für den Serienstand relevant.
+Devil-Fish-Handbuch (Whittle) · x0x-VCF-Mods (ladyada) ·
+[TB-303-Archiv (hyperreal)](http://machines.hyperreal.org/manufacturers/Roland/TB-303/) — Letzteres unausgewertet.

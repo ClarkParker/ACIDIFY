@@ -35,6 +35,7 @@ processor Ladder
     float64[5] coupleB0; float64[5] coupleB1; float64[5] coupleA1;
     float64[3] fbX1; float64[3] fbY1;
     float64[3] fbB0; float64[3] fbB1; float64[3] fbA1;
+    float64 modOverdrive = 1.0; float64 modKBoost = 1.0;
 {coef}
 {body}
     void main() {{ let sr = float (processor.frequency); updateCouplingCoefficients (sr);
@@ -64,6 +65,7 @@ processor Ladder
     float64[5] coupleB0; float64[5] coupleB1; float64[5] coupleA1;
     float64[3] fbX1; float64[3] fbY1;
     float64[3] fbB0; float64[3] fbB1; float64[3] fbA1;
+    float64 modOverdrive = 1.0; float64 modKBoost = 1.0;
 {coef}
 {body}
     void main() {{ let sr = float (processor.frequency); updateCouplingCoefficients (sr);

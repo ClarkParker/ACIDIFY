@@ -87,6 +87,21 @@ processor AcidifyCore
                                  text: "Internal|DAW" ]];
     input event float param50 [[ name: "Swing",              min: 0.0, max: 100.0, init: 0.0, step: 1.0,
                                  unit: "%" ]];
+    input event float param51 [[ name: "Mod Overdrive",        min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
+    input event float param52 [[ name: "Mod Overdrive Amount", min: 0.0, max: 1.0, init: 0.3, step: 0.001 ]];
+    input event float param53 [[ name: "Mod Resonance Boost",  min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
+    input event float param54 [[ name: "Mod Cutoff Range",     min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
+    input event float param55 [[ name: "Mod Env Mod x3",       min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
+    input event float param56 [[ name: "Mod Slide Time",       min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
+    input event float param57 [[ name: "Mod Slide Time Amount", min: 0.0, max: 1.0, init: 0.0, step: 0.001 ]];
+    input event float param58 [[ name: "Mod Soft Attack",      min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
+    input event float param59 [[ name: "Mod Soft Attack Amount", min: 0.0, max: 1.0, init: 0.25, step: 0.001 ]];
 
     float tuning = 0.0f;
     float cutoffControl = 0.45f;
@@ -199,6 +214,24 @@ processor AcidifyCore
     float ampAccentReleaseCoeff = 0.0f;
     int   ampReleaseElapsed = 0;
     float ampReleaseStep = 0.0f;
+
+    // MOD-Sektion (Devil Fish / x0x). Alle Defaults = Serienstand.
+    // Jeder Mod hat ein klares Enable; die Amount-Regler wirken nur bei
+    // Enable = an, damit man Einstellungen vorhalten und per Toggle A/B-
+    // vergleichen kann.
+    bool  modOdEnabled = false;      // DF Filter Overdrive (R62 220k -> 3,3k)
+    float modOdAmount = 0.3f;        //   Faktor = 66,6^v, also 1..66,6
+    bool  modResoBoost = false;      // x0x: R97 10k -> 8,2k => k * 1,2195
+    bool  modCutoffExt = false;      // DF: Cutoff-Maximum 5 kHz statt 2,5 kHz
+    bool  modEnvX3 = false;          // DF: Env-Mod-Spanne verdreifacht
+    bool  modSlideEnabled = false;   // DF: Slide-Pot in Reihe zum 100k-DAC
+    float modSlideAmount = 0.0f;     //   tau = 22 + 110*v ms (500k-Poti)
+    bool  modSoftAtkEnabled = false; // DF Soft Attack
+    float modSoftAtkAmount = 0.25f;  //   tau = 0,5 * 60^v ms (0,5..30, DF-Spanne)
+    float64 modOverdrive = 1.0;      // abgeleitet aus modOd*
+    float64 modKBoost = 1.0;         // abgeleitet aus modResoBoost
+    float ampAttackRamp = 1.0f;
+    float ampAttackAlpha = 1.0f;
     float accentVcaRiseAlpha = 0.0f;
     float accentVcaFallAlpha = 0.0f;
     float feedbackHighpassPole = 0.0f;
@@ -623,8 +656,10 @@ processor AcidifyCore
         // Wege haben damit dasselbe Gewicht, also dieselbe Spanne in Oktaven.
         // Drei Oktaven unter 2500 Hz sind 312,5 Hz; Open303s gefittetes
         // Minimum von 313,8 Hz liegt 0,4 % daneben und stuetzt den Wert.
-        const float highCutoff = 2500.0f;
-        const float octaves = 3.0f;
+        // MOD-Eingriffe: DF-Cutoff bis 5 kHz ("an octave above"), DF-Env-Mod
+        // verdreifacht. Beide Toggles aus, ergibt exakt den Serienstand.
+        let highCutoff = modCutoffExt ? 5000.0f : 2500.0f;
+        let octaves = 3.0f * (modEnvX3 ? 3.0f : 1.0f);
 
         let c = clamp (cutoffControl, 0.0f, 1.0f);
         let e = clamp (envModControl, 0.0f, 1.0f);
@@ -670,7 +705,9 @@ processor AcidifyCore
         // is caused by the 100K resistance of the DAC feeding a 0.22uF
         // capacitor." tau = 100 k * 0,22 uF = 22 ms. Open303 stand hier mit
         // 12 ms (60 ms mal 0,2), einem Fit.
-        glideCoeff = timeCoefficient (22.0f, sampleRate);
+        glideCoeff = timeCoefficient (modSlideEnabled
+                                          ? 22.0f + 110.0f * clamp (modSlideAmount, 0.0f, 1.0f)
+                                          : 22.0f, sampleRate);
         // MEG-Attack aus der Schaltung: D37 in Reihe mit R152 = 100 Ohm laedt
         // C62 = 1 uF. tau = 100 us. Der Knoten ist im Plan eindeutig gezeichnet
         // (R152 -> Basisknoten von Q40, C62 von dort gegen Masse), verfolgt mit
@@ -738,6 +775,7 @@ processor AcidifyCore
         updateDecayMapping();
         outputGainTarget = float (std::levels::dBtoGain (float64 (volumeDb)));
         updateRateConstants (sampleRate);
+        updateModDerived();
         baseCutoff = baseCutoffTarget;
         envScaler = envScalerTarget;
         envOffset = envOffsetTarget;
@@ -827,6 +865,7 @@ processor AcidifyCore
         currentFrequency = frequency;
         filterEnvelope = 1.0f;
         ampEnvelope = 1.0f;
+        ampAttackRamp = modSoftAtkEnabled ? 0.0f : 1.0f;
         accented = hasAccent;
         gateOpen = true;
     }
@@ -1130,7 +1169,7 @@ processor AcidifyCore
         // under that required for self-oscillation". Selbstoszillation waere
         // ein Fehler, kein Fortschritt.
         const float64 kMax = 18.7 / 1.06;
-        let k = kMax * float64 (clamp (resonanceSkewed, 0.0f, 1.0f));
+        let k = kMax * modKBoost * float64 (clamp (resonanceSkewed, 0.0f, 1.0f));
 
         let alpha1 = g1 / (1.0 + g1);
         let alpha2 = g2 / (1.0 + g2);
@@ -1200,7 +1239,7 @@ processor AcidifyCore
         // gekoppelt. Der Saegezahn im Modell hat 2,0 Einheiten ss, damit ist
         // eine Modelleinheit 2,585 V Spitze und der Signalstrom 11,75 uA.
         const float64 ladderDriveRef = 1089.8;   // (2,585 V / 220k) / (2*pi*33n*52m)
-        let drive = ladderDriveRef / float64 (bounded);
+        let drive = ladderDriveRef * modOverdrive / float64 (bounded);
 
         // WO die Begrenzung sitzt — und wo NICHT.
         //
@@ -1539,6 +1578,35 @@ processor AcidifyCore
     }
     event param50 (float v) { swingControl = clamp (v, 0.0f, 100.0f); }
 
+    void updateModDerived()
+    {
+        modOverdrive = modOdEnabled
+            ? pow (66.6, float64 (clamp (modOdAmount, 0.0f, 1.0f)))
+            : 1.0;
+        modKBoost = modResoBoost ? 10.0 / 8.2 : 1.0;
+        if (cachedRate > 0.5f)
+        {
+            let slideTau = modSlideEnabled
+                ? 22.0f + 110.0f * clamp (modSlideAmount, 0.0f, 1.0f)
+                : 22.0f;
+            glideCoeff = timeCoefficient (slideTau, cachedRate);
+            let atkTau = 0.5f * float (pow (60.0, float64 (clamp (modSoftAtkAmount, 0.0f, 1.0f))));
+            ampAttackAlpha = modSoftAtkEnabled
+                ? 1.0f - timeCoefficient (atkTau, cachedRate)
+                : 1.0f;
+        }
+    }
+
+    event param51 (float v) { modOdEnabled = v >= 0.5f; updateModDerived(); }
+    event param52 (float v) { modOdAmount = clamp (v, 0.0f, 1.0f); updateModDerived(); }
+    event param53 (float v) { modResoBoost = v >= 0.5f; updateModDerived(); }
+    event param54 (float v) { modCutoffExt = v >= 0.5f; updateFilterMapping(); }
+    event param55 (float v) { modEnvX3 = v >= 0.5f; updateFilterMapping(); }
+    event param56 (float v) { modSlideEnabled = v >= 0.5f; updateModDerived(); }
+    event param57 (float v) { modSlideAmount = clamp (v, 0.0f, 1.0f); updateModDerived(); }
+    event param58 (float v) { modSoftAtkEnabled = v >= 0.5f; updateModDerived(); }
+    event param59 (float v) { modSoftAtkAmount = clamp (v, 0.0f, 1.0f); updateModDerived(); }
+
     // Amorph sends its DAW playhead as a rolling six-value float64 event stream:
     // play state, BPM, time-signature numerator, denominator, absolute PPQ, and
     // one reserved slot. The small learner preserves compatibility with runtimes
@@ -1725,6 +1793,7 @@ processor AcidifyCore
             if (gateOpen)
             {
                 ampEnvelope *= ampBodyCoeff;
+                ampAttackRamp += ampAttackAlpha * (1.0f - ampAttackRamp);
                 ampReleaseElapsed = 0;
             }
             else if (accented)
@@ -1776,6 +1845,9 @@ processor AcidifyCore
             {
                 accentVcaRC += accentVcaFallAlpha * (0.0f - accentVcaRC);
             }
+            // DF Soft Attack sitzt am Steuerknoten und verlangsamt damit
+            // Huellkurven- UND Accent-Anteil gemeinsam.
+            ampControl *= ampAttackRamp;
             ampControl = processAmpSmoother (max (ampControl, 0.0f));
 
             // Zwei Summenzweige am VCA-Eingang statt einer Verstaerkung im
@@ -1896,6 +1968,21 @@ graph Acidify [[ main ]]
                                  text: "Internal|DAW" ]];
     input event float param50 [[ name: "Swing",              min: 0.0, max: 100.0, init: 0.0, step: 1.0,
                                  unit: "%" ]];
+    input event float param51 [[ name: "Mod Overdrive",        min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
+    input event float param52 [[ name: "Mod Overdrive Amount", min: 0.0, max: 1.0, init: 0.3, step: 0.001 ]];
+    input event float param53 [[ name: "Mod Resonance Boost",  min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
+    input event float param54 [[ name: "Mod Cutoff Range",     min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
+    input event float param55 [[ name: "Mod Env Mod x3",       min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
+    input event float param56 [[ name: "Mod Slide Time",       min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
+    input event float param57 [[ name: "Mod Slide Time Amount", min: 0.0, max: 1.0, init: 0.0, step: 0.001 ]];
+    input event float param58 [[ name: "Mod Soft Attack",      min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
+    input event float param59 [[ name: "Mod Soft Attack Amount", min: 0.0, max: 1.0, init: 0.25, step: 0.001 ]];
 
     node core = AcidifyCore * 4;
 
@@ -1941,5 +2028,14 @@ graph Acidify [[ main ]]
         param47 -> core.param47; param48 -> core.param48;
         param49 -> core.param49;
         param50 -> core.param50;
+        param51 -> core.param51;
+        param52 -> core.param52;
+        param53 -> core.param53;
+        param54 -> core.param54;
+        param55 -> core.param55;
+        param56 -> core.param56;
+        param57 -> core.param57;
+        param58 -> core.param58;
+        param59 -> core.param59;
     }
 }
