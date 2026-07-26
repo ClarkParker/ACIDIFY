@@ -158,6 +158,11 @@ processor AcidifyCore
     float64[5] coupleB0;
     float64[5] coupleB1;
     float64[5] coupleA1;
+    float64[3] fbX1;
+    float64[3] fbY1;
+    float64[3] fbB0;
+    float64[3] fbB1;
+    float64[3] fbA1;
     float64 zdfS1 = 0.0;
     float64 zdfS2 = 0.0;
     float64 zdfS3 = 0.0;
@@ -403,20 +408,21 @@ processor AcidifyCore
         // Durchlassverstaerkung 1.06 auf die erste Stufe.
         coupleB0[0] *= 1.06;
         coupleB1[0] *= 1.06;
+
+        // Rueckkopplungspfad, aus H(s) herausgerechnet:
+        //   Bfb(s) = (18.7/1.06) k s (s+46.5)(s+4.40)
+        //            / [(s+109.9)(s+34.0)(s+7.41)]
+        float64[3] fz = (0.0, 46.5, 4.40);
+        float64[3] fp = (109.9, 34.0, 7.41);
+        for (wrap<3> i)
+        {
+            let n = 1.0 / (K + fp[i]);
+            fbB0[i] = (K + fz[i]) * n;
+            fbB1[i] = (fz[i] - K) * n;
+            fbA1[i] = (fp[i] - K) * n;
+        }
     }
 
-    float processCoupling (float signal)
-    {
-        var v = float64 (signal);
-        for (wrap<5> i)
-        {
-            let y = coupleB0[i] * v + coupleB1[i] * coupleX1[i] - coupleA1[i] * coupleY1[i];
-            coupleX1[i] = v;
-            coupleY1[i] = y;
-            v = y;
-        }
-        return float (v);
-    }
 
 
 
@@ -1036,14 +1042,13 @@ processor AcidifyCore
         // absichtlich NICHT an — ein handverloeteter Widerstand trimmt „just
         // under that required for self-oscillation". Selbstoszillation waere
         // ein Fehler, kein Fortschritt.
-        const float64 kMax = 19.4;
+        const float64 kMax = 18.7 / 1.06;
         let k = kMax * float64 (clamp (resonanceSkewed, 0.0f, 1.0f));
 
         let alpha1 = g1 / (1.0 + g1);
         let alpha2 = g2 / (1.0 + g2);
         let alpha3 = g3 / (1.0 + g3);
         let alpha4 = g4 / (1.0 + g4);
-        let alpha0 = 1.0 / (1.0 + k * bigGamma);
 
         let gam1 = 1.0 + G1 * G2;
         let gam2 = 1.0 + G2 * G3;
@@ -1055,6 +1060,29 @@ processor AcidifyCore
         let B4 = 1.0 / (1.0 + g4);
 
         let d1 = g1, d2 = 0.5 * g2, d3 = 0.5 * g3;
+
+        // Instantanteil und Zustandsbeitrag beider Kaskaden.
+        // Zustandsbeitrag = Summe s_j * Produkt der b0 der NACHFOLGENDEN Glieder,
+        // also Horner vorwaerts: acc = acc*b0_j + s_j ueber j = 0..N-1.
+        var cInst = 1.0;
+        var cState = 0.0;
+        for (wrap<5> i)
+        {
+            cState = cState * coupleB0[i]
+                   + (coupleB1[i] * coupleX1[i] - coupleA1[i] * coupleY1[i]);
+            cInst *= coupleB0[i];
+        }
+
+        var bInst = 1.0;
+        var bState = 0.0;
+        for (wrap<3> i)
+        {
+            bState = bState * fbB0[i]
+                   + (fbB1[i] * fbX1[i] - fbA1[i] * fbY1[i]);
+            bInst *= fbB0[i];
+        }
+        bInst *= k;
+        bState *= k;
 
         let x = float64 (signal);
 
@@ -1068,7 +1096,9 @@ processor AcidifyCore
         // SG3; der Pfad von Stufe 2 zum Ausgang laeuft aber ueber G3*G4 = SG2.
         let sigma = S1 * SG1 + S2 * SG2 + S3 * SG3 + S4;
 
-        let u = (x - k * sigma) * alpha0;          // ZDF in einem Schritt geloest
+        // y4 = bigGamma*u + sigma ; y = cInst*y4 + cState ; fb = bInst*y + bState
+        let u = (x - bInst * (cInst * sigma + cState) - bState)
+              / (1.0 + bInst * cInst * bigGamma);
 
         let in1 = u * gam1 + S2 + S1 * G2;
         let v1 = (in1 - zdfS1) * alpha1;
@@ -1089,7 +1119,27 @@ processor AcidifyCore
         let y4 = v4 + zdfS4;
         zdfS4 += 2.0 * v4;
 
-        return 2.0f * float (y4);
+        // Koppelnetz nachfuehren (Vorwaertspfad).
+        var v = y4;
+        for (wrap<5> i)
+        {
+            let y = coupleB0[i] * v + coupleB1[i] * coupleX1[i] - coupleA1[i] * coupleY1[i];
+            coupleX1[i] = v;
+            coupleY1[i] = y;
+            v = y;
+        }
+
+        // Rueckkopplungsnetz mit dem Ausgang nachfuehren.
+        var w = v;
+        for (wrap<3> i)
+        {
+            let y = fbB0[i] * w + fbB1[i] * fbX1[i] - fbA1[i] * fbY1[i];
+            fbX1[i] = w;
+            fbY1[i] = y;
+            w = y;
+        }
+
+        return 2.0f * float (v);
     }
 
     // Die beiden Summenzweige am Eingang des VCA (IC15 BA662A, Pin 3), aus dem
@@ -1412,8 +1462,8 @@ processor AcidifyCore
             let instantaneousCutoff = baseCutoff * float (pow (2.0, float64 (exponent)));
             let filtered = processLadder (preFiltered, instantaneousCutoff, sampleRate);
 
-            // Koppelnetz nach Stinchcombe statt des gebuendelten Open303-Netzes.
-            let coupled = processCoupling (filtered);
+            // Koppelnetz liegt jetzt IN der Resonanzschleife, wie in der Schaltung.
+            let coupled = filtered;
 
             if (gateOpen)
             {
