@@ -88,3 +88,24 @@ python3 tools/bench/nettrace.py plan.png X1 Y1 X2 Y2
 Zwei Startpunkte, Ausgabe je Netz: Größe, umschließendes Rechteck und ob beide
 im selben Netz liegen. Damit wurde die Zuordnung der beiden VCA-Summenzweige
 geklärt (siehe [`docs/HARDWARE_AUDIT.md`](../../docs/HARDWARE_AUDIT.md)).
+
+## `hardware_checks.py`
+
+Die widerlegbaren Prüfsteine des Hardwareabgleichs, ausführbar. Schneidet den
+Filterkern aus `ACIDIFYDSP.cmajor` heraus und misst ihn als eigenständigen
+Prozessor — der Stand misst damit immer den echten Plug-in-Code, nicht eine
+Kopie, die auseinanderläuft (der Fehler K3).
+
+```bash
+ACIDIFY_BENCH_DIR=/pfad/mit/cmaj-bin python3 tools/bench/hardware_checks.py
+```
+
+Geprüft wird:
+
+1. kein Anschwingen bei 200 / 1000 / 5000 Hz und vollem Regler
+2. Anschwinggrenze frequenzabhängig — Reserve schrumpft zu hohen Frequenzen
+3. Steilheit steigt über der Frequenz und bleibt unter 24 dB/Okt
+4. Resonanz monoton über den ganzen Reglerweg, oberes Drittel trägt
+5. Koppelnetz trifft Stinchcombes Übertragungsfunktion
+
+Rückgabewert ungleich null, wenn ein Prüfstein fällt.
