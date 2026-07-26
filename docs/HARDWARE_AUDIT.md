@@ -560,3 +560,36 @@ Vermerkt, weil es sonst wie ein festgelegter Wert aussähe: In
 [`FILTER_TOPOLOGY.md`](FILTER_TOPOLOGY.md) steht `k = 19,4` als
 „← Kalibrierpunkt" in der Messtabelle. Die **Messung** stimmt; die
 **Zuordnung** zum Serienstand ruht auf Whittle plus dieser Nachbaubeobachtung.
+
+
+---
+
+## Belegte Randbedingung für die Cutoff-Abbildung
+
+Devil-Fish-Handbuch, Versionsnotiz 2.1C, über eine Anpassung am **Mod**:
+
+> „Internal adjustment to ensure that the maximum resonant filter frequency
+> (no Env Mod, Filter Tracking or external CV In) is 5 kHz — **an octave above
+> the standard frequency of the TB-303**."
+
+Der Serienstand endet damit bei **2,5 kHz**. ACIDIFY rechnet oben
+`2394,412 Hz` — aus Open303, also gefittet, und 4 % daneben.
+
+Bemerkenswert: „maximum **resonant** filter frequency" ist genau die Größe, die
+der Modellparameter seit der Kalibrierkorrektur führt (`peakToParameter`
+entfiel, weil der Parameter mit dem Koppelnetz in der Schleife die hörbare
+Spitze *ist*).
+
+**Noch nicht eingesetzt, und zwar mit Grund.** `baseCutoff` geht nicht direkt in
+die Eckfrequenz ein, sondern über
+`instantaneousCutoff = baseCutoff · 2^(envScaler·(env − envOffset))`, und
+`envScaler`/`envOffset` sind Open303-Polynome. Bei Env Mod null liefert
+`envScaler` dort **0,864 statt 0** — es bleibt also eine Restmodulation, die es
+in der Schaltung nicht geben dürfte. Den oberen Endwert an einer Stelle
+festzunageln, während die Abbildung darum herum gefittet bleibt, verschöbe den
+Fehler nur.
+
+Die 2,5 kHz sind damit eine **belegte Randbedingung**, an der sich die
+Neuherleitung der Cutoff-Abbildung messen lassen muss — nicht eine Konstante,
+die man einzeln austauscht. Das untere Ende der Reglerspanne ist in keiner
+Quelle genannt; `313,8 Hz` bleibt unbelegt.
