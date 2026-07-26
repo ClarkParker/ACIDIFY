@@ -163,6 +163,11 @@ processor AcidifyCore
     float64[3] fbB0;
     float64[3] fbB1;
     float64[3] fbA1;
+    // Die beiden VCA-Summenzweige haben eigene Hochpassecken.
+    float64 vcaFiltX1 = 0.0, vcaFiltY1 = 0.0;
+    float64 vcaCompX1 = 0.0, vcaCompY1 = 0.0;
+    float64 vcaFiltP = 0.0, vcaFiltG = 0.0;
+    float64 vcaCompP = 0.0, vcaCompG = 0.0;
     float64 zdfS1 = 0.0;
     float64 zdfS2 = 0.0;
     float64 zdfS3 = 0.0;
@@ -654,6 +659,7 @@ processor AcidifyCore
         distortionSmoothingAlpha = 1.0f - timeCoefficient (20.0f, sampleRate);
         updateOutputNetworkCoefficients (sampleRate);
         updateCouplingCoefficients (sampleRate);
+        updateVcaBranchCoefficients (sampleRate);
         updateMackityCoefficients (sampleRate);
         updateRiaaCoefficients (sampleRate);
         meterPeriod = max (1, int (sampleRate * 0.03f));
@@ -1162,9 +1168,41 @@ processor AcidifyCore
     // Er hebt den Einbruch NICHT auf: Die Kompensation folgt der Stellung
     // linear, der Einbruch der Form 1/(1+k). Zwei verschiedene Gesetze, also
     // bleibt sie teilweise — ein 303 duennt bei hoher Resonanz hoerbar aus.
+    // Die beiden Summenzweige am VCA-Eingang tragen je einen eigenen
+    // Koppelkondensator, und weil ihre Widerstaende verschieden sind, liegen
+    // ihre Hochpassecken verschieden. Gegen den Knotenwiderstand R124 = 2,2 k
+    // (C37 als Wechselspannungsmasse):
+    //
+    //   Filterzweig:  R121 + R124 = 222,2 k  mit C21 = 10 nF ->  71,6 Hz
+    //   Comp-Zweig:   R122 + R124 = 102,2 k  mit C22 = 10 nF -> 155,7 Hz
+    //
+    // Der Kompensationszweig ist in der Schaltung also bassaermer als der
+    // Filterzweig. Bei Resonanz null traegt er nichts bei, dann bleibt genau
+    // der 71,6-Hz-Hochpass des Filterzweigs stehen.
+    void updateVcaBranchCoefficients (float sampleRate)
+    {
+        let rate = max (float64 (sampleRate), 1.0);
+        vcaFiltP = exp (-float64 (twoPi) * 71.6 / rate);
+        vcaFiltG = 0.5 * (1.0 + vcaFiltP);
+        vcaCompP = exp (-float64 (twoPi) * 155.7 / rate);
+        vcaCompG = 0.5 * (1.0 + vcaCompP);
+    }
+
+    float vcaSummingNode (float signal)
+    {
+        let x = float64 (signal);
+        let yf = vcaFiltG * (x - vcaFiltX1) + vcaFiltP * vcaFiltY1;
+        vcaFiltX1 = x; vcaFiltY1 = yf;
+        let yc = vcaCompG * (x - vcaCompX1) + vcaCompP * vcaCompY1;
+        vcaCompX1 = x; vcaCompY1 = yc;
+
+        const float64 branchRatio = 2.2;   // R121 / R122 = 220 k / 100 k
+        return float (yf + branchRatio * float64 (clamp (resonanceSkewed, 0.0f, 1.0f)) * yc);
+    }
+
     float resonanceCompensation()
     {
-        const float branchRatio = 2.2f;   // R121 / R122 = 220 k / 100 k
+        const float branchRatio = 2.2f;
         return 1.0f + branchRatio * clamp (resonanceSkewed, 0.0f, 1.0f);
     }
 
@@ -1202,7 +1240,7 @@ processor AcidifyCore
         // bricht mit der Resonanz um mehr ein, als der Faktor (1 + 2,2 r)
         // hinzufuegt. Das Produkt — und nur das steuert den OTA aus — sinkt.
         // Die Topologie ist davon unberuehrt; falsch war der Zusatzschluss.
-        let x = signal * otaDrive * resonanceCompensation();
+        let x = vcaSummingNode (signal) * otaDrive;
         return float (tanh (float64 (x))) / otaDrive;
     }
 
