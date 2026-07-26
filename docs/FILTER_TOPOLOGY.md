@@ -419,11 +419,27 @@ Im Kern steht jetzt `N(v) = tanh(v · drive) / drive` mit
 `drive = 1089,8 / f_c`, an **allen vier** Diodenpaaren. Kein freier Parameter:
 Zähler ist `2,585 V / 220 kΩ = 11,75 µA`, Nenner `2π · 33 nF · 52 mV`.
 
-**Warum alle vier und nicht nur das Eingangspaar.** Im Durchlassbereich führen
-alle vier Paare denselben Signalstrom, also denselben Aussteuerungsgrad. Ein
-erster Einbau begrenzte nur am Summenknoten; gemessen kam dabei ein Drittel bis
-ein Viertel des Klirrs heraus (18,05 % statt 41,97 % bei 300 Hz). Die Richtung
-stimmte, der Betrag nicht.
+**Wo die Begrenzung sitzt — und wo nicht.** Die begrenzenden Bauteile sind die
+Diodenpaare **zwischen** den Kondensatorebenen. Jedes wird von der Spannung über
+sich getrieben, also von der bereits integrierten Knotenspannung, und reicht
+`I_c · tanh(v/(2·V_T))` weiter. `N` steht deshalb auf `y1`, `y2`, `y3`.
+
+Am **Eingang** steht keine. Der Zulauf über `C17`/`R62 = 220 kΩ` ist eine
+Stromquelle; ein eingeprägter Strom wird von einem Diodenpaar nicht begrenzt, er
+läuft in die Knotenkapazität, und die Knotenspannung stellt sich ein. Begrenzt
+wird der Eingangsstrom trotzdem — `y1` steigt, bis das erste Paar sättigt — nur
+nicht augenblicklich auf dem breitbandigen Eingangssignal.
+
+**Zwei Fehlversuche davor, beide gemessen widerlegt.** Zuerst begrenzte nur der
+Summenknoten: ein Drittel bis ein Viertel des Klirrs (18,05 % statt 41,97 % bei
+300 Hz), Richtung richtig, Betrag falsch. Dann `N` zusätzlich auf `u` — und das
+flog an der Faltung auf, siehe unten.
+
+**Offen:** Stinchcombe nennt „at the top of the ladder a single pair of
+transistors … which effectively act like a single diode in each arm" (sein
+`d = 1`). Ob der Ausgang durch dieses obere Paar läuft und damit ein viertes Mal
+begrenzt wird, geben die vorliegenden Quellen nicht her. Es träfe `y4`, also das
+am stärksten gefilterte Signal.
 
 **Wie die Zero-Delay-Auflösung das übersteht.** Die Stufenkette ist bei
 gegebenem `u` bereits **explizit** — `G`/`S` haben die Rückwirkung zwischen
@@ -440,7 +456,7 @@ Stufe durch die folgende bleibt linearisiert.
 |---|---|---|
 | 1 — kein Anschwingen | Hüllkurve fällt bei 200/1000/5000 Hz | 1,4e−3 / 6,8e−3 / 2,2e−2 ✔ |
 | 2 — Reserve frequenzabhängig | 150 Hz deutlich über 8 kHz | 2,668 gegen 1,027 ✔ |
-| 3 — Klirr steigt zu tiefem Cutoff | monoton fallend über f_c | 41,97 % / 16,30 % / 6,47 % ✔ |
+| 3 — Klirr steigt zu tiefem Cutoff | monoton fallend über f_c | 47,61 % / 17,34 % / 6,73 % ✔ |
 
 Dazu zwei Prüfsteine, die erst dieser Umbau möglich macht:
 
@@ -448,8 +464,45 @@ Dazu zwei Prüfsteine, die erst dieser Umbau möglich macht:
   Kleinsignalverhalten ist unberührt. Gemessen: 2,66796875 und 1,02734375 —
   **auf die Stelle identisch** mit dem linearen Kern. Das ist der Test, an dem
   ein falsch aufgesetztes Newton sofort aufgefallen wäre.
-- **Kleinsignal bleibt linear.** Bei 1 % Aussteuerung 0,16 % Klirr gegen 41,97 %
+- **Kleinsignal bleibt linear.** Bei 1 % Aussteuerung 0,16 % Klirr gegen 47,61 %
   bei Vollaussteuerung.
+
+### Der Prüfstein, den ich nicht aufgeschrieben hatte — und der zugeschlagen hat
+
+Keiner der drei geplanten Prüfsteine misst **Faltung**. Ein breitbandiges `tanh`
+auf dem rohen Oszillator erzeugt Oberwellen weit über Nyquist, die zurückfalten,
+und im Grenzfall lauter als das Nutzsignal. Gemessen, mit `N` auch auf `u`:
+
+| f_c | Eingang | größte inharmonische Linie |
+|---:|---:|---:|
+| 300 Hz | 3011 Hz | −54,2 dB |
+| 300 Hz | 5011 Hz | −9,7 dB |
+| 200 Hz | 7011 Hz | **+44,3 dB** |
+
+Die Anregungsfrequenzen sind bewusst **nicht** bin-gerastet — Faltungsprodukte
+landen dann auf Nicht-Vielfachen der Grundwelle und sind als solche erkennbar.
+Dass es Faltung ist und kein Rauschen, zeigt die Gegenprobe bei 192 kHz: dort
+bricht dieselbe Linie auf −37,7 dB ein.
+
++44,3 dB heißt: die Faltung ist 165-mal lauter als das, was man hören will — und
+zwar genau im klassischen Acid-Bereich, hohe Note über tiefem Cutoff.
+
+**Die Lösung war kein Oversampling, sondern die richtige Topologie.** Mit der
+Begrenzung an der Knotenspannung statt am Eingangsstrom:
+
+| f_c | Eingang | vorher | nachher |
+|---:|---:|---:|---:|
+| 300 Hz | 3011 Hz | −54,2 dB | −107,3 dB |
+| 300 Hz | 5011 Hz | −9,7 dB | −86,7 dB |
+| 200 Hz | 7011 Hz | +44,3 dB | **−62,9 dB** |
+
+107 dB im schlimmsten Fall — und der Klirr **steigt** dabei (47,61 % statt
+41,97 % bei 300 Hz). Die Nichtlinearität ist also nicht schwächer geworden, sie
+sitzt am richtigen Ort. Das ist Regel 1 in Reinform: Wer die Topologie trifft,
+muss das Artefakt nicht nachträglich wegdämpfen.
+
+Als Prüfstein 7 im Messstand festgehalten, damit dieser Fehler nicht still
+zurückkommen kann.
 
 ### Korrektur am Messstand, nicht am Modell
 

@@ -1206,12 +1206,39 @@ processor AcidifyCore
         const float64 ladderDriveRef = 1089.8;   // (2,585 V / 220k) / (2*pi*33n*52m)
         let drive = ladderDriveRef / float64 (bounded);
 
-        // ALLE VIER Paare begrenzen, nicht nur das erste: Im Durchlassbereich
-        // fuehren sie denselben Signalstrom, also denselben Aussteuerungsgrad.
-        // Nur das Eingangspaar zu begrenzen unterschaetzte die Nichtlinearitaet
-        // um rund den Faktor vier. Der Massstab `drive` gilt fuer alle vier,
-        // weil alle am selben Steuerstrom haengen; dass C101 = 18 nF die
-        // vierte Ecke verschiebt, steckt in g4 und nicht in der Begrenzung.
+        // WO die Begrenzung sitzt — und wo NICHT.
+        //
+        // Die begrenzenden Bauteile sind die Diodenpaare ZWISCHEN den
+        // Kondensatorebenen. Jedes wird von der Spannung ueber sich getrieben,
+        // also von der bereits integrierten Knotenspannung, und reicht
+        // I_c * tanh(v/(2*Vt)) weiter. Deshalb steht N auf y1, y2, y3.
+        //
+        // Am Eingang steht KEINE Begrenzung. Der Zulauf ueber C17/R62 = 220 k
+        // ist eine Stromquelle; ein eingepraegter Strom wird von einem
+        // Diodenpaar nicht begrenzt, er laeuft in die Knotenkapazitaet und die
+        // Knotenspannung stellt sich ein. Begrenzt wird der Eingangsstrom
+        // trotzdem — y1 steigt, bis das erste Paar in die Saettigung geht — nur
+        // eben nicht augenblicklich auf dem breitbandigen Eingangssignal.
+        //
+        // Das war zuerst falsch herum gebaut (N auch auf u) und ist an einer
+        // Messung aufgeflogen: Ein breitbandiges tanh auf dem rohen Oszillator
+        // erzeugt Oberwellen bis weit ueber Nyquist, die zurueckfalten. Bei
+        // f_c = 200 Hz und 7011 Hz Eingang lag die groesste inharmonische Linie
+        // **+44,3 dB UEBER** dem Nutzsignal. Ohne die Eingangsbegrenzung sind es
+        // -62,9 dB — 107 dB besser, und der Klirr steigt dabei sogar leicht
+        // (47,6 % statt 42,0 % bei 300 Hz). Die Nichtlinearitaet ist also nicht
+        // schwaecher, sie sitzt nur am richtigen Ort. Kein Oversampling noetig.
+        //
+        // OFFEN: Stinchcombe nennt „at the top of the ladder a single pair of
+        // transistors ... which effectively act like a single diode in each
+        // arm" (sein d = 1). Ob der Ausgang durch dieses obere Paar laeuft und
+        // damit ein viertes Mal begrenzt wird, ist aus den vorliegenden Quellen
+        // nicht entschieden. Es traefe y4, also das am staerksten gefilterte
+        // Signal — Aliasing waere davon kaum zu erwarten.
+        //
+        // Der Massstab `drive` gilt fuer alle Paare, weil alle am selben
+        // Steuerstrom haengen; dass C101 = 18 nF die vierte Ecke verschiebt,
+        // steckt in g4 und nicht in der Begrenzung.
         //
         // Die Kette ist bei gegebenem u EXPLIZIT — G/S haben die Rueckwirkung
         // zwischen benachbarten Stufen bereits aufgeloest. Implizit bleibt nur
@@ -1242,9 +1269,8 @@ processor AcidifyCore
         var u = P / (1.0 + Q);
         for (wrap<2> newtonStep)
         {
-            let t0 = tanh (u * drive);
-            let y1i = ((t0 / drive) * gam1 + S2 + S1 * G2 - zdfS1) * alpha1 + zdfS1;
-            let d1i = alpha1 * gam1 * (1.0 - t0 * t0);
+            let y1i = (u * gam1 + S2 + S1 * G2 - zdfS1) * alpha1 + zdfS1;
+            let d1i = alpha1 * gam1;
 
             let t1 = tanh (y1i * drive);
             let y2i = (((t1 / drive) * gam2 + S3 + S2 * G3) * 0.5 - zdfS2) * alpha2 + zdfS2;
@@ -1261,7 +1287,7 @@ processor AcidifyCore
             u -= (u + A * y4i + R) / (1.0 + A * d4i);
         }
 
-        let in1 = tanh (u * drive) / drive * gam1 + S2 + S1 * G2;
+        let in1 = u * gam1 + S2 + S1 * G2;
         let v1 = (in1 - zdfS1) * alpha1;
         let y1 = v1 + zdfS1;
         zdfS1 += 2.0 * v1;

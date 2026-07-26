@@ -136,6 +136,33 @@ def measure(cutoff, knob, n=32768, rate=48000):
     return ir, rate
 
 
+def spectrum(cutoff, sigfreq, amp=1.0, knob=0.0, n=32768, rate=48000):
+    """Betragsspektrum des Kerns bei Sinusanregung. Gibt (Betraege, Bin, df)."""
+    os.makedirs(WORK, exist_ok=True)
+    b = round(sigfreq * n / rate)
+    src = (extract(RIG_SINE).replace("CUTOFF", f"{float(cutoff)}f")
+           .replace("RESK", f"{float(knob)}f").replace("AMP", f"{float(amp)}f")
+           .replace("SIGFREQ", f"{b * rate / n}"))
+    open(f"{WORK}/Sine.cmajor", "w").write(src)
+    json.dump({"CmajorVersion": 1, "ID": "com.acidify.hwsine", "version": "1.0",
+               "name": "HwSine", "source": ["Sine.cmajor"]},
+              open(f"{WORK}/HwSine.cmajorpatch", "w"))
+    r = subprocess.run([CMAJ, "render", f"--rate={rate}", f"--length={4 * n}",
+                        "--channels=1", "--blockSize=512", f"--output={WORK}/a.wav",
+                        f"{WORK}/HwSine.cmajorpatch"], capture_output=True, text=True)
+    if r.returncode != 0:
+        raise RuntimeError((r.stdout + r.stderr)[-1500:])
+    d = open(f"{WORK}/a.wav", "rb").read()
+    off = 12
+    while off + 8 <= len(d):
+        sz = struct.unpack("<I", d[off + 4:off + 8])[0]
+        if d[off:off + 4] == b"data":
+            break
+        off += 8 + sz + (sz & 1)
+    xs = list(struct.unpack(f"<{sz // 4}f", d[off + 8:off + 8 + sz]))[-n:]
+    return [abs(v) / (n / 2) for v in fft(xs)[:n // 2]], b, rate / n
+
+
 def measure_thd(cutoff, knob, amp, harmonics=8, n=16384, rate=48000):
     """Klirrspektrum des Kerns bei Sinusanregung.
 
@@ -311,6 +338,22 @@ def main():
     small, _ = measure_thd(300, 0.0, 0.01)
     check("Kleinsignal bleibt linear", small < 0.01 * thds[0],
           f"THD bei 1 % Aussteuerung {100 * small:.4f} % gegen {100 * thds[0]:.2f} %")
+
+    print("\n7. Die Saettigung faltet nicht (Nichtlinearitaet sitzt an der Knotenspannung)")
+    # Anregung bewusst NICHT bin-gerastet: Faltungsprodukte landen dann auf
+    # Frequenzen, die keine Vielfachen der Grundwelle sind, und sind als solche
+    # erkennbar. Mit N auch auf dem Eingangsstrom lag der schlimmste Fall hier
+    # bei +44,3 dB — die Faltung war lauter als das Nutzsignal.
+    worst = -999.0
+    for cut, f0 in ((300, 3011.0), (300, 5011.0), (200, 7011.0)):
+        mag, b, df = spectrum(cut, f0)
+        lo = int(20 / df)
+        m, i = max((mag[k], k) for k in range(lo, len(mag)) if k % b != 0)
+        rel = 20 * math.log10(m / mag[b])
+        worst = max(worst, rel)
+        print(f"     f_c {cut:4d} Hz, Eingang {f0:7.1f} Hz: "
+              f"groesste inharmonische Linie {rel:+7.1f} dB bei {i * df:8.1f} Hz")
+    check("keine Faltung ueber -40 dB", worst < -40.0, f"schlimmster Fall {worst:+.1f} dB")
 
     print()
     if FAILURES:

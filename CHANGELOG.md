@@ -43,11 +43,29 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
   frühere `vSat`-Versuch mit fester Schwelle gescheitert.
 - Prüfstein 6 im Messstand: Klirr gegen Eckfrequenz, gemessen mit Sinus bei
   `f_c/8`, damit über alle Eckfrequenzen dieselben Oberwellen im selben
-  relativen Abstand zur Flanke liegen. **41,97 % / 16,30 % / 6,47 %** bei
+  relativen Abstand zur Flanke liegen. **47,61 % / 17,34 % / 6,73 %** bei
   300 / 1000 / 2500 Hz, dazu 0,16 % bei 1 % Aussteuerung.
+- **Prüfstein 7: Faltung.** Anregung bewusst nicht bin-gerastet, damit
+  Faltungsprodukte als Nicht-Vielfache der Grundwelle erkennbar sind. Grenze
+  −40 dB, gemessen −107,3 / −86,7 / **−62,9 dB**.
 
 ### Fixed
 
+- **Die Begrenzung saß am falschen Ort und faltete.** `N` stand zunächst auch
+  auf dem Eingangsstrom `u`. Ein breitbandiges `tanh` auf dem rohen Oszillator
+  erzeugt Oberwellen weit über Nyquist: bei `f_c = 200 Hz` und 7011 Hz Eingang
+  lag die größte inharmonische Linie **+44,3 dB über dem Nutzsignal** — genau im
+  klassischen Acid-Bereich, hohe Note über tiefem Cutoff. Gegenprobe bei
+  192 kHz (−37,7 dB) belegt Faltung, nicht Rauschen.
+
+  Die begrenzenden Bauteile sind die Diodenpaare **zwischen** den
+  Kondensatorebenen, getrieben von der bereits integrierten Knotenspannung. Der
+  Zulauf über `C17`/`R62` ist dagegen eine **Stromquelle** — ein eingeprägter
+  Strom wird von einem Diodenpaar nicht begrenzt. Mit `N` nur auf `y1`, `y2`,
+  `y3`: **−107,3 / −86,7 / −62,9 dB**, also bis zu 107 dB besser, während der
+  Klirr sogar **steigt** (47,61 % statt 41,97 % bei 300 Hz). Die
+  Nichtlinearität ist nicht schwächer, sie sitzt am richtigen Ort — kein
+  Oversampling nötig.
 - `oscillates()` im Messstand prüfte auf **Divergenz** — etwas, das ein Kern mit
   Sättigung per Konstruktion nicht zeigt. Bei 8 kHz und `k = 8·kMax` lief eine
   stehende Schwingung mit konstantem RMS 0,716 durch und wurde als „klingt ab"
