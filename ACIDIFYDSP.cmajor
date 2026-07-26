@@ -315,14 +315,16 @@ processor AcidifyCore
     {
         let rate = max (float64 (sampleRate), 1.0);
 
-        // Open303's 200 Hz Butterworth de-clicker for the VCA control signal.
-        let ampK = tan (float64 (pi) * 200.0 / rate);
-        let ampNorm = 1.0 / (1.0 + ampK / 0.7071067811865476 + ampK * ampK);
-        ampB0 = ampK * ampK * ampNorm;
-        ampB1 = 2.0 * ampB0;
-        ampB2 = ampB0;
-        ampA1 = 2.0 * (ampK * ampK - 1.0) * ampNorm;
-        ampA2 = (1.0 - ampK / 0.7071067811865476 + ampK * ampK) * ampNorm;
+        // VCA-Steuerglaettung aus der Schaltung: Q32 laedt C42 = 1 uF ueber
+        // R132 = 100 Ohm. tau = 100 us -> 1591,5 Hz, einpolig.
+        // Open303 stand hier mit einem 200-Hz-Butterworth zweiter Ordnung —
+        // ein Entklicker als Platzhalter fuer genau dieses RC-Glied, rund
+        // achtfach zu langsam und von falscher Ordnung.
+        ampB0 = 1.0 - exp (-float64 (twoPi) * 1591.5 / rate);
+        ampA1 = -(1.0 - ampB0);
+        ampB1 = 0.0;
+        ampB2 = 0.0;
+        ampA2 = 0.0;
     }
 
     void updateMackityCoefficients (float sampleRate)
