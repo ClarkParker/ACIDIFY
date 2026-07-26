@@ -6,6 +6,43 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-26
+
+### Changed
+
+- **Resonanzkompensation** sitzt jetzt als zweiter Summenzweig am VCA-Eingang
+  statt als Verstärkung im Filter. Gewichtung `1 + 2,2·r` aus `R121 = 220 kΩ`
+  (festes Potiende) und `R122 = 100 kΩ` (Schleifer), beide am Schaltplan
+  verfolgt. Open303s cutoff-abhängiges Makeup ist entfallen — feste
+  Widerstände können diese Abhängigkeit nicht haben.
+- **VCA** rechnet die BA662A-OTA-Kennlinie `tanh(v/(2·Vt))` statt zu
+  multiplizieren.
+- **Filterkern** ist die topologiehergeleitete Diodenleiter (ZDF/TPT) mit den
+  Schaltplan-Kondensatoren 33/33/33/**18** nF; Resonanz linear über den
+  Reglerweg, weil VR4 ein B-Poti ist. Ersetzt den Open303-Polynomfit.
+- **Koppelnetz** aus Stinchcombes vollständiger Übertragungsfunktion
+  hergeleitet: fünf Pole, fünf Nullstellen. Ersetzt Allpass, Notch und
+  Hochpass des gebündelten Open303-Netzes. Bei 8 Hz waren das 21 dB.
+- **Accent-Sweep** rechnet mit dem belegten 50-kΩ-Poti statt 100 kΩ
+  (Devil-Fish-Handbuch S. 28 und x0xb0x-Stückliste).
+
+### Fixed
+
+- Vier Stellen der Filterdokumentation galten für vier gleiche 33-nF-Stufen,
+  wurden aber für die Schaltplanwerte zitiert: Resonanztabelle,
+  Anschwinggrenze (17,0 statt ~19,5), Steilheitstabelle und der daraus
+  abgeleitete Kalibrierpunkt.
+
+### Known
+
+- Das Koppelnetz liegt hinter dem Kern, nicht in der Resonanzschleife. Damit
+  fehlen die 8-Hz-Spitze und die Frequenzabhängigkeit der Anschwinggrenze;
+  beide sind auf dieselbe Ursache zurückgeführt und in `docs/DSP_AUDIT.md`
+  mit Messwerten belegt.
+- `otaDrive` ist die einzige ungestützte Konstante im VCA und als solche
+  markiert.
+
+
 ### Added
 
 - CI-Workflow mit Preflight, Manifestprüfung, `node --check`, UI-Rauchtest in
