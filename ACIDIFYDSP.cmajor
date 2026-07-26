@@ -1750,10 +1750,14 @@ processor AcidifyCore
                 //
                 // Der Accent dagegen speist ueber D35/R133 = 2,2 k in den
                 // Q31-Knoten (R131 = 220 k traegt die Huellkurve). Die
-                // Stromquellen-Hypothese fuer Q36 ist am Schaltbild WIDERLEGT:
-                // Emitter direkt an +12 V, R145 haengt am Kollektor, C72
-                // stuetzt die Basis gegen die Schiene. Wohin R145 fuehrt, geben
-                // die Quellen nicht her — 4.0 bleibt der eine gefittete Wert.
+                // Stromquellen-Hypothese fuer Q36 ist am Schaltbild WIDERLEGT
+                // (Emitter direkt an +12 V, R145 am Kollektor), und ein
+                // oeffentliches Netz existiert nicht (EAGLE: nur Werte;
+                // RE-303: "no schematic, no netlist"). Die 4.0 kommt aus
+                // Open303 — rosic_Open303.h: (0.45 + 4*accentGain)*mainEnvOut —
+                // und ist dort gegen Aufnahmen eines echten 303 kalibriert.
+                // Damit gilt derselbe Status wie fuer squareDuty: gemessene
+                // Hardware schlaegt geschaetzte Schaltung. BEWUSST BEHALTEN.
                 ampControl += 4.0f * accentVcaRC;
             }
             else

@@ -54,8 +54,8 @@ benanntem Grund:
 
 | Konstante | Grund |
 |---|---|
-| `4.0f` Accent-Anteil | Leitwertverhältnis am Knoten ist 220/2,2 = 100, aber der Pegel der Accent-Quelle ist unbelegt und `accentVcaRC` normiert |
-| `2.0f` + `otaDrive` | gemeinsam **eine** Unbekannte: der Spannungsmassstab. Braucht eine Pegelmessung am Gerät |
+| `4.0f` Accent-Anteil | **bewusst behalten** — aus Open303 (`(0.45 + 4*accentGain)*mainEnvOut`), dort gegen Aufnahmen eines echten 303 kalibriert. Schaltungsherleitung öffentlich nicht möglich: Q36-Stromquellen-Hypothese am Schaltbild widerlegt, EAGLE-Quelle gibt nur Werte, RE-303 hat kein Netz |
+| ~~`2.0f` + `otaDrive`~~ | **erledigt** — `2.0f` entfallen (Stinchcombe `L(0)=1`, Durchlass 1,06), `otaDrive = 0,4971` aus dem belegten VCO-Hub abgeleitet |
 | VCO-Rechteckschwelle | **bewusst behalten** — an einem echten 303 gemessen, kein Modellkompromiss |
 
 Die Abschnitte „Die Lücken im Einzelnen" darunter beschreiben den Stand **vor**
@@ -148,8 +148,9 @@ Ehrlichkeitshalber getrennt geführt:
   habe ich noch nicht vollständig zugeordnet.
 - **VCO-Topologie** im Detail — Sägezahnkern und Rechteckableitung.
 - ~~**VCA-Topologie.**~~ Erledigt: Werte und Summenknoten stehen unter
-  „Aus dem x0xb0x abgelesen". **Offen bleibt allein die Zuordnung**, welcher der
-  beiden Zweige „from Filter" und welcher „from Reso. Comp." führt.
+  „Aus dem x0xb0x abgelesen". ~~Offen bleibt allein die Zuordnung~~ **Erledigt**
+  (`tools/bench/nettrace.py`): `R121 = 220 k` am festen Ende von VR4,
+  `R122 = 100 k` am Schleifer.
 - **Ausgangsübertrager.** Weder bestätigt noch widerlegt. Ein DAC existiert im
   303, erzeugt aber die Pitch-Steuerspannung (1–5 V), nicht Audio — der
   Audioweg ist durchgehend analog.
@@ -505,10 +506,11 @@ halbiert. Der Endwert steigt aus demselben Grund mit.
 Die Resonanzabhängigkeit der Ladezeit bleibt erhalten — sie fällt weiter aus
 der Knotenanalyse an und ist nicht angekoppelt.
 
-**Unverändert, weil unbelegt:** der `100 kΩ`-Summenwiderstand (`gMix`) stammt
-ebenfalls von der 303-unique-Seite und ist bisher aus keiner zweiten Quelle
-bestätigt. Er bleibt stehen, bis ein Beleg vorliegt — eine Anpassung „weil das
-andere sich auch geändert hat" wäre Anpassen ohne Quelle.
+**Inzwischen zweitbelegt:** Der `100 kΩ`-Summenwiderstand (`gMix`) von der
+303-unique-Seite hat eine zweite Quelle. Die x0x-VCF-Mods-Seite nennt
+„R71/R72/Q10-base, the summing point for the filter frequency control voltage
+input", und die EAGLE-Quelldatei führt dort `R72 = 100K` (daneben `R73 = 100K`).
+Bestätigung auf Wertebene; die Zuordnung R72 folgt aus der Nachbarschaft.
 
 Quelle: Robin Whittle, *Devil Fish Manual*, S. 28. Das Handbuch beschreibt im
 Übrigen einen **Mod**; für den Serienstand gilt es nur dort, wo es
@@ -612,7 +614,9 @@ Fehler nur.
 Die 2,5 kHz sind damit eine **belegte Randbedingung**, an der sich die
 Neuherleitung der Cutoff-Abbildung messen lassen muss — nicht eine Konstante,
 die man einzeln austauscht. Das untere Ende der Reglerspanne ist in keiner
-Quelle genannt; `313,8 Hz` bleibt unbelegt.
+Quelle genannt. **Inzwischen erledigt:** Seit der Neuherleitung ist das untere
+Ende keine eigene Konstante mehr — es fällt aus `2500 Hz` (belegt) minus
+`3 Oktaven` (hergeleitet, identische Injektionsnetze) als `312,5 Hz` ab.
 
 
 ---

@@ -177,6 +177,12 @@ gilt `Parameter ≈ Spitze × 1,61`.
 
 ## Was noch offen ist
 
+> **Stand 1.0.0: alle sechs Punkte erledigt.** Einbau + Kalibrierung (0.8.0),
+> Hüllkurve/Env Mod/Accent-Sweep (0.9.0–0.11.0), Pegel aus `L(0) = 1`
+> hergeleitet, Diodensättigung an allen vier Paaren, Koppelnetz exakt als
+> Stinchcombes `C(s)` (0,0001 dB), Anschwinggrenze frequenzabhängig gemessen
+> (2,67 / 1,03 bei 150 Hz / 8 kHz). Die Liste bleibt als damaliger Plan stehen.
+
 Das ist ein geprüfter Filterkern, keine fertige Emulation. Offen:
 
 - Einbau mit Neukalibrierung von Cutoff- und Resonanzabbildung

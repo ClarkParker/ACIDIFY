@@ -764,7 +764,11 @@ VCO-Rechteckschwelle und der Aufräumfaktor `2.0f`.
 > Bild (`nettrace.py`) — bewusst nicht weiterverfolgt, weil der Aufwand in
 > keinem Verhältnis zum Ertrag einer einzelnen Accent-Lautstärke steht.
 
-**`0.45` und `4.0` bleiben offen**, weil nicht geklärt ist, ob `Q36` — die
-Quelle hinter `D35`/`R133` — vom Gate oder vom Accent getrieben wird. Ohne das
-ist nicht entscheidbar, welcher der beiden Terme an `R133 = 2,2 k` hängt.
-Verfolgt ist der Weg bis `Q36` über `R145 = 10 k`.
+~~**`0.45` und `4.0` bleiben offen**~~ **Beide geschlossen.** `0.45` ist
+entfallen (kein MEG-Pfad zum VCA-Steuerknoten, siehe 1.0.0-rc1). `4.0` ist
+**bewusst behalten** mit belegter Herkunft: Open303, `rosic_Open303.h`,
+`ampEnvOut += (0.45 + 4*accentGain) * mainEnvOut` — dort gegen Aufnahmen eines
+echten 303 kalibriert, derselbe Status wie die VCO-Rechteckschwelle. Eine
+Schaltungsherleitung ist öffentlich nicht möglich: Q36-Stromquellen-Hypothese
+am Schaltbild widerlegt (Emitter direkt an +12 V, `R145` am Kollektor), die
+EAGLE-Quelle gibt nur Werte, das RE-303 hat kein veröffentlichtes Netz.

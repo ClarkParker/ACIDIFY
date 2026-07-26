@@ -8,8 +8,11 @@ Alle Prüfungen gelaufen: `smoke_test` 0,34552, Matrix 11/11, Artikulation,
 Transport 12/12, `hardware_checks` **11/11** (neu: Klirr-gegen-Cutoff,
 Kleinsignal, Faltung < −40 dB), `partcheck` 28/28. Anschwinggrenze durch den
 gesamten Umbau unverändert: 2,66796875 / 1,02734375 bei 150 Hz / 8 kHz.
-Offen bleiben zwei Konstanten (`4.0` Accent, VCO-Rechteckschwelle absichtlich)
-und der Abgleich gegen ein echtes Gerät.
+Beide verbliebenen Konstanten sind **bewusst behalten** mit belegter Herkunft
+(`4.0` Accent und VCO-Rechteckschwelle, beide aus Open303 = Messung/Kalibrierung
+an echter Hardware; Schaltungsherleitung der Accent-Quelle nachweislich nicht
+möglich, kein öffentliches Netz). Offen bleibt allein der Abgleich gegen ein
+echtes Gerät.
 
 ---
 
