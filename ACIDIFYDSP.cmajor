@@ -599,7 +599,16 @@ processor AcidifyCore
 
     void updateDecayMapping()
     {
-        normalDecayMs = 200.0f * float (pow (10.0, float64 (clamp (decayControl, 0.0f, 1.0f))));
+        // Schaltplan, ENV-Block: die Kurve ist mit „10 V = 100 %" am Anfang und
+        // „10 %" bei T beschriftet, dazu „DECAY VR MAX T = 2.5 sec, MIN T = 200 ms".
+        // T ist damit die Zeit bis auf ein Zehntel, nicht die Zeitkonstante —
+        // tau = T / ln(10). VR6 ist ein 1-M-Log-Poti, die Kennlinie bleibt
+        // exponentiell.
+        //
+        // Der bisherige Wert setzte T direkt als tau ein und lief damit am
+        // kurzen Ende 2,3-fach zu lang (461 ms statt 200 ms bis 10 %).
+        let tenPercentMs = 200.0f * float (pow (12.5, float64 (clamp (decayControl, 0.0f, 1.0f))));
+        normalDecayMs = tenPercentMs / float (log (10.0));
         cachedRate = 0.0f;
     }
 
