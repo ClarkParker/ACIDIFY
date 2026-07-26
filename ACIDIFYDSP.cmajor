@@ -592,9 +592,11 @@ processor AcidifyCore
 
     void updateResonanceMapping()
     {
-        let r = clamp (resonanceControl, 0.0f, 1.0f);
-        resonanceSkewedTarget = (1.0f - float (exp (-3.0 * float64 (r))))
-                              / (1.0f - float (exp (-3.0)));
+        // VR4 ist im Schaltplan ein 50-k-Poti mit B-Kennlinie, also linear.
+        // Die gefuehlte Kruemmung entsteht in der Schaltung, nicht am Regler.
+        // resonanceSkewed ist damit die mechanische Schleiferstellung — genau
+        // das, was processAccentSweep als Potiposition braucht.
+        resonanceSkewedTarget = clamp (resonanceControl, 0.0f, 1.0f);
     }
 
     void updateDecayMapping()

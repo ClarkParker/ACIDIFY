@@ -158,3 +158,32 @@ Das ist ein geprüfter Filterkern, keine fertige Emulation. Offen:
 
 Vor dem Einbau gilt: Jede dieser Änderungen braucht einen Test, der sie
 widerlegen könnte — nicht einen, der sie bestätigt.
+
+---
+
+## Einbauversuch — gescheitert an der Pegelstaffelung
+
+Der Kern wurde eingebaut und wieder zurückgenommen. Was dabei herauskam:
+
+**Was funktionierte.** Kompiliert, über den ganzen Resonanzweg stabil, kein
+Anschwingen bei k = 16,8. Und die Resonanz wirkt endlich durchgehend — der
+spektrale Schwerpunkt läuft 214 → 422 → 572 → 614 Hz über den Reglerweg,
+während der Polynomfit bei 457 → 516 → 523 Hz oben feststeckt.
+
+**Woran es scheiterte.** Die Rückkopplung senkt den Durchlassbereich zwischen
+k = 0 und k = 16,8 um **25 dB**; gemessen folgt das der Form 1/(1+k). Meine
+erste Kompensation `(1 + k·Γ)` griff nicht, weil `Γ = G1·G2·G3·G4` bei diesen
+Eckfrequenzen in der Größenordnung 10⁻⁵ liegt — der Einbruch kommt nicht aus
+`alpha0`, sondern aus der Schleifenverstärkung. Mit `(1 + k)` stimmt der
+Durchlassbereich, aber die Resonanzspitze wächst mit: Spitzenpegel 2,65,
+`dsp_matrix_test` meldet „unsafe processed peak".
+
+**Warum nicht einfach ein Faktor davor.** Weil das Anpassen an die Testschwelle
+wäre, nicht an die Schaltung. Der Schaltplan zeigt für dieses Problem einen
+eigenen Zweig — „Reso. Comp." vom Filter an den VCA. Die Kompensation gehört
+also nicht in den Filter, sondern in die Pegelstaffelung dahinter, und dafür
+muss die Ausgangsstufe mitgeplant werden.
+
+**Nächster Schritt.** Reso.-Comp.-Zweig als eigene Stufe zwischen Filter und
+VCA aufbauen, wie im Plan, und die Ausgangsstaffelung dazu neu rechnen. Der
+Kern selbst braucht keine Änderung — er ist gemessen und stabil.
