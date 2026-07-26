@@ -748,6 +748,22 @@ VCO-Rechteckschwelle und der Aufräumfaktor `2.0f`.
 > VCO-Rechteckschwelle, die **absichtlich** bleibt: sie stammt aus einer Messung
 > an einem echten 303, und gemessene Hardware schlägt geschätzte Schaltung.
 
+> **Nachtrag zu `4.0` — enger eingekreist, noch nicht zu.** Aus der
+> EAGLE-Quelle bestätigt: `Q36 = 2SA733P`, also ein **PNP** — das stützt die
+> Lesart „Emitter Richtung +12 V, über den 4066 geschaltete Stromquelle".
+> Ebenfalls bestätigt: `R142 = R143 = 10 kΩ` (ein **symmetrischer** Teiler, also
+> eine feste Referenz auf der halben Betriebsspannung), `R145 = 10 kΩ`,
+> `C72 = 10 µF` als Stützkondensator, `R133 = 2,2 kΩ`, `R131 = 220 kΩ`.
+>
+> **Was genau noch fehlt**, ist eine einzige Verbindungsaussage: ob `R145` der
+> **Emitterwiderstand** von `Q36` ist und worauf der Teiler `R142`/`R143`
+> bezogen ist. Erst damit steht der Accent-Strom fest und `4.0` fällt aus dem
+> Verhältnis zum Hüllkurvenzweig über `R131` ab. Die Bauteilwerte sind alle
+> gelesen; die EAGLE-Binärdatei gibt **Werte**, aber keine **Netze** her, und
+> die TB-303-PDF-Scans haben keine Textebene. Es bleibt also Netzverfolgung im
+> Bild (`nettrace.py`) — bewusst nicht weiterverfolgt, weil der Aufwand in
+> keinem Verhältnis zum Ertrag einer einzelnen Accent-Lautstärke steht.
+
 **`0.45` und `4.0` bleiben offen**, weil nicht geklärt ist, ob `Q36` — die
 Quelle hinter `D35`/`R133` — vom Gate oder vom Accent getrieben wird. Ohne das
 ist nicht entscheidbar, welcher der beiden Terme an `R133 = 2,2 k` hängt.
