@@ -558,3 +558,37 @@ Beides ohne getrimmte Zahl: `kMax = 18,7/1,06` stammt aus Stinchcombes
 Übertragungsfunktion, nicht aus einer Anpassung an dieses Ergebnis. Der Test
 hätte scheitern können — eine Reserve von 2,7 % am oberen Ende war nicht
 vorhersagbar, sie ist herausgekommen.
+
+---
+
+## Stand nach dem Schleifenumbau — Steilheit und Reglerweg
+
+**Steilheit ohne Resonanz, Eckfrequenz 1000 Hz:**
+
+| Bereich | 1→2 kHz | 2→4 kHz | 4→8 kHz |
+|---|---:|---:|---:|
+| dB/Okt | −12,72 | −17,71 | −21,69 |
+
+Steigend über der Frequenz, asymptotisch gegen 24 — und im Mittel über die drei
+Oktaven rund −17,4 dB/Okt. Das ist Stinchcombes „vierpolig, verhält sich aber
+über weite Teile des Hörbereichs wie 18 dB/Okt", näher daran als der blanke Kern
+vor dem Umbau.
+
+**Resonanz über den Reglerweg** (Spitze gegen 250-Hz-Bezug, Eckfrequenz 1000 Hz):
+
+| Regler | 0,0 | 0,2 | 0,4 | 0,6 | 0,8 | 1,0 |
+|---|---:|---:|---:|---:|---:|---:|
+| Spitze | +3,63 dB | +0,24 | +3,47 | +7,56 | +12,48 | **+19,80** |
+| bei | 97 Hz | 415 Hz | 754 Hz | 932 Hz | 1053 Hz | 1146 Hz |
+| Zuwachs | — | — | +3,24 | +4,08 | +4,92 | **+7,31** |
+
+Monoton ab Reglerstellung 0,2, und die Zuwächse **wachsen** zum Anschlag hin.
+Das obere Reglerdrittel bringt hier +12,2 dB; im Polynomfit von 0.7.2 waren es
+2,6 dB. Der Befund „oberes Reglerdrittel funktionslos" aus `REVIEW_0.4.0.md`
+ist damit erledigt.
+
+Die Spitze wandert über den Reglerweg von 415 auf 1146 Hz — die Polbewegung der
+Diodenleiter, die aus der fehlenden Entkopplung folgt.
+
+Die Zeile bei Reglerstellung 0,0 (+3,63 dB bei 97 Hz) ist **keine** Resonanz,
+sondern der Tieftonverlauf des Koppelnetzes.
