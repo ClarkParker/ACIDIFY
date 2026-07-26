@@ -184,6 +184,48 @@ eigenen Zweig — „Reso. Comp." vom Filter an den VCA. Die Kompensation gehör
 also nicht in den Filter, sondern in die Pegelstaffelung dahinter, und dafür
 muss die Ausgangsstufe mitgeplant werden.
 
-**Nächster Schritt.** Reso.-Comp.-Zweig als eigene Stufe zwischen Filter und
-VCA aufbauen, wie im Plan, und die Ausgangsstaffelung dazu neu rechnen. Der
-Kern selbst braucht keine Änderung — er ist gemessen und stabil.
+### Zweiter Anlauf: Diodensättigung — löst es auch nicht
+
+Vermutung war, der Pegel sei kein Verstärkungsproblem, sondern die fehlende
+Nichtlinearität: In der Schaltung begrenzen die Leiterdioden die Resonanz
+selbst. Also `tanh` in den Rückkopplungszweig, mit einer Sättigungsschwelle
+`vSat` als freiem Parameter, und die Kompensation weggelassen.
+
+Gemessen über `vSat`, Peak und Schwerpunkt bei Resonanz 0 / 0,5 / 1,0:
+
+| vSat | Peak | Schwerpunkt |
+|---:|---|---|
+| 1,0 | 0,64 / 0,33 / 0,34 | 214 → 355 → 391 Hz |
+| 2,5 | 0,64 / 0,19 / 0,14 | 214 → 413 → 579 Hz |
+| 5,0 | 0,64 / 0,18 / 0,12 | 214 → 420 → 605 Hz |
+| 20,0 | 0,64 / 0,17 / 0,12 | 214 → 422 → 613 Hz |
+
+**Das Ergebnis widerlegt die Vermutung.** Bei kleiner Schwelle erstickt die
+Sättigung die Resonanz (391 Hz statt 613), bei großer ist sie praktisch
+linear und der Pegel fällt unverändert auf 0,12. Es gibt keine Stellung, bei
+der sie beides tut. Sättigung und Durchlassbereichsverlust sind **zwei
+getrennte Effekte** — ich hatte sie als einen behandelt.
+
+Damit stünden zwei freie Parameter zur Verfügung, `vSat` und ein
+Kompensationsfaktor, die sich gegeneinander auf die Testschwelle tunen
+ließen. Das wäre wieder Anpassen an das Messergebnis. Deshalb erneut
+zurückgenommen.
+
+### Was tatsächlich fehlt
+
+Der Durchlassbereichsverlust von 25 dB bei hoher Resonanz ist physikalisch
+echt — Gegenkopplung senkt den Durchlassbereich, und ein 303 dünnt bei hoher
+Resonanz hörbar aus. Die Frage ist nicht **ob** kompensiert wird, sondern
+**wie viel**, und das steht in der Schaltung.
+
+Im Plan führen zwei Zweige an den VCA: `C49 = 10 nF` beschriftet „from Filter"
+und `C76` mit `R100 = 10 nF` beschriftet „from Reso. Comp.". Die Kompensation
+ist dort also kein Faktor auf das Audiosignal, sondern ein **zweiter
+Summenzweig in die VCA-Steuerung** — eine andere Architektur als die, die ich
+angenommen hatte.
+
+**Nächster Schritt.** Die Bauteilwerte um `R100`/`C76` und den zugehörigen
+Verstärker vollständig ablesen und den Zweig als eigene Stufe in die
+VCA-Ansteuerung bauen, statt als Verstärkung in den Filter. Erst dann kann der
+Kern eingesetzt werden. Er selbst ist gemessen und stabil und braucht keine
+Änderung.
