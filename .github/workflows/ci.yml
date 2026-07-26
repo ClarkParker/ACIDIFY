@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CMAJOR_VERSION: "1.0.3175"
+  DEVKIT_REF: "main"
+
+jobs:
+  static-checks:
+    name: Static checks (preflight, manifest, UI syntax)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out the Amorph dev kit (tooling)
+        uses: actions/checkout@v4
+        with:
+          repository: ClarkParker/Amorph_DEV_KIt
+          ref: ${{ env.DEVKIT_REF }}
+          path: devkit
+
+      - name: Preflight (strict)
+        run: python3 devkit/tools/preflight.py . --strict
+
+      - name: Validate the manifest (strict)
+        run: python3 devkit/tools/manifest_check.py . --strict
+
+      - name: UI file is a valid ES module
+        run: node --check ACIDIFYUI.js
+
+  ui-smoke-test:
+    name: UI smoke test (headless Chromium)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Playwright + Chromium
+        run: |
+          npm install --no-save --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+
+      - name: Render and exercise the real web component
+        run: node tools/ui_smoke_test.mjs
+
+  dsp-smoke-test:
+    name: Compile and render with the real cmaj compiler
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download cmaj ${{ env.CMAJOR_VERSION }}
+        run: |
+          curl -sLO "https://github.com/cmajor-lang/cmajor/releases/download/${CMAJOR_VERSION}/cmajor.linux.x64.zip"
+          unzip -q cmajor.linux.x64.zip -d cmaj-bin
+          chmod +x cmaj-bin/linux/x64/cmaj
+
+      - name: Make cmaj run headless (stub GUI libs)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libsoup2.4-1 libjack-jackd2-0
+          # The compile/render path never calls WebKit; stub the sonames it links.
+          readelf --dyn-syms -W cmaj-bin/linux/x64/cmaj \
+            | awk '$7=="UND"{print $8}' \
+            | grep -E '^(webkit_|jsc_|soup_)' | sed 's/@.*//' | sort -u \
+            | sed 's/.*/void* &(void){return 0;}/' > stub.c
+          gcc -shared -fPIC -o stub_webkit.so stub.c
+          sudo cp stub_webkit.so /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.0.so.37
+          sudo cp stub_webkit.so /usr/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.0.so.18
+          sudo ldconfig
+          cmaj-bin/linux/x64/cmaj version
+
+      - name: Generate C++ from the patch
+        run: cmaj-bin/linux/x64/cmaj generate --target=cpp --output=/dev/null ACIDIFY.cmajorpatch
+
+      - name: Render an accented C2 note at every supported rate
+        run: |
+          set -e
+          for rate in 44100 48000 88200 96000 176400 192000; do
+            node tools/smoke_test.mjs cmaj-bin/linux/x64/cmaj "$rate"
+          done

@@ -22,6 +22,7 @@ Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 - `mockup/preview.html` – lokaler UI-Preview-Host
 - `tools/render_mockup.mjs` – rendert den Preview als PNG
 - `tools/ui_smoke_test.mjs` – prüft Controls, Interaktionen und Skalierung
+- `tools/smoke_test.mjs` – rendert eine akzentuierte C2-Note und prüft das Audio
 - `tools/check_version.py` – prüft konsistente Versionsmetadaten
 
 ## Versionierung
@@ -33,14 +34,32 @@ sein und mit README sowie Validierungsdokument übereinstimmen. Die Prüfung
 Request über GitHub Actions. Der vollständige Ablauf steht in
 [docs/VERSIONING.md](docs/VERSIONING.md).
 
+## Continuous Integration
+
+Zwei Workflows laufen bei jedem Push und Pull Request:
+
+- `.github/workflows/versioning.yml` – Versionsmetadaten und Changelog-Links,
+- `.github/workflows/ci.yml` – Preflight und Manifestprüfung mit dem Dev-Kit,
+  `node --check` der UI, der UI-Rauchtest in headless Chromium sowie C++-Codegen
+  und MIDI-Render mit dem echten `cmaj`-Compiler über alle sechs Samplerates.
+
 ## Start
 
 In Amorph `ACIDIFY.cmajorpatch` öffnen und kompilieren. Alternativ:
 
 ```bash
-python3 ../Amorph_DEV_KIt/tools/preflight.py .
+python3 ../Amorph_DEV_KIt/tools/preflight.py . --strict
 cmaj generate --target=cpp --output=/dev/null ACIDIFY.cmajorpatch
 node tools/smoke_test.mjs /path/to/cmaj 48000
+node tools/ui_smoke_test.mjs
+```
+
+Der UI-Rauchtest benötigt Playwright. Ist kein von Playwright mitgeliefertes
+Chromium vorhanden, zeigt `ACIDIFY_CHROMIUM_PATH` auf ein vorhandenes Binary:
+
+```bash
+npm install playwright
+ACIDIFY_CHROMIUM_PATH=/pfad/zu/chrome node tools/ui_smoke_test.mjs
 ```
 
 MIDI-Noten spielen den Synth direkt. Velocity ab 100 aktiviert Accent. Überlappende

@@ -6,6 +6,22 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Added
+
+- CI-Workflow mit Preflight, Manifestprüfung, `node --check`, UI-Rauchtest in
+  headless Chromium sowie C++-Codegen und MIDI-Render über alle sechs Samplerates.
+- `tools/check_version.py` prüft zusätzlich, dass jede veröffentlichte Version
+  eine Commit-Linkdefinition im Changelog besitzt.
+
+### Fixed
+
+- Fehlender Commit-Link für 0.4.0 im Changelog ergänzt.
+- Versionsprüfung läuft jetzt tatsächlich bei jedem Push, nicht nur auf `main`.
+- `docs/VALIDATION.md`: Audiozahlen für 0.4.0 neu gemessen; die Notiz zur
+  angeblichen Unwiederholbarkeit oberhalb von 48 kHz durch die tatsächlich
+  beobachteten Renderer-Eigenschaften ersetzt.
+- README ergänzt um `tools/smoke_test.mjs` und `ACIDIFY_CHROMIUM_PATH`.
+
 ## [0.4.0] - 2026-07-25
 
 ### Added
@@ -73,6 +89,7 @@ vollständigen Repository-Commit. `0.2.0` führte den modernen Studio-Workflow
 ein. Sie werden hier ausdrücklich als historische Vorstufen festgehalten,
 besitzen aber keinen eigenen Commit-Anker im Repository.
 
+[0.4.0]: https://github.com/ClarkParker/ACIDIFY/commit/cd309ef5b4f527619a30ea19bfe8b9b6beef47b4
 [0.3.0]: https://github.com/ClarkParker/ACIDIFY/commit/ff2457e8288ed165a55c121fb63e8c30ad5abfca
 [0.2.3]: https://github.com/ClarkParker/ACIDIFY/commit/0ed21fcaa3684815db23c9a3761a4aa10fc2d9c3
 [0.2.2]: https://github.com/ClarkParker/ACIDIFY/commit/d4b20a284f6d88064784058c76fcaccd997647ca

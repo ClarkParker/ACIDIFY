@@ -27,9 +27,16 @@
 | Studio-Undo, Copy/Paste, Batch-Transpose und Batch-Rest | bestanden |
 | Studio-Tastaturkürzel und temporäres Reglerfeedback | bestanden |
 | Responsive UI-Skalierung (590 × 290 px) | bestanden |
-| Cmajor 1.0.3175 C++-Codegen | in 0.2.1 bestanden; DSP in 0.3.0 unverändert |
-| MIDI→Stereo Render 44,1 kHz | 0.2.1: Peak 0,45522; RMS 0,11637; DSP unverändert |
-| MIDI→Stereo Render 48 kHz | 0.2.1: Peak 0,44916; RMS 0,14604; DSP unverändert |
+| Cmajor 1.0.3175 C++-Codegen | in 0.4.0 erneut ausgeführt, bestanden |
+| Manifestprüfung `manifest_check.py --strict` | bestanden |
+| MIDI→Stereo Render 44,1 kHz | Peak 0,45522; RMS 0,11637 |
+| MIDI→Stereo Render 48 kHz | Peak 0,44916; RMS 0,14604 |
+| MIDI→Stereo Render 88,2 kHz | Peak 0,43836; RMS 0,12477 |
+| MIDI→Stereo Render 96 kHz | Peak 0,43773; RMS 0,12552 |
+| MIDI→Stereo Render 176,4 kHz | Peak 0,44083; RMS 0,12874 |
+| MIDI→Stereo Render 192 kHz | Peak 0,44119; RMS 0,15497 |
+| Wiederholbarkeit der Renders | je drei Läufe bei 48/96/192 kHz, identische Werte |
+| Note-Off-Freigabe (renderer­unabhängig) | bei 44,1/48/96/192 kHz bestanden |
 
 Der Rauchtest rendert eine akzentuierte C2-Note für zwei Viertelnoten, prüft
 Stereoformat, endliche Samples, Nicht-Stille und Full-Scale-Sicherheit.
@@ -46,20 +53,34 @@ Master-Bucht und Volume-Ring sowie Step-Gruppen, Classic-Modulen und den
 überlagerten Keyboard-Tasten. Damit können weder geprägte Linien noch
 Nachbarbereiche bei nativer Größe in Bedienelemente laufen.
 
-0.4.0 verändert ausschließlich UI, Manifestversion, Mockups und Dokumentation.
-`ACIDIFYDSP.cmajor` ist gegenüber dem bereits
-kompilierten und gerenderten Stand 0.2.1 unverändert. Ein erneuter Compilerlauf war in der
-aktuellen Umgebung nicht möglich, weil der bereitgestellten Cmajor-Binärdatei
-`libwebkit2gtk-4.0.so.37` und `libjavascriptcoregtk-4.0.so.18` fehlen; deshalb
-werden die Audiozahlen oben ausdrücklich als 0.2.1-Nachweis geführt.
+0.4.0 verändert ausschließlich UI, Manifestversion, Mockups und Dokumentation;
+`ACIDIFYDSP.cmajor` ist gegenüber 0.2.1 unverändert. Die Audiozahlen oben sind
+trotzdem für 0.4.0 frisch gemessen: Der fehlende GUI-Unterbau der Cmajor-Binärdatei
+(`libwebkit2gtk-4.0.so.37`, `libjavascriptcoregtk-4.0.so.18`, `libsoup-2.4.so.1`,
+`libjack.so.0`) lässt sich mit denselben Stub-Bibliotheken überbrücken, die das
+Dev-Kit bereits in seiner CI verwendet. Codegen und Render laufen damit headless;
+`.github/workflows/ci.yml` führt beides bei jedem Push aus.
 
-## Bekannte Test-Harness-Grenze
+## Eigenschaften des `cmaj render`-Harness
 
-Der `cmaj render`-MIDI-Pfad von Cmajor 1.0.3175 erzeugt in dieser Linux-Umgebung
-oberhalb von 48 kHz keine verlässlich wiederholbare Ausgabe. Dasselbe Verhalten tritt mit dem offiziellen
-`Amorph_DEV_KIt/examples/02_PolySynth` auf und ist daher nicht ACIDIFY-spezifisch.
-Der Patch selbst kompiliert. 88,2/96/176,4/192-kHz-Laufzeittests müssen im Amorph Host
-oder mit einem korrigierten Renderer nachgeholt werden.
+Die früher notierte Grenze „oberhalb von 48 kHz nicht wiederholbar“ trifft so
+nicht zu. Gemessen an Cmajor 1.0.3175 gilt:
+
+- **Wiederholbar.** Je drei Läufe bei 48, 96 und 192 kHz liefern identische Peak-
+  und RMS-Werte. Auch 88,2 und 176,4 kHz rendern sauber.
+- **Fester Vorlauf.** `cmaj render` schreibt vor dem ersten Audiosample rund
+  20 100 Samples Stille – unabhängig von der Samplerate und damit keine
+  Plugin-Latenz. Mit `Amorph_DEV_KIt/examples/02_PolySynth` tritt derselbe
+  Versatz auf (≈ 20 096 Samples), er gehört also zum Renderer.
+- **MIDI-Datei-Pfad verliert Note-Offs.** Bei 48 und 192 kHz klingt die Note im
+  Render endlos weiter, bei 44,1 und 96 kHz nicht. Deshalb schwanken die
+  RMS-Werte oben zwischen den Raten; die Peak-Werte sind stabil. Die RMS-Spalte
+  eignet sich daher nicht zum Vergleich der Raten untereinander.
+
+Der Note-Off-Pfad des DSP selbst ist davon nicht betroffen. Ein Prüfaufbau ohne
+MIDI-Datei – ein Cmajor-Quellprozessor sendet Note-On und 0,5 s später Note-Off
+direkt an den `Acidify`-Graph – gibt die Note bei 44,1, 48, 96 und 192 kHz
+korrekt frei und klingt in allen vier Fällen vollständig ab.
 
 ## Noch nicht abgedeckt
 
