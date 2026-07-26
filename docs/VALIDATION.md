@@ -1,3 +1,23 @@
+# Validierung 0.8.0
+
+## 0.8.0 — Hardwareabgleich
+
+| Prüfung | Ergebnis |
+|---|---|
+| `preflight.py --strict` | 50/50 Parameter, sauber |
+| `smoke_test` | bestanden, peak 0,88806 |
+| `dsp_matrix_test` | 11/11 `ok`, höchster Effekt-Peak 0,9395 |
+| `dsp_articulation_test` | `ok`, Tails 1,9e-08 / 3,5e-08 |
+| `dsp_transport_test` | 12/12 Prüfungen `ok` |
+| Filterkern gegen den vermessenen Prototyp | stellengenau identisch (k=14/16,5/19,4 und Steilheit) |
+| Koppelnetz gegen die analytische Funktion | Abweichung ≤ 0,0001 dB |
+| Kein Anschwingen über den ganzen Reglerweg | Tail-RMS 0,0 bei Resonanz 0…1 |
+| Reso-Comp bei Resonanz null wirkungslos | RMS auf 8 Stellen identisch zum Stand davor |
+
+Details und die widerlegten Vorhersagen in [`DSP_AUDIT.md`](DSP_AUDIT.md).
+
+---
+
 # Validierung 0.7.2
 
 ## Automatische Prüfungen
