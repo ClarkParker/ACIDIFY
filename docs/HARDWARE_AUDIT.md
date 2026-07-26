@@ -46,10 +46,17 @@ Punkt 8 mit Einschränkung: Stinchcombes **Spitze** steht in seiner hergeleitete
 dagegen aus einer Messung an einem **Klon mit zusätzlicher kapazitiver Last aus
 dem Messaufbau** — die Frequenzangabe trägt weniger als die Existenz der Spitze.
 
-**Was bleibt:** Punkt 7, und ausserhalb dieser acht Punkte die noch
-gefitteten Blöcke — VCO, MEG-Attack und Release-Zeiten, die Cutoff- und
-Env-Mod-Abbildung sowie die drei VCA-Steuerkonstanten. Dazu `otaDrive` als
-einzige ungestützte Konstante im VCA.
+**Alle acht Punkte sind zu.** Punkt 7 nicht durch Modellieren, sondern weil die
+Forderung falsch gestellt war — siehe „Punkt 7 war falsch gestellt" am Ende.
+
+Ausserhalb dieser acht bleiben **drei** gefittete Konstanten, jede mit
+benanntem Grund:
+
+| Konstante | Grund |
+|---|---|
+| `4.0f` Accent-Anteil | Leitwertverhältnis am Knoten ist 220/2,2 = 100, aber der Pegel der Accent-Quelle ist unbelegt und `accentVcaRC` normiert |
+| `2.0f` + `otaDrive` | gemeinsam **eine** Unbekannte: der Spannungsmassstab. Braucht eine Pegelmessung am Gerät |
+| VCO-Rechteckschwelle | **bewusst behalten** — an einem echten 303 gemessen, kein Modellkompromiss |
 
 Die Abschnitte „Die Lücken im Einzelnen" darunter beschreiben den Stand **vor**
 diesen Änderungen und bleiben als Verlaufsprotokoll stehen.
@@ -108,7 +115,7 @@ Einschränkung, die ich nicht überdehne: Ein 65-Hz-Ton regt 8 Hz kaum an. Die
 Wirkung liegt im Einschwingen und in der Phase, und belegen ließe sie sich erst
 im A/B nach Einbau.
 
-### 7 — Bauteilstreuung
+### 7 — Bauteilstreuung (überholt, siehe „Punkt 7 war falsch gestellt")
 
 Bergman zum Nachbau:
 

@@ -1,3 +1,13 @@
+# Validierung 1.0.0-rc2
+
+## 1.0.0-rc2
+
+Unverändert zu rc1 (nur Doku und Kommentare); alle Prüfungen erneut gelaufen:
+`preflight --strict` sauber, `smoke_test` 0,73853, Matrix 11/11, Artikulation,
+Transport 12/12, `hardware_checks` 8/8, `partcheck` 28/28.
+
+---
+
 # Validierung 1.0.0-rc1
 
 ## 1.0.0-rc1

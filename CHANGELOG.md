@@ -6,6 +6,25 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [1.0.0-rc2] - 2026-07-26
+
+### Fixed
+
+- **Audit-Punkt 7 war falsch gestellt** und ist damit zu. Ein Bauteil hat einen
+  Sollwert; Toleranz ist ein Fertigungsmangel, den die Selektion beseitigen
+  soll. Eine Streuung zu modellieren hiesse, ein schlechter gefertigtes Gerät
+  zu modellieren. ACIDIFY rechnet 33/33/33/18 nF — richtig so.
+- Damit sind **alle acht Audit-Punkte** geschlossen.
+
+### Added
+
+- Empfindlichkeitsmessung statt Streuungsmodell: ±10 % an den vier
+  Leiterkondensatoren verschieben die Resonanzspitze um **171 Cent**. Die
+  Transistorpaarung (0,3 mV Vbe → 1,16 %) wird von der Kondensatortoleranz
+  (±10 %) um fast das Zehnfache dominiert — die Paarung sichert den
+  Arbeitspunkt, nicht die Eckfrequenzen.
+
+
 ## [1.0.0-rc1] - 2026-07-26
 
 ### Changed
