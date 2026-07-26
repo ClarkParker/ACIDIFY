@@ -650,7 +650,13 @@ processor AcidifyCore
         // capacitor." tau = 100 k * 0,22 uF = 22 ms. Open303 stand hier mit
         // 12 ms (60 ms mal 0,2), einem Fit.
         glideCoeff = timeCoefficient (22.0f, sampleRate);
-        filterAttackAlpha = 1.0f - timeCoefficient (3.0f, sampleRate);
+        // MEG-Attack aus der Schaltung: D37 in Reihe mit R152 = 100 Ohm laedt
+        // C62 = 1 uF. tau = 100 us. Der Knoten ist im Plan eindeutig gezeichnet
+        // (R152 -> Basisknoten von Q40, C62 von dort gegen Masse), verfolgt mit
+        // tools/bench/nettrace.py. C62 = 1 uF bestaetigt zugleich die
+        // Kondensatorannahme, aus der der Decay-Bereich hergeleitet wurde.
+        // Open303 stand hier mit 3 ms, also 30-fach zu langsam.
+        filterAttackAlpha = 1.0f - timeCoefficient (0.1f, sampleRate);
         normalDecayCoeff = timeCoefficient (normalDecayMs, sampleRate);
         // Accent-Decay: dieselbe Zahl aus derselben Zeichnung wie das Minimum
         // des normalen Decay — also ebenfalls eine 10-%-Zeit, nicht tau.
