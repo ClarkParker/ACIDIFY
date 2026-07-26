@@ -6,6 +6,35 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Added
+
+- **Diodensättigung im Leiterkern**, an allen vier Paaren:
+  `N(v) = tanh(v · drive) / drive` mit `drive = 1089,8 / f_c`. Kein freier
+  Parameter — Zähler `2,585 V / 220 kΩ = 11,75 µA` aus dem belegten VCO-Hub
+  (`10,5 − 5,33 = 5,17 Vss` auf der 5,333-V-Vorspannung) über `R62`, Nenner
+  `2π · 33 nF · 52 mV`. Die Schwelle folgt damit `1/f_c`; genau daran war der
+  frühere `vSat`-Versuch mit fester Schwelle gescheitert.
+- Prüfstein 6 im Messstand: Klirr gegen Eckfrequenz, gemessen mit Sinus bei
+  `f_c/8`, damit über alle Eckfrequenzen dieselben Oberwellen im selben
+  relativen Abstand zur Flanke liegen. **41,97 % / 16,30 % / 6,47 %** bei
+  300 / 1000 / 2500 Hz, dazu 0,16 % bei 1 % Aussteuerung.
+
+### Fixed
+
+- `oscillates()` im Messstand prüfte auf **Divergenz** — etwas, das ein Kern mit
+  Sättigung per Konstruktion nicht zeigt. Bei 8 kHz und `k = 8·kMax` lief eine
+  stehende Schwingung mit konstantem RMS 0,716 durch und wurde als „klingt ab"
+  gewertet, weil der letzte Abtastwert zufällig nahe einem Nulldurchgang lag.
+  Bewertet wird jetzt die Hüllkurve. Der lineare Kern wurde mit dem neuen
+  Kriterium **vor** dem Einbau nachgemessen (2,6973 / 1,0566), damit die
+  Änderung eine Referenz hat und kein Zurechtbiegen ist.
+
+### Changed
+
+- Die Anschwinggrenze bleibt durch den Umbau **unverändert** (2,66796875 /
+  1,02734375 bei 150 Hz / 8 kHz) — `N'(0) = 1`, das Kleinsignalverhalten ist
+  unberührt. Das war die Vorhersage und ist der schärfste Test des Newton-Aufsatzes.
+
 ## [1.0.0-rc2] - 2026-07-26
 
 ### Fixed

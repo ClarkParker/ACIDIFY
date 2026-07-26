@@ -353,9 +353,20 @@ Das fällt aus der Topologie an. Die dB-Schlagzeile nicht.
 
 ## Die Leiter wird stark ausgesteuert — und die Schwelle ist nicht fest
 
-Aus ausschliesslich belegten Werten: VCO-Hub 5,33…10,5 V (Whittle,
-x0x-VCF-Mods), `R62 = 220 kΩ` als Vorwiderstand in den VCF, `C98 = 33 nF`,
-`V_T = 26 mV`.
+Aus ausschliesslich belegten Werten. Die Quelle wörtlich (x0x-VCF-Mods,
+Abschnitt „Devilfish Overdrive Exactly"):
+
+> „The VCO output is from 5.33v to ~10.5v, so you should make sure you
+> reference Pin 1 of the pot to the 5.33V bias voltage."
+
+Beides sind **Absolutwerte auf der 5,333-V-Vorspannung**, nicht zwei Varianten:
+der Hub ist `10,5 − 5,33 = 5,17 Vss`, über `C17` wechselstromgekoppelt.
+Dazu `R62 = 220 kΩ` als Vorwiderstand in den VCF, `C98 = 33 nF`, `V_T = 26 mV`.
+
+Dass `R62` im Serienstand ohne Abschwächer davor liegt, sagt dieselbe Quelle:
+Der Devil-Fish-Overdrive erreicht seine 66,6-fache Übersteuerung, indem er
+`R62` auf 3,3 kΩ verkleinert — der Serienwert 220 kΩ **ist** also die
+Eins-fach-Referenz.
 
 ```
 Signalstrom  = 5,17 Vss / 220 kΩ = 23,5 µAss
@@ -399,3 +410,71 @@ Prüfsteine, die dafür schon feststehen und scheitern können:
 3. Die Verzerrung muss mit **sinkender** Eckfrequenz zunehmen — bei 300 Hz ist
    das Verhältnis 7,3, bei 2,5 kHz 0,87. Kommt sie cutoff-unabhängig heraus,
    ist die Kopplung an `I_c` falsch.
+
+---
+
+## Eingebaut — und was die Prüfsteine dazu sagen
+
+Im Kern steht jetzt `N(v) = tanh(v · drive) / drive` mit
+`drive = 1089,8 / f_c`, an **allen vier** Diodenpaaren. Kein freier Parameter:
+Zähler ist `2,585 V / 220 kΩ = 11,75 µA`, Nenner `2π · 33 nF · 52 mV`.
+
+**Warum alle vier und nicht nur das Eingangspaar.** Im Durchlassbereich führen
+alle vier Paare denselben Signalstrom, also denselben Aussteuerungsgrad. Ein
+erster Einbau begrenzte nur am Summenknoten; gemessen kam dabei ein Drittel bis
+ein Viertel des Klirrs heraus (18,05 % statt 41,97 % bei 300 Hz). Die Richtung
+stimmte, der Betrag nicht.
+
+**Wie die Zero-Delay-Auflösung das übersteht.** Die Stufenkette ist bei
+gegebenem `u` bereits **explizit** — `G`/`S` haben die Rückwirkung zwischen
+benachbarten Stufen aufgelöst. Implizit bleibt allein die Resonanzschleife über
+`y4`, also ein Skalar. Newton darauf, Startwert die lineare Lösung.
+
+**Benannte Näherung.** `gam`/`G`/`S` stammen aus der *linearen* Auflösung der
+Rückwirkung. Der Vorwärtspfad ist damit exakt nichtlinear, die Belastung einer
+Stufe durch die folgende bleibt linearisiert.
+
+### Ergebnisse
+
+| Prüfstein | Erwartung | Gemessen |
+|---|---|---|
+| 1 — kein Anschwingen | Hüllkurve fällt bei 200/1000/5000 Hz | 1,4e−3 / 6,8e−3 / 2,2e−2 ✔ |
+| 2 — Reserve frequenzabhängig | 150 Hz deutlich über 8 kHz | 2,668 gegen 1,027 ✔ |
+| 3 — Klirr steigt zu tiefem Cutoff | monoton fallend über f_c | 41,97 % / 16,30 % / 6,47 % ✔ |
+
+Dazu zwei Prüfsteine, die erst dieser Umbau möglich macht:
+
+- **Die Anschwinggrenze darf sich nicht verschieben.** `N'(0) = 1`, das
+  Kleinsignalverhalten ist unberührt. Gemessen: 2,66796875 und 1,02734375 —
+  **auf die Stelle identisch** mit dem linearen Kern. Das ist der Test, an dem
+  ein falsch aufgesetztes Newton sofort aufgefallen wäre.
+- **Kleinsignal bleibt linear.** Bei 1 % Aussteuerung 0,16 % Klirr gegen 41,97 %
+  bei Vollaussteuerung.
+
+### Korrektur am Messstand, nicht am Modell
+
+`oscillates()` prüfte auf **Divergenz** (`max > 1e3`, letzter Abtastwert gegen
+Maximum). Ein Kern mit Sättigung divergiert per Konstruktion nicht — er läuft in
+einen Grenzzyklus, und der letzte Abtastwert einer stehenden Schwingung ist
+Phasenlotterie. Gemessen bei 8 kHz und `k = 8·kMax`: RMS über alle acht Achtel
+konstant 0,716, letzter Wert trotzdem unter der halben Spitze. Das Kriterium
+hätte also gerade den Fall verpasst, für den es da war. Es misst jetzt die
+Hüllkurve (letztes gegen zweites Achtel); anschwingend ≈ 1,0, abklingend 1e−2
+bis 1e−4.
+
+Damit die Änderung nicht als nachträgliches Zurechtbiegen durchgeht: Der
+**lineare** Kern wurde mit dem neuen Kriterium nachgemessen, bevor die Sättigung
+einzog — 2,6973 / 1,0566. Genau diese Zahlen kommen mit Sättigung wieder heraus.
+
+### Iterationszahl, gemessen statt geschätzt
+
+1, 2, 3 und 6 Newton-Schritte liefern in jedem geprüften Betriebspunkt — auch im
+Grenzzyklus bei 8 kHz und `k = 2·kMax` — dasselbe Ergebnis auf acht
+Nachkommastellen. Grund: `bigGamma` liegt im Hörbereich bei ~3e−6, der instantane
+Anteil der Schleife ist winzig und die Resonanz steckt im Zustand. Eingebaut sind
+**zwei** Schritte, der zweite als Reserve für hohe Eckfrequenzen.
+
+### Was offen bleibt
+
+Der Betrag ist nie gegen ein Gerät geprüft. 41,97 % Klirr bei 300 Hz ist eine
+Vorhersage aus Bauteilwerten, keine Messung am 303.

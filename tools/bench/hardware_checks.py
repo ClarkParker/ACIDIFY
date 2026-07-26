@@ -50,7 +50,32 @@ graph HwCheck [[ main ]]
 """
 
 
-def extract():
+RIG_SINE = """processor Tone
+{{ output stream float out; float64 ph = 0.0;
+   void main() {{ let inc = SIGFREQ / float64 (processor.frequency);
+       loop {{ out <- float (sin (6.283185307179586 * ph)); ph += inc;
+               if (ph >= 1.0) ph -= 1.0; advance(); }} }} }}
+
+processor Ladder
+{{
+    input stream float in; output stream float out;
+    float64 zdfS1 = 0.0, zdfS2 = 0.0, zdfS3 = 0.0, zdfS4 = 0.0;
+    float64[5] coupleX1; float64[5] coupleY1;
+    float64[5] coupleB0; float64[5] coupleB1; float64[5] coupleA1;
+    float64[3] fbX1; float64[3] fbY1;
+    float64[3] fbB0; float64[3] fbB1; float64[3] fbA1;
+{coef}
+{body}
+    void main() {{ let sr = float (processor.frequency); updateCouplingCoefficients (sr);
+        loop {{ out <- processLadder (in * AMP, CUTOFF, sr); advance(); }} }} }}
+
+graph HwSine [[ main ]]
+{{ output stream float out; node src = Tone; node f = Ladder;
+   connection {{ src.out -> f.in; f.out -> out; }} }}
+"""
+
+
+def extract(rig=None):
     src = open(DSP).read()
 
     def block(start):
@@ -61,7 +86,7 @@ def extract():
     body = block("    float processLadder (float signal, float cutoffHz, float sampleRate)")
     body = body.replace("clamp (resonanceSkewed, 0.0f, 1.0f)", "RESK")
     coef = block("    void updateCouplingCoefficients (float sampleRate)")
-    return RIG.format(coef=coef, body=body)
+    return (rig or RIG).format(coef=coef, body=body)
 
 
 def fft(x):
@@ -111,6 +136,48 @@ def measure(cutoff, knob, n=32768, rate=48000):
     return ir, rate
 
 
+def measure_thd(cutoff, knob, amp, harmonics=8, n=16384, rate=48000):
+    """Klirrspektrum des Kerns bei Sinusanregung.
+
+    Die Signalfrequenz laeuft mit `cutoff/8` mit, damit ueber alle Eckfrequenzen
+    dieselben Oberwellen im selben relativen Abstand zur Flanke liegen — sonst
+    misst man die Filterung der Oberwellen statt ihrer Entstehung. Die Frequenz
+    wird auf einen FFT-Bin gerastet, damit Grund- und Oberwellen ohne Leckage
+    genau auf Bins fallen.
+    """
+    os.makedirs(WORK, exist_ok=True)
+    bin_ = max(1, round((cutoff / 8.0) * n / rate))
+    sig = bin_ * rate / n
+    src = (extract(RIG_SINE).replace("CUTOFF", f"{float(cutoff)}f")
+           .replace("RESK", f"{float(knob)}f").replace("AMP", f"{float(amp)}f")
+           .replace("SIGFREQ", f"{sig}"))
+    open(f"{WORK}/Sine.cmajor", "w").write(src)
+    json.dump({"CmajorVersion": 1, "ID": "com.acidify.hwsine", "version": "1.0",
+               "name": "HwSine", "source": ["Sine.cmajor"]},
+              open(f"{WORK}/HwSine.cmajorpatch", "w"))
+    r = subprocess.run([CMAJ, "render", f"--rate={rate}", f"--length={4 * n}",
+                        "--channels=1", "--blockSize=512", f"--output={WORK}/s.wav",
+                        f"{WORK}/HwSine.cmajorpatch"], capture_output=True, text=True)
+    if r.returncode != 0:
+        raise RuntimeError((r.stdout + r.stderr)[-1500:])
+    d = open(f"{WORK}/s.wav", "rb").read()
+    off = 12
+    while off + 8 <= len(d):
+        sz = struct.unpack("<I", d[off + 4:off + 8])[0]
+        if d[off:off + 4] == b"data":
+            break
+        off += 8 + sz + (sz & 1)
+    cnt = sz // 4
+    xs = list(struct.unpack(f"<{cnt}f", d[off + 8:off + 8 + sz]))
+    seg = xs[-n:]                      # eingeschwungener Teil
+    sp = fft(seg)
+    mag = [abs(v) for v in sp]
+    fund = mag[bin_]
+    dist = math.sqrt(sum(mag[bin_ * h] ** 2 for h in range(2, harmonics + 1)
+                         if bin_ * h < n // 2))
+    return (dist / fund if fund else 0.0), sig
+
+
 def response(ir, rate):
     sp = fft(ir)
     n = len(ir)
@@ -122,8 +189,23 @@ def at(rp, f):
 
 
 def oscillates(ir):
-    mx = max(abs(v) for v in ir)
-    return mx > 1e3 or (mx > 0 and abs(ir[-1]) / mx > 0.5)
+    """Schwingt die Huellkurve an, statt abzuklingen.
+
+    Das frühere Kriterium (`max > 1e3` oder letzter Abtastwert gegen Maximum)
+    prüfte auf **Divergenz**. Ein Kern mit Diodensättigung kann per Konstruktion
+    nicht divergieren — er läuft in einen Grenzzyklus — und der letzte
+    Abtastwert einer stehenden Schwingung ist reine Phasenlotterie. Gemessen:
+    8 kHz, k = 8·kMax, RMS über alle acht Achtel konstant 0,716, letzter Wert
+    trotzdem unter der halben Spitze. Das Kriterium hätte also gerade den Fall
+    verpasst, für den es da ist.
+
+    Gemessen wird darum die Hüllkurve: RMS im letzten Achtel gegen das zweite.
+    Getrennt wird das sauber — anschwingend ≈ 1,0, abklingend 1e-2 bis 1e-4.
+    """
+    n = len(ir) // 8
+    rms = lambda i: math.sqrt(sum(v * v for v in ir[i * n:(i + 1) * n]) / n)
+    early = rms(1)
+    return max(abs(v) for v in ir) > 1e3 or (early > 0.0 and rms(7) > 0.5 * early)
 
 
 FAILURES = []
@@ -143,9 +225,11 @@ def main():
     print("1. Der Serien-303 schwingt absichtlich NICHT an")
     for cut in (200, 1000, 5000):
         ir, _ = measure(cut, 1.0)
-        mx = max(abs(v) for v in ir)
-        tail = abs(ir[-1]) / mx if mx else 0.0
-        check(f"kein Anschwingen bei {cut} Hz", not oscillates(ir), f"Tail/Max = {tail:.6f}")
+        n = len(ir) // 8
+        rms = lambda i: math.sqrt(sum(v * v for v in ir[i * n:(i + 1) * n]) / n)
+        decay = rms(7) / rms(1) if rms(1) else 0.0
+        check(f"kein Anschwingen bei {cut} Hz", not oscillates(ir),
+              f"Huellkurve letztes/zweites Achtel = {decay:.2e}")
 
     print("\n2. Anschwinggrenze ist frequenzabhaengig (Whittle: nur mittlere/hohe Frequenzen)")
     limits = {}
@@ -213,6 +297,20 @@ def main():
     worst = max(abs(20 * math.log10(c_digital(f)) - 20 * math.log10(c_analytic(f)))
                 for f in (2, 4, 8, 20, 65.4, 200, 1000, 5000))
     check("Abweichung unter 0,01 dB", worst < 0.01, f"groesste Abweichung {worst:.5f} dB")
+
+    print("\n6. Diodensaettigung folgt dem Steuerstrom, also 1/f_c")
+    thds = []
+    for cut in (300, 1000, 2500):
+        thd, sig = measure_thd(cut, 0.0, 1.0)
+        thds.append(thd)
+        print(f"     {cut:5d} Hz (Sinus {sig:6.1f} Hz): THD {100 * thd:6.2f} %"
+              f"   erwartet drive = {1089.8 / cut:.2f}")
+    check("Klirr steigt mit SINKENDER Eckfrequenz", thds[0] > thds[1] > thds[2],
+          " > ".join(f"{100 * t:.2f} %" for t in thds))
+    # Kleinsignal: bei 1/100 Aussteuerung muss die Leiter praktisch linear sein.
+    small, _ = measure_thd(300, 0.0, 0.01)
+    check("Kleinsignal bleibt linear", small < 0.01 * thds[0],
+          f"THD bei 1 % Aussteuerung {100 * small:.4f} % gegen {100 * thds[0]:.2f} %")
 
     print()
     if FAILURES:

@@ -1187,26 +1187,96 @@ processor AcidifyCore
         // SG3; der Pfad von Stufe 2 zum Ausgang laeuft aber ueber G3*G4 = SG2.
         let sigma = S1 * SG1 + S2 * SG2 + S3 * SG3 + S4;
 
-        // y4 = bigGamma*u + sigma ; y = cInst*y4 + cState ; fb = bInst*y + bState
-        let u = (x - bInst * (cInst * sigma + cState) - bState)
-              / (1.0 + bInst * cInst * bigGamma);
+        // Aussteuerung der Diodenpaare. Ein Diodenpaar am Ruhestrom
+        // I_c kann an die naechste Stufe hoechstens +-I_c weiterreichen; die
+        // Uebertragung ist I_c * tanh(v / (2*Vt)). Der Signalstrom kommt ueber
+        // R62 = 220 k, der Steuerstrom ist I_c = 2*pi*f_c*C98*2*Vt. Also
+        //
+        //   drive = I_signal / I_c = (V/220k) / (2*pi*f_c*33n*52mV)
+        //
+        // Das Verhaeltnis haengt an 1/f_c — die Schwelle ist KEINE Konstante,
+        // sondern folgt der Eckfrequenz ueber mehr als eine Groessenordnung.
+        // Genau daran ist der fruehere `vSat`-Versuch gescheitert.
+        //
+        // Der Pegel ist belegt, kein freier Parameter: x0x-VCF-Mods, „The VCO
+        // output is from 5.33v to ~10.5v" — beides Absolutwerte auf der
+        // 5,333-V-Vorspannung, also 5,17 Vss Hub, ueber C17 wechselstrom-
+        // gekoppelt. Der Saegezahn im Modell hat 2,0 Einheiten ss, damit ist
+        // eine Modelleinheit 2,585 V Spitze und der Signalstrom 11,75 uA.
+        const float64 ladderDriveRef = 1089.8;   // (2,585 V / 220k) / (2*pi*33n*52m)
+        let drive = ladderDriveRef / float64 (bounded);
 
-        let in1 = u * gam1 + S2 + S1 * G2;
+        // ALLE VIER Paare begrenzen, nicht nur das erste: Im Durchlassbereich
+        // fuehren sie denselben Signalstrom, also denselben Aussteuerungsgrad.
+        // Nur das Eingangspaar zu begrenzen unterschaetzte die Nichtlinearitaet
+        // um rund den Faktor vier. Der Massstab `drive` gilt fuer alle vier,
+        // weil alle am selben Steuerstrom haengen; dass C101 = 18 nF die
+        // vierte Ecke verschiebt, steckt in g4 und nicht in der Begrenzung.
+        //
+        // Die Kette ist bei gegebenem u EXPLIZIT — G/S haben die Rueckwirkung
+        // zwischen benachbarten Stufen bereits aufgeloest. Implizit bleibt nur
+        // die Resonanzschleife ueber y4, also ein Skalar: Newton auf u.
+        //
+        // NAEHERUNG, ausdruecklich benannt: gam/G/S stammen aus der LINEAREN
+        // Aufloesung dieser Rueckwirkung. Der Vorwaertspfad ist damit exakt
+        // nichtlinear, die Belastung einer Stufe durch die folgende bleibt
+        // linearisiert. Widerlegbar waere das an einem Geraet, dessen Klirr bei
+        // tiefem Cutoff deutlich ueber dem Modell liegt.
+        let P = x - bInst * (cInst * sigma + cState) - bState;
+        let Q = bInst * cInst * bigGamma;
+        let A = bInst * cInst;
+        let R = bInst * cState + bState - x;
+
+        // Startwert ist die lineare Loesung — und sie ist im linearen Grenzfall
+        // schon exakt: mit N(v) = v wird alpha1*gam1 = G1, 0,5*alpha2*gam2 = G2,
+        // 0,5*alpha3*gam3 = G3, 0,5*alpha4 = G4, also dy4/du = bigGamma. Newton
+        // ruehrt sich dann nicht. Pruefstein: die Anschwinggrenze darf sich
+        // durch diesen Umbau NICHT verschieben.
+        //
+        // Zwei Schritte, gemessen begruendet: 1, 2, 3 und 6 Iterationen liefern
+        // in jedem geprueften Betriebspunkt — auch im Grenzzyklus bei 8 kHz und
+        // k = 2*kMax — dasselbe Ergebnis auf acht Nachkommastellen. Grund ist,
+        // dass bigGamma im Hoerbereich bei ~3e-6 liegt: der instantane Anteil
+        // der Schleife ist winzig, die Resonanz steckt im Zustand. Der zweite
+        // Schritt ist Reserve fuer hohe Eckfrequenzen, wo bigGamma waechst.
+        var u = P / (1.0 + Q);
+        for (wrap<2> newtonStep)
+        {
+            let t0 = tanh (u * drive);
+            let y1i = ((t0 / drive) * gam1 + S2 + S1 * G2 - zdfS1) * alpha1 + zdfS1;
+            let d1i = alpha1 * gam1 * (1.0 - t0 * t0);
+
+            let t1 = tanh (y1i * drive);
+            let y2i = (((t1 / drive) * gam2 + S3 + S2 * G3) * 0.5 - zdfS2) * alpha2 + zdfS2;
+            let d2i = alpha2 * 0.5 * gam2 * (1.0 - t1 * t1) * d1i;
+
+            let t2 = tanh (y2i * drive);
+            let y3i = (((t2 / drive) * gam3 + S4 + S3 * G4) * 0.5 - zdfS3) * alpha3 + zdfS3;
+            let d3i = alpha3 * 0.5 * gam3 * (1.0 - t2 * t2) * d2i;
+
+            let t3 = tanh (y3i * drive);
+            let y4i = ((t3 / drive) * 0.5 - zdfS4) * alpha4 + zdfS4;
+            let d4i = alpha4 * 0.5 * (1.0 - t3 * t3) * d3i;
+
+            u -= (u + A * y4i + R) / (1.0 + A * d4i);
+        }
+
+        let in1 = tanh (u * drive) / drive * gam1 + S2 + S1 * G2;
         let v1 = (in1 - zdfS1) * alpha1;
         let y1 = v1 + zdfS1;
         zdfS1 += 2.0 * v1;
 
-        let in2 = y1 * gam2 + S3 + S2 * G3;
+        let in2 = tanh (y1 * drive) / drive * gam2 + S3 + S2 * G3;
         let v2 = (in2 * 0.5 - zdfS2) * alpha2;
         let y2 = v2 + zdfS2;
         zdfS2 += 2.0 * v2;
 
-        let in3 = y2 * gam3 + S4 + S3 * G4;
+        let in3 = tanh (y2 * drive) / drive * gam3 + S4 + S3 * G4;
         let v3 = (in3 * 0.5 - zdfS3) * alpha3;
         let y3 = v3 + zdfS3;
         zdfS3 += 2.0 * v3;
 
-        let v4 = (y3 * 0.5 - zdfS4) * alpha4;
+        let v4 = (tanh (y3 * drive) / drive * 0.5 - zdfS4) * alpha4;
         let y4 = v4 + zdfS4;
         zdfS4 += 2.0 * v4;
 
