@@ -314,39 +314,101 @@ a BA662, do not solder in Q1-4!"). Zwei verschiedene Eingangsstufen für
 denselben Steckplatz — die Eingangskennlinie ist also auch im Nachbau eine
 bewusste Entscheidung.
 
-### Was damit **nicht** geklärt ist
+### Die Zuordnung — verfolgt, nicht ausgelegt
 
-**Welcher Zweig „from Filter" ist und welcher „from Reso. Comp."** Die
-Zuordnung steht in der TD-3-Beschriftung, nicht im x0xb0x; die beiden
-Leitungen laufen im x0xb0x-Plan über lange, mehrfach gekreuzte Strecken, und
-Pixelverfolgung über solche Distanzen ist genau die Fehlerquelle, die dieses
-Projekt schon zweimal bezahlt hat. **Nicht geraten.**
+Der TB-303-Serviceplan bestätigt die x0xb0x-Lesung wörtlich: `IC15 BA662A` als
+zwei Symbole eines 9-Pin-SIP, `R121` mit `C21 .01`, `R122 100K` mit `C22 .01`,
+beide auf **Pin 3**, dazu `R124 2,2K` und `C37 10/16`. Der x0xb0x ist hier ein
+netzgleicher Nachbau; nur `C22` heißt dort `C20`.
 
-Die Folge ist keine Kleinigkeit: Die Zuordnung entscheidet, ob der
-Kompensationszweig 6,85 dB **stärker** oder **schwächer** als der Filterzweig
-einkoppelt.
+Welcher Zweig woher kommt, ist mit
+[`tools/bench/nettrace.py`](../tools/bench/nettrace.py) **verfolgt** statt
+angeschaut. Das Skript zerlegt den Plan in waagerechte und senkrechte Läufe und
+verbindet zwei Läufe nur dann, wenn sie sich am **Ende** eines der beiden
+berühren (Ecke oder T) oder wenn an einer echten Kreuzung ein **Knotenpunkt**
+sitzt — geprüft über die Füllung einer Scheibe abseits beider Linienachsen.
+Genau diese Unterscheidung macht Augenverfolgung über lange Strecken
+unzuverlässig, und sie ist die Fehlerquelle, die dieses Projekt zweimal
+bezahlt hat.
+
+Ergebnis: **zwei getrennte Netze** (keine gemeinsamen Läufe), beide enden am
+**Resonanzpoti VR4 50K(B)** — aber an verschiedenen Punkten:
+
+| Zweig | Gewicht | Abgriff an VR4 | Signal |
+|---|---|---|---|
+| **R121 = 220 kΩ** + C21 | 1/220k | **festes Ende** | resonanzunabhängig |
+| **R122 = 100 kΩ** + C22 | 1/100k | **Schleifer** | **∝ Reglerstellung** |
+
+Damit ist die Zuordnung keine Auslegung mehr:
+
+- **R121 (220 k) = „from Filter"** — greift das feste Potiende ab, also das
+  Filtersignal in voller Höhe, unabhängig von der Resonanzstellung.
+- **R122 (100 k) = „from Reso. Comp."** — greift den **Schleifer** ab. Sein
+  Beitrag wächst mit der Reglerstellung: bei Resonanz null trägt er nichts bei,
+  bei Vollausschlag am meisten.
+
+**Das ist die Kompensation, und sie fällt aus der Topologie an.** Der
+Pegeleinbruch wächst mit der Resonanz — und genau mit der Resonanz wächst auch
+der Anteil, den der Schleiferzweig dazusummiert. Es braucht keine
+resonanzabhängige Ankopplung von Hand; ein Poti-Schleifer als zweiter Abgriff
+erzeugt sie.
+
+**Unabhängige Bestätigung.** Die x0x-VCF-Mods-Seite führt einen Mod von
+Nutzer `bcbox`:
+
+> „you can increase resonance feedback by changing C21 and R122. Replace R122
+> with 68k … **The sound level will stay more constant as you increase
+> resonance — not so much of a drop off.**"
+
+`R122` von 100 k auf 68 k senken heißt: Leitwert des **Schleiferzweigs** um den
+Faktor 1,47 erhöhen. Die berichtete Wirkung — der Pegel fällt bei steigender
+Resonanz weniger ab — ist genau das, was dieser Zweig laut Topologie tut. Eine
+Beobachtung, die aus einer anderen Richtung kommt und dieselbe Zuordnung
+stützt. (Der Mod nennt `C21` statt `C22`; die Bezeichner sind dort quer
+gegriffen, der Widerstand ist eindeutig.)
+
+Dieselbe Verfolgung klärt nebenbei die **zweite Ebene** des dualen Potis:
+`D24 (1N4148)` und `R46 = 47 kΩ` treiben das eine Ende, `C13 = 1 µF/50 V`
+hängt gegen Masse am anderen. Das ist Whittles Accent-Sweep-Netz, Bauteil für
+Bauteil — und es bestätigt den 47-k-Zulauf sowie den **50-k**-Potiwert direkt
+aus der Schaltung.
 
 ### Befund, der das Ziel korrigiert
 
-Ein **festes** Verhältnis von 2,2 kann keinen **resonanzabhängigen**
-Pegelverlust von 24 dB ausgleichen. Das ist keine Messung, sondern ein
-Abzählargument: 6,85 dB fester Versatz gegen 24 dB veränderlichen Einbruch.
+**Korrektur an einer früheren Fassung dieses Abschnitts.** Hier stand, ein
+**festes** Gewichtsverhältnis von 2,2 könne einen resonanzabhängigen Einbruch
+nicht ausgleichen. Das Abzählargument war richtig — die **Annahme** war falsch:
+Es galt nur, solange beide Zweige pegelfeste Signale führen. Die Netzverfolgung
+zeigt, dass `R122` am **Schleifer** hängt. Der Zweig ist damit sehr wohl
+resonanzabhängig, und zwar ohne dass es hineingeschrieben werden müsste.
 
-Dazu kommt: Der Einbruch ist für **jede** gegengekoppelte Tiefpassstruktur
-unvermeidlich. Aus `H_zu = H / (1 + k·H)` folgt im Durchlassbereich
-(`H ≈ 1`) unmittelbar `H_zu ≈ 1/(1+k)`. Das gilt für den ZDF-Prototyp **und für
-die echte Schaltung**. Der Serien-303 dünnt bei hoher Resonanz hörbar aus —
-das ist Schaltungsverhalten, kein Modellfehler.
+Was **bestehen bleibt**: Der Einbruch selbst ist für jede gegengekoppelte
+Tiefpassstruktur unvermeidlich. Aus `H_zu = H / (1 + k·H)` folgt im
+Durchlassbereich (`H ≈ 1`) unmittelbar `H_zu ≈ 1/(1+k)`. Das gilt für den
+ZDF-Prototyp **und für die echte Schaltung**. Der Serien-303 dünnt bei hoher
+Resonanz hörbar aus — Schaltungsverhalten, kein Modellfehler.
 
-Damit ist die Formulierung „**auszugleichen sind ~24 dB**" als Ziel falsch.
-Richtig ist: Der Zweig ist eine **feste, teilweise** Vorwärtseinkopplung. Er
-soll den Einbruch **nicht** aufheben. Ein Modell, das ihn aufhebt, hat die
-Schaltung nicht getroffen — und zwei freie Parameter gegen die
-`dsp_matrix_test`-Schwelle zu stellen wäre wieder Anpassen ans Messergebnis.
+Was **neu** ist: Die Kompensation folgt der Reglerstellung **linear** (der
+Schleifer teilt linear, VR4 ist B-Kennlinie), der Einbruch dagegen der Form
+`1/(1+k)`. Zwei verschiedene Gesetze. Sie können sich nicht über den ganzen
+Weg aufheben — die Kompensation bleibt also **teilweise**, aber sie ist
+**mitlaufend** statt fest.
 
-**Der Prüfstein für Anlauf 3:** Nach dem Einbau muss der Durchlassbereich bei
-maximaler Resonanz **immer noch messbar absinken**, nur weniger als 24 dB.
-Kommt er flach heraus, ist die Kompensation zu groß angesetzt.
+Damit ist die Formulierung „**auszugleichen sind ~24 dB**" weiterhin als Ziel
+falsch, nur aus einem anderen Grund als zuerst notiert: nicht weil die
+Kompensation zu klein wäre, sondern weil sie einem anderen Gesetz folgt als der
+Einbruch. Ein Modell, das den Durchlassbereich flach herausbringt, hat die
+Schaltung nicht getroffen.
+
+**Der Prüfstein für Anlauf 3, unverändert gültig:** Nach dem Einbau muss der
+Durchlassbereich bei maximaler Resonanz **immer noch messbar absinken**, nur
+weniger als 24 dB. Kommt er flach heraus, ist die Kompensation zu groß
+angesetzt — und ein Faktor, der ihn flach macht, wäre Anpassen an die
+Testschwelle.
+
+**Zusatzprüfstein, der jetzt möglich ist:** Bei Resonanz **null** darf der
+Kompensationszweig **nichts** beitragen (Schleifer am unteren Anschlag). Ein
+Modell, das dort schon kompensiert, hat den Abgriff falsch angesetzt.
 
 ### Potentiometer — unabhängig bestätigt und ein Widerspruch
 
@@ -466,13 +528,35 @@ Auflösen lässt sich das hier **nicht**, und zwar aus zwei Gründen:
    gleichzusetzen und dann daraus einen Kalibrierpunkt abzuleiten, wäre genau
    die Referenzpunkt-Vermischung aus Regel 3.
 
-**Konsequenz für die Reihenfolge:** Der Kalibrierpunkt `k ≈ 19,4` bleibt der
-Arbeitswert, ist aber **nicht** belegt, sondern die Ableitung aus *einer* der
-beiden Aussagen. Er gehört vor dem Einbau des Filterkerns geklärt — an einem
-Serienschaltplan, über den Wert des handverlöteten Widerstands, nicht über
-Hörvergleich und nicht über eine Testschwelle.
+### Auflösung — Drittbeleg aus dem Nachbau
+
+Die x0x-VCF-Mods-Seite gibt der „knapp unter"-Lesart deutlich mehr Gewicht.
+Im x0xb0x setzt `R97` die Resonanzstärke; ab Werk **10 kΩ**. Aus der Mod-Seite:
+
+> „r46 = jumper / **r97 = 8.2k**" — Vorschlag, „for making a x0xb0x sound
+> **just like a 303**", bestätigt von einem zweiten Nutzer mit dem Zusatz:
+> „you tend to get **self resonance at the (very) top end**"
+
+Zwei Aussagen in einer: Der Wert, der einen x0xb0x wie einen 303 klingen lässt,
+liegt so, dass der Filter **am obersten Ende gerade anschwingt**. Das ist
+„knapp unter der Anschwinggrenze" — mit dem Zusatz, dass die Grenze am oberen
+Frequenzende bereits überschritten wird, genau wie Whittles „only self oscillate
+at mid and high frequencies" es beschreibt.
+
+Die „Verdopplung" des Devil Fish ist damit kein Widerspruch: Sie schafft
+Reserve, damit der Filter über **mittlere und hohe** Frequenzen zuverlässig
+anschwingt, statt nur ganz oben zu kippen.
+
+**Konsequenz:** Der Kalibrierpunkt gehört an die obere Grenze, nicht auf die
+Hälfte. `k ≈ 19,4` bleibt der Arbeitswert und ist damit **gestützt** statt nur
+abgeleitet.
+
+Belegkraft ehrlich eingeordnet: Das ist eine **Hörangabe aus einem Forum**,
+kein Messwert und kein Schaltplanwert. Sie widerlegt die Halbierungs-Lesart
+plausibel, sie legt aber keine Zahl fest. Ein abgelesener Wert des
+handverlöteten Widerstands bliebe der bessere Beleg.
 
 Vermerkt, weil es sonst wie ein festgelegter Wert aussähe: In
 [`FILTER_TOPOLOGY.md`](FILTER_TOPOLOGY.md) steht `k = 19,4` als
-„← Kalibrierpunkt" in der Messtabelle. Die **Messung** stimmt; ihre
-**Zuordnung** zum Serienstand steht auf einem einzigen Satz.
+„← Kalibrierpunkt" in der Messtabelle. Die **Messung** stimmt; die
+**Zuordnung** zum Serienstand ruht auf Whittle plus dieser Nachbaubeobachtung.

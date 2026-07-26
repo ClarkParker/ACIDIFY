@@ -70,3 +70,21 @@ Open303-Polynomfit.
 python3 -c "import sys; sys.path.insert(0,'tools/bench'); import zdfmeas as Z; \
   ir,_=Z.measure(1610, 16.5); print(max(Z.resp(ir,48000), key=lambda p:p[1]))"
 ```
+
+## `nettrace.py`
+
+Netzverfolgung in Schaltplan-Rastergrafiken. Zerlegt das Bild in waagerechte
+und senkrechte Leiterläufe und verbindet zwei Läufe nur, wenn sie sich am
+**Ende** eines der beiden berühren (Ecke oder T) oder wenn an einer echten
+Kreuzung ein **Knotenpunkt** sitzt — geprüft über die Füllung einer Scheibe
+abseits beider Linienachsen. EAGLE zeichnet Kreuzungen ohne Verbindung als
+schlichte Überlagerung; genau diese Unterscheidung macht Augenverfolgung über
+lange Strecken unzuverlässig.
+
+```bash
+python3 tools/bench/nettrace.py plan.png X1 Y1 X2 Y2
+```
+
+Zwei Startpunkte, Ausgabe je Netz: Größe, umschließendes Rechteck und ob beide
+im selben Netz liegen. Damit wurde die Zuordnung der beiden VCA-Summenzweige
+geklärt (siehe [`docs/HARDWARE_AUDIT.md`](../../docs/HARDWARE_AUDIT.md)).
