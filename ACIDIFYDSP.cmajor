@@ -643,7 +643,12 @@ processor AcidifyCore
     void updateRateConstants (float sampleRate)
     {
         cachedRate = sampleRate;
-        glideCoeff = timeCoefficient (12.0f, sampleRate);  // Open303 scales 60 ms slide by 0.2.
+        // Slide aus der Schaltung statt aus Open303. Whittle, Devil-Fish-Handbuch
+        // S. 16, ueber den Serienstand: „The usual rather fast slide of a TB-303
+        // is caused by the 100K resistance of the DAC feeding a 0.22uF
+        // capacitor." tau = 100 k * 0,22 uF = 22 ms. Open303 stand hier mit
+        // 12 ms (60 ms mal 0,2), einem Fit.
+        glideCoeff = timeCoefficient (22.0f, sampleRate);
         filterAttackAlpha = 1.0f - timeCoefficient (3.0f, sampleRate);
         normalDecayCoeff = timeCoefficient (normalDecayMs, sampleRate);
         accentDecayCoeff = timeCoefficient (200.0f, sampleRate);
