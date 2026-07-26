@@ -109,3 +109,18 @@ Geprüft wird:
 5. Koppelnetz trifft Stinchcombes Übertragungsfunktion
 
 Rückgabewert ungleich null, wenn ein Prüfstein fällt.
+
+## `partcheck.py`
+
+Prüft jeden Bauteilwert, aus dem eine DSP-Konstante abgeleitet ist, gegen die
+**EAGLE-Quelldatei** des x0xb0x. Der x0xb0x ist quelloffen; `mainboard.sch`
+ist die Textquelle. Scans lesen oder Netze im Bild verfolgen ist der falsche
+Weg, solange diese Datei existiert.
+
+```bash
+curl -sSLO https://raw.githubusercontent.com/x0xb0x/x0xb0x.github.io/master/assets/media/x0xb0x/mainboard.sch
+python3 tools/bench/partcheck.py mainboard.sch
+```
+
+Nicht abgedeckt: Verbindungen (dafür `nettrace.py`) und alles, was die
+Schaltung nicht hergibt — Arbeitspunkte, Pinfunktionen des BA662A.
