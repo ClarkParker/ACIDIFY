@@ -1,3 +1,13 @@
+# Validierung 1.2.0
+
+## 1.2.0
+
+Mod-Overlay in der Produkt-UI. `ui_smoke_test` dreifach grün (27 Controls,
+Mod-Interaktion, Reconnect), `preflight` sauber bis auf die dokumentierte
+Parameterzahl-Notiz, DSP unangetastet (`smoke_test` 0,34552).
+
+---
+
 # Validierung 1.1.0
 
 ## 1.1.0

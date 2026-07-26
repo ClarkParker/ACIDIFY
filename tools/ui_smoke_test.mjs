@@ -42,8 +42,11 @@ try {
     studioRulerGroups: document.querySelectorAll(".studio-ruler-group").length,
     studioActions: document.querySelectorAll("[data-studio-action]").length,
     pitchChoices: document.querySelectorAll(".pitch-menu-choice").length,
-    distortionTriggers: document.querySelectorAll(".distortion-trigger").length,
-    distortionControls: document.querySelectorAll(".distortion-overlay .control[data-param]").length,
+    distortionTriggers: document.querySelectorAll(".distortion-trigger:not(.mods-trigger)").length,
+    distortionControls: document.querySelectorAll("#distortion-overlay .control[data-param]").length,
+    modTriggers: document.querySelectorAll(".mods-trigger").length,
+    modControls: document.querySelectorAll("#mods-overlay .control[data-param]").length,
+    modRows: document.querySelectorAll(".mod-row").length,
     distortionTypes: document.querySelectorAll(".distortion-types button").length,
     clockModes: document.querySelectorAll(".clock-mode button").length,
     swingControls: document.querySelectorAll('.control[data-param="param50"]').length,
@@ -55,13 +58,14 @@ try {
     nativeTitles: document.querySelectorAll("[title]").length,
     screws: document.querySelectorAll(".screw").length,
   }));
-  if (counts.controls !== 18 || counts.endpointControls !== 18
+  if (counts.controls !== 27 || counts.endpointControls !== 27
       || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
       || counts.stepGroups !== 4 || counts.whiteKeys !== 7 || counts.blackKeys !== 5
       || counts.studioCells !== 64 || counts.studioCellGroups !== 16
       || counts.studioRulerGroups !== 4 || counts.studioActions !== 15
       || counts.pitchChoices !== 25
       || counts.distortionTriggers !== 1 || counts.distortionControls !== 4
+      || counts.modTriggers !== 1 || counts.modControls !== 9 || counts.modRows !== 6
       || counts.distortionTypes !== 3 || counts.clockModes !== 2
       || counts.swingControls !== 1
       || counts.basslineVisuals !== 1 || counts.basslineNodes !== 16
@@ -466,6 +470,53 @@ try {
     throw new Error("Distortion overlay did not close with Escape");
   }
 
+  const modsTrigger = page.locator(".mods-trigger");
+  if (await modsTrigger.evaluate(node => node.classList.contains("active"))) {
+    throw new Error("Circuit mods are not stock by default");
+  }
+  await modsTrigger.click();
+  if (!(await page.locator(".mods-overlay").isVisible())
+      || await modsTrigger.getAttribute("aria-expanded") !== "true") {
+    throw new Error("Mods overlay did not open");
+  }
+  await page.locator('.control[data-param="param51"] button').click();
+  await page.locator('.control[data-param="param53"] button').click();
+  await page.waitForFunction(() => {
+    const node = document.querySelector("acidify-patch-view");
+    return node && node.querySelector(".mods-status").textContent === "2 MODS ACTIVE";
+  });
+  const modState = await page.locator("acidify-patch-view").evaluate(node => ({
+    od: node._values.get("param51"),
+    reso: node._values.get("param53"),
+    status: node.querySelector(".mods-status").textContent,
+    triggerActive: node.querySelector(".mods-trigger").classList.contains("active"),
+    pendingEchoes: node._recentSends.length,
+  }));
+  if (modState.od !== 1 || modState.reso !== 1
+      || modState.status !== "2 MODS ACTIVE"
+      || !modState.triggerActive || modState.pendingEchoes !== 0) {
+    throw new Error(`Mod controls failed: ${JSON.stringify(modState)}`);
+  }
+  const odAmt = page.locator('.control[data-param="param52"] .dial');
+  const odBefore = Number(await odAmt.getAttribute("aria-valuenow"));
+  await odAmt.focus();
+  await odAmt.press("ArrowRight");
+  const odAfter = Number(await odAmt.getAttribute("aria-valuenow"));
+  if (!(odAfter > odBefore)) {
+    throw new Error(`Overdrive amount keyboard input failed: ${odBefore} -> ${odAfter}`);
+  }
+  await page.locator('.control[data-param="param51"] button').click();
+  await page.locator('.control[data-param="param53"] button').click();
+  await page.waitForFunction(() => {
+    const node = document.querySelector("acidify-patch-view");
+    return node && node.querySelector(".mods-status").textContent === "STOCK 303";
+  });
+  await page.keyboard.press("Escape");
+  if (await page.locator(".mods-overlay").isVisible()
+      || await modsTrigger.getAttribute("aria-expanded") !== "false") {
+    throw new Error("Mods overlay did not close with Escape");
+  }
+
   await page.locator('.sequence-step[data-step="7"]').click();
   if (!(await page.locator('.sequence-step[data-step="7"]').evaluate(node => node.classList.contains("selected")))) {
     throw new Error("Step selection failed");
@@ -815,7 +866,7 @@ try {
       mounted: node._mounted,
     };
   });
-  if (reconnect.sends !== 1 || reconnect.controls !== 18 || reconnect.endpointControls !== 18
+  if (reconnect.sends !== 1 || reconnect.controls !== 27 || reconnect.endpointControls !== 27
       || reconnect.pendingEchoes !== 0 || !reconnect.mounted) {
     throw new Error(`Reconnect lifecycle failed: ${JSON.stringify(reconnect)}`);
   }
@@ -857,6 +908,13 @@ try {
     distortion: {
       state: distortionState,
       drive: { before: driveBefore, after: driveAfter },
+      overlay: true,
+      escapeClose: true,
+    },
+    mods: {
+      state: modState,
+      overdriveAmount: { before: odBefore, after: odAfter },
+      backToStock: true,
       overlay: true,
       escapeClose: true,
     },

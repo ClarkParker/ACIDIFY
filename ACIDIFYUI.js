@@ -292,6 +292,7 @@ class AcidifyPatchView extends HTMLElement {
     this._playingStep = -1;
     this._studioMode = false;
     this._distortionOpen = false;
+    this._modsOpen = false;
     this._pitchMenuOpen = false;
     this._pitchMenuTargets = [];
     this._pitchMenuReturnFocus = null;
@@ -335,6 +336,7 @@ class AcidifyPatchView extends HTMLElement {
     if (this._mounted) return;
     this._mounted = true;
     this._distortionOpen = false;
+    this._modsOpen = false;
     this._pitchMenuOpen = false;
     this._pitchMenuTargets = [];
     this._pitchMenuReturnFocus = null;
@@ -348,6 +350,7 @@ class AcidifyPatchView extends HTMLElement {
     this._wireStudio();
     this._wirePitchMenu();
     this._wireDistortion();
+    this._wireMods();
     this._wireTooltips();
     this._renderStepStrip();
     this._renderStepEditor();
@@ -361,6 +364,9 @@ class AcidifyPatchView extends HTMLElement {
       if (endpointID === "param45" || endpointID === "param46"
           || endpointID === "param47" || endpointID === "param48") {
         this._renderDistortionState();
+      }
+      if (endpointID >= "param51" && endpointID <= "param59" && endpointID.length === 7) {
+        this._renderModState();
       }
       if (endpointID === "param9" || endpointID === "param10" || endpointID === "param49") {
         this._renderTransportState();
@@ -667,6 +673,9 @@ class AcidifyPatchView extends HTMLElement {
             }
             if (config.id === "param45" || config.id === "param46") {
               this._renderDistortionState();
+            }
+            if (config.id >= "param51" && config.id <= "param59" && config.id.length === 7) {
+              queueMicrotask(() => this._renderModState());
             }
           },
         });
@@ -1046,6 +1055,60 @@ class AcidifyPatchView extends HTMLElement {
     };
     this.addEventListener("keydown", this._distortionKeyDown);
     this._renderDistortionState();
+  }
+
+  _wireMods() {
+    this.querySelector(".mods-trigger")?.addEventListener("click", () => {
+      this._setModsOpen(true);
+    });
+    this.querySelector(".mods-close")?.addEventListener("click", () => {
+      this._setModsOpen(false);
+    });
+    this.querySelector(".mods-scrim")?.addEventListener("pointerdown", event => {
+      if (event.target === event.currentTarget) this._setModsOpen(false);
+    });
+    this._modsKeyDown = event => {
+      if (!this._modsOpen || event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      this._setModsOpen(false);
+    };
+    this.addEventListener("keydown", this._modsKeyDown);
+    this._renderModState();
+  }
+
+  _setModsOpen(enabled) {
+    this._modsOpen = Boolean(enabled);
+    if (this._modsOpen) this._closePitchMenu(false);
+    this.classList.toggle("mods-open", this._modsOpen);
+    const trigger = this.querySelector(".mods-trigger");
+    const scrim = this.querySelector(".mods-scrim");
+    trigger?.setAttribute("aria-expanded", `${this._modsOpen}`);
+    if (scrim) {
+      scrim.hidden = !this._modsOpen;
+      scrim.setAttribute("aria-hidden", `${!this._modsOpen}`);
+    }
+    if (this._modsOpen) {
+      queueMicrotask(() => this.querySelector(".mods-close")?.focus());
+    } else {
+      trigger?.focus();
+    }
+  }
+
+  _renderModState() {
+    const modIds = ["param51", "param53", "param54", "param55", "param56", "param58"];
+    const count = modIds.reduce((n, id) => n + (Number(this._values.get(id) ?? 0) >= 0.5 ? 1 : 0), 0);
+    const trigger = this.querySelector(".mods-trigger");
+    trigger?.classList.toggle("active", count > 0);
+    trigger?.setAttribute("aria-label", count > 0
+      ? `Circuit mods: ${count} of 6 active; open controls`
+      : "Circuit mods stock; open controls");
+    if (trigger) trigger.dataset.tooltip = count > 0
+      ? `Circuit mods — ${count} of 6 active. The lamp stays lit while the circuit is modified.`
+      : "Circuit mods — Devil Fish and x0x modifications. All off, so the instrument runs the stock 303 circuit.";
+    const status = this.querySelector(".mods-status");
+    if (status) status.textContent = count > 0 ? `${count} MOD${count > 1 ? "S" : ""} ACTIVE` : "STOCK 303";
+    this.querySelector(".mods-led")?.classList.toggle("lit", count > 0);
   }
 
   _setDistortionOpen(enabled) {
@@ -3592,7 +3655,7 @@ class AcidifyPatchView extends HTMLElement {
     color: #505a5d; font-size: 5px; font-weight: 900; letter-spacing: .85px;
     text-align: right;
   }
-  acidify-patch-view .distortion-trigger {
+  acidify-patch-view .distortion-trigger, acidify-patch-view .mods-trigger {
     display: inline-flex; align-items: center; justify-content: center; gap: 3px;
     width: 40px; height: 15px; padding: 0 4px; border-radius: 3px; cursor: pointer;
     color: #424c4f; font-size: 5.5px; line-height: 1; font-weight: 900; letter-spacing: .65px;
@@ -3600,21 +3663,21 @@ class AcidifyPatchView extends HTMLElement {
     border: 1px solid #5d676a;
     box-shadow: inset 0 1px rgba(255,255,255,.75), 0 1px rgba(255,255,255,.38);
   }
-  acidify-patch-view .distortion-trigger:hover { color: #272823; }
-  acidify-patch-view .distortion-trigger:active,
+  acidify-patch-view .distortion-trigger:hover, acidify-patch-view .mods-trigger:hover { color: #272823; }
+  acidify-patch-view .distortion-trigger:active, acidify-patch-view .mods-trigger:active, acidify-patch-view .mods-trigger.active,
   acidify-patch-view .distortion-trigger.active {
     transform: translateY(1px);
     color: #fff0e8; border-color: #751911;
     background: linear-gradient(#a72a21, #64130e);
     box-shadow: inset 0 2px 3px rgba(41,3,1,.52), 0 0 6px rgba(181,41,33,.22);
   }
-  acidify-patch-view .distortion-trigger:focus-visible,
-  acidify-patch-view .distortion-close:focus-visible,
+  acidify-patch-view .distortion-trigger:focus-visible, acidify-patch-view .mods-trigger:focus-visible,
+  acidify-patch-view .distortion-close:focus-visible, acidify-patch-view .mods-close:focus-visible,
   acidify-patch-view .distortion-types button:focus-visible,
   acidify-patch-view .distortion-power button:focus-visible {
     outline: 2px solid rgba(169,32,26,.72); outline-offset: 2px;
   }
-  acidify-patch-view .distortion-led {
+  acidify-patch-view .distortion-led, acidify-patch-view .mods-led {
     display: block; width: 5px; height: 5px; border-radius: 50%;
     background: #3d1612; border: 1px solid #2b0a07;
     box-shadow: inset 0 1px 1px rgba(255,255,255,.16);
@@ -3628,7 +3691,7 @@ class AcidifyPatchView extends HTMLElement {
     position: absolute; z-index: 80; inset: 0; border-radius: 15px;
     background: rgba(25,24,20,.2);
   }
-  acidify-patch-view .distortion-overlay {
+  acidify-patch-view .distortion-overlay, acidify-patch-view .mods-overlay {
     position: absolute; right: 22px; top: 20px; width: 514px; height: 198px;
     overflow: hidden; border: 1px solid #595f5e; border-radius: 8px;
     color: #242724;
@@ -3649,22 +3712,22 @@ class AcidifyPatchView extends HTMLElement {
     from { opacity: 0; transform: translateY(-5px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  acidify-patch-view .distortion-overlay-head {
+  acidify-patch-view .distortion-overlay-head, acidify-patch-view .mods-overlay-head {
     height: 35px; padding: 7px 9px 5px 12px;
     display: flex; align-items: center; justify-content: space-between;
     border-bottom: 1px solid rgba(69,69,64,.55);
     box-shadow: 0 1px rgba(255,255,255,.55);
   }
-  acidify-patch-view .distortion-overlay-head > div {
+  acidify-patch-view .distortion-overlay-head > div, acidify-patch-view .mods-overlay-head > div {
     display: flex; align-items: baseline; gap: 11px;
   }
-  acidify-patch-view .distortion-overlay-head strong {
+  acidify-patch-view .distortion-overlay-head strong, acidify-patch-view .mods-overlay-head strong {
     color: #9f1e18; font-size: 10px; letter-spacing: 1.8px;
   }
   acidify-patch-view .distortion-status {
     color: #505a5d; font: 7px "Courier New", monospace; letter-spacing: .75px;
   }
-  acidify-patch-view .distortion-close {
+  acidify-patch-view .distortion-close, acidify-patch-view .mods-close {
     width: 23px; height: 21px; border-radius: 3px; cursor: pointer;
     color: #e4e9ea; font: 18px/17px Arial, sans-serif;
     background: linear-gradient(#555e61, #282f31);
@@ -3754,7 +3817,30 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .distortion-overlay .value-label {
     margin-top: 2px; font-size: 7px;
   }
-  acidify-patch-view .distortion-overlay footer {
+  acidify-patch-view .mods-overlay { width: min(560px, 92vw); }
+  acidify-patch-view .mods-scrim {
+    position: absolute; inset: 0; z-index: 90; border-radius: 15px;
+    display: grid; place-items: center;
+    background: rgba(12, 14, 15, 0.55);
+  }
+  acidify-patch-view .mods-scrim[hidden] { display: none; }
+  acidify-patch-view .mods-overlay { position: static; height: auto; }
+  acidify-patch-view .mods-overlay-body {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; padding: 12px 14px;
+  }
+  acidify-patch-view .mod-row {
+    display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px;
+    padding: 6px 8px; border: 1px solid rgba(20, 24, 25, 0.5); border-radius: 4px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+  acidify-patch-view .mod-info b { display: block; font: 800 10px/1.2 "Arial Narrow", Arial, sans-serif; letter-spacing: 1.2px; }
+  acidify-patch-view .mod-info small { display: block; font: 600 8px/1.3 "Arial Narrow", Arial, sans-serif; opacity: 0.65; letter-spacing: 0.6px; }
+  acidify-patch-view .mod-fixed { text-align: center; min-width: 52px; }
+  acidify-patch-view .mod-fixed span { display: block; font: 700 7px/1.2 "Arial Narrow", Arial, sans-serif; opacity: 0.6; letter-spacing: 1px; }
+  acidify-patch-view .mod-fixed b { display: block; font: 800 10px/1.3 "Arial Narrow", Arial, sans-serif; }
+  acidify-patch-view .mods-overlay .knob-control { width: 66px; height: 92px; }
+  acidify-patch-view .mods-overlay .dial { width: 48px; height: 48px; }
+  acidify-patch-view .distortion-overlay footer, acidify-patch-view .mods-overlay footer {
     height: 25px; padding: 4px 12px 0; border-top: 1px solid rgba(69,69,64,.35);
     color: #505a5d; font-size: 5px; font-weight: 900; letter-spacing: 1.1px;
     text-align: right;
@@ -3788,8 +3874,8 @@ class AcidifyPatchView extends HTMLElement {
     acidify-patch-view .studio-ruler-group span { font-size: 6px; }
     acidify-patch-view .studio-cell { font-size: 8px; }
     acidify-patch-view .studio-hint { font-size: 6px; }
-    acidify-patch-view .distortion-trigger { font-size: 6.5px; }
-    acidify-patch-view .distortion-overlay-head strong { font-size: 11px; }
+    acidify-patch-view .distortion-trigger, acidify-patch-view .mods-trigger { font-size: 6.5px; }
+    acidify-patch-view .distortion-overlay-head strong, acidify-patch-view .mods-overlay-head strong { font-size: 11px; }
     acidify-patch-view .distortion-status { font-size: 8px; }
     acidify-patch-view .distortion-cell-label { font-size: 7px; }
     acidify-patch-view .distortion-types button { font-size: 8px; }
@@ -3845,6 +3931,9 @@ class AcidifyPatchView extends HTMLElement {
           <button class="distortion-trigger" type="button" aria-expanded="false"
             aria-controls="distortion-overlay" aria-label="Distortion disabled; open controls"
             title="Distortion · OFF"><i class="distortion-led"></i><span>DIST</span></button>
+          <button class="mods-trigger" type="button" aria-expanded="false"
+            aria-controls="mods-overlay" aria-label="Circuit mods stock; open controls"
+            title="Circuit Mods · STOCK"><i class="mods-led"></i><span>MODS</span></button>
           <span class="master-output"><span class="output-lamp"></span>OUT</span>
         </div>
         ${dial("param8")}
@@ -3883,6 +3972,70 @@ class AcidifyPatchView extends HTMLElement {
           <div class="distortion-knob-cell">${dial("param48")}</div>
         </div>
         <footer>POST OUTPUT · 4× OVERSAMPLED · TYPE CHANGES CROSSFADED</footer>
+      </section>
+    </div>
+
+    <div class="mods-scrim" hidden aria-hidden="true">
+      <section class="mods-overlay" id="mods-overlay" role="dialog" aria-modal="true"
+        aria-labelledby="mods-title">
+        <header class="mods-overlay-head">
+          <div>
+            <strong id="mods-title">CIRCUIT MODS</strong>
+            <span class="mods-status" role="status">STOCK 303</span>
+          </div>
+          <button class="mods-close" type="button" aria-label="Close circuit mods">×</button>
+        </header>
+        <div class="mods-overlay-body">
+          <div class="mod-row">
+            <div class="mod-info"><b>OVERDRIVE</b><small>FILTER OVERDRIVE · R62 220k → 3k3</small></div>
+            <div class="control run-switch mod-switch" data-param="param51" data-endpoint-id="param51"
+              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+              <button data-value="1" type="button"><i></i><span>ON</span></button>
+            </div>
+            <div class="mod-knob">${dial("param52")}</div>
+          </div>
+          <div class="mod-row">
+            <div class="mod-info"><b>RESO BOOST</b><small>x0x R97 10k → 8k2</small></div>
+            <div class="control run-switch mod-switch" data-param="param53" data-endpoint-id="param53"
+              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+              <button data-value="1" type="button"><i></i><span>ON</span></button>
+            </div>
+            <div class="mod-fixed"><span>FEEDBACK</span><b>x1.22</b></div>
+          </div>
+          <div class="mod-row">
+            <div class="mod-info"><b>CUTOFF RANGE</b><small>TOP END 2.5 kHz → 5 kHz</small></div>
+            <div class="control run-switch mod-switch" data-param="param54" data-endpoint-id="param54"
+              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+              <button data-value="1" type="button"><i></i><span>ON</span></button>
+            </div>
+            <div class="mod-fixed"><span>MAXIMUM</span><b>5 kHz</b></div>
+          </div>
+          <div class="mod-row">
+            <div class="mod-info"><b>ENV MOD</b><small>SWEEP RANGE TRIPLED · DF</small></div>
+            <div class="control run-switch mod-switch" data-param="param55" data-endpoint-id="param55"
+              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+              <button data-value="1" type="button"><i></i><span>ON</span></button>
+            </div>
+            <div class="mod-fixed"><span>RANGE</span><b>x3</b></div>
+          </div>
+          <div class="mod-row">
+            <div class="mod-info"><b>SLIDE TIME</b><small>SLIDE POT IN SERIES · 22–132 ms</small></div>
+            <div class="control run-switch mod-switch" data-param="param56" data-endpoint-id="param56"
+              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+              <button data-value="1" type="button"><i></i><span>ON</span></button>
+            </div>
+            <div class="mod-knob">${dial("param57")}</div>
+          </div>
+          <div class="mod-row">
+            <div class="mod-info"><b>SOFT ATTACK</b><small>VCA SOFT ATTACK · ENV + ACCENT</small></div>
+            <div class="control run-switch mod-switch" data-param="param58" data-endpoint-id="param58"
+              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+              <button data-value="1" type="button"><i></i><span>ON</span></button>
+            </div>
+            <div class="mod-knob">${dial("param59")}</div>
+          </div>
+        </div>
+        <footer>DEVIL FISH &amp; x0x MODS · ALL OFF = STOCK 303 CIRCUIT</footer>
       </section>
     </div>
 

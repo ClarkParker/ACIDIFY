@@ -6,6 +6,27 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-27
+
+### Added
+
+- **CIRCUIT-MODS-Overlay in der Produkt-UI** (`ACIDIFYUI.js`): MODS-Trigger mit
+  Lampe neben DIST, sechs Mod-Reihen (Toggle + Amount-Dial bzw. Festwert),
+  Statuszeile („STOCK 303" / „N MODS ACTIVE"), Schließen per ×, Scrim und
+  Escape. Portiert aus dem Claude-Design-Export nach dem Muster des
+  Distortion-Overlays; Controls verdrahten sich über `_buildControls`.
+- **Design-Export eingecheckt** unter `design/` (dc.html, dc-runtime,
+  Host-Mock, Portierungsnotizen). Die 14 MB Session-Screenshots bewusst nicht.
+- `ui_smoke_test` erweitert: Zählungen (27 Controls, 9 Mod-Controls, 6 Reihen)
+  plus Interaktionstest — öffnen, zwei Mods schalten, Status „2 MODS ACTIVE",
+  Amount per Tastatur, zurück auf „STOCK 303", Escape. Dreifach-Lauf stabil.
+- Mockup-Host initialisiert `param51`–`param59`.
+
+### Fixed
+
+- Mod-Statusanzeige lief dem Wertespeicher voraus (Render im `onChange` vor
+  `_values`-Update, Echo wird verschluckt) — Render in den Microtask verlegt.
+
 ## [1.1.0] - 2026-07-26
 
 ### Added

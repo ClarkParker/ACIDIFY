@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #17191b; }
+  x-dc { display: block; height: 100%; }
+  a { color: #d33a2f; }
+  a:hover { color: #ff7768; }
+  @keyframes acidify-sweep { from { opacity: .95 } to { opacity: .45 } }
+</style>
+</helmet>
+<section style="display:grid; place-items:center; height:100%; overflow:hidden; padding:0; font-family:'Helvetica Neue',Arial,sans-serif">
+  <div style="display:flex">
+    <div id="3a" style="display:flex; flex-direction:column">
+
+      <div ref="{{ frameRef }}" onMouseOver="{{ overTip }}" onMouseLeave="{{ hideTip }}" style="position:relative; width:1180px; height:580px; box-sizing:border-box; padding:8px; display:flex; flex-direction:column; gap:8px; border-radius:7px; overflow:hidden; color:#15191a; font-family:'Arial Narrow','Helvetica Neue',Arial,sans-serif; user-select:none; background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='2' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E&quot;),repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.02) 1px 2px, transparent 2px 5px),linear-gradient(180deg,#dfe1e0 0%,#c8cac9 40%,#aeb1b0 78%,#8f9392 100%); background-blend-mode:overlay,overlay,normal; background-size:96px 96px,auto,auto; box-shadow:0 26px 44px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.85), inset 0 -6px 10px rgba(38,41,40,.35)">
+
+        <sc-if value="{{ modOpen }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ modScrimClick }}" style="position:absolute; z-index:92; inset:0; background:rgba(28,32,31,.4)">
+            <div style="position:absolute; right:8px; top:8px; width:788px; height:300px; box-sizing:border-box; border-radius:3px; overflow:hidden; border:1px solid #6f7573; background-image:repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),linear-gradient(180deg,#f0f2f1 0%,#dfe1e0 44%,#c7cac9 100%); box-shadow:0 22px 40px rgba(0,0,0,.5), inset 0 1px 0 #fff">
+
+              <div style="height:26px; box-sizing:border-box; padding:0 12px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(45,50,49,.45); box-shadow:0 1px 0 rgba(255,255,255,.7)">
+                <div style="display:flex; align-items:baseline; gap:10px">
+                  <strong style="color:#a51d17; font:900 11px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:2.2px; white-space:nowrap; text-shadow:0 1px 0 rgba(255,255,255,.7)">CIRCUIT MODS</strong>
+                  <span style="color:{{ modFooterColor }}; font:900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.4px; white-space:nowrap">{{ modStatus }}</span>
+                </div>
+                <button type="button" onClick="{{ toggleMod }}" data-tip="Close the circuit mods panel." style="width:26px; height:18px; display:grid; place-items:center; cursor:pointer; border-radius:2px; border:1px solid #1a1e1f; color:#1d2426; font:900 9px/1 'Arial Narrow',Arial,sans-serif; background:linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4)">✕</button>
+              </div>
+
+              <div style="height:252px; box-sizing:border-box; padding:12px; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); gap:8px">
+                <sc-for list="{{ modCells }}" as="m" hint-placeholder-count="6">
+                  <div style="box-sizing:border-box; padding:7px 8px; display:flex; flex-direction:column; border-radius:2px; border:1px solid {{ m.cellBorder }}; background:{{ m.cellBg }}; box-shadow:{{ m.cellShadow }}">
+
+                    <div style="height:14px; display:flex; align-items:center; justify-content:space-between">
+                      <strong style="color:{{ m.titleColor }}; font:900 9.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.6px; white-space:nowrap; text-shadow:0 1px 0 rgba(255,255,255,.85)">{{ m.title }}</strong>
+                      <span style="width:9px; height:9px; border-radius:50%; border:1px solid #4f1a15; background:{{ m.ledBg }}; box-shadow:{{ m.ledGlow }}"></span>
+                    </div>
+
+                    <div style="margin-top:5px; flex:1; min-height:0; display:flex; align-items:center; gap:9px">
+                      <div class="control run-switch" data-param="{{ m.param }}" data-endpoint-id="{{ m.param }}" data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle" style="flex:0 0 auto">
+                        <button data-value="1" type="button" data-mod="{{ m.key }}" onClick="{{ toggleModFlag }}" data-tip="{{ m.tip }}" style="width:66px; height:56px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; border-radius:2px; border:1px solid {{ m.rockerBorder }}; background:{{ m.rockerBg }}; box-shadow:{{ m.rockerShadow }}">
+                          <strong style="color:{{ m.stateColor }}; font:900 12px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.5px; text-shadow:0 1px 0 rgba(255,255,255,.35)">{{ m.stateLabel }}</strong>
+                          <small style="color:#5b6466; font:900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:.8px">ENABLE</small>
+                        </button>
+                      </div>
+
+                      <sc-if value="{{ m.hasDial }}" hint-placeholder-val="{{ true }}">
+                        <div class="control knob-control" data-param="{{ m.amtParam }}" data-endpoint-id="{{ m.amtParam }}" data-min="0" data-max="1" data-step="0.001" data-init="{{ m.amtInit }}" data-control="dial" style="flex:1; min-width:0; display:flex; align-items:center; gap:8px">
+                          <div style="position:relative; flex:0 0 auto; width:46px; height:46px">
+                            <div class="tick-ring" style="position:absolute; inset:-4px; border-radius:50%; background:repeating-conic-gradient(from 218deg, #3f4645 0 1.2deg, transparent 1.2deg 11.5deg); -webkit-mask:radial-gradient(circle, transparent 0 68%, #000 68% 100%); mask:radial-gradient(circle, transparent 0 68%, #000 68% 100%)"></div>
+                            <div class="dial" role="slider" tabindex="0" data-knob="{{ m.knob }}" onPointerDown="{{ knobDown }}" onDoubleClick="{{ knobReset }}" data-tip="{{ m.amtTip }}" style="position:absolute; inset:0; border-radius:50%; cursor:ns-resize; touch-action:none; border:1px solid #565e60; background:linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 20%, rgba(26,32,34,.15) 56%, rgba(26,32,34,.38) 100%), repeating-conic-gradient(from .5deg, #798285 0 1.7deg, #c4cbcd 1.7deg 2.5deg, #6d7679 2.5deg 4.2deg); box-shadow:0 6px 8px rgba(0,0,0,.3), inset 0 2px 2px rgba(255,255,255,.9), inset 0 -6px 8px rgba(40,47,49,.55)">
+                              <div class="dial-cap" style="position:absolute; inset:7px; border-radius:50%; border:1px solid #6d7578; background:radial-gradient(ellipse at 50% 118%, rgba(255,255,255,.5) 0 16%, rgba(255,255,255,0) 54%), radial-gradient(ellipse 132% 114% at 34% 15%, #ffffff 0 5%, #f1f4f4 17%, #cdd3d4 39%, #a8b0b2 65%, #8c9598 88%, #a3abad 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.95), inset -5px -7px 12px rgba(96,106,109,.26)">
+                                <i class="dial-pointer" style="position:absolute; left:50%; top:3px; width:3px; height:11px; margin-left:-1.5px; border-radius:2px; transform-origin:50% 12.5px; transform:rotate({{ m.deg }}deg); background:linear-gradient(90deg,#141819 0,#343a3c 45%,#0f1314 100%); box-shadow:1px 0 0 rgba(255,255,255,.55)"></i>
+                              </div>
+                            </div>
+                          </div>
+                          <div style="flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:5px">
+                            <span class="control-label" style="white-space:nowrap; color:#26302f; font:900 8.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.3px; text-shadow:0 1px 0 rgba(255,255,255,.85)">{{ m.amtLabel }}</span>
+                            <span style="width:100%; height:22px; display:grid; place-items:center; border-radius:2px; border:1px solid #0a0706; background:linear-gradient(180deg,#241512,#130b09); box-shadow:inset 0 2px 4px rgba(0,0,0,.72)"><span class="value-label" style="white-space:nowrap; color:{{ m.fixedColor }}; font:12px/1 'Courier New',monospace; text-shadow:0 0 5px rgba(255,57,37,.45)">{{ m.amtValue }}</span></span>
+                          </div>
+                        </div>
+                      </sc-if>
+
+                      <sc-if value="{{ m.fixedOnly }}" hint-placeholder-val="{{ false }}">
+                        <div style="flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px">
+                          <span style="white-space:nowrap; color:#26302f; font:900 8.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.3px; text-shadow:0 1px 0 rgba(255,255,255,.85)">{{ m.fixedLabel }}</span>
+                          <span style="width:100%; height:32px; display:grid; place-items:center; border-radius:2px; border:1px solid #0a0706; background:linear-gradient(180deg,#241512,#130b09); box-shadow:inset 0 2px 4px rgba(0,0,0,.72)"><span style="white-space:nowrap; color:{{ m.fixedColor }}; font:16px/1 'Courier New',monospace; text-shadow:0 0 5px rgba(255,57,37,.45)">{{ m.fixedValue }}</span></span>
+                        </div>
+                      </sc-if>
+                    </div>
+
+                    <span style="margin-top:5px; height:12px; color:#5d6768; font:900 8px/12px 'Arial Narrow',Arial,sans-serif; letter-spacing:.75px; white-space:nowrap; overflow:hidden">{{ m.desc }}</span>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="height:22px; box-sizing:border-box; padding:0 12px; display:flex; align-items:center; justify-content:space-between; border-top:1px solid rgba(45,50,49,.35); box-shadow:0 -1px 0 rgba(255,255,255,.6)">
+                <span style="white-space:nowrap; color:#5d6768; font:900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px">PARAM 51–59 · DEVIL FISH / X0X</span>
+                <span style="white-space:nowrap; color:{{ modFooterColor }}; font:900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px">{{ modFooter }}</span>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ distOpen }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ scrimClick }}" style="position:absolute; z-index:90; inset:0; background:rgba(28,32,31,.34)">
+            <div style="position:absolute; right:8px; top:8px; width:588px; height:180px; box-sizing:border-box; border-radius:3px; overflow:hidden; border:1px solid #6f7573; background-image:repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),linear-gradient(180deg,#f0f2f1 0%,#dfe1e0 44%,#c7cac9 100%); box-shadow:0 22px 40px rgba(0,0,0,.5), inset 0 1px 0 #fff">
+              <div style="height:26px; box-sizing:border-box; padding:0 12px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(45,50,49,.45); box-shadow:0 1px 0 rgba(255,255,255,.6)">
+                <div style="display:flex; align-items:baseline; gap:10px">
+                  <strong style="color:#a51d17; font:900 11px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:2.2px; white-space:nowrap; text-shadow:0 1px 0 rgba(255,255,255,.7)">DISTORTION STAGE</strong>
+                  <span style="color:#5d6768; font:900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.4px; white-space:nowrap">{{ distStatus }}</span>
+                </div>
+                <button type="button" onClick="{{ toggleDist }}" data-tip="Close the distortion stage." style="width:26px; height:18px; display:grid; place-items:center; cursor:pointer; border-radius:2px; border:1px solid #1a1e1f; color:#1d2426; font:900 13px/1 Arial,sans-serif; background:linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4)">×</button>
+              </div>
+              <div style="height:130px; box-sizing:border-box; padding:9px 12px; display:grid; grid-template-columns:104px 226px 1fr; gap:12px">
+                <div class="control run-switch distortion-power" data-param="param45" data-endpoint-id="param45" data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle" style="display:flex; flex-direction:column; align-items:center; border-right:1px solid rgba(45,50,49,.4); box-shadow:1px 0 0 rgba(255,255,255,.6)">
+                  <span style="width:88px; display:grid; place-items:center; border-bottom:1px solid rgba(45,50,49,.45); color:#26302f; font:900 8px/14px 'Arial Narrow',Arial,sans-serif; letter-spacing:1.7px; text-shadow:0 1px 0 rgba(255,255,255,.85)">POWER</span>
+                  <span style="margin-top:10px; width:11px; height:11px; border-radius:50%; border:1px solid #4f1a15; background:{{ distLedBg }}; box-shadow:{{ distLedGlow }}"></span>
+                  <button type="button" data-value="1" onClick="{{ toggleDistPower }}" data-tip="True bypass for the whole distortion stage." style="margin-top:9px; width:80px; height:58px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; border-radius:2px; border:1px solid {{ distPowerBorder }}; background:{{ distPowerRocker }}; box-shadow:{{ distPowerShadow }}">
+                    <strong style="color:{{ distPowerText }}; font:900 10px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.4px; text-shadow:0 1px 0 rgba(255,255,255,.6)">{{ distPowerLabel }}</strong>
+                    <small style="color:#5b6466; font:900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:.7px">CLEAN BYPASS</small>
+                  </button>
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:center; border-right:1px solid rgba(45,50,49,.4); box-shadow:1px 0 0 rgba(255,255,255,.6)">
+                  <span style="width:150px; display:grid; place-items:center; border-bottom:1px solid rgba(45,50,49,.45); color:#26302f; font:900 8px/14px 'Arial Narrow',Arial,sans-serif; letter-spacing:1.7px; text-shadow:0 1px 0 rgba(255,255,255,.85)">CHARACTER</span>
+                  <div class="control distortion-types" data-param="param46" data-endpoint-id="param46" data-min="0" data-max="2" data-step="1" data-init="0" data-control="buttons" style="margin-top:10px; display:grid; grid-template-columns:repeat(3,1fr); gap:6px; width:206px">
+                    <sc-for list="{{ distTypes }}" as="t" hint-placeholder-count="3">
+                      <button type="button" data-value="{{ t.id }}" data-dist="{{ t.id }}" onClick="{{ setDistType }}" data-tip="{{ t.tip }}" style="position:relative; height:80px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; cursor:pointer; border-radius:2px; border:1px solid {{ t.rockerBorder }}; background:{{ t.rockerBg }}; box-shadow:{{ t.rockerShadow }}">
+                        <span style="position:absolute; left:50%; top:6px; margin-left:-3px; width:6px; height:6px; border-radius:50%; background:{{ t.ledBg }}; box-shadow:{{ t.ledGlow }}"></span>
+                        <strong style="margin-top:8px; color:{{ t.textColor }}; font:900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px; text-shadow:0 1px 0 rgba(255,255,255,.6)">{{ t.label }}</strong>
+                        <small style="color:#5b6466; font:900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:.7px">{{ t.sub }}</small>
+                      </button>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="display:flex; justify-content:space-around">
+                  <sc-for list="{{ distKnobs }}" as="k" hint-placeholder-count="2">
+                    <div class="control knob-control" data-param="{{ k.param }}" data-endpoint-id="{{ k.param }}" data-min="{{ k.min }}" data-max="{{ k.max }}" data-step="{{ k.step }}" data-init="{{ k.init }}" data-control="dial" style="display:flex; flex-direction:column; align-items:center">
+                      <span class="control-label" style="width:74px; display:grid; place-items:center; border-bottom:1px solid rgba(45,50,49,.45); color:#26302f; font:900 8px/14px 'Arial Narrow',Arial,sans-serif; letter-spacing:1.7px; text-shadow:0 1px 0 rgba(255,255,255,.85)">{{ k.label }}</span>
+                      <div class="dial" role="slider" tabindex="0" data-knob="{{ k.id }}" onPointerDown="{{ knobDown }}" onDoubleClick="{{ knobReset }}" data-tip="{{ k.tip }}" style="position:relative; margin-top:9px; width:58px; height:58px; border-radius:50%; cursor:ns-resize; touch-action:none; border:1px solid #565e60; background:linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 20%, rgba(26,32,34,.15) 56%, rgba(26,32,34,.38) 100%), repeating-conic-gradient(from .5deg, #798285 0 1.7deg, #c4cbcd 1.7deg 2.5deg, #6d7679 2.5deg 4.2deg); box-shadow:0 7px 9px rgba(0,0,0,.3), inset 0 2px 2px rgba(255,255,255,.9), inset 0 -6px 8px rgba(40,47,49,.55)">
+                        <div style="position:absolute; inset:8px; border-radius:50%; border:1px solid #6d7578; background:radial-gradient(ellipse at 50% 118%, rgba(255,255,255,.5) 0 16%, rgba(255,255,255,0) 54%), radial-gradient(ellipse 132% 114% at 34% 15%, #ffffff 0 5%, #f1f4f4 17%, #cdd3d4 39%, #a8b0b2 65%, #8c9598 88%, #a3abad 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.95), inset -5px -7px 12px rgba(96,106,109,.26)"></div>
+                        <div style="position:absolute; inset:8px; border-radius:50%; pointer-events:none; transform:rotate({{ k.deg }}deg)">
+                          <i style="position:absolute; left:50%; top:5px; width:3px; height:14px; margin-left:-1.5px; border-radius:2px; background:linear-gradient(90deg,#141819 0,#343a3c 45%,#0f1314 100%); box-shadow:1px 0 0 rgba(255,255,255,.55)"></i>
+                        </div>
+                      </div>
+                      <div style="margin-top:8px; width:58px; height:19px; display:grid; place-items:center; border-radius:2px; border:1px solid #0a0706; background:linear-gradient(180deg,#241512,#130b09); box-shadow:inset 0 2px 4px rgba(0,0,0,.72)"><span class="value-label" style="color:#ff6756; font:11px/1 'Courier New',monospace; text-shadow:0 0 5px rgba(255,57,37,.5)">{{ k.value }}</span></div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="height:22px; box-sizing:border-box; padding:0 12px; display:flex; align-items:center; justify-content:flex-end; border-top:1px solid rgba(45,50,49,.35); color:#5d6768; font:900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.2px">POST OUTPUT · 4× OVERSAMPLED · TYPE CHANGES CROSSFADED</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tipVisible }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; z-index:140; left:{{ tipX }}; top:{{ tipY }}; width:max-content; max-width:290px; padding:7px 10px; border-radius:3px; pointer-events:none; transform:translate(-50%,-100%); color:#f1efe5; background:rgba(20,23,22,.97); border:1px solid rgba(228,225,211,.3); box-shadow:0 8px 18px rgba(0,0,0,.5); font:700 10px/1.35 'Helvetica Neue',Arial,sans-serif">{{ tipText }}</div>
+        </sc-if>
+
+        <!-- DECK A -->
+        <div style="height:168px; display:flex; border:1px solid #6f7573; border-radius:3px; overflow:hidden; background-image:repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),linear-gradient(180deg,#f0f2f1 0%,#dfe1e0 44%,#c7cac9 100%); box-shadow:inset 0 1px 0 #fff, inset 0 -2px 3px rgba(30,34,33,.2)">
+          <div style="box-sizing:border-box; width:206px; padding:15px 16px; display:flex; flex-direction:column; justify-content:space-between; border-right:1px solid rgba(45,50,49,.5); box-shadow:1px 0 0 rgba(255,255,255,.6)">
+            <div>
+              <div style="position:relative; font:900 34px/34px Impact,'Arial Black',sans-serif; letter-spacing:.4px; color:#8d9391; text-shadow:0 -1px 0 rgba(14,18,17,.85), 0 1px 0 rgba(255,255,255,.98), 0 2px 2px rgba(255,255,255,.45), 0 -2px 3px rgba(14,18,17,.35)"><span style="color:#8e1f16; text-shadow:0 -1px 0 rgba(38,4,2,.95), 0 1px 0 rgba(255,255,255,.95), 0 -2px 4px rgba(96,14,8,.55), 0 0 9px rgba(196,32,20,.28)">ACID</span>IFY</div>
+              <div style="margin-top:8px; width:100%; height:2px; border-radius:1px; background:linear-gradient(90deg, rgba(30,35,34,.55) 0 62%, rgba(142,31,22,.75) 62% 100%); box-shadow:0 1px 0 rgba(255,255,255,.85), inset 0 1px 1px rgba(0,0,0,.5)"></div>
+              <div style="margin-top:8px; font:900 8px/11px 'Arial Narrow',Arial,sans-serif; letter-spacing:.85px; white-space:nowrap; color:#2b3536; text-shadow:0 -.5px 0 rgba(20,24,23,.5), 0 1px 0 rgba(255,255,255,.9)">AC-303 BASSLINE SYNTHESIZER</div>
+              <div style="margin-top:3px; font:900 6.5px/10px 'Arial Narrow',Arial,sans-serif; letter-spacing:.8px; white-space:nowrap; color:#798382; text-shadow:0 1px 0 rgba(255,255,255,.75)">MONOPHONIC · 4× MODELLED CORE</div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:7px">
+              <div style="box-sizing:border-box; height:34px; padding:0 8px; display:flex; align-items:center; justify-content:space-between; border-radius:2px; border:1px solid #8b918f; background:linear-gradient(180deg,#b6bab8,#c9cdcb); box-shadow:inset 0 2px 4px rgba(48,54,52,.4), inset 0 -1px 0 rgba(255,255,255,.6), 0 1px 0 rgba(255,255,255,.7)">
+                <button type="button" onClick="{{ toggleTips }}" data-tip="Turns the control tooltips on or off." style="display:flex; align-items:center; gap:5px; height:18px; padding:0 6px; cursor:pointer; border-radius:2px; border:1px solid #1a1e1f; background:{{ tipsRocker }}; box-shadow:{{ tipsRockerShadow }}"><span style="color:#1d2426; font:900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px">? TIPS</span><strong style="padding:2px 4px; border-radius:1px; color:{{ tipsStateColor }}; background:{{ tipsStateBg }}; font:900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:.8px">{{ tipsStateLabel }}</strong></button>
+                <button type="button" onClick="{{ toggleBypass }}" data-tip="{{ bypassTip }}" style="display:flex; align-items:center; gap:6px; padding:0; border:0; background:transparent; cursor:pointer"><span style="color:{{ bypassLabelColor }}; font:900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px; text-shadow:0 1px 0 rgba(255,255,255,.7)">{{ bypassLabel }}</span><span style="display:grid; place-items:center; width:22px; height:22px; border-radius:50%; border:1px solid rgba(45,50,49,.5); background:radial-gradient(circle at 34% 26%, #f2f4f4, #b9bfbd 62%, #98a09e); box-shadow:inset 0 1px 0 rgba(255,255,255,.9), inset 0 -2px 3px rgba(48,54,52,.35), 0 1px 0 rgba(255,255,255,.65)"><i style="width:8px; height:8px; border-radius:50%; background:{{ bypassLedBg }}; box-shadow:{{ bypassLedGlow }}"></i></span></button>
+              </div>
+              <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px">
+                <span style="color:#5d6767; font:900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.2px; white-space:nowrap; text-shadow:0 1px 0 rgba(255,255,255,.8)">COMPUTER CONTROLLED</span>
+                <span style="color:#8b9494; font:900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.2px; white-space:nowrap; text-shadow:0 1px 0 rgba(255,255,255,.7)">v0.7.2</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="box-sizing:border-box; width:172px; padding:12px 13px; display:flex; flex-direction:column; border-right:1px solid rgba(45,50,49,.5); box-shadow:1px 0 0 rgba(255,255,255,.6)">
+            <div style="width:100%; height:15px; display:grid; place-items:center; border-bottom:1px solid rgba(45,50,49,.45); color:#26302f; font:900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.7px; text-shadow:0 1px 0 rgba(255,255,255,.85)">OSCILLATOR</div>
+            <div style="flex:1; min-height:0; display:flex; gap:14px; align-items:center; justify-content:center">
+              <div class="control waveform" data-param="param7" data-endpoint-id="param7" data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons" style="display:flex; flex-direction:column; align-items:center; gap:5px">
+                <button type="button" data-value="0" data-wave="0" onClick="{{ setWave }}" data-tip="Sawtooth oscillator — bright and buzzy. Click to select." style="position:relative; width:62px; height:58px; padding:5px; border-radius:3px; cursor:pointer; border:1px solid #1a1e1f; color:{{ sawColor }}; background:{{ sawRocker }}; box-shadow:{{ sawRockerShadow }}">
+                  <svg viewBox="0 0 28 20" style="display:block; width:100%; height:100%; overflow:visible; fill:none; stroke:currentColor; stroke-width:2.4"><path d="M2 16L9 4v12l7-12v12l7-12"></path></svg>
+                </button>
+                <span style="color:{{ sawLabelColor }}; font:900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.3px; text-shadow:0 1px 0 rgba(255,255,255,.75)">SAW</span>
+              </div>
+              <div class="control waveform-alt" style="display:flex; flex-direction:column; align-items:center; gap:5px">
+                <button type="button" data-value="1" data-wave="1" onClick="{{ setWave }}" data-tip="Modelled 303-style square wave — hollow and woody. Click to select." style="position:relative; width:62px; height:58px; padding:5px; border-radius:3px; cursor:pointer; border:1px solid #1a1e1f; color:{{ sqrColor }}; background:{{ sqrRocker }}; box-shadow:{{ sqrRockerShadow }}">
+                  <svg viewBox="0 0 28 20" style="display:block; width:100%; height:100%; overflow:visible; fill:none; stroke:currentColor; stroke-width:2.4"><path d="M2 16V4h10v12h10V4h4"></path></svg>
+                </button>
+                <span style="color:{{ sqrLabelColor }}; font:900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.3px; text-shadow:0 1px 0 rgba(255,255,255,.75)">SQR</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex:1; padding:14px 16px 0; display:grid; grid-template-columns:repeat(6,1fr)">
+            <sc-for list="{{ toneKnobs }}" as="k" hint-placeholder-count="6">
+              <div class="control knob-control" data-param="{{ k.param }}" data-endpoint-id="{{ k.param }}" data-min="{{ k.min }}" data-max="{{ k.max }}" data-step="{{ k.step }}" data-init="{{ k.init }}" data-control="dial" style="display:flex; flex-direction:column; align-items:center">
+                <div class="control-label" style="font:900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.15px; color:{{ k.labelColor }}; white-space:nowrap">{{ k.label }}</div>
+                <div style="position:relative; margin-top:9px; width:68px; height:68px">
+                  <div style="position:absolute; inset:-5px; border-radius:50%; background:repeating-conic-gradient(from 218deg, #3f4645 0 1.2deg, transparent 1.2deg 11.5deg); -webkit-mask:radial-gradient(circle, transparent 86%, #000 87% 97%, transparent 98%); mask:radial-gradient(circle, transparent 86%, #000 87% 97%, transparent 98%); clip-path:polygon(0 0,100% 0,100% 86%,50% 50%,0 86%)"></div>
+                  <div class="dial" role="slider" tabindex="0" data-knob="{{ k.id }}" onPointerDown="{{ knobDown }}" onDoubleClick="{{ knobReset }}" data-tip="{{ k.tip }}" style="position:absolute; inset:0; border-radius:50%; cursor:ns-resize; touch-action:none; border:1px solid #565e60; background:linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 20%, rgba(26,32,34,.15) 56%, rgba(26,32,34,.38) 100%), repeating-conic-gradient(from .5deg, #798285 0 1.7deg, #c4cbcd 1.7deg 2.5deg, #6d7679 2.5deg 4.2deg); box-shadow:0 7px 9px rgba(0,0,0,.3), 0 2px 2px rgba(0,0,0,.4), inset 0 2px 2px rgba(255,255,255,.9), inset 0 -6px 8px rgba(40,47,49,.55)">
+                    <div style="position:absolute; inset:9px; border-radius:50%; border:1px solid #6d7578; background:radial-gradient(ellipse at 50% 118%, rgba(255,255,255,.5) 0 16%, rgba(255,255,255,0) 54%), radial-gradient(ellipse 132% 114% at 34% 15%, #ffffff 0 5%, #f1f4f4 17%, #cdd3d4 39%, #a8b0b2 65%, #8c9598 88%, #a3abad 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.5), inset -5px -7px 12px rgba(96,106,109,.26), inset 4px 5px 10px rgba(255,255,255,.3)"></div>
+                    <div style="position:absolute; inset:9px; border-radius:50%; pointer-events:none; transform:rotate({{ k.deg }}deg)">
+                      <i style="position:absolute; left:50%; top:5px; width:3px; height:20px; margin-left:-1.5px; border-radius:2px; background:linear-gradient(90deg,#141819 0,#343a3c 45%,#0f1314 100%); box-shadow:1px 0 0 rgba(255,255,255,.55)"></i>
+                    </div>
+                  </div>
+                </div>
+                <div style="margin-top:10px; width:66px; height:20px; display:grid; place-items:center; border-radius:2px; border:1px solid #0a0706; background:linear-gradient(180deg,#241512,#130b09); box-shadow:inset 0 2px 4px rgba(0,0,0,.72)"><span class="value-label" style="color:#ff6756; font:12px/1 'Courier New',monospace; letter-spacing:.5px; text-shadow:0 0 5px rgba(255,57,37,.5)">{{ k.value }}</span></div>
+
+                <div data-tip="{{ k.nutTip }}" style="position:relative; margin-top:7px; width:66px; height:13px; border-radius:7px; background:linear-gradient(180deg, rgba(52,58,57,.3), rgba(210,214,212,.16)); box-shadow:inset 0 2px 3px rgba(40,46,45,.5), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6)">
+                  <sc-if value="{{ k.hasMod }}" hint-placeholder-val="{{ false }}">
+                    <div class="mod-slider" data-mirrors="{{ k.modParam }}" data-control="dial" style="position:absolute; inset:0">
+                      <span class="control-label" hidden="{{ true }}">{{ k.modLabel }}</span>
+                      <div class="dial" role="slider" tabindex="0" data-knob="{{ k.modKnob }}" onPointerDown="{{ sliderDown }}" onDoubleClick="{{ knobReset }}" data-tip="{{ k.modTip }}" style="position:absolute; inset:0; cursor:ew-resize; touch-action:none">
+                        <i style="position:absolute; left:4px; right:4px; top:6px; height:2px; border-radius:1px; background:linear-gradient(90deg, rgba(142,31,22,.75), rgba(255,90,66,.5))"></i>
+                        <i style="position:absolute; top:1px; left:{{ k.modPct }}; width:9px; height:11px; margin-left:-4.5px; border-radius:2px; border:1px solid #4a5153; background:linear-gradient(180deg,#f4f6f6 0 30%,#c9cfd0 55%,#98a1a3 100%); box-shadow:0 1px 2px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.9)"></i>
+                      </div>
+                      <span style="position:absolute; left:50%; top:14px; margin-left:-24px; width:48px; height:13px; z-index:6; display:grid; place-items:center; border-radius:2px; border:1px solid #0a0706; background:linear-gradient(180deg,#241512,#130b09); box-shadow:0 3px 6px rgba(0,0,0,.45); opacity:{{ k.modShow }}; transition:opacity .12s; pointer-events:none"><span class="value-label" style="color:#ff6756; font:10px/1 'Courier New',monospace">{{ k.modValue }}</span></span>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="width:206px; padding:12px 12px; display:flex; gap:10px; border-left:1px solid rgba(45,50,49,.5)">
+            <div class="control knob-control" data-param="param8" data-endpoint-id="param8" data-min="-36" data-max="0" data-step="0.1" data-init="-6" data-control="dial" style="display:flex; flex-direction:column; align-items:center">
+              <div style="width:96px; height:15px; display:grid; place-items:center; border-bottom:1px solid rgba(45,50,49,.45); color:#26302f; font:900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.7px; text-shadow:0 1px 0 rgba(255,255,255,.85)">MASTER</div>
+              <div style="position:relative; margin-top:11px; width:72px; height:72px">
+                <div class="dial" role="slider" tabindex="0" data-knob="volume" data-tip="Output level in decibels. Drag or scroll to set · hold Shift for fine steps · double-click resets to −6.0 dB." onPointerDown="{{ knobDown }}" onDoubleClick="{{ knobReset }}" style="position:absolute; inset:0; border-radius:50%; cursor:ns-resize; touch-action:none; border:1px solid #565e60; background:linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 20%, rgba(26,32,34,.15) 56%, rgba(26,32,34,.38) 100%), repeating-conic-gradient(from .5deg, #798285 0 1.7deg, #c4cbcd 1.7deg 2.5deg, #6d7679 2.5deg 4.2deg); box-shadow:0 7px 9px rgba(0,0,0,.3), inset 0 2px 2px rgba(255,255,255,.9), inset 0 -6px 8px rgba(40,47,49,.55)">
+                  <div style="position:absolute; inset:8px; border-radius:50%; border:1px solid #6d7578; background:radial-gradient(ellipse at 50% 118%, rgba(255,255,255,.5) 0 16%, rgba(255,255,255,0) 54%), radial-gradient(ellipse 132% 114% at 34% 15%, #ffffff 0 5%, #f1f4f4 17%, #cdd3d4 39%, #a8b0b2 65%, #8c9598 88%, #a3abad 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.95), inset -5px -7px 12px rgba(96,106,109,.26)"></div>
+                  <div style="position:absolute; inset:8px; border-radius:50%; pointer-events:none; transform:rotate({{ volumeDeg }}deg)">
+                    <i style="position:absolute; left:50%; top:5px; width:3px; height:21px; margin-left:-1.5px; border-radius:2px; background:linear-gradient(90deg,#141819 0,#343a3c 45%,#0f1314 100%); box-shadow:1px 0 0 rgba(255,255,255,.55)"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="control-label" style="margin-top:8px; font:900 8.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px; color:#1c2224">VOLUME</div>
+              <div class="value-label" style="margin-top:4px; font:8px/1 'Courier New',monospace; color:#6c1710">{{ volumeLabel }}</div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; padding-top:1px">
+              <div style="width:99px; height:15px; display:grid; place-items:center; border-bottom:1px solid rgba(45,50,49,.45); color:#26302f; font:900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.7px; text-shadow:0 1px 0 rgba(255,255,255,.85)">OUTPUT</div>
+              <div style="position:relative; margin-top:9px; width:44px; height:88px; border-radius:3px; overflow:hidden; border:1px solid #0b0d0c; background:linear-gradient(180deg,#1a1c19,#0d0f0d); box-shadow:inset 0 3px 7px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.6)">
+                <div style="position:absolute; left:6px; bottom:4px; width:14px; top:4px; border-radius:1px; background:repeating-linear-gradient(0deg, rgba(255,255,255,.055) 0 2px, transparent 2px 4px)"></div>
+                <div style="position:absolute; right:6px; bottom:4px; width:14px; top:4px; border-radius:1px; background:repeating-linear-gradient(0deg, rgba(255,255,255,.055) 0 2px, transparent 2px 4px)"></div>
+                <div style="position:absolute; left:6px; bottom:4px; width:14px; height:{{ meterL }}; border-radius:1px; background:linear-gradient(0deg,#3fa05a,#a8c33c 58%,#e4a52c 80%,#e1382a 100%); box-shadow:0 0 7px rgba(255,110,60,.4)"></div>
+                <div style="position:absolute; right:6px; bottom:4px; width:14px; height:{{ meterR }}; border-radius:1px; background:linear-gradient(0deg,#3fa05a,#a8c33c 58%,#e4a52c 80%,#e1382a 100%); box-shadow:0 0 7px rgba(255,110,60,.4)"></div>
+              </div>
+              <div style="margin-top:8px; display:flex; gap:5px">
+              <button type="button" onClick="{{ toggleDist }}" data-tip="Post-output distortion stage: Pure, Mackie or Phono character." style="width:47px; height:22px; display:flex; align-items:center; justify-content:center; gap:4px; border-radius:2px; cursor:pointer; border:1px solid #1a1e1f; color:#1d2426; font:900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:.7px; background:linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4)"><i style="width:5px; height:5px; border-radius:50%; background:{{ distLedBg }}; box-shadow:{{ distLedGlow }}"></i>DIST</button>
+              <button type="button" onClick="{{ toggleMod }}" data-tip="{{ modButtonTip }}" style="width:47px; height:22px; display:flex; align-items:center; justify-content:center; gap:4px; border-radius:2px; cursor:pointer; border:1px solid #1a1e1f; color:#1d2426; font:900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:.7px; background:linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4)"><i style="width:5px; height:5px; border-radius:50%; background:{{ modLedBg }}; box-shadow:{{ modLedGlow }}"></i>MOD</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- DECK B -->
+        <div style="height:104px; display:flex; border:1px solid #6f7573; border-radius:3px; overflow:hidden; background-image:repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),linear-gradient(180deg,#eef0ef 0%,#dcdedd 46%,#c5c8c7 100%); box-shadow:inset 0 1px 0 #fff, inset 0 -2px 3px rgba(30,34,33,.2)">
+          <div style="width:168px; flex:0 0 auto; padding:9px 11px; display:flex; flex-direction:column; align-items:center; border-right:1px solid rgba(45,50,49,.5); box-shadow:1px 0 0 rgba(255,255,255,.6)">
+            <div style="width:100%; height:14px; display:grid; place-items:center; border-bottom:1px solid rgba(45,50,49,.45); color:#26302f; font:900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.7px; text-shadow:0 1px 0 rgba(255,255,255,.85)">TEMPO · BPM</div>
+            <div class="control knob-control" data-param="param9" data-endpoint-id="param9" data-min="40" data-max="300" data-step="0.01" data-init="128" data-control="dial" style="margin-top:9px; width:100%; display:flex; align-items:center; gap:11px">
+            <div style="position:relative; flex:0 0 auto; width:56px; height:56px">
+              <div class="dial" role="slider" tabindex="0" data-knob="tempo" data-tip="Internal clock tempo, 40 to 300 BPM. Drag or scroll to set · hold Shift for fine steps · double-click resets to 128 BPM." onPointerDown="{{ knobDown }}" onDoubleClick="{{ knobReset }}" style="position:absolute; inset:0; border-radius:50%; cursor:ns-resize; touch-action:none; border:1px solid #565e60; background:linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 20%, rgba(26,32,34,.15) 56%, rgba(26,32,34,.38) 100%), repeating-conic-gradient(from .5deg, #798285 0 1.7deg, #c4cbcd 1.7deg 2.5deg, #6d7679 2.5deg 4.2deg); box-shadow:0 5px 7px rgba(0,0,0,.3), inset 0 2px 2px rgba(255,255,255,.85), inset 0 -5px 6px rgba(40,47,49,.5)">
+                <div style="position:absolute; inset:8px; border-radius:50%; border:1px solid #6d7578; background:radial-gradient(ellipse at 50% 118%, rgba(255,255,255,.45) 0 16%, rgba(255,255,255,0) 54%), radial-gradient(ellipse 132% 114% at 34% 15%, #ffffff 0 5%, #f1f4f4 17%, #cdd3d4 39%, #a8b0b2 65%, #8c9598 88%, #a3abad 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.9), inset -4px -5px 9px rgba(96,106,109,.26)"></div>
+                <div style="position:absolute; inset:8px; border-radius:50%; pointer-events:none; transform:rotate({{ tempoDeg }}deg)">
+                  <i style="position:absolute; left:50%; top:5px; width:3px; height:12px; margin-left:-1.5px; border-radius:2px; background:linear-gradient(90deg,#141819 0,#343a3c 45%,#0f1314 100%)"></i>
+                </div>
+              </div>
+            </div>
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:5px">
+              <div style="position:relative; box-sizing:border-box; width:100%; height:30px; display:grid; place-items:center; border-radius:2px; border:1px solid #0a0706; background:repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.09) 3px 4px), linear-gradient(180deg,#251614,#130b09); box-shadow:inset 0 3px 6px rgba(0,0,0,.75), 0 1px 0 rgba(255,255,255,.62)">
+                <span class="value-label" style="color:#ff6756; font:20px/22px 'Courier New',monospace; white-space:nowrap; text-shadow:0 0 8px rgba(255,57,37,.5)">{{ tempoValue }}</span>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; color:#4d5658; font:900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px; text-shadow:0 1px 0 rgba(255,255,255,.7)"><span>SLOW 40</span><i style="flex:1; margin:0 5px; height:1px; background:linear-gradient(90deg, rgba(45,50,49,.35), rgba(255,255,255,.5))"></i><span>300 FAST</span></div>
+            </div>
+            </div>
+          </div>
+
+          <div style="width:120px; flex:0 0 auto; padding:9px 11px; display:flex; flex-direction:column; align-items:center; border-right:1px solid rgba(45,50,49,.5); box-shadow:1px 0 0 rgba(255,255,255,.6)">
+            <div style="width:100px; height:14px; display:grid; place-items:center; border-bottom:1px solid rgba(45,50,49,.45); color:#26302f; font:900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.7px; text-shadow:0 1px 0 rgba(255,255,255,.85)">CLOCK</div>
+            <div class="control clock-mode" data-param="param49" data-endpoint-id="param49" data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle" style="margin-top:8px; display:flex; gap:8px">
+              <div style="display:flex; flex-direction:column; align-items:center; gap:6px">
+                <span style="width:7px; height:7px; border-radius:50%; background:{{ intLampBg }}; box-shadow:{{ intLampGlow }}"></span>
+                <button type="button" data-value="0" data-clock="0" onClick="{{ setClock }}" data-tip="INT: tempo knob and RUN/STOP drive the pattern clock." style="width:44px; height:34px; border-radius:3px; cursor:pointer; border:1px solid #1a1e1f; color:#1d2426; font:900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1px; background:{{ intRocker }}; box-shadow:{{ intRockerShadow }}">INT</button>
+              </div>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:6px">
+                <span style="width:7px; height:7px; border-radius:50%; background:{{ dawLampBg }}; box-shadow:{{ dawLampGlow }}"></span>
+                <button type="button" data-value="1" data-clock="1" onClick="{{ setClock }}" data-tip="DAW: tempo, transport and song position follow the Amorph host." style="width:44px; height:34px; border-radius:3px; cursor:pointer; border:1px solid #1a1e1f; color:#1d2426; font:900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1px; background:{{ dawRocker }}; box-shadow:{{ dawRockerShadow }}">DAW</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="width:160px; flex:0 0 auto; padding:9px 11px; display:flex; flex-direction:column; align-items:center; border-right:1px solid rgba(45,50,49,.5); box-shadow:1px 0 0 rgba(255,255,255,.6)">
+            <div style="width:140px; height:14px; display:grid; place-items:center; border-bottom:1px solid rgba(45,50,49,.45); color:#26302f; font:900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.7px; text-shadow:0 1px 0 rgba(255,255,255,.85)">TRANSPORT</div>
+            <span style="margin-top:7px; width:9px; height:9px; border-radius:50%; border:1px solid #4f1a15; background:{{ runLampBg }}; box-shadow:{{ runLampGlow }}"></span>
+            <div class="control run-switch" data-param="param10" data-endpoint-id="param10" data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle" style="display:contents">
+            <button type="button" data-value="1" onClick="{{ toggleRun }}" data-tip="Starts or stops the internal 16th-note sequencer. In DAW mode this follows the host transport." style="margin-top:6px; width:140px; height:36px; border-radius:3px; cursor:pointer; border:1px solid {{ runRockerBorder }}; color:{{ runRockerColor }}; font:900 10px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.5px; background:{{ runRocker }}; box-shadow:{{ runRockerShadow }}">RUN / STOP</button>
+            </div>
+          </div>
+
+          <div style="width:292px; flex:0 0 auto; padding:9px 11px; display:flex; gap:8px; justify-content:center; border-right:1px solid rgba(45,50,49,.5); box-shadow:1px 0 0 rgba(255,255,255,.6)">
+            <sc-for list="{{ steppers }}" as="s" hint-placeholder-count="3">
+              <div class="control" data-param="{{ s.param }}" data-endpoint-id="{{ s.param }}" data-min="{{ s.min }}" data-max="{{ s.max }}" data-step="1" data-init="{{ s.init }}" data-control="stepper" style="display:flex; flex-direction:column; align-items:center">
+                <div style="width:86px; height:14px; display:grid; place-items:center; border-bottom:1px solid rgba(45,50,49,.45); color:#26302f; font:900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.7px; text-shadow:0 1px 0 rgba(255,255,255,.85)">{{ s.label }}</div>
+                <div style="margin-top:6px; width:86px; height:22px; display:grid; place-items:center; border-radius:2px; border:1px solid #0a0706; background:repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.09) 3px 4px), linear-gradient(180deg,#251614,#130b09); box-shadow:inset 0 3px 6px rgba(0,0,0,.75), 0 1px 0 rgba(255,255,255,.62)">
+                  <span style="color:#ff6756; font:12px/1 'Courier New',monospace; letter-spacing:1px; text-shadow:0 0 6px rgba(255,57,37,.55)">{{ s.value }}</span>
+                </div>
+                <div style="margin-top:7px; display:flex; gap:6px">
+                  <button type="button" data-stepper="{{ s.id }}" data-dir="-1" onClick="{{ stepperClick }}" data-tip="{{ s.tipDown }}" style="width:40px; height:24px; border-radius:3px; cursor:pointer; border:1px solid #1a1e1f; color:#1d2426; font:900 13px/1 Arial,sans-serif; background:linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4)">−</button>
+                  <button type="button" data-stepper="{{ s.id }}" data-dir="1" onClick="{{ stepperClick }}" data-tip="{{ s.tipUp }}" style="width:40px; height:24px; border-radius:3px; cursor:pointer; border:1px solid #1a1e1f; color:#1d2426; font:900 13px/1 Arial,sans-serif; background:linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4)">+</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="flex:1; min-width:0; padding:9px 11px; display:flex; flex-direction:column">
+            <div style="display:flex; align-items:center; justify-content:space-between">
+              <div style="width:132px; height:14px; display:grid; place-items:center; border-bottom:1px solid rgba(45,50,49,.45); color:#26302f; font:900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.7px; text-shadow:0 1px 0 rgba(255,255,255,.85)">FILTER RESPONSE</div>
+              <span style="font:7px/1 'Courier New',monospace; color:#6c1710">{{ cutoffHz }}</span>
+            </div>
+            <div style="margin-top:7px; flex:1; min-height:0; min-width:0; display:flex; gap:7px">
+              <div style="position:relative; flex:1; min-width:0; border-radius:2px; overflow:hidden; border:1px solid #0a0b09; background:linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(#22231e,#121310); background-size:22px 100%, 100% 16px, 100% 100%; box-shadow:inset 0 3px 8px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.6)">
+                <svg viewBox="0 0 238 104" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%">
+                  <path d="{{ envPath }}" style="fill:none; stroke:#c48a34; stroke-width:1.2; opacity:.6; stroke-dasharray:3 3"></path>
+                  <path d="{{ curveFill }}" style="fill:rgba(211,58,47,.13); stroke:none"></path>
+                  <path d="{{ curvePath }}" style="fill:none; stroke:#ff5140; stroke-width:1.8; stroke-linejoin:round"></path>
+                  <line x1="{{ cutoffX }}" y1="0" x2="{{ cutoffX }}" y2="104" style="stroke:rgba(255,236,220,.22); stroke-width:1; stroke-dasharray:2 3"></line>
+                </svg>
+                <span style="position:absolute; left:6px; top:5px; color:#6e6f66; font:900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:.8px">VCF · 4-POLE</span>
+                <span style="position:absolute; left:6px; bottom:4px; color:#6e6f66; font:900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:.8px">20 Hz</span>
+                <span style="position:absolute; right:6px; bottom:4px; color:#6e6f66; font:900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:.8px">20 kHz</span>
+              </div>
+              <div style="width:66px; flex:0 0 auto; display:grid; grid-template-rows:repeat(4,1fr); gap:4px">
+                <sc-for list="{{ scopeLegend }}" as="l" hint-placeholder-count="4">
+                  <div style="display:flex; align-items:center; justify-content:space-between; padding:0 5px; border-radius:2px; border:1px solid #0a0706; background:linear-gradient(180deg,#241512,#130b09); box-shadow:inset 0 2px 4px rgba(0,0,0,.7)">
+                    <span style="color:#8d9698; font:900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:.9px">{{ l.label }}</span>
+                    <span style="color:#ff6756; font:8px/1 'Courier New',monospace; text-shadow:0 0 5px rgba(255,57,37,.5)">{{ l.value }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DECK C -->
+        <div style="flex:1; display:flex; flex-direction:column; border:1px solid #6f7573; border-radius:3px; overflow:hidden; background-image:repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),linear-gradient(180deg,#eef0ef 0%,#dcdedd 46%,#c5c8c7 100%); box-shadow:inset 0 1px 0 #fff">
+          <div style="height:24px; padding:0 12px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(45,50,49,.45); box-shadow:0 1px 0 rgba(255,255,255,.6)">
+            <div style="flex:0 0 auto; display:flex; align-items:baseline; gap:10px">
+              <span style="color:#a51d17; font:900 11px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:2.2px; white-space:nowrap; text-shadow:0 1px 0 rgba(255,255,255,.7)">16 STEP</span>
+              <span style="color:#26302f; font:900 11px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:2.2px; white-space:nowrap; text-shadow:0 1px 0 rgba(255,255,255,.8)">PATTERN PROGRAMMER</span>
+              <span style="color:#5d6768; font:900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.5px; white-space:nowrap">{{ modeCaption }}</span>
+              <span style="display:flex; align-items:center; gap:5px; padding-left:12px; border-left:1px solid rgba(58,66,64,.28); white-space:nowrap">
+                <i style="width:14px; height:10px; display:grid; place-items:center; border-radius:2px; font:900 8px/1 'Arial Narrow',Arial,sans-serif; font-style:normal; color:#fff2ee; border:1px solid #5d1611; background:linear-gradient(180deg,#ff7361,#a3201a); box-shadow:0 0 6px rgba(255,72,48,.5)">A</i>
+                <span style="color:#3d4749; font:900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.2px">ACCENT</span>
+                <i style="margin-left:6px; width:14px; height:10px; display:grid; place-items:center; border-radius:2px; font:900 8px/1 'Arial Narrow',Arial,sans-serif; font-style:normal; color:#2a1a02; border:1px solid #5b3908; background:linear-gradient(180deg,#ffc776,#8d5410); box-shadow:0 0 6px rgba(255,168,60,.45)">S</i>
+                <span style="color:#3d4749; font:900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.2px">SLIDE</span>
+                <i style="margin-left:6px; width:12px; height:8px; border-radius:4px; background:radial-gradient(ellipse at 50% 28%, #fff4ec 0 22%, #ff8a63 46%, #ff3a1c 78%, #b81c0c 100%); box-shadow:0 0 8px rgba(255,86,52,.7)"></i>
+                <span style="color:#3d4749; font:900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.2px">PLAYING</span>
+              </span>
+            </div>
+            <div style="flex:1; min-width:0; display:flex; align-items:center; justify-content:flex-end; gap:12px">
+              <span style="color:#4f5a5b; font:900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.3px; white-space:nowrap">{{ selectionCaption }}</span>
+              <span style="min-width:56px; text-align:center; padding:2px 6px; border-radius:2px; border:1px solid #0a0706; background:linear-gradient(180deg,#241512,#130b09); color:#ff6756; font:9px/1 'Courier New',monospace; letter-spacing:1px; box-shadow:inset 0 2px 4px rgba(0,0,0,.7)">{{ positionLabel }}</span>
+              <div style="display:flex; border-radius:2px; overflow:hidden; border:1px solid #3d4446">
+                <button type="button" data-mode="0" onClick="{{ setMode }}" data-tip="Classic: hardware-style step keys, keyboard and step functions." style="width:58px; height:15px; padding:0; display:grid; place-items:center; cursor:pointer; border:0; font:900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.2px; color:{{ classicSegColor }}; background:{{ classicSegBg }}">CLASSIC</button>
+                <button type="button" data-mode="1" onClick="{{ setMode }}" data-tip="Studio: lane matrix with accent, slide, bass line contour and edit tools." style="width:58px; height:15px; padding:0; display:grid; place-items:center; cursor:pointer; border:0; font:900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.2px; color:{{ studioSegColor }}; background:{{ studioSegBg }}">STUDIO</button>
+              </div>
+            </div>
+          </div>
+
+          <sc-if value="{{ studioMode }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1; margin:8px; display:flex; gap:8px">
+            <div style="flex:1; padding:6px 8px 8px; border-radius:2px; border:1px solid #0a0b09; background:linear-gradient(#1c1e1a,#0f100e); box-shadow:inset 0 3px 9px rgba(0,0,0,.72)">
+              <div style="display:grid; grid-template-columns:52px 1fr; gap:8px; align-items:center; height:11px">
+                <span></span>
+                <div style="display:grid; grid-template-columns:repeat(4,1fr); column-gap:12px">
+                  <sc-for list="{{ rulerQuads }}" as="q" hint-placeholder-count="4">
+                    <div style="display:grid; grid-template-columns:repeat(4,1fr); column-gap:3px">
+                      <sc-for list="{{ q.cells }}" as="r" hint-placeholder-count="4">
+                        <span style="text-align:center; font:900 8px/1 'Courier New',monospace; color:{{ r.color }}">{{ r.label }}</span>
+                      </sc-for>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="margin-top:5px; display:grid; grid-template-columns:52px 1fr; gap:8px; align-items:center">
+                <span style="text-align:right; color:#c9cfca; font:900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px">ACCENT</span>
+                <div style="display:grid; grid-template-columns:repeat(4,1fr); column-gap:12px">
+                  <sc-for list="{{ accentQuads }}" as="q" hint-placeholder-count="4">
+                  <div style="display:grid; grid-template-columns:repeat(4,1fr); column-gap:3px">
+                  <sc-for list="{{ q.cells }}" as="c" hint-placeholder-count="4">
+                    <button type="button" data-lane="accent" data-step="{{ c.index }}" onClick="{{ studioCell }}" data-tip="Click to toggle accent on this step." style="height:15px; border-radius:2px; cursor:pointer; border:1px solid {{ c.border }}; background:{{ c.bg }}; box-shadow:{{ c.shadow }}"></button>
+                  </sc-for>
+                  </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="margin-top:4px; display:grid; grid-template-columns:52px 1fr; gap:8px; align-items:center">
+                <span style="text-align:right; color:#c9cfca; font:900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px">SLIDE</span>
+                <div style="display:grid; grid-template-columns:repeat(4,1fr); column-gap:12px">
+                  <sc-for list="{{ slideQuads }}" as="q" hint-placeholder-count="4">
+                  <div style="display:grid; grid-template-columns:repeat(4,1fr); column-gap:3px">
+                  <sc-for list="{{ q.cells }}" as="c" hint-placeholder-count="4">
+                    <button type="button" data-lane="slide" data-step="{{ c.index }}" onClick="{{ studioCell }}" data-tip="Click to toggle slide into the next active step." style="height:15px; border-radius:2px; cursor:pointer; border:1px solid {{ c.border }}; background:{{ c.bg }}; box-shadow:{{ c.shadow }}"></button>
+                  </sc-for>
+                  </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="margin-top:6px; display:grid; grid-template-columns:52px 1fr; gap:8px; align-items:center">
+                <span style="text-align:right; color:#c9cfca; font:900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px">BASS LINE</span>
+                <div style="display:grid; grid-template-columns:repeat(4,1fr); column-gap:12px; height:66px; border-top:1px solid rgba(255,255,255,.05); border-bottom:1px solid rgba(255,255,255,.05)">
+                  <sc-for list="{{ basslineGroups }}" as="g" hint-placeholder-count="4">
+                    <svg viewBox="0 0 160 66" preserveAspectRatio="none" style="width:100%; height:100%">
+                      <path d="{{ g.slidePath }}" style="fill:none; stroke:#d8862c; stroke-width:2; opacity:.85"></path>
+                      <path d="{{ g.path }}" style="fill:none; stroke:#ff4a33; stroke-width:2.4; stroke-linecap:round"></path>
+                      <line x1="{{ g.playheadX }}" y1="0" x2="{{ g.playheadX }}" y2="66" style="stroke:rgba(255,120,95,.6); stroke-width:2; opacity:{{ g.playheadOpacity }}"></line>
+                    </svg>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="margin-top:6px; display:grid; grid-template-columns:52px 1fr; gap:8px; align-items:start">
+                <span style="padding-top:24px; text-align:right; color:#c9cfca; font:900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px">PITCH<br>GATE</span>
+                <div style="display:grid; grid-template-columns:repeat(4,1fr); column-gap:12px">
+                  <sc-for list="{{ stepQuads }}" as="q" hint-placeholder-count="4">
+                  <div style="display:grid; grid-template-columns:repeat(4,1fr); column-gap:3px">
+                  <sc-for list="{{ q.steps }}" as="s" hint-placeholder-count="4">
+                    <button type="button" data-step="{{ s.index }}" onClick="{{ selectStep }}" onDoubleClick="{{ stepDoubleClick }}" onContextMenu="{{ cycleStepPitch }}" data-tip="{{ s.tip }}" style="position:relative; height:76px; padding:0; border:0; background:transparent; cursor:pointer">
+                      <span style="position:absolute; left:50%; top:0; margin-left:-3px; width:6px; height:6px; border-radius:50%; background:{{ s.stepLampBg }}; box-shadow:{{ s.stepLampGlow }}"></span>
+                      <span style="position:absolute; left:-2px; right:-2px; top:7px; bottom:18px; border-radius:3px; border:1px solid {{ s.selRing }}; background:{{ s.selFill }}; box-shadow:{{ s.selGlow }}"></span>
+                      <span style="position:absolute; left:0; right:0; top:9px; height:45px; border-radius:2px; background:linear-gradient(180deg,#4e5659,#20272a); box-shadow:inset 0 2px 3px rgba(0,0,0,.65)"></span>
+                      <span style="position:absolute; left:0; right:0; top:{{ s.capTopStudio }}; height:41px; border-radius:2px; border:1px solid {{ s.capBorder }}; background:linear-gradient(180deg,#8e9698,#6f7779); box-shadow:{{ s.capShadow }}">
+                        <i style="position:absolute; left:1px; right:1px; top:1px; height:33px; border-radius:2px; background:{{ s.rockerBg }}; box-shadow:inset 0 1px 0 rgba(255,255,255,.95)"></i>
+                        <i style="position:absolute; left:26%; right:26%; top:11px; height:11px; border-radius:6px; background:linear-gradient(180deg,#79817f,#aab1b0); box-shadow:inset 0 2px 3px rgba(30,36,35,.7), 0 1px 0 rgba(255,255,255,.9)">
+                          <i style="position:absolute; inset:2px; border-radius:4px; background:{{ s.keyLedBg }}; box-shadow:{{ s.keyLedGlow }}"></i>
+                        </i>
+                        <i style="position:absolute; left:1px; right:1px; bottom:0; height:6px; border-radius:0 0 2px 2px; background:linear-gradient(180deg,#7d8587,#5d6567)"></i>
+                      </span>
+                      <span style="position:absolute; left:3px; right:3px; top:55px; height:3px; border-radius:1px; background:{{ s.playBarBg }}; box-shadow:{{ s.playBarGlow }}"></span>
+                      <span style="position:absolute; left:0; right:0; bottom:0; height:16px; display:grid; place-items:center; border-radius:2px; border:1px solid rgba(255,255,255,.06); background:linear-gradient(180deg,#1e211d,#0e100d); box-shadow:inset 0 1px 2px rgba(0,0,0,.6); font:900 11px/1 'Courier New',monospace; letter-spacing:.4px; color:{{ s.noteColor }}; text-shadow:{{ s.noteGlow }}">{{ s.note }}</span>
+                    </button>
+                  </sc-for>
+                  </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+
+            <sc-if value="{{ studioMode }}" hint-placeholder-val="{{ false }}">
+              <div style="width:296px; display:flex; flex-direction:column; padding:6px 8px 8px; border-radius:2px; border:1px solid #0a0b09; background:linear-gradient(#1c1e1a,#0f100e); box-shadow:inset 0 3px 9px rgba(0,0,0,.72)">
+                <div style="position:relative; display:flex; gap:6px">
+                  <span style="width:88px; height:12px; display:grid; place-items:center; border-radius:2px; background:#8f1d16; color:#ffe3de; font:900 6px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.3px">STUDIO</span>
+                  <sc-if value="{{ scaleMenu }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute; z-index:70; left:94px; right:0; top:15px; max-height:196px; overflow:auto; padding:3px; border-radius:3px; border:1px solid #0a0b09; background:linear-gradient(#252824,#15170f); box-shadow:0 12px 22px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.08)">
+                      <sc-for list="{{ scaleOptions }}" as="o" hint-placeholder-count="6">
+                        <button type="button" data-scale="{{ o.index }}" onClick="{{ pickScale }}" data-tip="{{ o.tip }}" style="width:100%; height:17px; padding:0 6px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; border:0; border-radius:2px; background:{{ o.bg }}; color:{{ o.color }}; font:900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1px" style-hover="background:#3a3f39"><span>{{ o.label }}</span><small style="color:{{ o.subColor }}; font:900 5.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:.6px">{{ o.sub }}</small></button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <button type="button" onClick="{{ toggleScaleMenu }}" data-tip="Choose the scale that Generate, Mutate and note edits snap to." style="flex:1; height:12px; display:flex; align-items:center; justify-content:space-between; padding:0 6px; cursor:pointer; border-radius:2px; border:0; background:#2b302f; color:#9aa3a5; font:900 5.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px"><span>SCALE</span><strong style="color:#ff9a89">{{ scaleName }} {{ scaleCaret }}</strong></button>
+                </div>
+                <div style="margin-top:7px; flex:1; min-height:0; display:flex; flex-direction:column; gap:6px">
+                  <sc-for list="{{ studioGroups }}" as="g" hint-placeholder-count="4">
+                    <div style="flex:1; min-height:0; display:flex; flex-direction:column; gap:3px">
+                      <span style="display:flex; align-items:center; gap:6px; color:#93a0a2; font:900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.4px; white-space:nowrap">{{ g.label }}<i style="flex:1; height:1px; background:rgba(255,255,255,.11)"></i></span>
+                      <div style="flex:1; min-height:0; display:grid; grid-template-columns:repeat(4,1fr); gap:5px">
+                        <sc-for list="{{ g.actions }}" as="a" hint-placeholder-count="4">
+                          <button type="button" data-action="{{ a.id }}" onClick="{{ studioAction }}" data-tip="{{ a.tip }}" style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; cursor:pointer; border-radius:2px; border:1px solid #1a1e1f; color:#1d2426; background:linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.42); font:11px/11px 'Arial Narrow',Arial,sans-serif">{{ a.glyph }}<small style="color:#3f4a4c; font:900 6.5px/7px 'Arial Narrow',Arial,sans-serif; letter-spacing:.5px">{{ a.label }}</small></button>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="margin-top:6px; text-align:right; color:#8d9698; font:900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:.9px">RECHTSKLICK AUF STEP · TONHÖHE · SHIFT FÜR FEINWERTE</div>
+              </div>
+            </sc-if>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ classicMode }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1; min-height:0; margin:8px; display:flex; flex-direction:column; gap:8px">
+            <div style="box-sizing:border-box; height:108px; flex:0 0 auto; padding:8px 9px; display:grid; grid-template-columns:repeat(4,1fr); column-gap:15px; align-items:start; border-radius:2px; border:1px solid #6f7573; background:linear-gradient(180deg,#bcc0be,#a9adab); box-shadow:inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6)">
+              <sc-for list="{{ stepQuads }}" as="q" hint-placeholder-count="4">
+              <div style="display:grid; grid-template-columns:repeat(4,1fr); column-gap:5px">
+              <sc-for list="{{ q.steps }}" as="s" hint-placeholder-count="4">
+                <button type="button" data-step="{{ s.index }}" onClick="{{ selectStep }}" onDoubleClick="{{ stepDoubleClick }}" onContextMenu="{{ cycleStepPitch }}" data-tip="{{ s.tip }}" style="position:relative; height:90px; padding:0; border:0; background:transparent; cursor:pointer">
+                  <span style="position:absolute; left:0; right:0; top:0; height:14px; display:flex; align-items:center; justify-content:space-between; padding:0 1px">
+                    <span style="font:{{ s.numberFont }}; color:{{ s.numberColor }}">{{ s.number }}</span>
+                    <span style="display:flex; align-items:center; gap:3px">
+                      <i role="button" data-pill="accent" data-step="{{ s.index }}" onClick="{{ pillClick }}" data-tip="Click to toggle accent on this step." style="width:15px; height:11px; display:grid; place-items:center; border-radius:2px; cursor:pointer; font:900 8px/1 'Arial Narrow',Arial,sans-serif; font-style:normal; border:1px solid {{ s.accPillBorder }}; color:{{ s.accPillColor }}; background:{{ s.accPillBg }}; box-shadow:{{ s.accPillShadow }}">A</i>
+                      <i role="button" data-pill="slide" data-step="{{ s.index }}" onClick="{{ pillClick }}" data-tip="Click to toggle slide into the next step." style="width:15px; height:11px; display:grid; place-items:center; border-radius:2px; cursor:pointer; font:900 8px/1 'Arial Narrow',Arial,sans-serif; font-style:normal; border:1px solid {{ s.slPillBorder }}; color:{{ s.slPillColor }}; background:{{ s.slPillBg }}; box-shadow:{{ s.slPillShadow }}">S</i>
+                    </span>
+                  </span>
+                  <span style="position:absolute; left:-2px; right:-2px; top:14px; bottom:24px; border-radius:3px; border:1px solid {{ s.selRing }}; background:{{ s.selFill }}; box-shadow:{{ s.selGlow }}"></span>
+                  <span style="position:absolute; left:0; right:0; top:16px; height:46px; border-radius:2px; background:linear-gradient(180deg,#4e5659,#20272a); box-shadow:inset 0 2px 3px rgba(0,0,0,.65)"></span>
+                  <span style="position:absolute; left:0; right:0; top:{{ s.capTop }}; height:42px; border-radius:2px; border:1px solid {{ s.capBorder }}; background:linear-gradient(180deg,#8e9698,#6f7779); box-shadow:{{ s.capShadow }}">
+                    <i style="position:absolute; left:1px; right:1px; top:1px; height:34px; border-radius:2px; background:{{ s.rockerBg }}; box-shadow:inset 0 1px 0 rgba(255,255,255,.95)"></i>
+                    <i style="position:absolute; left:26%; right:26%; top:11px; height:12px; border-radius:6px; background:linear-gradient(180deg,#79817f,#aab1b0); box-shadow:inset 0 2px 3px rgba(30,36,35,.7), 0 1px 0 rgba(255,255,255,.9)">
+                      <i style="position:absolute; inset:2px; border-radius:4px; background:{{ s.keyLedBg }}; box-shadow:{{ s.keyLedGlow }}"></i>
+                    </i>
+                    <i style="position:absolute; left:1px; right:1px; bottom:0; height:6px; border-radius:0 0 2px 2px; background:linear-gradient(180deg,#7d8587,#5d6567)"></i>
+                  </span>
+                  <span style="position:absolute; left:4px; right:4px; top:63px; height:3px; border-radius:1px; background:{{ s.playBarBg }}; box-shadow:{{ s.playBarGlow }}"></span>
+                  <span style="position:absolute; left:0; right:0; bottom:0; height:22px; display:grid; place-items:center; border-radius:2px; border:1px solid #0d0807; background:{{ s.noteFieldBg }}; box-shadow:{{ s.noteFieldShadow }}; font:{{ s.noteFont }}; letter-spacing:.6px; color:{{ s.noteColor }}; text-shadow:{{ s.noteGlow }}">{{ s.note }}</span>
+                </button>
+              </sc-for>
+              </div>
+              </sc-for>
+            </div>
+
+            <div style="flex:1; min-height:0; display:flex; gap:8px">
+              <div style="box-sizing:border-box; width:196px; padding:6px 8px 8px; display:flex; flex-direction:column; border-radius:2px; border:1px solid #7c827f; background:linear-gradient(180deg,#bcc0be,#a9adab); box-shadow:inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6)">
+                <span style="width:100%; height:12px; display:grid; place-items:center; border-radius:2px; border-bottom:1px solid rgba(45,50,49,.4); color:#26302f; text-shadow:0 1px 0 rgba(255,255,255,.8); font:900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.3px">SELECT STEP · CHOOSE KEY</span>
+                <div style="margin-top:8px; flex:1; min-height:34px; display:grid; place-items:center; border-radius:2px; border:1px solid #0a0706; background:repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.09) 3px 4px), linear-gradient(180deg,#251614,#130b09); box-shadow:inset 0 3px 6px rgba(0,0,0,.78)">
+                  <span style="color:#ff513b; font:24px/1 'Courier New',monospace; letter-spacing:2px; white-space:nowrap; text-shadow:0 0 5px #e32418, 0 0 10px rgba(227,36,24,.4)">{{ readout }}</span>
+                </div>
+                <span style="margin-top:7px; color:#4b5558; font:900 8px/11px 'Courier New',monospace; letter-spacing:.4px">{{ readoutHint }}</span>
+              </div>
+
+              <div style="box-sizing:border-box; flex:1; padding:6px 8px 8px; display:flex; flex-direction:column; border-radius:2px; border:1px solid #7c827f; background:linear-gradient(180deg,#bcc0be,#a9adab); box-shadow:inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6)">
+                <div style="display:flex; gap:6px">
+                  <span style="width:88px; height:12px; display:grid; place-items:center; border-radius:2px; border-bottom:1px solid rgba(45,50,49,.4); color:#26302f; text-shadow:0 1px 0 rgba(255,255,255,.8); font:900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.3px">KEYBOARD</span>
+                  <span style="flex:1; height:12px; display:flex; align-items:center; justify-content:flex-end; color:#4f5a5b; font:900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px">TONHÖHE DES GEWÄHLTEN STEPS</span>
+                </div>
+                <div style="position:relative; flex:1; margin-top:6px">
+                  <sc-for list="{{ pianoKeys }}" as="k" hint-placeholder-count="12">
+                    <button type="button" data-pitch="{{ k.pitch }}" onClick="{{ pressKey }}" data-tip="{{ k.tip }}" style="position:absolute; top:0; left:{{ k.left }}; width:{{ k.width }}; height:{{ k.height }}; z-index:{{ k.z }}; padding:0; border-radius:0 0 2px 2px; cursor:pointer; border:1px solid {{ k.border }}; background:{{ k.bg }}; box-shadow:{{ k.shadow }}">
+                      <span style="position:absolute; left:50%; top:4px; margin-left:-4.5px; width:9px; height:9px; border-radius:50%; background:{{ k.ledBg }}; box-shadow:{{ k.ledGlow }}"></span>
+                      <span style="position:absolute; left:0; right:0; bottom:4px; text-align:center; font:900 7px/1 'Arial Narrow',Arial,sans-serif; color:{{ k.labelColor }}">{{ k.label }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="box-sizing:border-box; width:300px; overflow:hidden; padding:6px 8px 8px; display:flex; flex-direction:column; border-radius:2px; border:1px solid #7c827f; background:linear-gradient(180deg,#bcc0be,#a9adab); box-shadow:inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6)">
+                <div style="flex:1; min-height:0; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); gap:6px">
+                  <sc-for list="{{ functionButtons }}" as="f" hint-placeholder-count="6">
+                    <button type="button" data-fn="{{ f.id }}" onClick="{{ functionClick }}" data-tip="{{ f.tip }}" style="position:relative; height:100%; min-height:36px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; border-radius:2px; cursor:pointer; border:1px solid #1a1e1f; background:{{ f.rockerBg }}; box-shadow:{{ f.rockerShadow }}">
+                      <span style="position:absolute; left:5px; top:5px; width:5px; height:5px; border-radius:50%; background:{{ f.ledBg }}; box-shadow:{{ f.ledGlow }}"></span>
+                      <strong style="color:{{ f.textColor }}; font:900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:1.1px; text-shadow:0 1px 0 rgba(255,255,255,.6)">{{ f.label }}</strong>
+                      <small style="color:#5b6466; font:900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing:.6px">{{ f.sub }}</small>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:580}}">
+const NOTE_NAMES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+const PATCHES = ["90's AcidDistSqr", "Deep Sub Roller", "Screamer Lead", "Rubber Pluck", "Dub Chord Bass", "Overdrive Saw"];
+const SCALES = [
+  { label: "MIN PENTA", sub: "1 ♭3 4 5 ♭7", degrees: [0, 3, 5, 7, 10] },
+  { label: "MAJ PENTA", sub: "1 2 3 5 6", degrees: [0, 2, 4, 7, 9] },
+  { label: "NAT MINOR", sub: "AEOLIAN", degrees: [0, 2, 3, 5, 7, 8, 10] },
+  { label: "HARM MINOR", sub: "RAISED 7", degrees: [0, 2, 3, 5, 7, 8, 11] },
+  { label: "DORIAN", sub: "MINOR ♯6", degrees: [0, 2, 3, 5, 7, 9, 10] },
+  { label: "PHRYGIAN", sub: "MINOR ♭2", degrees: [0, 1, 3, 5, 7, 8, 10] },
+  { label: "MAJOR", sub: "IONIAN", degrees: [0, 2, 4, 5, 7, 9, 11] },
+  { label: "MIXOLYDIAN", sub: "MAJOR ♭7", degrees: [0, 2, 4, 5, 7, 9, 10] },
+  { label: "BLUES", sub: "WITH ♭5", degrees: [0, 3, 5, 6, 7, 10] },
+  { label: "CHROMATIC", sub: "ALL 12", degrees: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+];
+const KNOBS = {
+  tuning: { label: "TUNING", param: "param1", min: -1, max: 1, init: 0, fmt: v => `${v >= 0 ? "+" : ""}${v.toFixed(2)}` },
+  cutoff: { label: "CUTOFF", param: "param2", min: 0, max: 1, init: 0.45, fmt: v => `${Math.round(v * 100)}` },
+  reso: { label: "RESONANCE", param: "param3", min: 0, max: 1, init: 0.72, fmt: v => `${Math.round(v * 100)}` },
+  envmod: { label: "ENV MOD", param: "param4", min: 0, max: 1, init: 0.68, fmt: v => `${Math.round(v * 100)}` },
+  decay: { label: "DECAY", param: "param5", min: 0, max: 1, init: 0.45, fmt: v => `${Math.round(v * 100)}` },
+  accent: { label: "ACCENT", param: "param6", min: 0, max: 1, init: 0.65, fmt: v => `${Math.round(v * 100)}` },
+  volume: { label: "VOLUME", param: "param8", min: -36, max: 0, init: -6, fmt: v => `${v.toFixed(1)} dB` },
+  tempo: { label: "TEMPO", param: "param9", min: 40, max: 300, init: 128, fmt: v => `${v.toFixed(1)}` },
+  drive: { label: "DRIVE", param: "param47", min: 0, max: 1, init: 0.35, fmt: v => `${Math.round(v * 100)}` },
+  mix: { label: "MIX", param: "param48", min: 0, max: 1, init: 1, fmt: v => `${Math.round(v * 100)}%` },
+  odAmt: { label: "AMOUNT", param: "param52", min: 0, max: 1, init: 0.3, fmt: v => `${Math.pow(66.6, v).toFixed(1)}x` },
+  slideTime: { label: "TIME", param: "param57", min: 0, max: 1, init: 0, fmt: v => `${Math.round(22 + 110 * v)}ms` },
+  atkTime: { label: "TIME", param: "param59", min: 0, max: 1, init: 0.25, fmt: v => `${(0.5 * Math.pow(60, v)).toFixed(1)}ms` },
+};
+const MODS = [
+  { key: "mOd", param: "param51", title: "OVERDRIVE", desc: "FILTER OVERDRIVE · R62 220k → 3k3",
+    knob: "odAmt", amtParam: "param52", amtInit: 0.3,
+    tip: "Devil Fish filter overdrive: swaps R62 from 220k to 3k3 and drives the ladder hard. Off is stock 303.",
+    amtTip: "Overdrive amount — drive factor 66.6^v on the ladder. Drag or scroll · double-click resets to 3.5x." },
+  { key: "mReso", param: "param53", title: "RESO BOOST", desc: "x0x R97 10k → 8k2 · k x1.22",
+    fixedLabel: "FEEDBACK", fixedValue: "x1.22",
+    tip: "x0x resonance boost: R97 from 10k to 8k2, feedback k x1.2195. Self-oscillates at full resonance." },
+  { key: "mCut", param: "param54", title: "CUTOFF RANGE", desc: "TOP END 2.5 kHz → 5 kHz",
+    fixedLabel: "MAXIMUM", fixedValue: "5 kHz",
+    tip: "Devil Fish cutoff range: doubles the top end from 2.5 kHz to 5 kHz. Measured centroid 2975 → 5074 Hz." },
+  { key: "mEnv", param: "param55", title: "ENV MOD", desc: "SWEEP RANGE TRIPLED · DF",
+    fixedLabel: "RANGE", fixedValue: "x3",
+    tip: "Devil Fish env mod: triples the envelope sweep range over the cutoff." },
+  { key: "mSlide", param: "param56", title: "SLIDE TIME", desc: "SLIDE POT IN SERIES · 22–132 ms",
+    knob: "slideTime", amtParam: "param57", amtInit: 0,
+    tip: "Devil Fish slide time: puts the slide pot in series with the 100k DAC resistor. Off is the stock glide.",
+    amtTip: "Slide time constant, 22 to 132 ms (500k pot). Drag or scroll · double-click resets to 22 ms." },
+  { key: "mAtk", param: "param58", title: "SOFT ATTACK", desc: "VCA SOFT ATTACK · ENV + ACCENT",
+    knob: "atkTime", amtParam: "param59", amtInit: 0.25,
+    tip: "Devil Fish soft attack at the VCA control node — softens both the envelope and accented steps.",
+    amtTip: "Attack time, 0.5 to 30 ms. Drag or scroll · double-click resets to 1.4 ms." },
+];
+const PITCH_DEFAULTS = [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7];
+const FLAG_DEFAULTS = [3, 5, 1, 1, 3, 5, 1, 1, 0, 1, 3, 5, 1, 1, 1, 5];
+
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const noteName = n => `${NOTE_NAMES[((n % 12) + 12) % 12]}${Math.floor(n / 12) - 1}`;
+
+const DARK_BTN = "linear-gradient(105deg, rgba(255,255,255,.13), transparent 34% 77%, rgba(0,0,0,.25)), linear-gradient(#576063,#282f31)";
+const DARK_BTN_ON = "linear-gradient(#ae3026,#67140f)";
+const LIGHT_BTN = "linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%)";
+const LIGHT_BTN_ON = "linear-gradient(#879194,#b7bec0 44%,#9ba4a7)";
+
+class Component extends DCLogic {
+  state = {
+    tuning: 0, cutoff: 0.45, reso: 0.72, envmod: 0.68, decay: 0.45, accent: 0.65,
+    volume: -6, tempo: 128, drive: 0.35, mix: 1,
+    odAmt: 0.3, slideTime: 0, atkTime: 0.25,
+    mOd: false, mReso: false, mCut: false, mEnv: false, mSlide: false, mAtk: false, dragSlider: null,
+    wave: 0, clock: 0, swing: 0, length: 16, root: 36,
+    running: false, playStep: -1, level: 0, peak: 0,
+    studio: false, distOpen: false, distOn: true, distType: 1, bypass: false, modOpen: false,
+    selected: 0, patch: 0, pattern: 0, scale: 0, scaleMenu: false,
+    tips: true, tip: null,
+    steps: PITCH_DEFAULTS.map((pitch, i) => ({ pitch, flags: FLAG_DEFAULTS[i] })),
+  };
+
+  componentDidMount() {
+    this._wheel = e => {
+      let el = e.target;
+      const stepHost = el && el.closest ? el.closest("[data-step]") : null;
+      if (stepHost && stepHost.tagName === "BUTTON" && !stepHost.dataset.lane) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        const index = Number(stepHost.dataset.step);
+        const delta = (e.deltaY > 0 ? -1 : 1) * (e.shiftKey ? 12 : 1);
+        this._editSteps(steps => {
+          steps[index].pitch = clamp(steps[index].pitch + delta, 0, 24);
+          steps[index].flags |= 1;
+        });
+        this.setState({ selected: index });
+        return;
+      }
+      let host = el && el.closest ? el.closest("[data-knob]") : null;
+      if (!host) {
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        host = under && under.closest ? under.closest("[data-knob]") : null;
+      }
+      if (!host) return;
+      const id = host.dataset.knob;
+      const cfg = KNOBS[id];
+      if (!cfg) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+      const range = cfg.max - cfg.min;
+      const dir = e.deltaY > 0 ? -1 : 1;
+      const stepFrac = e.shiftKey ? 0.004 : 0.02;
+      this.setState(s => ({ [id]: clamp(s[id] + dir * range * stepFrac, cfg.min, cfg.max) }));
+    };
+    window.addEventListener("wheel", this._wheel, { passive: false, capture: true });
+    document.addEventListener("wheel", this._wheel, { passive: false, capture: true });
+    this._decay = window.setInterval(() => {
+      this.setState(s => {
+        if (!s.running && s.level < 0.001) return null;
+        return { level: Math.max(0, s.level * 0.82), peak: Math.max(0, s.peak - 0.012) };
+      });
+    }, 45);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("wheel", this._wheel, { capture: true });
+    document.removeEventListener("wheel", this._wheel, { capture: true });
+    window.clearInterval(this._decay);
+    window.clearTimeout(this._clock);
+  }
+
+  _tick = () => {
+    this.setState(s => {
+      const next = (s.playStep + 1) % Math.max(1, s.length);
+      const flags = s.steps[next].flags;
+      const hit = flags & 1 ? (flags & 2 ? 0.96 : 0.62) : s.level;
+      return { playStep: next, level: hit, peak: Math.max(s.peak, hit) };
+    });
+    const ms = 60000 / this.state.tempo / 4;
+    this._clock = window.setTimeout(this._tick, ms);
+  };
+
+  toggleRun = () => {
+    const next = !this.state.running;
+    window.clearTimeout(this._clock);
+    if (next) {
+      this.setState({ running: true, playStep: -1 });
+      this._clock = window.setTimeout(this._tick, 30);
+    } else {
+      this.setState({ running: false, playStep: -1, level: 0 });
+    }
+  };
+
+  knobDown = event => {
+    const id = event.currentTarget.dataset.knob;
+    const cfg = KNOBS[id];
+    if (!cfg) return;
+    const startY = event.clientY;
+    const startValue = this.state[id];
+    const range = cfg.max - cfg.min;
+    try { event.currentTarget.setPointerCapture(event.pointerId); } catch (err) { /* pointer already released */ }
+    const move = e => {
+      const sensitivity = e.shiftKey ? 0.0015 : 0.007;
+      this.setState({ [id]: clamp(startValue + (startY - e.clientY) * range * sensitivity, cfg.min, cfg.max) });
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    event.preventDefault();
+  };
+
+  sliderDown = event => {
+    const host = event.currentTarget;
+    const id = host.dataset.knob;
+    const cfg = KNOBS[id];
+    if (!cfg) return;
+    const rect = host.getBoundingClientRect();
+    const set = clientX => {
+      const t = clamp((clientX - rect.left - 4) / Math.max(1, rect.width - 8), 0, 1);
+      this.setState({ [id]: cfg.min + t * (cfg.max - cfg.min) });
+    };
+    try { host.setPointerCapture(event.pointerId); } catch (err) { /* pointer already released */ }
+    this.setState({ dragSlider: id });
+    set(event.clientX);
+    const move = e => set(e.clientX);
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      this.setState({ dragSlider: null });
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  knobReset = event => {
+    const id = event.currentTarget.dataset.knob;
+    if (KNOBS[id]) this.setState({ [id]: KNOBS[id].init });
+  };
+
+  _editSteps(fn) {
+    this.setState(s => {
+      const steps = s.steps.map(step => ({ ...step }));
+      fn(steps, s);
+      return { steps };
+    });
+  }
+
+  setWave = e => this.setState({ wave: Number(e.currentTarget.dataset.wave) });
+  setClock = e => this.setState({ clock: Number(e.currentTarget.dataset.clock) });
+  selectStep = e => this.setState({ selected: Number(e.currentTarget.dataset.step) });
+  selectPattern = e => this.setState({ pattern: Number(e.currentTarget.dataset.pattern) });
+  toggleStudio = () => this.setState(s => ({ studio: !s.studio }));
+  frameRef = node => { this._frame = node; };
+  toggleTips = () => this.setState(s => ({ tips: !s.tips, tip: null }));
+  overTip = event => {
+    if (!this.state.tips || !this._frame) return;
+    const target = event.target.closest("[data-tip]");
+    if (!target) { if (this.state.tip) this.setState({ tip: null }); return; }
+    const text = target.dataset.tip;
+    if (!text || this.state.tip?.text === text) return;
+    const frame = this._frame.getBoundingClientRect();
+    const rect = target.getBoundingClientRect();
+    const scale = frame.width / 1180 || 1;
+    this.setState({
+      tip: {
+        text,
+        x: clamp((rect.left - frame.left + rect.width / 2) / scale, 150, 1030),
+        y: Math.max(46, (rect.top - frame.top) / scale - 6),
+      },
+    });
+  };
+  hideTip = () => { if (this.state.tip) this.setState({ tip: null }); };
+  setMode = e => this.setState({ studio: Number(e.currentTarget.dataset.mode) === 1 });
+  toggleDist = () => this.setState(s => ({ distOpen: !s.distOpen, modOpen: false }));
+  toggleMod = () => this.setState(s => ({ modOpen: !s.modOpen, distOpen: false }));
+  modScrimClick = e => { if (e.target === e.currentTarget) this.setState({ modOpen: false }); };
+  toggleModFlag = e => {
+    const key = e.currentTarget.dataset.mod;
+    this.setState(s => ({ [key]: !s[key] }));
+  };
+  scrimClick = e => { if (e.target === e.currentTarget) this.setState({ distOpen: false }); };
+  toggleBypass = () => this.setState(s => ({ bypass: !s.bypass }));
+  toggleDistPower = () => this.setState(s => ({ distOn: !s.distOn }));
+  setDistType = e => this.setState({ distType: Number(e.currentTarget.dataset.dist), distOn: true });
+  cycleScale = () => this.setState(s => ({ scale: (s.scale + 1) % SCALES.length }));
+  toggleScaleMenu = () => this.setState(s => ({ scaleMenu: !s.scaleMenu }));
+  pickScale = e => this.setState({ scale: Number(e.currentTarget.dataset.scale), scaleMenu: false });
+  prevPatch = () => this.setState(s => ({ patch: (s.patch + PATCHES.length - 1) % PATCHES.length }));
+  nextPatch = () => this.setState(s => ({ patch: (s.patch + 1) % PATCHES.length }));
+
+  cycleStepPitch = event => {
+    event.preventDefault();
+    const index = Number(event.currentTarget.dataset.step);
+    this._editSteps(steps => { steps[index].pitch = (steps[index].pitch + 1) % 25; });
+    this.setState({ selected: index });
+  };
+
+  pillClick = event => {
+    event.stopPropagation();
+    const kind = event.currentTarget.dataset.pill;
+    const index = Number(event.currentTarget.dataset.step);
+    const bit = kind === "accent" ? 2 : 4;
+    this._editSteps(steps => { steps[index].flags ^= bit; });
+    this.setState({ selected: index });
+  };
+
+  stepDoubleClick = event => {
+    event.preventDefault();
+    event.stopPropagation();
+    const index = Number(event.currentTarget.dataset.step);
+    this._editSteps(steps => { steps[index].flags ^= 1; });
+    this.setState({ selected: index });
+  };
+
+  stepperClick = event => {
+    const id = event.currentTarget.dataset.stepper;
+    const dir = Number(event.currentTarget.dataset.dir);
+    const ranges = { swing: [0, 100], length: [1, 16], root: [24, 60] };
+    const [min, max] = ranges[id];
+    this.setState(s => ({ [id]: clamp(s[id] + dir, min, max) }));
+  };
+
+  pressKey = event => {
+    const semitone = Number(event.currentTarget.dataset.pitch);
+    this._editSteps((steps, s) => {
+      const octave = steps[s.selected].pitch >= 12 ? 12 : 0;
+      steps[s.selected].pitch = clamp(octave + semitone, 0, 24);
+      steps[s.selected].flags |= 1;
+    });
+  };
+
+  functionClick = event => {
+    const id = event.currentTarget.dataset.fn;
+    this._editSteps((steps, s) => {
+      const step = steps[s.selected];
+      if (id === "oct-down") step.pitch = clamp(step.pitch - 12, 0, 24);
+      if (id === "oct-up") step.pitch = clamp(step.pitch + 12, 0, 24);
+      if (id === "gate") step.flags ^= 1;
+      if (id === "accent") step.flags ^= 2;
+      if (id === "slide") step.flags ^= 4;
+      if (id === "clear") { step.pitch = 0; step.flags = 0; }
+    });
+  };
+
+  studioCell = event => {
+    const kind = event.currentTarget.dataset.lane;
+    const index = Number(event.currentTarget.dataset.step);
+    this.setState({ selected: index });
+    if (kind === "pitch") {
+      this._editSteps(steps => { steps[index].pitch = (steps[index].pitch + 1) % 25; });
+      return;
+    }
+    const bit = kind === "gate" ? 1 : kind === "accent" ? 2 : 4;
+    this._editSteps(steps => { steps[index].flags ^= bit; });
+  };
+
+  studioAction = event => {
+    const id = event.currentTarget.dataset.action;
+    const degrees = SCALES[this.state.scale].degrees;
+    this._editSteps((steps, s) => {
+      if (id === "rotate-left") steps.push(steps.shift());
+      if (id === "rotate-right") steps.unshift(steps.pop());
+      if (id === "reverse") steps.reverse();
+      if (id === "mirror") steps.forEach(step => { step.pitch = clamp(24 - step.pitch, 0, 24); });
+      if (id === "oct-down") steps[s.selected].pitch = clamp(steps[s.selected].pitch - 12, 0, 24);
+      if (id === "oct-up") steps[s.selected].pitch = clamp(steps[s.selected].pitch + 12, 0, 24);
+      if (id === "rest") steps[s.selected].flags ^= 1;
+      if (id === "generate") {
+        steps.forEach(step => {
+          const octave = Math.random() < 0.25 ? 12 : 0;
+          step.pitch = clamp(octave + degrees[Math.floor(Math.random() * degrees.length)], 0, 24);
+          step.flags = (Math.random() < 0.82 ? 1 : 0) | (Math.random() < 0.3 ? 2 : 0) | (Math.random() < 0.22 ? 4 : 0);
+        });
+      }
+      if (id === "mutate") {
+        steps.forEach(step => {
+          if (Math.random() < 0.3) step.pitch = clamp(step.pitch + (Math.random() < 0.5 ? -2 : 2), 0, 24);
+          if (Math.random() < 0.15) step.flags ^= 2;
+        });
+      }
+      if (id === "note") step.pitch = clamp(steps[s.selected].pitch + 1, 0, 24);
+    });
+  };
+
+  _curve() {
+    const { cutoff, reso, envmod } = this.state;
+    const fc = 30 * Math.pow(320, cutoff);
+    const q = 0.55 + reso * 9;
+    const W = 238;
+    const H = 104;
+    const points = [];
+    for (let i = 0; i <= 60; i += 1) {
+      const x = (i / 60) * W;
+      const f = 20 * Math.pow(1000, i / 60);
+      const r = f / fc;
+      const mag = 1 / Math.sqrt(Math.pow(1 - r * r, 2) + Math.pow(r / q, 2));
+      const db = clamp(20 * Math.log10(Math.max(1e-6, mag * mag)) / 2, -46, 22);
+      const y = clamp(H * 0.62 - db * 1.7, 2, H - 2);
+      points.push(`${x.toFixed(1)} ${y.toFixed(1)}`);
+    }
+    const path = `M ${points.join(" L ")}`;
+    const cutoffX = (Math.log(clamp(fc, 20, 20000) / 20) / Math.log(1000)) * W;
+    const envX = clamp(cutoffX + envmod * 60, 0, W);
+    return { path, fill: `${path} L ${W} ${H} L 0 ${H} Z`, cutoffX: cutoffX.toFixed(1), envX };
+  }
+
+  _envPath() {
+    const { decay, envmod } = this.state;
+    const W = 238;
+    const H = 104;
+    const peak = H * 0.62 - envmod * 46;
+    const len = 40 + decay * 150;
+    const pts = [`M 0 ${H - 6}`, `L 8 ${peak.toFixed(1)}`];
+    for (let i = 1; i <= 16; i += 1) {
+      const x = 8 + (len * i) / 16;
+      const y = peak + (H - 6 - peak) * (1 - Math.exp(-3 * (i / 16)));
+      pts.push(`L ${Math.min(W, x).toFixed(1)} ${y.toFixed(1)}`);
+    }
+    pts.push(`L ${W} ${H - 6}`);
+    return pts.join(" ");
+  }
+
+  renderVals() {
+    const s = this.state;
+    const norm = id => (s[id] - KNOBS[id].min) / (KNOBS[id].max - KNOBS[id].min);
+    const deg = id => (-135 + norm(id) * 270).toFixed(2);
+    const modCells = MODS.map(m => {
+      const on = !!s[m.key];
+      return {
+        ...m,
+        on, hasDial: !!m.knob, fixedOnly: !m.knob,
+        knob: m.knob || "", amtParam: m.amtParam || "", amtInit: m.amtInit == null ? 0 : m.amtInit,
+        amtLabel: m.knob ? KNOBS[m.knob].label : "",
+        amtValue: m.knob ? KNOBS[m.knob].fmt(s[m.knob]) : "",
+        deg: m.knob ? deg(m.knob) : "0",
+        amtTip: m.amtTip || "",
+        stateLabel: on ? "ON" : "OFF",
+        titleColor: on ? "#8e1f16" : "#26302f",
+        stateColor: on ? "#fff1ec" : "#2b3536",
+        ledBg: on ? "radial-gradient(circle at 38% 32%, #ffd9d1 0 14%, #ff5335 34%, #b81b0d 74%, #6d0f06 100%)" : "linear-gradient(180deg,#6c6360,#3e3836)",
+        ledGlow: on ? "0 0 7px rgba(255,64,38,.85), inset 0 1px 1px rgba(255,255,255,.55)" : "inset 0 1px 1px rgba(255,255,255,.3)",
+        cellBorder: on ? "#7d5750" : "rgba(45,50,49,.42)",
+        cellBg: on
+          ? "linear-gradient(180deg, rgba(232,214,210,.5), rgba(198,182,178,.42))"
+          : "linear-gradient(180deg, rgba(228,231,229,.42), rgba(190,196,193,.4))",
+        cellShadow: on
+          ? "inset 0 1px 0 rgba(255,255,255,.85), inset 0 -2px 6px rgba(120,58,48,.24), 0 1px 0 rgba(255,255,255,.5)"
+          : "inset 0 1px 0 rgba(255,255,255,.8), inset 0 -2px 6px rgba(70,78,76,.16), 0 1px 0 rgba(255,255,255,.5)",
+        rockerBg: on ? DARK_BTN_ON : LIGHT_BTN,
+        rockerBorder: on ? "#4c130e" : "#5d6668",
+        rockerShadow: on
+          ? "inset 0 2px 3px rgba(0,0,0,.4), inset 0 -1px 0 rgba(255,255,255,.22)"
+          : "inset 0 1px 0 rgba(255,255,255,.9), 0 2px 3px rgba(0,0,0,.34)",
+        fixedLabel: m.fixedLabel || "",
+        fixedValue: m.fixedValue || "",
+        fixedColor: on ? "#ff6756" : "#7d3a31",
+      };
+    });
+    const modOnCount = MODS.filter(m => s[m.key]).length;
+    const modStatus = modOnCount === 0
+      ? "ALL STOCK · FACTORY 303 CIRCUIT"
+      : `${modOnCount} OF 6 ACTIVE · MODIFIED CIRCUIT`;
+    const modFooterColor = modOnCount === 0 ? "#5d6768" : "#8e1f16";
+    const modFooter = modOnCount === 0 ? "DEFAULTS = STOCK" : "AMOUNTS HELD WHILE OFF";
+    const curve = this._curve();
+    const scale = SCALES[s.scale];
+    const sel = s.steps[s.selected];
+
+    const KNOB_HINT = " Drag or scroll to set · hold Shift for fine steps · double-click resets.";
+    const KNOB_TIPS = {
+      tuning: "Master tuning, up to one semitone either way." + KNOB_HINT,
+      cutoff: "Filter cutoff frequency — higher opens the sound up." + KNOB_HINT,
+      reso: "Filter resonance at the cutoff — the acid peak." + KNOB_HINT,
+      envmod: "How far the filter envelope sweeps the cutoff." + KNOB_HINT,
+      decay: "Decay time of the filter envelope." + KNOB_HINT,
+      accent: "Intensity of accented steps and loud MIDI notes." + KNOB_HINT,
+    };
+    const MOD_SLOTS = {
+      tuning: { flag: "mSlide", knob: "slideTime", label: "SLD", mod: "SLIDE TIME" },
+      cutoff: { flag: "mOd", knob: "odAmt", label: "OD", mod: "OVERDRIVE" },
+      accent: { flag: "mAtk", knob: "atkTime", label: "ATK", mod: "SOFT ATTACK" },
+    };
+    const toneKnobs = ["tuning", "cutoff", "reso", "envmod", "decay", "accent"].map(id => {
+      const slot = MOD_SLOTS[id];
+      const active = !!(slot && s[slot.flag]);
+      return {
+        id, label: KNOBS[id].label, value: KNOBS[id].fmt(s[id]), deg: deg(id), tip: KNOB_TIPS[id],
+        param: KNOBS[id].param, min: KNOBS[id].min, max: KNOBS[id].max, step: KNOBS[id].step, init: KNOBS[id].init,
+        hasMod: active,
+        labelColor: active ? "#9b2019" : "#1c2224",
+        modKnob: active ? slot.knob : "",
+        modParam: active ? KNOBS[slot.knob].param : "",
+        modInit: active ? KNOBS[slot.knob].init : 0,
+        modLabel: active ? slot.label : "",
+        modValue: active ? KNOBS[slot.knob].fmt(s[slot.knob]) : "",
+        modPct: active ? `${(4 + norm(slot.knob) * 58).toFixed(1)}px` : "0px",
+        modShow: active && s.dragSlider === slot.knob ? 1 : 0,
+        modTip: active
+          ? `${slot.mod} amount — ${KNOBS[slot.knob].label.toLowerCase()} of the active circuit mod. Drag sideways or scroll · double-click resets.`
+          : "",
+        nutTip: slot
+          ? `Mod slot — the ${slot.mod} amount appears here while that circuit mod is on.`
+          : "Mod slot — reserved for circuit mod amounts.",
+      };
+    });
+
+    const stepGroups = [0, 1, 2, 3].map(group => ({
+      steps: [0, 1, 2, 3].map(pos => {
+        const index = group * 4 + pos;
+        const step = s.steps[index];
+        const gate = Boolean(step.flags & 1);
+        const playing = s.playStep === index;
+        const selected = s.selected === index;
+        const beyond = index >= s.length;
+        const lamp = (on, hot) => on
+          ? {
+            bg: hot
+              ? "radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%)"
+              : "radial-gradient(circle at 35% 28%, #ffeecd 0 14%, #ffb03a 46%, #7d4a06 100%)",
+            glow: hot
+              ? "0 0 6px rgba(255,72,48,.85), inset 0 0 2px rgba(255,255,255,.6)"
+              : "0 0 6px rgba(255,168,50,.7), inset 0 0 2px rgba(255,255,255,.5)",
+          }
+          : {
+            bg: hot
+              ? "radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%)"
+              : "radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #423417 55%, #221a0c 100%)",
+            glow: "inset 0 -1px 1px rgba(0,0,0,.65)",
+          };
+        const acc = lamp(Boolean(step.flags & 2), true);
+        const sl = lamp(Boolean(step.flags & 4), false);
+        return {
+          index,
+          number: String(index + 1).padStart(2, "0"),
+          tip: `Step ${index + 1} — ${gate ? noteName(s.root + step.pitch) : "rest"}${step.flags & 2 ? " · accent" : ""}${step.flags & 4 ? " · slide" : ""}. Click selects · scroll changes the note (Shift = octave) · double-click toggles rest · right-click cycles.`,
+          numberColor: playing ? "#b8241a" : beyond ? "#7b8482" : "#3d4749",
+          selected,
+          groupGap: index % 4 === 3 && index !== 15 ? "12px" : "0px",
+          note: gate ? noteName(s.root + step.pitch) : "REST",
+          noteColor: !gate ? "#69726f" : playing ? "#a8231a" : "#2a3234",
+          noteGlow: "0 1px 0 rgba(255,255,255,.88)",
+          accOn: Boolean(step.flags & 2), slOn: Boolean(step.flags & 4),
+          accBg: acc.bg, accGlow: acc.glow,
+          slBg: sl.bg, slGlow: sl.glow,
+          capTransform: selected ? "translateY(3px)" : "none",
+          capBorder: beyond ? "#4e5658" : "#5f676a",
+          capBg: selected
+            ? "radial-gradient(ellipse 150% 130% at 42% 12%, #e8ebeb 0 6%, #cfd5d6 20%, #aab2b4 48%, #8a9295 78%, #9fa7a9 100%)"
+            : beyond
+              ? "radial-gradient(ellipse 150% 130% at 42% 10%, #cfd4d4 0 6%, #bcc2c3 20%, #9aa2a4 48%, #798285 78%, #8d9598 100%)"
+              : "radial-gradient(ellipse 150% 130% at 42% 10%, #ffffff 0 6%, #eef1f2 18%, #ccd2d3 44%, #a3abad 74%, #b9c1c3 100%)",
+          capShadow: selected
+            ? "inset 0 3px 6px rgba(38,45,47,.5), 0 1px 0 rgba(255,255,255,.5)"
+            : playing
+              ? "inset 0 1px 0 rgba(255,255,255,.95), inset -3px -5px 8px rgba(96,106,109,.22), 0 2px 3px rgba(0,0,0,.5), 0 0 14px rgba(255,70,45,.4)"
+              : "inset 0 1px 0 rgba(255,255,255,.95), inset -3px -5px 8px rgba(96,106,109,.25), inset 3px 4px 7px rgba(255,255,255,.3), 0 2px 3px rgba(0,0,0,.5)",
+        };
+      }),
+    }));
+
+    const laneDefs = [
+      { kind: "pitch", label: "NOTE" },
+      { kind: "gate", label: "GATE" },
+      { kind: "accent", label: "ACCENT" },
+      { kind: "slide", label: "SLIDE" },
+    ];
+    const studioLanes = laneDefs.map(lane => ({
+      label: lane.label,
+      cells: s.steps.map((step, index) => {
+        const on = lane.kind === "gate" ? step.flags & 1 : lane.kind === "accent" ? step.flags & 2 : lane.kind === "slide" ? step.flags & 4 : true;
+        const playing = s.playStep === index;
+        const base = { kind: lane.kind, index, text: "", color: "#6d6e67", bg: "linear-gradient(#30312d,#22231f)", border: playing ? "#a4463a" : "#11120f", shadow: playing ? "0 0 6px rgba(255,60,42,.35)" : "inset 0 1px rgba(255,255,255,.055)" };
+        if (lane.kind === "pitch") {
+          return { ...base, text: noteName(s.root + step.pitch), color: step.flags & 1 ? "#ff8b79" : "#5f6059", bg: step.flags & 1 ? "linear-gradient(#44312c,#2c1d19)" : "linear-gradient(#2a2b27,#1d1e1b)" };
+        }
+        if (!on) return base;
+        const fills = {
+          gate: ["linear-gradient(#d4d3c9,#85867e)", "#e0dfd5", "#22231f"],
+          accent: ["linear-gradient(#ed5b49,#971c13)", "#ff7666", "#fff"],
+          slide: ["linear-gradient(#d09252,#71431e)", "#dba05c", "#241500"],
+        }[lane.kind];
+        return { ...base, bg: fills[0], border: fills[1], color: fills[2] };
+      }),
+    }));
+
+    const functionButtons = [
+      { id: "oct-down", label: "OCT −", sub: "TRANSPOSE", on: false, tip: "Transpose the selected step one octave down." },
+      { id: "oct-up", label: "OCT +", sub: "TRANSPOSE", on: false, tip: "Transpose the selected step one octave up." },
+      { id: "gate", label: "GATE", sub: "REST / ON", on: Boolean(sel.flags & 1), tip: "Switch the selected step between gate and rest." },
+      { id: "accent", label: "ACCENT", sub: "DYNAMICS", on: Boolean(sel.flags & 2), tip: "Accent the selected step — louder, brighter, more envelope." },
+      { id: "slide", label: "SLIDE", sub: "LEGATO", on: Boolean(sel.flags & 4), tip: "Slide from this step into the next active one." },
+      { id: "clear", label: "CLEAR", sub: "THIS STEP", on: false, tip: "Reset the selected step to its default pitch and timing." },
+    ].map(f => ({
+      ...f,
+      color: f.on ? "#a51d17" : "#222a2c",
+      border: f.on ? "#a42a22" : "#69706d",
+      bg: f.on ? LIGHT_BTN_ON : LIGHT_BTN,
+      shadow: f.on ? "0 1px 1px rgba(0,0,0,.25), inset 0 3px 5px rgba(0,0,0,.28)" : "0 4px 2px rgba(0,0,0,.38), inset 0 1px #edf1f2",
+    }));
+
+    const distTypes = [
+      { id: 0, label: "PURE", sub: "SUBTLE", tip: "Pure: subtle, level-dependent saturation." },
+      { id: 1, label: "MACKIE", sub: "1202", tip: "Mackie: modelled pre-VLZ mixer channel drive." },
+      { id: 2, label: "PHONO", sub: "RIAA", tip: "Phono: line-into-phono abuse with an RIAA curve." },
+    ].map(t => {
+      const on = s.distOn && s.distType === t.id;
+      return {
+        ...t,
+        rockerBg: on ? "linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%)" : "linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%)",
+        rockerBorder: on ? "#8c2c23" : "#1a1e1f",
+        rockerShadow: on
+          ? "inset 0 2px 5px rgba(30,36,38,.55), 0 0 12px rgba(181,41,33,.3)"
+          : "inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45)",
+        textColor: on ? "#8c1a12" : "#1d2426",
+        ledBg: on
+          ? "radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%)"
+          : "radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%)",
+        ledGlow: on ? "0 0 7px rgba(255,72,48,.9), inset 0 0 2px rgba(255,255,255,.6)" : "inset 0 -1px 1px rgba(0,0,0,.7)",
+        bg: on ? DARK_BTN_ON : DARK_BTN,
+        border: on ? "#75160f" : "#171d1f",
+        color: on ? "#fff0e9" : "#e2e7e8",
+        subColor: on ? "#ffc0b5" : "#a9b0b2",
+        shadow: on ? "0 1px 1px rgba(0,0,0,.52), inset 0 2px 4px rgba(52,5,2,.4)" : "0 3px 2px rgba(0,0,0,.33), inset 0 1px rgba(255,255,255,.2)",
+      };
+    });
+
+    const waveOn = index => s.wave === index;
+    const waveStyle = index => ({
+      bg: waveOn(index) ? "linear-gradient(#383530,#1b1a17)" : "linear-gradient(105deg, rgba(255,255,255,.16), transparent 35% 75%, rgba(0,0,0,.25)), linear-gradient(#687174,#353d40 62%,#22282a)",
+      color: waveOn(index) ? "#ff5545" : "#4d5658",
+      border: waveOn(index) ? "#5f1812" : "#151b1d",
+      shadow: waveOn(index) ? "0 1px 1px rgba(0,0,0,.6), inset 0 2px 5px #0b0b09, 0 0 8px rgba(181,41,33,.22)" : "0 3px 2px rgba(0,0,0,.52), inset 0 1px rgba(255,255,255,.25)",
+    });
+    const saw = waveStyle(0);
+    const sqr = waveStyle(1);
+
+    const clockOn = index => s.clock === index;
+    const clockStyle = index => ({
+      color: clockOn(index) ? "#fff2ee" : "#aaa99f",
+      bg: clockOn(index) ? "linear-gradient(#b72b22,#6e1712)" : "transparent",
+      shadow: clockOn(index) ? "inset 0 1px rgba(255,255,255,.18), 0 0 6px rgba(174,32,25,.24)" : "none",
+    });
+    const int = clockStyle(0);
+    const daw = clockStyle(1);
+
+    const level = clamp(s.level, 0, 1);
+    const meterPct = `${(level * 96).toFixed(1)}%`;
+
+    const ROCKER = "linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%)";
+    const ROCKER_DOWN = "linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%)";
+    const ROCKER_SHADOW = "inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45)";
+    const ROCKER_SHADOW_DOWN = "inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5)";
+    const lampOn = "radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%)";
+    const lampOff = "radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%)";
+    const lampGlowOn = "0 0 7px rgba(255,72,48,.9), inset 0 0 2px rgba(255,255,255,.6)";
+    const lampGlowOff = "inset 0 -1px 1px rgba(0,0,0,.7)";
+
+    const flatSteps = stepGroups.flatMap(g => g.steps).map((step, index) => {
+      const playing = s.playStep === index;
+      const groupStart = index % 4 === 0;
+      const angle = 96 + (index % 4) * 4;
+      return {
+        ...step,
+        rockerBg: step.capTransform === "none"
+          ? `linear-gradient(${angle}deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%)`
+          : `linear-gradient(${angle}deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%)`,
+        numberFont: groupStart ? "900 10px/11px 'Courier New',monospace" : "700 9px/10px 'Courier New',monospace",
+        numberColor: playing ? "#b8241a" : groupStart ? "#232c2e" : "#5c6668",
+        playBarBg: playing
+          ? "linear-gradient(90deg, rgba(255,74,51,0), #ff4a33 25% 75%, rgba(255,74,51,0))"
+          : "rgba(70,78,76,.22)",
+        playBarGlow: playing ? "0 0 8px rgba(255,74,51,.75)" : "inset 0 1px 0 rgba(255,255,255,.4)",
+        capTop: step.capTransform === "none" ? "16px" : "18px",
+        capTopStudio: step.capTransform === "none" ? "9px" : "11px",
+        selRing: step.selected ? "#e9eeee" : "transparent",
+        selFill: "transparent",
+        selGlow: step.selected
+          ? "inset 0 0 0 1px rgba(46,54,52,.6), 0 0 0 1px rgba(255,255,255,.55), 0 1px 4px rgba(30,36,34,.3)"
+          : "none",
+        seam: "none",
+        noteFont: "900 14px/15px 'Courier New',monospace",
+        noteFieldBg: playing ? "linear-gradient(180deg,#3d1713,#1d0d0b)" : "linear-gradient(180deg,#2b1a17,#150c0a)",
+        noteFieldShadow: "inset 0 2px 4px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.6)",
+        noteColor: step.note === "REST" ? "#8d4c42" : playing ? "#ff9a88" : "#ff6756",
+        noteGlow: step.note === "REST" ? "none" : playing ? "0 0 9px rgba(255,80,55,.85)" : "0 0 6px rgba(255,57,37,.5)",
+        accPillBg: step.accOn ? "linear-gradient(180deg,#ff7361,#a3201a)" : "linear-gradient(180deg,#868e90,#6a7274)",
+        accPillBorder: step.accOn ? "#5d1611" : "#4f5759",
+        accPillColor: step.accOn ? "#fff2ee" : "#b6bebf",
+        accPillShadow: step.accOn ? "0 0 7px rgba(255,72,48,.65), inset 0 1px 0 rgba(255,255,255,.4)" : "inset 0 1px 2px rgba(0,0,0,.42)",
+        slPillBg: step.slOn ? "linear-gradient(180deg,#ffc776,#8d5410)" : "linear-gradient(180deg,#868e90,#6a7274)",
+        slPillBorder: step.slOn ? "#5b3908" : "#4f5759",
+        slPillColor: step.slOn ? "#2a1a02" : "#b6bebf",
+        slPillShadow: step.slOn ? "0 0 7px rgba(255,168,60,.6), inset 0 1px 0 rgba(255,255,255,.45)" : "inset 0 1px 2px rgba(0,0,0,.42)",
+        keyLedBg: playing
+          ? "radial-gradient(ellipse at 50% 28%, #fff4ec 0 22%, #ff8a63 46%, #ff3a1c 78%, #b81c0c 100%)"
+          : step.note === "REST"
+            ? "linear-gradient(180deg,#3b3f3e,#565c5b)"
+            : step.selected
+              ? "radial-gradient(ellipse at 50% 28%, #ffb59f 0 20%, #e8492c 58%, #7d1a0d 100%)"
+              : "radial-gradient(ellipse at 50% 30%, #7a3228 0 18%, #52201a 58%, #2e1310 100%)",
+        keyLedGlow: playing
+          ? "0 0 12px rgba(255,86,52,.95), 0 0 22px rgba(255,86,52,.5), inset 0 1px 0 rgba(255,255,255,.75)"
+          : step.note === "REST"
+            ? "inset 0 1px 2px rgba(0,0,0,.6)"
+            : step.selected
+              ? "0 0 7px rgba(255,80,45,.55), inset 0 1px 0 rgba(255,255,255,.4)"
+              : "inset 0 1px 2px rgba(0,0,0,.62)",
+        stepLampBg: playing ? lampOn : lampOff,
+        stepLampGlow: playing ? lampGlowOn : lampGlowOff,
+      };
+    });
+
+    const cellRow = (bit, hue) => s.steps.map((step, index) => {
+      const on = Boolean(step.flags & bit);
+      const playing = s.playStep === index;
+      return {
+        index,
+        groupGap: index % 4 === 3 && index !== 15 ? "12px" : "0px",
+        bg: on
+          ? (hue === "red" ? "linear-gradient(180deg,#ff6a58,#a4211a)" : "linear-gradient(180deg,#ffc46f,#8a5312)")
+          : "linear-gradient(180deg,#3a403c,#262b28)",
+        border: on ? (hue === "red" ? "#ff8878" : "#ffd191") : playing ? "#7d5a52" : "#171b19",
+        shadow: on
+          ? (hue === "red" ? "0 0 7px rgba(255,72,48,.4), inset 0 1px 0 rgba(255,255,255,.35)" : "0 0 7px rgba(255,168,60,.32), inset 0 1px 0 rgba(255,255,255,.3)")
+          : "inset 0 1px 0 rgba(255,255,255,.06)",
+      };
+    });
+
+    const selPitchClass = ((s.root + sel.pitch) % 12 + 12) % 12;
+    const whiteMap = { 0: 0, 2: 1, 4: 2, 5: 3, 7: 4, 9: 5, 11: 6 };
+    const blackLeft = { 1: 9.68, 3: 23.97, 6: 52.54, 8: 66.82, 10: 81.11 };
+    const pianoKeys = [0, 2, 4, 5, 7, 9, 11, 1, 3, 6, 8, 10].map(pitch => {
+      const black = blackLeft[pitch] !== undefined;
+      const active = selPitchClass === pitch;
+      return {
+        pitch,
+        label: NOTE_NAMES[pitch],
+        tip: `Set the selected step to ${NOTE_NAMES[pitch]}.`,
+        left: black ? `${blackLeft[pitch]}%` : `${whiteMap[pitch] * 14.2857}%`,
+        width: black ? "9.2%" : "14.2857%",
+        height: black ? "62%" : "100%",
+        z: black ? 2 : 1,
+        border: black ? "#050607" : "#5f6a6c",
+        bg: black
+          ? (active ? "linear-gradient(180deg,#5a3a34,#20100d)" : "linear-gradient(180deg,#3b423f,#0a0c0b)")
+          : (active
+            ? "linear-gradient(180deg,#f6dad3,#c9a29a 70%,#a67c74)"
+            : "linear-gradient(180deg,#f4f6f6 0%,#dfe3e4 56%,#b7bfc1 86%,#95a0a2 100%)"),
+        shadow: black
+          ? "0 3px 3px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.12)"
+          : "0 3px 2px rgba(0,0,0,.45), inset 0 1px 0 #fff",
+        labelColor: black ? "#c9d0d1" : "#2a3234",
+        ledBg: active ? lampOn : lampOff,
+        ledGlow: active ? lampGlowOn : lampGlowOff,
+      };
+    });
+
+    const GW = 160;
+    const GC = GW / 4;
+    const yInGroup = pitch => 66 - 8 - (clamp(pitch, 0, 24) / 24) * (66 - 16);
+    const basslineGroups = [0, 1, 2, 3].map(group => {
+      const notes = [];
+      const slides = [];
+      let prev = null;
+      for (let i = 0; i < 4; i += 1) {
+        const index = group * 4 + i;
+        const step = s.steps[index];
+        if (!(step.flags & 1)) { prev = null; continue; }
+        const y = yInGroup(step.pitch);
+        const x0 = i * GC + 3;
+        const x1 = (i + 1) * GC - 3;
+        notes.push(`M ${x0.toFixed(1)} ${y.toFixed(1)} L ${x1.toFixed(1)} ${y.toFixed(1)}`);
+        if (prev && prev.slide) slides.push(`M ${prev.x.toFixed(1)} ${prev.y.toFixed(1)} L ${x0.toFixed(1)} ${y.toFixed(1)}`);
+        prev = { x: x1, y, slide: Boolean(step.flags & 4) };
+      }
+      const inGroup = s.playStep >= group * 4 && s.playStep < group * 4 + 4;
+      return {
+        path: notes.join(" "),
+        slidePath: slides.join(" "),
+        playheadX: inGroup ? ((s.playStep - group * 4 + 0.5) * GC).toFixed(1) : "-10",
+        playheadOpacity: s.running && inGroup ? 1 : 0,
+      };
+    });
+
+    const BW = 640;
+    const BH = 66;
+    const cell = BW / 16;
+    const yFor = pitch => BH - 8 - (clamp(pitch, 0, 24) / 24) * (BH - 16);
+    const notes = [];
+    const slides = [];
+    let previous = null;
+    s.steps.forEach((step, index) => {
+      if (!(step.flags & 1)) { previous = null; return; }
+      const y = yFor(step.pitch);
+      const x0 = index * cell + 3;
+      const x1 = (index + 1) * cell - 3;
+      notes.push(`M ${x0.toFixed(1)} ${y.toFixed(1)} L ${x1.toFixed(1)} ${y.toFixed(1)}`);
+      if (previous && previous.slide) {
+        slides.push(`M ${previous.x.toFixed(1)} ${previous.y.toFixed(1)} L ${x0.toFixed(1)} ${y.toFixed(1)}`);
+      }
+      previous = { x: x1, y, slide: Boolean(step.flags & 4) };
+    });
+
+    const bandFns = functionButtons.map(f => ({
+      ...f,
+      bandBg: f.on ? "#8f1d16" : "#2b302f",
+      bandColor: f.on ? "#ffe3de" : "#dfe4e2",
+      rockerBg: f.on ? ROCKER_DOWN : ROCKER,
+      rockerShadow: f.on ? ROCKER_SHADOW_DOWN : ROCKER_SHADOW,
+      textColor: f.on ? "#8c1a12" : "#1d2426",
+      ledBg: f.on ? lampOn : lampOff,
+      ledGlow: f.on ? lampGlowOn : lampGlowOff,
+    }));
+
+    const quad = arr => [0, 1, 2, 3].map(g => { const part = arr.slice(g * 4, g * 4 + 4); return { cells: part, steps: part }; });
+    const accentCellsRow = cellRow(2, "red");
+    const slideCellsRow = cellRow(4, "amber");
+    const rulerRow = s.steps.map((_, index) => ({
+      label: String(index + 1).padStart(2, "0"),
+      color: s.playStep === index ? "#ff8a76" : index % 4 === 0 ? "#cfd6d0" : "#8e9791",
+    }));
+    const studioGroups = [
+      { label: "EDIT", actions: [
+        { id: "undo", glyph: "↶", label: "UNDO", tip: "Undo the last pattern edit." },
+        { id: "redo", glyph: "↷", label: "REDO", tip: "Redo the last undone edit." },
+        { id: "copy", glyph: "⧉", label: "COPY", tip: "Copy the current pattern." },
+        { id: "paste", glyph: "▣", label: "PASTE", tip: "Paste the copied pattern." },
+      ] },
+      { label: "ARRANGE", actions: [
+        { id: "rotate-left", glyph: "◀", label: "ROTATE", tip: "Rotate the whole pattern one step to the left." },
+        { id: "rotate-right", glyph: "▶", label: "ROTATE", tip: "Rotate the whole pattern one step to the right." },
+        { id: "reverse", glyph: "⇄", label: "REVERSE", tip: "Play the pattern backwards — reverses the step order." },
+        { id: "mirror", glyph: "◇", label: "MIRROR", tip: "Mirror every pitch inside its range." },
+      ] },
+      { label: "SELECTED STEP", actions: [
+        { id: "oct-down", glyph: "−12", label: "OCT", tip: "Selected step one octave down." },
+        { id: "oct-up", glyph: "+12", label: "OCT", tip: "Selected step one octave up." },
+        { id: "rest", glyph: "—", label: "REST", tip: "Toggle gate and rest for the selected step." },
+        { id: "note", glyph: "♪", label: "NOTE", tip: "Step the selected note up one semitone." },
+      ] },
+      { label: "GENERATE", actions: [
+        { id: "generate", glyph: "✣", label: "PHRASE", tip: "Generate a new phrase inside the selected scale." },
+        { id: "mutate", glyph: "≈", label: "MUTATE", tip: "Nudge the current phrase without losing its character." },
+        { id: "scale", glyph: "◧", label: "SCALE", tip: "Next scale for Generate and Mutate." },
+        { id: "select-all", glyph: "16", label: "ALL", tip: "Select all 16 steps." },
+      ] },
+    ];
+
+    return {
+      toneKnobs, stepGroups, studioLanes, distTypes, studioGroups,
+      modCells, modStatus, modFooter, modFooterColor, toggleModFlag: this.toggleModFlag, sliderDown: this.sliderDown,
+      stepQuads: quad(flatSteps), accentQuads: quad(accentCellsRow), slideQuads: quad(slideCellsRow), rulerQuads: quad(rulerRow),
+      rulerCells: rulerRow, accentCells: accentCellsRow, slideCells: slideCellsRow,
+      functionButtons: bandFns,
+      flatSteps,
+      pianoKeys,
+      scopeLegend: [
+        { label: "RES", value: Math.round(s.reso * 100) },
+        { label: "ENV", value: Math.round(s.envmod * 100) },
+        { label: "DEC", value: Math.round(s.decay * 100) },
+        { label: "ACC", value: Math.round(s.accent * 100) },
+      ],
+      basslineGroups,
+      basslinePath: notes.join(" "),
+      basslineSlidePath: slides.join(" "),
+      playheadX: (s.playStep >= 0 ? (s.playStep + 0.5) * cell : -10).toFixed(1),
+      playheadOpacity: s.running && s.playStep >= 0 ? 1 : 0,
+      sawRocker: s.wave === 0 ? ROCKER_DOWN : ROCKER,
+      sawRockerShadow: s.wave === 0 ? ROCKER_SHADOW_DOWN : ROCKER_SHADOW,
+      sqrRocker: s.wave === 1 ? ROCKER_DOWN : ROCKER,
+      sqrRockerShadow: s.wave === 1 ? ROCKER_SHADOW_DOWN : ROCKER_SHADOW,
+      intRocker: s.clock === 0 ? ROCKER_DOWN : ROCKER,
+      intRockerShadow: s.clock === 0 ? ROCKER_SHADOW_DOWN : ROCKER_SHADOW,
+      dawRocker: s.clock === 1 ? ROCKER_DOWN : ROCKER,
+      dawRockerShadow: s.clock === 1 ? ROCKER_SHADOW_DOWN : ROCKER_SHADOW,
+      intLampBg: s.clock === 0 ? lampOn : lampOff,
+      intLampGlow: s.clock === 0 ? lampGlowOn : lampGlowOff,
+      dawLampBg: s.clock === 1 ? lampOn : lampOff,
+      dawLampGlow: s.clock === 1 ? lampGlowOn : lampGlowOff,
+      runRocker: s.running ? ROCKER_DOWN : ROCKER,
+      runRockerShadow: s.running ? `${ROCKER_SHADOW_DOWN}, 0 0 14px rgba(181,41,33,.3)` : ROCKER_SHADOW,
+      runRockerBorder: s.running ? "#8c2c23" : "#1a1e1f",
+      runRockerColor: s.running ? "#8c1a12" : "#1d2426",
+      tipVisible: Boolean(s.tips && s.tip && !s.dragSlider),
+      tipText: s.tip?.text ?? "",
+      tipX: `${Math.round(s.tip?.x ?? 0)}px`,
+      tipY: `${Math.round(s.tip?.y ?? 0)}px`,
+      tipsRocker: s.tips ? ROCKER_DOWN : ROCKER,
+      tipsRockerShadow: s.tips ? ROCKER_SHADOW_DOWN : ROCKER_SHADOW,
+      tipsStateLabel: s.tips ? "ON" : "OFF",
+      tipsStateColor: s.tips ? "#fff2ed" : "#a9aaa4",
+      tipsStateBg: s.tips ? "linear-gradient(#b92e24,#74150f)" : "linear-gradient(#4b4c47,#292a27)",
+      toggleTips: this.toggleTips,
+      frameRef: this.frameRef,
+      overTip: this.overTip,
+      hideTip: this.hideTip,
+      classicSegBg: s.studio ? "#2b302f" : "linear-gradient(180deg,#eef1f1,#c3cacb)",
+      classicSegColor: s.studio ? "#9aa3a5" : "#15191a",
+      studioSegBg: s.studio ? "linear-gradient(180deg,#c9382c,#7d1610)" : "#2b302f",
+      studioSegColor: s.studio ? "#fff1ee" : "#9aa3a5",
+      volumeDeg: deg("volume"), tempoDeg: deg("tempo"),
+      volumeLabel: KNOBS.volume.fmt(s.volume),
+      tempoLabel: `${s.tempo.toFixed(1)} BPM`,
+      tempoValue: s.tempo.toFixed(1),
+      sawLabelColor: s.wave === 0 ? "#8e1f16" : "#67716f",
+      sqrLabelColor: s.wave === 1 ? "#8e1f16" : "#67716f",
+      sawBg: saw.bg, sawColor: saw.color, sawBorder: saw.border, sawShadow: saw.shadow,
+      sqrBg: sqr.bg, sqrColor: sqr.color, sqrBorder: sqr.border, sqrShadow: sqr.shadow,
+      intBg: int.bg, intColor: int.color, intShadow: int.shadow,
+      dawBg: daw.bg, dawColor: daw.color, dawShadow: daw.shadow,
+      curvePath: curve.path, curveFill: curve.fill, cutoffX: curve.cutoffX, envPath: this._envPath(),
+      cutoffHz: `${Math.round(30 * Math.pow(320, s.cutoff))} Hz`,
+      resoLabel: Math.round(s.reso * 100), envLabel: Math.round(s.envmod * 100),
+      decayLabel: Math.round(s.decay * 100), accentLabel: Math.round(s.accent * 100),
+      meterL: meterPct, meterR: `${(level * 92).toFixed(1)}%`,
+      peakLabel: s.peak > 0.01 ? `${(20 * Math.log10(Math.max(0.001, s.peak))).toFixed(1)}` : "-∞",
+      runLabel: s.running ? "STOP" : "RUN / STOP",
+      runColor: s.running ? "#ffb3a9" : "#e6eaeb",
+      runBorder: s.running ? "#641811" : "#1a2022",
+      runBg: s.running ? "linear-gradient(#49332d,#211916)" : "linear-gradient(100deg, rgba(255,255,255,.13), transparent 30% 72%, rgba(0,0,0,.25)), linear-gradient(180deg,#697174 0%,#484f52 43%,#272d2f 100%)",
+      runShadow: s.running ? "0 1px 1px #050504, inset 0 2px 4px rgba(0,0,0,.45), 0 0 14px rgba(181,41,33,.28)" : "0 3px 2px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.25)",
+      runLampBg: s.running
+        ? "radial-gradient(circle at 34% 27%, #fffbd5 0 7%, transparent 11%), radial-gradient(circle, #ff8c68 0, #fb3823 34%, #9c0f08 74%)"
+        : "radial-gradient(circle at 34% 25%, rgba(255,255,255,.38) 0 5%, transparent 8%), radial-gradient(circle at 45% 42%, #7f241c, #4a1511 48%, #210906 78%)",
+      runLampGlow: s.running ? "0 0 6px rgba(255,51,31,.85), 0 0 13px rgba(255,42,25,.5), inset 0 0 2px #fff" : "0 1px 0 rgba(255,255,255,.62), inset 0 -2px 3px #170403",
+      steppers: [
+        { id: "swing", param: "param50", min: 0, max: 100, init: 0, label: "SWING", value: `${s.swing}%`, tipDown: "Less swing — 0% is a straight 16th grid.", tipUp: "More swing — 100% reaches a 2:1 triplet feel." },
+        { id: "length", param: "param11", min: 1, max: 16, init: 16, label: "LENGTH", value: s.length, tipDown: "Shorten the pattern.", tipUp: "Lengthen the pattern, up to 16 steps." },
+        { id: "root", param: "param12", min: 24, max: 60, init: 36, label: "ROOT", value: noteName(s.root), tipDown: "Transpose the whole pattern down one semitone.", tipUp: "Transpose the whole pattern up one semitone." },
+      ],
+      positionLabel: s.running ? `${String(s.playStep + 1).padStart(2, "0")} / ${s.length}` : `-- / ${s.length}`,
+      classicMode: !s.studio,
+      studioMode: s.studio,
+      modeCaption: s.studio ? "STUDIO MATRIX" : "CLASSIC PROGRAMMING",
+      selectionCaption: `STEP ${String(s.selected + 1).padStart(2, "0")} · ${noteName(s.root + sel.pitch)} · OCT +${Math.floor(sel.pitch / 12)}`,
+      studioKnobX: s.studio ? "72px" : "0px",
+      studioKnobBg: s.studio ? "linear-gradient(#b63329,#72150f)" : "linear-gradient(#5a5953,#2c2c28)",
+      studioKnobBorder: s.studio ? "#68130e" : "#20201d",
+      classicLabelColor: s.studio ? "#505a5d" : "#edf1f2",
+      studioLabelColor: s.studio ? "#fff1e9" : "#505a5d",
+      scaleName: scale.label,
+      scaleCaret: s.scaleMenu ? "▴" : "▾",
+      scaleMenu: s.scaleMenu,
+      scaleOptions: SCALES.map((sc, index) => ({
+        index, label: sc.label, sub: sc.sub,
+        tip: `${sc.label} — ${sc.degrees.length} notes per octave.`,
+        bg: index === s.scale ? "#8f1d16" : "transparent",
+        color: index === s.scale ? "#ffe3de" : "#c2c8c4",
+        subColor: index === s.scale ? "#f0b0a6" : "#7d8681",
+      })),
+      studioActions: [
+        { id: "undo", glyph: "↶", label: "UNDO", tip: "Undo the last pattern edit." },
+        { id: "redo", glyph: "↷", label: "REDO", tip: "Redo the last undone edit." },
+        { id: "copy", glyph: "⧉", label: "COPY", tip: "Copy the current pattern." },
+        { id: "paste", glyph: "▣", label: "PASTE", tip: "Paste the copied pattern." },
+        { id: "rotate-left", glyph: "◀", label: "ROTATE", tip: "Rotate the whole pattern one step to the left." },
+        { id: "rotate-right", glyph: "▶", label: "ROTATE", tip: "Rotate the whole pattern one step to the right." },
+        { id: "reverse", glyph: "⇄", label: "REVERSE", tip: "Play the pattern backwards — reverses the step order." },
+        { id: "mirror", glyph: "◇", label: "MIRROR", tip: "Mirror every pitch inside its range." },
+        { id: "oct-down", glyph: "−12", label: "OCT", tip: "Selected step one octave down." },
+        { id: "oct-up", glyph: "+12", label: "OCT", tip: "Selected step one octave up." },
+        { id: "select-all", glyph: "16", label: "ALL", tip: "Select all 16 steps." },
+        { id: "generate", glyph: "✣", label: "GENERATE", tip: "Generate a new phrase inside the selected scale." },
+        { id: "mutate", glyph: "≈", label: "MUTATE", tip: "Nudge the current phrase without losing its character." },
+        { id: "rest", glyph: "—", label: "REST", tip: "Toggle gate and rest for the selected step." },
+        { id: "note", glyph: "♪", label: "NOTE", tip: "Step the selected note up one semitone." },
+        { id: "scale", glyph: "◧", label: "SCALE", tip: "Next scale for Generate and Mutate." },
+      ],
+      readout: `${String(s.selected + 1).padStart(2, "0")} ${noteName(s.root + sel.pitch)}`,
+      readoutHint: `OCT +${Math.floor(sel.pitch / 12)} · ${sel.pitch} SEMITONES FROM ROOT`,
+      distOpen: s.distOpen,
+      modOpen: s.modOpen,
+      modButtonTip: modOnCount > 0
+        ? `Circuit mods — ${modOnCount} of 6 active. The lamp stays lit while the circuit is modified.`
+        : "Circuit mods — Devil Fish and x0x modifications. All off, so the instrument runs the stock 303 circuit.",
+      modLedBg: modOnCount > 0 ? "#ff503d" : "#48140f",
+      modLedGlow: modOnCount > 0 ? "0 0 6px rgba(255,50,32,.9), inset 0 0 1px #fff" : "inset 0 1px rgba(255,255,255,.18)",
+      bypassLedBg: s.bypass ? "radial-gradient(circle at 35% 30%, #55201a, #2c0b07 70%, #1a0503)" : "radial-gradient(circle at 35% 30%, #ff6a54, #9d1c11 68%, #5a0d06)",
+      bypassLedGlow: s.bypass ? "inset 0 1px 1px rgba(255,255,255,.16)" : "inset 0 1px 1px rgba(255,255,255,.45), 0 0 8px rgba(220,42,26,.6)",
+      bypassLabel: s.bypass ? "BYPASS" : "POWER",
+      bypassLabelColor: s.bypass ? "#8e1f16" : "#6d7776",
+      bypassTip: s.bypass ? "Plugin is bypassed — click to bring the instrument back online." : "Bypass the whole instrument (dry signal passes through).",
+      distStatus: s.distOn ? `${["PURE", "MACKIE", "PHONO"][s.distType]} ACTIVE` : "TRUE BYPASS",
+      distLedBg: s.distOn ? "#ff503d" : "#48140f",
+      distLedGlow: s.distOn ? "0 0 6px rgba(255,50,32,.9), inset 0 0 1px #fff" : "inset 0 1px rgba(255,255,255,.18)",
+      distPowerBg: s.distOn ? DARK_BTN_ON : DARK_BTN,
+      distPowerBorder: s.distOn ? "#75160f" : "#171d1f",
+      distPowerColor: s.distOn ? "#fff0e9" : "#e2e7e8",
+      distPowerShadow: s.distOn ? "inset 0 2px 4px rgba(52,5,2,.4)" : "0 3px 2px rgba(0,0,0,.33), inset 0 1px rgba(255,255,255,.2)",
+      distKnobs: [
+        { id: "drive", param: "param47", min: 0, max: 1, step: 0.001, init: 0.35, label: "DRIVE", value: KNOBS.drive.fmt(s.drive), deg: deg("drive"), tip: "Amount of drive for the selected character." + " Drag or scroll to set · hold Shift for fine steps · double-click resets." },
+        { id: "mix", param: "param48", min: 0, max: 1, step: 0.001, init: 1, label: "MIX", value: KNOBS.mix.fmt(s.mix), deg: deg("mix"), tip: "Blend between the clean instrument and the distorted signal." + " Drag or scroll to set · hold Shift for fine steps · double-click resets." },
+      ],
+      distPowerRocker: s.distOn ? ROCKER_DOWN : ROCKER,
+      distPowerShadow: s.distOn ? `${ROCKER_SHADOW_DOWN}, 0 0 12px rgba(181,41,33,.3)` : ROCKER_SHADOW,
+      distPowerText: s.distOn ? "#8c1a12" : "#1d2426",
+      distPowerLabel: s.distOn ? "ON" : "OFF",
+      knobDown: this.knobDown, knobReset: this.knobReset,
+      setWave: this.setWave, setClock: this.setClock, toggleRun: this.toggleRun,
+      stepperClick: this.stepperClick, selectStep: this.selectStep, cycleStepPitch: this.cycleStepPitch,
+      pillClick: this.pillClick, stepDoubleClick: this.stepDoubleClick,
+      selectPattern: this.selectPattern, toggleStudio: this.toggleStudio, setMode: this.setMode,
+      pressKey: this.pressKey, functionClick: this.functionClick,
+      studioCell: this.studioCell, studioAction: this.studioAction, cycleScale: this.cycleScale,
+      toggleScaleMenu: this.toggleScaleMenu, pickScale: this.pickScale, scrimClick: this.scrimClick, toggleBypass: this.toggleBypass,
+      toggleDist: this.toggleDist, toggleDistPower: this.toggleDistPower, setDistType: this.setDistType,
+      toggleMod: this.toggleMod, modScrimClick: this.modScrimClick,
+      prevPatch: this.prevPatch, nextPatch: this.nextPatch,
+    };
+  }
+}
+</script>
+</body>
+</html>
