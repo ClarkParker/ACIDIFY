@@ -640,3 +640,31 @@ Die eine Konstante, die ohne diesen Umbau ersetzbar wäre, ist die Rechteck-
 Schwelle `0,4687857` (Open303, gemessen). Sie folgt aus dem Spannungsbereich des
 Sägezahns gegen die Komparatorschwelle an `Q8` — beides ist im Plan vorhanden,
 aber noch nicht ausgewertet.
+
+
+---
+
+## Cutoff- und Env-Mod-Abbildung aus der Schaltung
+
+Sieben Open303-Polynomkoeffizienten ersetzt durch zwei Werte:
+
+- `highCutoff = 2500 Hz` — belegt (Whittle, DF-Handbuch 2.1C: DF-Maximum 5 kHz,
+  „an octave above the standard frequency of the TB-303").
+- `octaves = 3` — Cutoff und Env Mod speisen den Steuerknoten über **identische**
+  Netze (VR3 50 k + R47 10 k; VR5 50 k + R61 10 k), haben also dieselbe Spanne.
+  Drei Oktaven unter 2500 Hz sind 312,5 Hz; Open303s gefittete 313,8 Hz liegen
+  0,4 % daneben.
+
+**Behobener Defekt:** `envScaler` lieferte bei Env Mod null **0,864 statt 0** —
+Restmodulation ohne Bauteil dahinter. Open303 brauchte deshalb `envOffset` als
+Gegengewicht; beides entfällt.
+
+Gemessen, spektraler Schwerpunkt:
+
+| Env Mod = 0 | Cutoff 0,0 | 0,5 | 1,0 |
+|---|---:|---:|---:|
+| | 447,7 Hz | 482,9 Hz | 1097,1 Hz |
+
+| Cutoff = 0,5 | EnvMod 0,0 | 0,5 | 1,0 |
+|---|---:|---:|---:|
+| | 482,9 Hz | 593,9 Hz | 728,5 Hz |

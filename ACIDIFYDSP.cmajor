@@ -606,15 +606,33 @@ processor AcidifyCore
 
     void updateFilterMapping()
     {
-        const float lowCutoff = 313.8152786f;
-        const float highCutoff = 2394.411987f;
+        // Cutoff- und Env-Mod-Abbildung aus der Schaltung statt aus sieben
+        // Open303-Polynomkoeffizienten.
+        //
+        // Obergrenze belegt: Whittle, Devil-Fish-Handbuch, Versionsnotiz 2.1C —
+        // die maximale resonante Filterfrequenz des Mods ist 5 kHz und damit
+        // „an octave above the standard frequency of the TB-303". Serienstand
+        // also 2500 Hz. Das ist genau die Groesse, die der Modellparameter
+        // seit dem Wegfall von peakToParameter fuehrt.
+        //
+        // Spanne: Cutoff und Env Mod speisen den Steuerknoten ueber IDENTISCHE
+        // Netze — VR3 = 50 k mit R47 = 10 k, VR5 = 50 k mit R61 = 10 k. Beide
+        // Wege haben damit dasselbe Gewicht, also dieselbe Spanne in Oktaven.
+        // Drei Oktaven unter 2500 Hz sind 312,5 Hz; Open303s gefittetes
+        // Minimum von 313,8 Hz liegt 0,4 % daneben und stuetzt den Wert.
+        const float highCutoff = 2500.0f;
+        const float octaves = 3.0f;
+
         let c = clamp (cutoffControl, 0.0f, 1.0f);
         let e = clamp (envModControl, 0.0f, 1.0f);
-        baseCutoffTarget = lowCutoff * float (pow (float64 (highCutoff / lowCutoff), float64 (c)));
-        let scalerLow = 3.773996325f * e + 0.736965594f;
-        let scalerHigh = 4.194548788f * e + 0.864344901f;
-        envScalerTarget = (1.0f - c) * scalerLow + c * scalerHigh;
-        envOffsetTarget = 0.048292931f * c + 0.294391201f;
+
+        baseCutoffTarget = highCutoff * float (pow (2.0, float64 (octaves * (c - 1.0f))));
+
+        // Env Mod null heisst KEINE Modulation. Open303 lieferte hier 0,864
+        // statt 0 und brauchte deshalb envOffset als Gegengewicht — eine
+        // Restmodulation, fuer die es in der Schaltung kein Bauteil gibt.
+        envScalerTarget = octaves * e;
+        envOffsetTarget = 0.0f;
     }
 
     void updateResonanceMapping()
