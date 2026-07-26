@@ -185,3 +185,40 @@ VCO-Stimmung 110 Hz bei CV 2,75 V (Taste A), 1 Oktave/Volt.
 2. **Filterkern** (3) — Voraussetzung für 1, Prototyp ist geprüft
 3. **Bauteilstreuung** (7) — klein umzusetzen, wirkt auf den Charakter
 4. **Koppelnetzwerk** (5, 8) — braucht erst die Bauteilwerte
+
+---
+
+## VCA — der Punkt, an dem ich zweimal falsch abgebogen bin
+
+Aus dem hochauflösenden Serviceplan und der x0xb0x-Dokumentation:
+
+**Der VCA ist ein `IC15 BA662A`** — ein Operational Transconductance
+Amplifier, kein Multiplizierer. Seine Verstärkung wird über einen
+**Steuerstrom** gesetzt, und er hat eine eigene, tanh-artige
+Übertragungskennlinie. Die x0xb0x-Dokumentation nennt den BA662 „one of the
+most difficult to source parts from the original 303" und ersetzt ihn durch
+einen BA6110 mit vorgeschaltetem Stromspiegel, um das Eingangsverhalten
+nachzubilden — die Eingangsstufe ist also klanglich relevant genug, dass ein
+Nachbau sie eigens nachbaut.
+
+ACIDIFY multipliziert die Hüllkurve schlicht mit dem Signal. Das ist kein
+OTA.
+
+**Die beiden Summenzweige.** Am VCA-Eingang liegen `C21 = 10 nF` und
+`C22 = 10 nF` mit `R121` und `R122`; in der TD-3-Fassung sind dieselben
+Zweige mit „from Filter" und „from Reso. Comp." beschriftet. Die
+Resonanzkompensation ist damit bestätigt **kein Faktor auf das Audiosignal**,
+sondern ein zweiter, über ein RC-Glied eingekoppelter Summenzweig. Meine
+beiden gescheiterten Einbauversuche haben genau das falsch angenommen.
+
+### Bessere Quelle als Pixellesen
+
+Der **[x0xb0x](https://ladyada.net/make/x0xb0x/)** von Limor Fried ist ein
+quelloffener, dokumentierter und lizenzierter Nachbau des 303. Sein
+Fabrikationshandbuch und die VCA-/VCF-Seiten führen Bauteilwerte im Klartext.
+Das ist die belastbare Grundlage für die verbleibenden Werte — der direkte
+Abruf lief in dieser Sitzung auf HTTP 403, das Handbuch liegt aber als PDF
+vor: `ladyada.net/wiki/_media/x0x/x0xb0xfabmanual.pdf`.
+
+Quellen: [x0xb0x im Open Music Labs Wiki](http://wiki.openmusiclabs.com/wiki/x0xb0x) ·
+[BA662A gegen BA6110 im x0xb0x](https://www.subatomicglue.com/x0xl0g/ba662a-analysis/)
