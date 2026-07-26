@@ -10,6 +10,8 @@
 | `dsp_articulation_test` | `ok` |
 | Kein Anschwingen bei 200 / 1000 / 5000 Hz, volle Resonanz | Tail 0,00001 … 0,00004 |
 | Tieftonspitze bei voller Resonanz | −7,0 dB @ 9 Hz gegen −19,7 dB @ 4 Hz |
+| `hardware_checks.py` | 8/8 Prüfsteine bestanden |
+| Samplerate-Invarianz `dsp_matrix_test` | 44,1 / 88,2 / 96 / **192** kHz alle `ok`; `cleanPeak` 0,79004 / 0,78909 / 0,78912 / 0,78985 — Spanne 0,12 % |
 
 ---
 
@@ -217,7 +219,6 @@ Transportfunktionen offen.
 - detaillierter 0.7.2-Lauf von Tempo, Transport, Position, Swing und
   Parameterautomation im finalen Amorph-Build und in der Ziel-DAW,
 - CPU-Messung im finalen Host,
-- Hostlauf bei 176,4/192 kHz,
 - Blindtest mit Produzenten,
 - Vergleich des generischen `PHONO`-Modells mit einem festgelegten,
   vermessenen DJ-Mixer.
