@@ -1,3 +1,19 @@
+# Validierung 1.0.0-rc1
+
+## 1.0.0-rc1
+
+| Prüfung | Ergebnis |
+|---|---|
+| `preflight --strict` | sauber |
+| `smoke_test` | peak 0,73853 |
+| `dsp_matrix_test` | 11/11 `ok` |
+| `dsp_articulation_test` | `ok` |
+| `dsp_transport_test` | 12/12 `ok` |
+| `hardware_checks.py` | 8/8 bestanden |
+| `partcheck.py` gegen EAGLE-Quelle | 28/28 Bauteilwerte bestätigt |
+
+---
+
 # Validierung 0.11.0
 
 ## 0.11.0

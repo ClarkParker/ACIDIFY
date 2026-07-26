@@ -6,6 +6,43 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [1.0.0-rc1] - 2026-07-26
+
+### Changed
+
+- **VCA-Verstaerkung aus Bauteilwerten**: `I_abc = (12−0,2−0,6)/R131 = 50,9 µA`,
+  Ausgang über `R119 = 47 k`, Eingangsteiler `R124/R121 = 1/100` →
+  `0,460` statt Open303s `0,42`. Möglich durch die BA662-Pinbelegung
+  (Roland-100M-Servicehandbuch): Pin 1 = CV1, Pin 3 = +IN1.
+- **VCA-Release** aus dem Abschaltvorgang: kein Entladepfad an `C42`, der VCA
+  schliesst über `R123 = 1,5 M`; Schwellenübertritt bei 51…104 ms → **77 ms**
+  statt Open303s 1 ms (unterhalb des physikalisch Möglichen) und 50 ms.
+
+### Removed
+
+- `0.45f * filterEnvelope` am VCA. Verfolgt: Der MEG-Knoten läuft über `Q41`
+  zu `VR5` und erreicht den VCA-Steuerknoten nicht — die Filterhüllkurve
+  speist den VCA in der Schaltung nicht.
+
+### Added
+
+- `tools/bench/partcheck.py` — prüft **28 Bauteilwerte** gegen die
+  EAGLE-Quelldatei des x0xb0x. Alle bestätigt, darunter `C18 = .018` gegen
+  `C19/C24/C26 = .033` (die ungleiche vierte Leiterstufe) und
+  `C42 = C62 = 1 µF`.
+
+### Known
+
+Von 14 gefitteten Konstanten sind **3** übrig, jede mit benanntem Grund:
+
+- `4.0f` (Accent-Anteil) — Leitwertverhältnis am Knoten ist 220/2,2 = 100,
+  aber der Pegel der Accent-Quelle ist unbelegt und `accentVcaRC` normiert.
+- `2.0f` und `otaDrive` — gemeinsam **eine** Unbekannte, der Spannungsmassstab.
+  Braucht eine Pegelmessung am Gerät.
+- VCO-Rechteckschwelle `0.4687857` — **bewusst behalten**: gemessene Hardware,
+  kein Modellkompromiss.
+
+
 ## [0.11.0] - 2026-07-26
 
 ### Changed
