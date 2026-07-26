@@ -101,9 +101,17 @@ processor AcidifyCore
 
     float filterEnvelope = 0.0f;
     float filterEnvelopeRC = 0.0f;
-    float accentEnvelope = 0.0f;
-    float accentEnvelopeRC = 0.0f;
     float ampEnvelope = 0.0f;
+
+    // Accent-Sweep-Netzwerk der Hardware: eine Diode und 47 k treiben das
+    // gegen-den-Uhrzeigersinn liegende Ende eines 100-k-Potis, am anderen Ende
+    // hängt 1 µF gegen Masse. Das Poti ist die zweite Ebene des Resonanzreglers.
+    // Der Schleifer geht über 100 k auf den Summenknoten der Filterfrequenz.
+    // Weil die Diode nur in eine Richtung leitet, bleibt Ladung über
+    // Notengrenzen hinweg stehen — daraus entsteht die Steigerung über eine
+    // Folge akzentuierter Noten.
+    float accentCap = 0.0f;   // Spannung am 1-µF-Kondensator
+    float accentVca = 0.0f;   // getrennter VCA-Zweig, 47 k / 0,033 µF
 
     float preLowpass = 0.0f;
     float feedbackLowpass = 0.0f;
@@ -123,7 +131,9 @@ processor AcidifyCore
     float cachedRate = 0.0f;
     float glideCoeff = 0.0f;
     float filterAttackAlpha = 0.0f;
-    float accentAttackAlpha = 0.0f;
+    float accentChargeAlpha = 0.0f;
+    float accentDischargeCoeff = 0.0f;
+    float accentVcaAlpha = 0.0f;
     float normalDecayCoeff = 0.0f;
     float accentDecayCoeff = 0.0f;
     float ampAttackAlpha = 0.0f;
@@ -259,7 +269,13 @@ processor AcidifyCore
         cachedRate = sampleRate;
         glideCoeff = timeCoefficient (12.0f, sampleRate);  // Open303 scales 60 ms slide by 0.2.
         filterAttackAlpha = 1.0f - timeCoefficient (3.0f, sampleRate);
-        accentAttackAlpha = 1.0f - timeCoefficient (15.0f, sampleRate);
+
+        // 47 k × 1 µF = 47 ms Ladung über die Diode. Der Entladepfad läuft über
+        // Poti und Mischwiderstand; sein genauer Wert steht in der Quelle nicht,
+        // 150 ms liegt in der Mitte des beschriebenen 100…200-k-Netzwerks.
+        accentChargeAlpha = 1.0f - timeCoefficient (47.0f, sampleRate);
+        accentDischargeCoeff = timeCoefficient (150.0f, sampleRate);
+        accentVcaAlpha = 1.0f - timeCoefficient (1.55f, sampleRate);   // 47 k × 0,033 µF
         normalDecayCoeff = timeCoefficient (normalDecayMs, sampleRate);
         accentDecayCoeff = timeCoefficient (200.0f, sampleRate);
         ampAttackAlpha = 1.0f - timeCoefficient (1.0f, sampleRate);
@@ -307,7 +323,8 @@ processor AcidifyCore
         targetFrequency = frequency;
         currentFrequency = frequency;
         filterEnvelope = 1.0f;
-        accentEnvelope = hasAccent ? 1.0f : 0.0f;
+        // accentCap wird bewusst nicht zurückgesetzt: der Kondensator behält
+        // seine Restladung, genau darauf beruht die Accent-Steigerung.
         accented = hasAccent;
         gateOpen = true;
     }
@@ -317,8 +334,6 @@ processor AcidifyCore
         currentNote = note;
         targetFrequency = midiFrequency (note);
         accented = hasAccent;
-        if (hasAccent)
-            accentEnvelope = max (accentEnvelope, filterEnvelope);
         gateOpen = true;
     }
 
@@ -519,12 +534,29 @@ processor AcidifyCore
             let preFiltered = oscillator - preLowpass;
 
             filterEnvelope *= accented ? accentDecayCoeff : normalDecayCoeff;
-            accentEnvelope *= accentDecayCoeff;
             filterEnvelopeRC += filterAttackAlpha * (filterEnvelope - filterEnvelopeRC);
-            accentEnvelopeRC += accentAttackAlpha * (accentEnvelope - accentEnvelopeRC);
+
+            // Die MEG-Spannung speist das Accent-Netzwerk, solange ein
+            // akzentuierter Ton anliegt.
+            let accentSource = accented && gateOpen ? filterEnvelope : 0.0f;
+
+            // Diode: lädt über 47 k, sperrt in Gegenrichtung. Entladen kann sich
+            // der Kondensator nur langsam über das Poti-Netzwerk.
+            if (accentSource > accentCap)
+                accentCap += accentChargeAlpha * (accentSource - accentCap);
+            else
+                accentCap *= accentDischargeCoeff;
+
+            // Schleiferstellung des Resonanzpotis blendet zwischen rohem
+            // MEG-Impuls (ganz links) und geglätteter Kondensatorspannung
+            // (ganz rechts). Daher hängt der Accent-Charakter an der Resonanz.
+            let accentSweep = accentSource + resonanceControl * (accentCap - accentSource);
+
+            // Zweiter, deutlich schnellerer Zweig aus derselben Quelle in den VCA.
+            accentVca += accentVcaAlpha * (accentSource - accentVca);
 
             let exponent = envScaler * (filterEnvelopeRC - envOffset)
-                         + accentControl * 1.75f * accentEnvelopeRC;
+                         + accentControl * 1.75f * accentSweep;
             let instantaneousCutoff = baseCutoff * float (pow (2.0, float64 (exponent)));
             let filtered = processLadder (preFiltered, instantaneousCutoff, sampleRate);
 
@@ -542,9 +574,13 @@ processor AcidifyCore
                 ampEnvelope *= accented ? ampAccentReleaseCoeff : ampReleaseCoeff;
             }
 
-            let accentGain = 1.0f + accentControl
-                           * (0.45f * filterEnvelopeRC + 3.2f * accentEnvelopeRC);
-            let voice = softClip (coupled * ampEnvelope * accentGain * 1.45f) * outputGain;
+            // Additiv auf die Amplitudenhüllkurve, wie in der Vorlage. Der
+            // 0,45-Anteil hängt nicht am Accent-Regler — er wirkt auf jeder
+            // gehaltenen Note, nicht nur auf akzentuierten.
+            let ampBoost = gateOpen ? 0.45f * filterEnvelopeRC
+                                      + accentControl * 4.0f * accentVca
+                                    : 0.0f;
+            let voice = softClip ((ampEnvelope + ampBoost) * coupled * 1.45f) * outputGain;
             let sample = abs (voice) < 0.0000000001f ? 0.0f : voice;
 
             meterEnvelope += meterAlpha * (abs (sample) - meterEnvelope);
