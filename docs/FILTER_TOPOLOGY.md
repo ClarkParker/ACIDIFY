@@ -348,3 +348,54 @@ Das Argument für den ZDF-Kern ist strukturell, nicht in dB:
 - frequenzabhängige Steilheit (−16,2 / −20,7 / −23,1 dB/Okt)
 
 Das fällt aus der Topologie an. Die dB-Schlagzeile nicht.
+
+---
+
+## Die Leiter wird stark ausgesteuert — und die Schwelle ist nicht fest
+
+Aus ausschliesslich belegten Werten: VCO-Hub 5,33…10,5 V (Whittle,
+x0x-VCF-Mods), `R62 = 220 kΩ` als Vorwiderstand in den VCF, `C98 = 33 nF`,
+`V_T = 26 mV`.
+
+```
+Signalstrom  = 5,17 Vss / 220 kΩ = 23,5 µAss
+Steuerstrom  = 2π · f_c · C · 2·V_T
+```
+
+| Eckfrequenz | Steuerstrom | Signal / Steuerstrom |
+|---|---:|---:|
+| 300 Hz | 3,23 µA | **7,3** |
+| 1000 Hz | 10,78 µA | **2,2** |
+| 2500 Hz | 26,95 µA | 0,87 |
+
+**Der Signalstrom übersteigt den Steuerstrom bei normalen Pegeln um das Zwei-
+bis Siebenfache.** Die Leiter arbeitet also tief in ihrer Nichtlinearität, nicht
+am Rand. Der eingebaute ZDF-Kern ist demgegenüber **vollständig linear**.
+
+### Warum der frühere `vSat`-Versuch scheitern musste
+
+Weiter oben steht der zurückgenommene Anlauf mit `tanh` im Rückkopplungszweig
+und einer festen Schwelle `vSat`. Gemessen wurde damals: bei kleiner Schwelle
+erstickt die Resonanz, bei grosser ist es praktisch linear — „es gibt keine
+Stellung, bei der sie beides tut".
+
+Der Grund steht jetzt da: **Die Schwelle ist keine Konstante.** Sie ist der
+Steuerstrom, und der folgt der Eckfrequenz. Über den Cutoff-Regler ändert sich
+`I_c` um mehr als eine Grössenordnung — eine feste Schwelle kann das per
+Konstruktion nicht abbilden. Der Versuch war nicht schlecht ausgeführt, er war
+falsch parametrisiert.
+
+### Was ein Einbau bedeutet
+
+Kein freier Parameter mehr: Der Aussteuerungsgrad `u = I_signal / I_c` ist aus
+den obigen Werten bestimmt. Aber es ist ein **Eingriff in den Kern**, nicht ein
+Konstantentausch — die Zustandsgleichungen des ZDF müssen die Strombegrenzung
+je Stufe mitführen, und die Zero-Delay-Auflösung muss das überstehen.
+
+Prüfsteine, die dafür schon feststehen und scheitern können:
+
+1. Kein Anschwingen bei irgendeiner Eckfrequenz (`hardware_checks.py` 1)
+2. Anschwinggrenze weiter frequenzabhängig (`hardware_checks.py` 2)
+3. Die Verzerrung muss mit **sinkender** Eckfrequenz zunehmen — bei 300 Hz ist
+   das Verhältnis 7,3, bei 2,5 kHz 0,87. Kommt sie cutoff-unabhängig heraus,
+   ist die Kopplung an `I_c` falsch.
