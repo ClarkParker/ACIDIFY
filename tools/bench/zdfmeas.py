@@ -1,5 +1,6 @@
 import cmath, json, math, os, struct, subprocess
-SD="/tmp/claude-0/-home-user/0d638a5f-d17d-5e69-9f78-27c8a9360bd2/scratchpad"
+SD = os.environ.get("ACIDIFY_BENCH_DIR",
+                    os.path.join(os.path.dirname(os.path.abspath(__file__)), "_work"))
 CMAJ=f"{SD}/cmaj-bin/linux/x64/cmaj"; D=f"{SD}/bench/zdf"
 TMPL=open(f"{D}/Zdf.cmajor").read()
 def fft(x):

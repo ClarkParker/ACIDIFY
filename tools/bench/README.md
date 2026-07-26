@@ -46,8 +46,16 @@ node tools/bench/ui_audit.mjs
 
 ## Voraussetzung
 
-Ein lauffähiger `cmaj` und Playwright. Der Pfad zum Compiler steht in
-`bench.py` (`CMAJ`) und `filtermeas.py`.
+Ein lauffähiger `cmaj` und Playwright.
+
+Das Arbeitsverzeichnis kommt aus `ACIDIFY_BENCH_DIR`; ohne die Variable wird
+`tools/bench/_work/` verwendet. Dort werden `cmaj-bin/`, Rigs und WAVs erwartet.
+Früher stand hier ein fest verdrahteter Pfad — der Messstand war damit nicht
+reproduzierbar.
+
+```bash
+export ACIDIFY_BENCH_DIR=/pfad/mit/cmaj-bin
+```
 
 ## `zdf/Zdf.cmajor` und `zdfmeas.py`
 

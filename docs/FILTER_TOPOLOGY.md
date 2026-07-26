@@ -71,6 +71,11 @@ Der Pfad von Stufe 2 zum Ausgang läuft über `G3*G4` = `SG2`. Hier steht `SG2`.
 
 ## Messungen
 
+> **Referenzdefinition — verbindlich.** „Spitze" heißt hier: Pegel des Maximums
+> zwischen 40 Hz und 20 kHz **minus Pegel bei 20 Hz bei demselben k**. Der alte
+> Filter wurde in `REVIEW_0.4.0.md` gegen **250 Hz** referenziert. Beide Zahlen
+> sind nicht vergleichbar — siehe „Korrektur" am Ende dieses Dokuments.
+
 ### Steilheit — der Test, der hätte scheitern können
 
 Stinchcombes Hardwareanalyse sagt: Der 303-Filter ist **vierpolig**, verhält
@@ -92,22 +97,38 @@ Bereich — flacher als die Hardware im Sperrbereich.
 
 ### Resonanz
 
-Parameter 1610 Hz, Spitze bei ~1000 Hz:
+**Achtung: zwei Tabellen.** Die erste wurde mit vier gleichen 33-nF-Stufen
+gemessen — dem Ursprungs-Prototyp aus `5c58833`, der noch kein `CAP4` kannte.
+Die Schaltplanwerte kamen erst mit `82ff49e`. **Maßgeblich ist die zweite.**
+
+Vier gleiche 33 nF (historisch, nicht schaltplangerecht):
 
 | k | Spitze | Zustand |
 |---:|---:|---|
-| 4 | +1,5 dB | stabil |
-| 8 | +7,0 dB | stabil |
 | 12 | +14,0 dB | stabil |
-| 14 | +19,3 dB | stabil |
-| 15,5 | +25,8 dB | stabil |
 | 16,5 | +35,7 dB | stabil |
-| 16,9 | +49,4 dB | stabil |
 | 16,99 | +67,7 dB | schwingt |
 | 17,0 | +83,0 dB | schwingt |
 
-Monoton über den ganzen Weg, kein totes Drittel. Bei k = 16,5 liegt die Spitze
-**18,5 dB über dem, was der bisherige Filter überhaupt erreichen kann**.
+**Schaltplan 33/33/33/18 nF — die gültigen Werte:**
+
+| k | Spitze | bei | Zustand |
+|---:|---:|---:|---|
+| 4 | +0,9 dB | 513 Hz | stabil |
+| 8 | +5,5 dB | 911 Hz | stabil |
+| 12 | +11,0 dB | 1121 Hz | stabil |
+| 16,5 | +20,5 dB | 1279 Hz | stabil |
+| 17,0 | +22,3 dB | 1293 Hz | stabil |
+| 18,0 | +26,9 dB | 1321 Hz | stabil |
+| 19,0 | +36,4 dB | 1349 Hz | stabil |
+| **19,4** | **+48,2 dB** | 1358 Hz | **stabil** |
+| 19,6 | +63,2 dB | 1364 Hz | schwingt |
+
+Monoton über den ganzen Weg, kein totes Drittel — das gilt für beide.
+
+**Die Anschwinggrenze liegt bei k ≈ 19,5, nicht bei 17,0.** Der Kalibrierpunkt
+„knapp unter Anschwingen" ist damit k ≈ 19,4, nicht 16,8. Ein bei 16,8
+festgelegter Maximalwert läge mitten im linearen Bereich statt am Rand.
 
 ### Selbstoszillation ist kein Ziel
 
@@ -118,9 +139,9 @@ Wichtig für die Kalibrierung, aus Whittles Devil-Fish-Dokumentation:
 > **just under that required for self-oscillation**"
 
 Der serienmäßige 303 schwingt also absichtlich **nicht** an — der Devil-Fish-Mod
-fügt das erst nachträglich hinzu. Maximale Resonanz gehört daher auf ein k
-knapp unterhalb 17, nicht darauf. Der handverlötete Widerstand ist der
-Kalibrierpunkt.
+fügt das erst nachträglich hinzu. Maximale Resonanz gehört daher **knapp unter
+k ≈ 19,5** (Schaltplan-Kondensatoren), nicht knapp unter 17. Der handverlötete
+Widerstand ist der Kalibrierpunkt.
 
 Ergänzend: laut derselben Quelle schwingt der Filter überhaupt nur bei mittleren
 und hohen Frequenzen an. Ob das Modell diese Frequenzabhängigkeit von selbst
@@ -229,3 +250,54 @@ Verstärker vollständig ablesen und den Zweig als eigene Stufe in die
 VCA-Ansteuerung bauen, statt als Verstärkung in den Filter. Erst dann kann der
 Kern eingesetzt werden. Er selbst ist gemessen und stabil und braucht keine
 Änderung.
+
+
+---
+
+## Korrektur — drei Fehler in diesem Dokument
+
+Nachgeprüft und bestätigt. Sie betreffen Schlussfolgerungen, nicht die
+Messungen: der Messstand reproduziert alle dokumentierten Zahlen exakt.
+
+**K1 — Resonanztabelle und Anschwinggrenze galten für die falschen
+Kondensatoren.** Beide wurden am Ursprungs-Prototyp `5c58833` gemessen, der
+vier gleiche 33-nF-Stufen hatte; `CAP4` und damit C101 = 18 nF kamen erst mit
+`82ff49e`. Mit den Schaltplanwerten sind es bei k = 16,5 **+20,5 dB statt
++35,7 dB**, und die Anschwinggrenze liegt bei **k ≈ 19,5 statt 17,0**. Das ist
+der schwerwiegendste der drei: Der Kalibrierpunkt wäre 2,7 Einheiten zu tief
+angesetzt worden, mitten im linearen Bereich.
+
+**K2 — die „Lücke von 18 dB" mischte zwei Referenzpunkte.**
+`REVIEW_0.4.0.md` misst den alten Filter gegen **250 Hz**, dieses Dokument den
+ZDF gegen den **20-Hz-Durchlassbereich**. Der alte Filter hat den 150-Hz-Hochpass
+im Rückkopplungszweig und liegt bei 20 Hz darum rund 15 dB über seinem
+250-Hz-Pegel; der ZDF hat diesen Hochpass nicht. Konsistent gemessen, Spitze
+jeweils auf ~1000 Hz, Schaltplan-Kondensatoren:
+
+| Referenz | alter Filter | ZDF k = 16,5 | Differenz |
+|---|---:|---:|---:|
+| 250 Hz | +17,3 dB | +20,0 dB | **2,7 dB** |
+| 20 Hz | +2,2 dB | +20,5 dB | **18,3 dB** |
+
+Die dokumentierten „18 dB" entsprechen zufällig der 20-Hz-Zeile, entstanden
+aber aus der Mischung beider Referenzen. Die Spanne kommt daher, dass sich die
+Kerne im **Tieftonverhalten** unterscheiden, nicht nur in der Resonanz.
+
+**K3 — `tools/bench/filter/Filt.cmajor` war veraltet**, obwohl die README das
+ausdrücklich verbietet: enthielt noch die in `e676bd8` entfernte
+Exponentialkennlinie, den Rückkopplungs-Hochpass mit anderen Koeffizienten und
+zusätzliche Skalare. Folge: Die Tabelle „Resonanzregler → Spitze" oben ist ein
+Vor-Linearisierungs-Stand — die **Reglerpositionen** dort bilden das heutige
+Verhalten nicht ab, die **k-Werte** schon.
+
+### Was die Prüfung überlebt hat
+
+Das Argument für den ZDF-Kern ist strukturell, nicht in dB:
+
+- Resonanz durchgehend monoton über den ganzen Reglerweg
+- eine überhaupt erreichbare Anschwinggrenze — ohne die ist der handverlötete
+  Widerstand nicht darstellbar
+- die nicht-identische vierte Stufe aus C101 = 18 nF
+- frequenzabhängige Steilheit (−16,2 / −20,7 / −23,1 dB/Okt)
+
+Das fällt aus der Topologie an. Die dB-Schlagzeile nicht.

@@ -22,7 +22,7 @@ unten stehenden Lücken.
 | 1 | Accent-Sweep | RC-Netz an der zweiten Poti-Ebene, Ladung bleibt über Notengrenzen | Knotenanalyse mit Leitwerten, Diodenzustand, Kondensatorstrom | ✅ |
 | 2 | Ausgangs-Koppelstufen | Allpass, Notch, Hochpass | vorhanden | ✅ |
 | 3 | Filterordnung | vierpolig, im Hörbereich ~18 dB/Okt | Polynomfit, konstant 18 dB/Okt | ⚠️ |
-| 4 | Resonanzgrenze | handverlöteter Widerstand, **knapp unter** Anschwingen | Maximum +17,2 dB, weit darunter | ❌ |
+| 4 | Resonanzgrenze | handverlöteter Widerstand, **knapp unter** Anschwingen | erreicht die Grenze nicht, Kalibrierpunkt k ≈ 19,4 | ❌ |
 | 5 | Koppelnetzwerk | **fünf** Hochpassgruppen um den Filterkern verteilt | zu vier Stufen zusammengefasst, nicht verteilt | ❌ |
 | 6 | Anschwingen | nur bei mittleren und hohen Frequenzen | überhaupt nicht möglich | ❌ |
 | 7 | Leiterbauteile | 2SC945 als Dioden verschaltet, **gepaarte Paare kritisch** | keine Bauteilstreuung modelliert | ❌ |
@@ -45,9 +45,18 @@ und
 > „The filter will only self oscillate at mid and high frequencies."
 
 Zwei getrennte Aussagen mit zwei Folgen. Erstens: Maximale Resonanz gehört
-**dicht an** die Anschwinggrenze, nicht weit darunter. Gemessen liegt 0.7.2 bei
-+17,2 dB Spitze; der topologiehergeleitete Kern erreicht bei k = 16,5 bereits
-+35,7 dB und schwingt erst bei 17,0 an. Die Lücke beträgt rund 18 dB.
+**dicht an** die Anschwinggrenze, nicht weit darunter. Der Polynomfit erreicht
+sie prinzipiell nie; der topologiehergeleitete Kern schwingt mit
+Schaltplan-Kondensatoren zwischen k = 19,4 und 19,6 an. Der Kalibrierpunkt ist
+damit **k ≈ 19,4**.
+
+Eine frühere Fassung nannte hier „rund 18 dB Lücke". Diese Zahl mischte zwei
+Referenzpunkte und galt zudem für vier gleiche Kondensatoren. Konsistent
+gemessen sind es 2,7 dB (gegen 250 Hz) oder 18,3 dB (gegen 20 Hz) — die Spanne
+entsteht durch unterschiedliches **Tieftonverhalten** der beiden Kerne, nicht
+durch die Resonanz. Belege in [`FILTER_TOPOLOGY.md`](FILTER_TOPOLOGY.md),
+Abschnitt „Korrektur". **Die Rangfolge unten stützt sich daher nicht mehr auf
+eine dB-Zahl, sondern auf die erreichbare Anschwinggrenze.**
 
 Zweitens: Die Anschwinggrenze ist **frequenzabhängig**. Ob das ZDF-Modell das
 von selbst zeigt, ist noch nicht gemessen — das ist der nächste Test, und er
@@ -181,7 +190,9 @@ VCO-Stimmung 110 Hz bei CV 2,75 V (Taste A), 1 Oktave/Volt.
 
 ## Reihenfolge
 
-1. **Resonanzgrenze** (4, 6) — größte messbare Lücke, Kalibrierpunkt ist bekannt
+1. **Resonanzgrenze** (4, 6) — der Kalibrierpunkt ist benennbar (k ≈ 19,4),
+   und ohne erreichbare Anschwinggrenze ist der handverlötete Widerstand
+   überhaupt nicht darstellbar
 2. **Filterkern** (3) — Voraussetzung für 1, Prototyp ist geprüft
 3. **Bauteilstreuung** (7) — klein umzusetzen, wirkt auf den Charakter
 4. **Koppelnetzwerk** (5, 8) — braucht erst die Bauteilwerte
@@ -205,8 +216,12 @@ ACIDIFY multipliziert die Hüllkurve schlicht mit dem Signal. Das ist kein
 OTA.
 
 **Die beiden Summenzweige.** Am VCA-Eingang liegen `C21 = 10 nF` und
-`C22 = 10 nF` mit `R121` und `R122`; in der TD-3-Fassung sind dieselben
-Zweige mit „from Filter" und „from Reso. Comp." beschriftet. Die
+`C22 = 10 nF` mit `R121` und `R122` — das sind die Bezeichner der
+**TB-303-Servicezeichnung**. In der **TD-3-Fassung** heißen dieselben zwei
+Zweige `C49` und `C76` mit `R88` und `R100`; dort tragen sie die Beschriftung
+„from Filter" und „from Reso. Comp.". Zwei Bezeichnersätze für dieselbe
+Funktion auf zwei verschiedenen Platinen — beide Angaben stimmen, sie gehören
+nur unterschiedlichen Zeichnungen. Die
 Resonanzkompensation ist damit bestätigt **kein Faktor auf das Audiosignal**,
 sondern ein zweiter, über ein RC-Glied eingekoppelter Summenzweig. Meine
 beiden gescheiterten Einbauversuche haben genau das falsch angenommen.

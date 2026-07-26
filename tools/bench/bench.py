@@ -7,7 +7,8 @@ dem Repository - der Messstand ist bewusst neu gebaut.
 """
 import json, math, os, shutil, struct, subprocess, cmath
 
-SD   = "/tmp/claude-0/-home-user/0d638a5f-d17d-5e69-9f78-27c8a9360bd2/scratchpad"
+SD = os.environ.get("ACIDIFY_BENCH_DIR",
+                    os.path.join(os.path.dirname(os.path.abspath(__file__)), "_work"))
 CMAJ = f"{SD}/cmaj-bin/linux/x64/cmaj"
 RIG  = f"{SD}/bench/rig"
 DSP  = "/home/user/ACIDIFY/ACIDIFYDSP.cmajor"

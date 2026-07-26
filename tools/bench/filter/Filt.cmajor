@@ -1,3 +1,18 @@
+// ============================================================================
+// VERALTET — NICHT als Abbild des aktuellen DSP verwenden.
+//
+// Diese Kopie stammt aus der ersten Messreihe gegen 0.7.2 und ist seither
+// nicht nachgezogen worden. Sie weicht vom heutigen processLadder ab in:
+//   - Exponentialkennlinie auf die Resonanz (in e676bd8 entfernt, jetzt linear)
+//   - Rueckkopplungs-Hochpass als Tiefpass-Subtraktion, andere Koeffizienten
+//   - zusaetzliche Skalare 0.82 / 1.18 / 1.08
+//   - anderer Cutoff-Clamp
+//
+// Sie bleibt nur erhalten, weil die Messwerte in REVIEW_0.4.0.md mit ihr
+// entstanden sind. Fuer neue Messungen des alten Kerns eine wortgetreue Kopie
+// des aktuellen processLadder anlegen.
+// ============================================================================
+
 // Der Leiterfilter aus ACIDIFYDSP.cmajor, woertlich uebernommen, aber als
 // eigenstaendiger Prozessor mit Stream-Eingang. Zweck: saubere Messung der
 // Uebertragungsfunktion ohne Oszillator, Huellkurven und Ausgangsstufe.
