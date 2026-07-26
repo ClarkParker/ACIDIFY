@@ -6,6 +6,44 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-07-26
+
+### Changed
+
+- **Accent-Netz am VCA ist asymmetrisch**, wie D27 es macht: Laden über
+  `R120 = 22 k` (726 µs), Fallen über `R119 = 47 k` (1,551 ms). Vorher ein
+  einziger symmetrischer Wert — der Accent stieg 2,1× zu langsam an.
+- **MEG-Attack** aus `D37` + `R152 = 100 Ω` mit `C62 = 1 µF` → **100 µs**
+  statt Open303s 3 ms (30× zu langsam).
+- **Accent-Decay** auf die 10-%-Konvention umgestellt (86,9 ms statt 200 ms).
+  Es war 2,3× länger als das minimale normale Decay — verkehrt herum für
+  einen Accent.
+- **Cutoff-Skalar entfällt.** `peakToParameter = 1,345` war vor dem
+  Schleifenumbau kalibriert und schob den Cutoff danach 34,5 % zu hoch.
+
+### Fixed
+
+- Bezeichnerfehler: die 47 k / 33 nF am VCA wurden als „R26/C26" geführt; in
+  der TB-303-Nummerierung sind es `R119`/`C36`, und sie sind nur der Fallpfad.
+- `IC15` Pin 1 und Pin 3 liegen auf demselben Netz; frühere Notiz nannte nur
+  Pin 3.
+
+### Added
+
+- `tools/bench/hardware_checks.py` — die widerlegbaren Prüfsteine ausführbar,
+  Kern direkt aus dem Plug-in-Code geschnitten. Rückgabewert ≠ 0 bei Fehlschlag.
+- Samplerate-Invarianz bis **192 kHz** belegt.
+
+### Known
+
+- Weiterhin Open303: VCO, Release-Zeiten, Cutoff-/Env-Mod-Abbildung, die drei
+  VCA-Steuerkonstanten `0.45` / `4.0` / `0.42`, sowie `otaDrive`.
+- Zum Ersetzen der drei Steuerkonstanten fehlt genau **eine** Angabe: die
+  Pinbelegung des BA662A. Alle Bauteilwerte drumherum sind gelesen.
+- Der VCO ist gelesen, aber bewusst nicht ersetzt — er braucht eine eigene
+  Antialiasing-Strategie, keinen Konstantentausch.
+
+
 ## [0.9.0] - 2026-07-26
 
 ### Changed

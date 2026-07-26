@@ -1,3 +1,18 @@
+# Validierung 0.10.0
+
+## 0.10.0
+
+| Prüfung | Ergebnis |
+|---|---|
+| `preflight.py --strict` | sauber |
+| `smoke_test` | peak 0,76596 |
+| `dsp_matrix_test` | 11/11 `ok`, höchster Effekt-Peak 0,9384 |
+| `dsp_articulation_test` | `ok` |
+| `hardware_checks.py` | 8/8 Prüfsteine bestanden |
+| Samplerate 44,1 / 88,2 / 96 / 192 kHz | alle `ok`, `cleanPeak`-Spanne 0,12 % |
+
+---
+
 # Validierung 0.9.0
 
 ## 0.9.0
