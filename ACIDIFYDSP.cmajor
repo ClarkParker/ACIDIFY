@@ -692,8 +692,19 @@ processor AcidifyCore
         // Aufladen IST also der Decay. tau = 1,5 M * 1 uF = 1500 ms.
         // Open303 stand hier mit 1230 ms, einem Fit.
         ampBodyCoeff = timeCoefficient (1500.0f, sampleRate);
-        ampReleaseCoeff = timeCoefficient (1.0f, sampleRate);
-        ampAccentReleaseCoeff = timeCoefficient (50.0f, sampleRate);
+        // Verfolgt: An C42 = 1 uF haengen nur R123 = 1,5 M nach +12 V,
+        // R132 = 100 Ohm von Q32 und die Basis von Q31 (PNP). Beim Gate-Off
+        // sperrt Q32 — es gibt KEINEN eigenen Entladepfad. Der VCA schliesst,
+        // sobald die Basis von Q31 durch das Aufladen ueber die Abschaltschwelle
+        // gelaufen ist:
+        //   t = -tau * ln(1 - Vth/12)   mit tau = 1,5 s
+        //   Vth = 0,4 V -> 51 ms | 0,6 V -> 77 ms | 0,8 V -> 104 ms
+        // Open303 stand hier mit 1 ms — das ist unterhalb dessen, was die
+        // Schaltung ueberhaupt kann. 77 ms ist der Wert fuer die uebliche
+        // Silizium-Schwelle; der Arbeitspunkt von Q31 ist nicht bestimmt,
+        // die Spanne 51..104 ms deshalb die belegte Grenze.
+        ampReleaseCoeff = timeCoefficient (77.0f, sampleRate);
+        ampAccentReleaseCoeff = timeCoefficient (77.0f, sampleRate);
         // 47k * 0.033uF RC between the accent switch and VCA summing node.
         // Accent-Netz am VCA, aus dem Plan gelesen: D27 (1N4148) in Reihe mit
         // R120 = 22 k laedt C36 = 33 nF; R119 = 47 k liegt parallel dazu an der
