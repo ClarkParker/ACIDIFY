@@ -198,7 +198,8 @@ processor AcidifyCore
     float ampBodyCoeff = 0.0f;
     float ampReleaseCoeff = 0.0f;
     float ampAccentReleaseCoeff = 0.0f;
-    float accentVcaAlpha = 0.0f;
+    float accentVcaRiseAlpha = 0.0f;
+    float accentVcaFallAlpha = 0.0f;
     float feedbackHighpassPole = 0.0f;
     float feedbackHighpassGain = 0.0f;
     float meterAlpha = 0.0f;
@@ -668,7 +669,19 @@ processor AcidifyCore
         ampReleaseCoeff = timeCoefficient (1.0f, sampleRate);
         ampAccentReleaseCoeff = timeCoefficient (50.0f, sampleRate);
         // 47k * 0.033uF RC between the accent switch and VCA summing node.
-        accentVcaAlpha = exponentialAlpha (102.616f, sampleRate);
+        // Accent-Netz am VCA, aus dem Plan gelesen: D27 (1N4148) in Reihe mit
+        // R120 = 22 k laedt C36 = 33 nF; R119 = 47 k liegt parallel dazu an der
+        // Ausgangsstufe. Die Diode macht das Netz ASYMMETRISCH:
+        //   laden  ueber 22 k * 33 nF = 726 us   -> 219,24 Hz
+        //   fallen ueber 47 k * 33 nF = 1,551 ms -> 102,62 Hz
+        // Bisher stand hier ein einziger, symmetrischer Wert von 102,616 Hz.
+        // Die 47 k / 33 nF wurden zuvor als „R26/C26" gefuehrt — gleiche Werte,
+        // die Bezeichner der TB-303-Zeichnung sind R119/C36.
+        //
+        // Einschraenkung: R119 fuehrt an die OTA-Ausgangsstufe, nicht gegen
+        // Masse; die Fallzeitkonstante ist damit eine Naeherung erster Ordnung.
+        accentVcaRiseAlpha = exponentialAlpha (219.24f, sampleRate);
+        accentVcaFallAlpha = exponentialAlpha (102.616f, sampleRate);
         feedbackHighpassPole = float (exp (-float64 (twoPi) * 150.0 / float64 (sampleRate)));
         feedbackHighpassGain = 0.5f * (1.0f + feedbackHighpassPole);
         meterAlpha = 1.0f - timeCoefficient (12.0f, sampleRate);
@@ -1532,12 +1545,14 @@ processor AcidifyCore
             if (gateOpen)
             {
                 let accentVcaSource = accented ? accentControl * filterEnvelope : 0.0f;
-                accentVcaRC += accentVcaAlpha * (accentVcaSource - accentVcaRC);
+                let aAlpha = accentVcaSource > accentVcaRC ? accentVcaRiseAlpha
+                                                           : accentVcaFallAlpha;
+                accentVcaRC += aAlpha * (accentVcaSource - accentVcaRC);
                 ampControl += 0.45f * filterEnvelope + 4.0f * accentVcaRC;
             }
             else
             {
-                accentVcaRC += accentVcaAlpha * (0.0f - accentVcaRC);
+                accentVcaRC += accentVcaFallAlpha * (0.0f - accentVcaRC);
             }
             ampControl = processAmpSmoother (max (ampControl, 0.0f));
 
