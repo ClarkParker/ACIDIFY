@@ -504,11 +504,24 @@ processor AcidifyCore
 
     float processAccentSweep (float source, float sampleRate)
     {
-        // Ideal-diode nodal model of the stock 47k + dual 100k resonance pot
+        // Ideal-diode nodal model of the stock 47k + dual 50k resonance pot
         // + 100k summing resistor + 1uF accent-sweep capacitor network.
+        //
+        // VR4 ist ein duales 50-k-Poti, nicht 100 k. Zwei unabhaengige Quellen:
+        // Whittles Devil-Fish-Handbuch ueber das Originalteil — „The Resonance
+        // pot is a dual 50k pot, with a linear taper, which is 'B' ... So
+        // '50KB' is the label of the original and the replacement pots" — und
+        // die x0xb0x-Stueckliste („50K B (linear) dual potentiometer 1 VR4").
+        // Die 100-k-Angabe stand nur auf Whittles 303-unique-Seite und ist
+        // damit der Ausreisser gegen seinen eigenen ausfuehrlicheren Text.
+        //
+        // Der Kondensator laedt ueber den Potiabschnitt, der Wert sitzt also
+        // direkt in der Ladezeitkonstante: 1,28x…1,56x schneller ueber den
+        // Reglerweg, und der Endwert steigt, weil nur das Poti skaliert und
+        // die 47 k und der Summenwiderstand fest bleiben.
         let potPosition = clamp (resonanceSkewed, 0.0f, 1.0f);
-        let rAW = max (0.001f, 100.0f * potPosition);
-        let rWB = max (0.001f, 100.0f * (1.0f - potPosition));
+        let rAW = max (0.001f, 50.0f * potPosition);
+        let rWB = max (0.001f, 50.0f * (1.0f - potPosition));
         let gSource = 1.0f / 47.0f;
         let gAW = 1.0f / rAW;
         let gWB = 1.0f / rWB;

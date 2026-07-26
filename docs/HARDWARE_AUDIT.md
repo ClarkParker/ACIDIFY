@@ -7,7 +7,11 @@ Quellen mit Belegkraft:
 - **Tim Stinchcombe**, [Analyse des TB-303-Filters](https://www.timstinchcombe.co.uk/index.php?pge=diode2)
   und [Diodenleiter allgemein](https://www.timstinchcombe.co.uk/index.php?pge=diode)
 - **Robin Whittle**, [Devil-Fish-Dokumentation zur Accent-Schaltung](https://www.firstpr.com.au/rwi/dfish/303-unique.html)
-  und [Devil-Fish-Handbuch](https://www.firstpr.com.au/rwi/dfish/)
+  und [Devil-Fish-Handbuch](https://www.firstpr.com.au/rwi/dfish/) — das
+  Handbuch liegt als PDF vor und beschreibt an mehreren Stellen ausdrücklich
+  das **Originalgerät**; nur dort ist es Quelle für den Serienstand, im
+  Übrigen beschreibt es einen Mod. Wo beide Whittle-Texte sich widersprechen,
+  gilt der ausführlichere (siehe „Der Resonanzpoti-Wert").
 - **Eddy Bergman**, [Nachbau des TB-303-VCF](https://www.eddybergman.com/2025/03/TB303-VCF.html)
 - **Limor Fried**, x0xb0x — quelloffener lizenzierter Nachbau:
   Fabrikationshandbuch und Mainboard-Schaltplan, Werte im Klartext
@@ -366,15 +370,109 @@ Zwei Bestätigungen, die zählen:
    Resonanzbereich des Plans `R46 = 47 kΩ`, also der Wert, den Whittle für den
    Zulauf nennt.
 
-**Der Widerspruch:** Whittle beschreibt für den TB-303 ein **100-kΩ**-Poti („a
-diode and a 47k resistor in series driving the ACW end of a **100k** pot"),
-der x0xb0x verbaut **50 kΩ**. `processAccentSweep` rechnet mit 100 kΩ, folgt
-also Whittle. Das ist nicht gleichgültig: Die Potisektion lädt den 1-µF-
-Kondensator, die Zeitkonstante hängt direkt am Wert — bei 50 kΩ wäre sie halb
-so groß. Da der x0xb0x ein Redesign mit Substitutionen ist, haben Whittle und
-die Servicezeichnung für eine **TB-303**-Emulation Vorrang; ACIDIFY bleibt
-deshalb bei 100 kΩ. Der Konflikt ist hier festgehalten, nicht stillschweigend
-entschieden — er gehört an einem lesbaren Serviceplan geklärt.
+**Der Widerspruch — inzwischen entschieden, siehe unten.** Whittles
+303-unique-Seite nennt ein **100-kΩ**-Poti („a diode and a 47k resistor in
+series driving the ACW end of a **100k** pot"), der x0xb0x verbaut **50 kΩ**.
+`processAccentSweep` folgte der 100-k-Angabe.
 
 Dieselbe Vorsicht bei VR3/VR5: Der x0xb0x nutzt D-Kennlinien, die
 TB-303-Zeichnung nennt A. ACIDIFY folgt der Zeichnung.
+
+---
+
+## Der Resonanzpoti-Wert — entschieden, mit Folge im DSP
+
+Das **Devil-Fish-Handbuch** (Whittle, S. 28, Abschnitt „Replacements for the 6
+small TB-303 pots") beendet den Widerspruch. Derselbe Autor, ausführlicher und
+ausdrücklich über das **Originalteil**:
+
+> „The Resonance pot is a **dual 50k** pot, with a **linear** taper, which is
+> **‚B'** in the arcane world of potentiometer nomenclature. So **‚50KB' is the
+> label of the original** and the replacement pots."
+
+Der Satz steht in einem Erfahrungsbericht über Ersatzpotis, die er als
+nicht-linear zurückweist — er kennt das Originalteil in der Hand. Das wiegt
+schwerer als die beiläufige Angabe auf der 303-unique-Seite.
+
+**Damit stehen zwei unabhängige Quellen auf 50 kΩ**: Devil-Fish-Handbuch und
+x0xb0x-Stückliste. Die 100-k-Angabe ist der Ausreißer — und zwar gegen Whittles
+eigenen, ausführlicheren Text. ACIDIFY folgte bis hierher dem Ausreißer.
+
+Der Beleg liefert obendrein die **dritte** unabhängige Bestätigung der linearen
+B-Kennlinie und der **dualen** Ausführung.
+
+### Folge im DSP
+
+`processAccentSweep` rechnete mit `100.0f * potPosition`. Der Kondensator lädt
+über den Potiabschnitt, der Wert sitzt also direkt in der Zeitkonstante.
+Gemessen an der Differenzengleichung des Modells, Sprungantwort auf
+63 % des Endwerts:
+
+| Potistellung | 100 kΩ (bisher) | 50 kΩ (belegt) | Faktor | Endwert |
+|---:|---:|---:|---:|---|
+| 0,25 | 116,8 ms | 74,8 ms | 1,56× | 0,581 → 0,627 |
+| 0,50 | 99,2 ms | 66,8 ms | 1,48× | 0,508 → 0,581 |
+| 0,72 | 82,3 ms | 59,3 ms | 1,39× | 0,457 → 0,546 |
+| 0,90 | 67,8 ms | 52,9 ms | 1,28× | 0,422 → 0,521 |
+
+**Nicht** exakt der Faktor 2, und das ist der Prüfstein dafür, dass hier ein
+Netzwerk gerechnet wird und kein Zeitglied: Nur das Poti skaliert, die 47 kΩ
+und der Summenwiderstand bleiben stehen. Ein reines RC-Glied hätte glatt
+halbiert. Der Endwert steigt aus demselben Grund mit.
+
+Die Resonanzabhängigkeit der Ladezeit bleibt erhalten — sie fällt weiter aus
+der Knotenanalyse an und ist nicht angekoppelt.
+
+**Unverändert, weil unbelegt:** der `100 kΩ`-Summenwiderstand (`gMix`) stammt
+ebenfalls von der 303-unique-Seite und ist bisher aus keiner zweiten Quelle
+bestätigt. Er bleibt stehen, bis ein Beleg vorliegt — eine Anpassung „weil das
+andere sich auch geändert hat" wäre Anpassen ohne Quelle.
+
+Quelle: Robin Whittle, *Devil Fish Manual*, S. 28. Das Handbuch beschreibt im
+Übrigen einen **Mod**; für den Serienstand gilt es nur dort, wo es
+ausdrücklich das Originalgerät beschreibt — wie an dieser Stelle.
+
+---
+
+## Offene Spannung: wie weit unter der Anschwinggrenze liegt der Serienstand?
+
+Aus demselben Handbuch, S. 5, über den Resonanz-Mod:
+
+> „The range of the Resonance control can be switched to **double the usual
+> feedback** so as to allow the filter to self-oscillate at mid and high
+> frequencies."
+
+Das steht in Spannung zur Angabe, auf der die bisherige Kalibrierung beruht
+(303-unique-Seite):
+
+> „…chosen to tweak the feedback level to **just under that required for
+> self-oscillation**"
+
+**Die beiden Aussagen liefern zwei verschiedene Kalibrierpunkte.** Ist der
+Serienstand „knapp unter" der Grenze, gehört maximale Resonanz an das gemessene
+`k ≈ 19,4`. Reicht dagegen erst die **Verdopplung**, um Anschwingen zu
+ermöglichen, läge der Serienstand eher bei `k ≈ 9,7` — ein Faktor 2 im
+Resonanzgesetz, also kein Detail.
+
+Auflösen lässt sich das hier **nicht**, und zwar aus zwei Gründen:
+
+1. Beide Sätze stammen von Whittle, keiner ist beiläufiger als der andere.
+   Sie sind formal vereinbar („knapp unter" bei mittleren Frequenzen, die
+   Verdopplung schafft Reserve über den ganzen Bereich), aber die Vereinbarkeit
+   legt keinen Zahlenwert fest.
+2. Das `k` des ZDF-Modells ist **nicht** dasselbe wie „feedback level" in der
+   Schaltung. Eine Verdopplung des Rückkopplungswiderstandsverhältnisses
+   verdoppelt `k` nicht notwendigerweise. Die beiden Skalen erst
+   gleichzusetzen und dann daraus einen Kalibrierpunkt abzuleiten, wäre genau
+   die Referenzpunkt-Vermischung aus Regel 3.
+
+**Konsequenz für die Reihenfolge:** Der Kalibrierpunkt `k ≈ 19,4` bleibt der
+Arbeitswert, ist aber **nicht** belegt, sondern die Ableitung aus *einer* der
+beiden Aussagen. Er gehört vor dem Einbau des Filterkerns geklärt — an einem
+Serienschaltplan, über den Wert des handverlöteten Widerstands, nicht über
+Hörvergleich und nicht über eine Testschwelle.
+
+Vermerkt, weil es sonst wie ein festgelegter Wert aussähe: In
+[`FILTER_TOPOLOGY.md`](FILTER_TOPOLOGY.md) steht `k = 19,4` als
+„← Kalibrierpunkt" in der Messtabelle. Die **Messung** stimmt; ihre
+**Zuordnung** zum Serienstand steht auf einem einzigen Satz.
