@@ -1597,7 +1597,28 @@ processor AcidifyCore
             // Filter. Der Skalar 0.42f bleibt unveraendert stehen — er gehoert
             // zur Ausgangsstufe und wird erst mit der OTA-Kennlinie ersetzt.
             let vcaInput = processOta (coupled);
-            let cleanVoice = vcaInput * ampControl * 0.42f * outputGain;
+            // VCA-Verstaerkung aus Bauteilwerten statt aus einem Fit.
+            //
+            // Pinbelegung BA662 (Roland-100M-Servicehandbuch): Pin 1 = CV1,
+            // Pin 3 = +IN1, Pin 6 = OUT1, Pin 8 = OUT2. Q31 (PNP) ist die
+            // Steuerstromquelle an Pin 1, Emitterwiderstand R131 = 220 k
+            // nach +12 V:
+            //
+            //   I_abc,max = (12 V - 0,2 V - 0,6 V) / 220 k = 50,9 uA
+            //
+            // Der OTA liefert I_aus = I_abc * tanh(v_ein / (2 Vt)); die
+            // Ausgangsstufe setzt das ueber R119 = 47 k in Spannung um. Mit dem
+            // Eingangsteiler R124/R121 = 1/100 ergibt die Kleinsignal-
+            // verstaerkung
+            //
+            //   I_abc * R119 * (R124/R121) / (2 Vt)
+            //     = 50,9 uA * 47 k * 0,01 / 0,052 = 0,460
+            //
+            // Der Spannungsmassstab kuerzt sich hier heraus — er bleibt nur in
+            // otaDrive stehen, das den Knick der Kennlinie setzt.
+            // Open303 stand hier mit 0,42; die Herleitung liegt 9,6 % darueber.
+            const float vcaGain = 0.4601f;
+            let cleanVoice = vcaInput * ampControl * vcaGain * outputGain;
             let voice = processDistortion (cleanVoice);
             let sample = abs (voice) < 0.0000000001f ? 0.0f : voice;
 

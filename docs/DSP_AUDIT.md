@@ -707,3 +707,24 @@ geprüft sind (`partcheck.py`).
 
 Offen bleibt dabei nur der Arbeitspunkt von `Q31` — die Basisspannung an `C42`
 in Volt. Sie folgt aus der Hüllkurvenamplitude, die im Modell normiert ist.
+
+
+### VCA-Verstaerkung eingebaut
+
+`I_abc,max = (12 − 0,2 − 0,6)/R131 = 50,9 µA`, Ausgangsumsetzung über
+`R119 = 47 k`, Eingangsteiler `R124/R121 = 1/100`:
+
+`0,460 = 50,9 µA · 47 k · 0,01 / (2·0,026)`
+
+Open303 stand bei `0,42`, also 9,6 % darunter. Der **Spannungsmaßstab kürzt
+sich in der Kleinsignalverstärkung heraus** — er bleibt nur in `otaDrive`,
+das den Knick der Kennlinie setzt.
+
+Damit sind von den ursprünglich 14 gefitteten Konstanten noch **fünf** übrig:
+`0.45`, `4.0` (Accent/Hüllkurve-Aufteilung), `otaDrive`, die
+VCO-Rechteckschwelle und der Aufräumfaktor `2.0f`.
+
+**`0.45` und `4.0` bleiben offen**, weil nicht geklärt ist, ob `Q36` — die
+Quelle hinter `D35`/`R133` — vom Gate oder vom Accent getrieben wird. Ohne das
+ist nicht entscheidbar, welcher der beiden Terme an `R133 = 2,2 k` hängt.
+Verfolgt ist der Weg bis `Q36` über `R145 = 10 k`.
