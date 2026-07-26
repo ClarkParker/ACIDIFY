@@ -647,7 +647,11 @@ processor AcidifyCore
         filterAttackAlpha = 1.0f - timeCoefficient (3.0f, sampleRate);
         normalDecayCoeff = timeCoefficient (normalDecayMs, sampleRate);
         accentDecayCoeff = timeCoefficient (200.0f, sampleRate);
-        ampBodyCoeff = timeCoefficient (1230.0f, sampleRate);
+        // VCA-Huellkurve aus der Schaltung: C42 = 1 uF laedt ueber R123 = 1,5 M
+        // nach +12 V; Q31 ist ein PNP, steigende Basisspannung sperrt ihn, das
+        // Aufladen IST also der Decay. tau = 1,5 M * 1 uF = 1500 ms.
+        // Open303 stand hier mit 1230 ms, einem Fit.
+        ampBodyCoeff = timeCoefficient (1500.0f, sampleRate);
         ampReleaseCoeff = timeCoefficient (1.0f, sampleRate);
         ampAccentReleaseCoeff = timeCoefficient (50.0f, sampleRate);
         // 47k * 0.033uF RC between the accent switch and VCA summing node.
