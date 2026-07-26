@@ -9,8 +9,8 @@ def fft(x):
     for k in range(n//2):
         t=cmath.exp(-2j*math.pi*k/n)*od[k]; o[k]=ev[k]+t; o[k+n//2]=ev[k]-t
     return o
-def measure(cut,res,amp=1.0,rate=48000,n=32768):
-    src=TMPL.replace("CUTOFF",f"{float(cut)}").replace("RESONANCE",f"{float(res)}").replace("AMPLITUDE",f"{float(amp)}f")
+def measure(cut,res,amp=1.0,rate=48000,n=32768,cap4=18.0):
+    src=TMPL.replace("CUTOFF",f"{float(cut)}").replace("RESONANCE",f"{float(res)}").replace("CAP4",f"{float(cap4)}").replace("AMPLITUDE",f"{float(amp)}f")
     open(f"{D}/Gen.cmajor","w").write(src)
     json.dump({"CmajorVersion":1,"ID":"com.b.zdf","version":"1.0","name":"Zdf","source":["Gen.cmajor"]},open(f"{D}/Zdf.cmajorpatch","w"))
     r=subprocess.run([CMAJ,"render",f"--rate={rate}",f"--length={n+30000}","--channels=2","--blockSize=512",f"--output={D}/ir.wav",f"{D}/Zdf.cmajorpatch"],capture_output=True,text=True)

@@ -101,9 +101,9 @@ also **flacher als die Hardware**. Der topologiehergeleitete Kern misst
 
 Ehrlichkeitshalber getrennt geführt:
 
-- **Einzelne Kondensatorwerte des Koppelnetzwerks.** Die verfügbaren
-  Schaltpläne (schematicheaven, experimentalistsanonymous) sind Rasterscans ohne
-  Textebene; Stinchcombe nennt die Werte auf der Analyseseite nicht.
+- **Zuordnung der fünf Koppelgruppen zu Bauteilen.** Die Gruppen sind in
+  Stinchcombes annotiertem VCF-Ausschnitt markiert, die Einzelwerte je Gruppe
+  habe ich noch nicht vollständig zugeordnet.
 - **VCO-Topologie** im Detail — Sägezahnkern und Rechteckableitung.
 - **VCA-Topologie.** Whittle beschreibt nur den Accent-Zulauf (47 k / 0,033 µF).
 - **Ausgangsübertrager.** Weder bestätigt noch widerlegt. Ein DAC existiert im
@@ -117,6 +117,67 @@ Ohne die Werte bleibt jede Modellierung des Koppelnetzwerks eine Schätzung —
 und die gehört dann auch so benannt, nicht als Schaltung ausgegeben.
 
 ---
+
+---
+
+## Aus dem Schaltplan gelesen
+
+Quelle: TB-303 Service-Zeichnung (Feb. 19, 1982) und die annotierte TD-3-Fassung
+(„Original: TB303, Blue: TD3"), beide vom Projektinhaber beigestellt. Damit
+entfällt die zuvor notierte Grenze — die Werte sind jetzt belegt, nicht geschätzt.
+
+### Diodenleiter
+
+| Bauteil | Wert | Folge |
+|---|---|---|
+| C98 | 33 nF | Stufe 1 |
+| C99 | 33 nF | Stufe 2 |
+| C100 | 33 nF | Stufe 3 |
+| **C101** | **18 nF** | **Stufe 4 — Pol um 33/18 höher** |
+
+**Die vier Leiterstufen sind nicht identisch.** Weder Open303 noch ein
+generischer ZDF-Diodenleiter bilden das ab; beide rechnen mit vier gleichen
+Stufen. Gemessen am Prototyp verschiebt der Unterschied die Resonanzspitze von
+1061 auf 1197 Hz und senkt sie bei gleichem k von +19,3 auf +14,4 dB.
+
+Ladertransistoren: im Original 2SC1583-Paare, in der TD-3 sechs DMMT3904W.
+
+### VCA-Accent-Pfad
+
+`R26 = 47 k`, `C26 = 33 nF`, im Plan beschriftet „VCA-ACC modulation".
+τ = 1,55 ms — **bestätigt Whittles Angabe** unabhängig.
+
+### Hüllkurve
+
+Zeichnungsvermerk am ENV-Block:
+
+> „DECAY VR MAX T = 2.5 sec.  MIN T = 200 ms"
+
+Der Decay-Bereich ist also **200 ms bis 2,5 s**. ACIDIFY rechnet
+`200 · 10^decay` = 200 ms bis 2,0 s — die obere Grenze liegt 25 % zu tief.
+Die Kurve ist mit „10 V = 100 %" und 10 % bei T annotiert.
+
+### Potentiometer-Kennlinien
+
+| Regler | Typ | |
+|---|---|---|
+| VR3 Cutoff | 50 k **(A)** | logarithmisch |
+| VR4 Resonance | 50 k **(B)** | **linear** |
+| VR5 Env Mod | 50 k (A) | logarithmisch |
+| VR6 Env Decay | 1 M (A) | logarithmisch |
+| VR7 Accent | 50 k **(B)** | **linear** |
+
+Resonanz und Accent sind **lineare** Potis. ACIDIFY legt auf die Resonanz die
+Kennlinie `(1−e^(−3r))/(1−e^(−3))`, also eine Krümmung, die die Hardware an
+dieser Stelle nicht hat. Die Krümmung des Höreindrucks entsteht in der
+Schaltung, nicht im Regler.
+
+### Weitere abgelesene Werte
+
+`C19 = 1 µF` Filtereingangskopplung · `C79 = C80 = 120 nF` Differenzverstärker
+und Ausgangspuffer · `R23 = 20 k`, `R24 = 200 k` Leiterarbeitspunkt ·
+VCO-Stimmung 110 Hz bei CV 2,75 V (Taste A), 1 Oktave/Volt.
+
 
 ## Reihenfolge
 
