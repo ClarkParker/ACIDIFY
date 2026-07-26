@@ -1,4 +1,4 @@
-// ACIDIFY — modern 303-class Amorph instrument UI.
+// ACIDIFY — hardware-inspired modern 303-class Amorph instrument UI.
 // WINDOW SIZE: 1180x580
 //
 // Single-file light-DOM Web Component. No imports, fonts, images or CDN assets.
@@ -12,10 +12,16 @@ const ACIDIFY_GLOBALS = [
   { id: "param6",  type: "dial",    label: "ACCENT",       min: 0,  max: 1,   step: 0.001, init: 0.65, format: v => `${Math.round(v * 100)}` },
   { id: "param7",  type: "toggle",  label: "WAVEFORM",     min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param8",  type: "dial",    label: "VOLUME",       min: -36, max: 0,  step: 0.1, init: -6,    format: v => `${v.toFixed(1)} dB` },
-  { id: "param9",  type: "dial",    label: "TEMPO",        min: 40, max: 300, step: 1, init: 128,     format: v => `${Math.round(v)}` },
+  { id: "param9",  type: "dial",    label: "TEMPO",        min: 40, max: 300, step: 0.01, coarseStep: 0.1, init: 128, format: formatTempo },
   { id: "param10", type: "toggle",  label: "RUN",          min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param11", type: "stepper", label: "LENGTH",       min: 1,  max: 16,  step: 1, init: 16,      format: v => `${Math.round(v)}` },
   { id: "param12", type: "stepper", label: "ROOT",         min: 24, max: 60,  step: 1, init: 36,      format: v => noteName(Math.round(v)) },
+  { id: "param45", type: "toggle",  label: "DISTORTION",   min: 0,  max: 1,   step: 1, init: 0 },
+  { id: "param46", type: "toggle",  label: "TYPE",         min: 0,  max: 2,   step: 1, init: 0 },
+  { id: "param47", type: "dial",    label: "DRIVE",        min: 0,  max: 1,   step: 0.001, init: 0.35, format: v => `${Math.round(v * 100)}` },
+  { id: "param48", type: "dial",    label: "MIX",          min: 0,  max: 1,   step: 0.001, init: 1,    format: v => `${Math.round(v * 100)}%` },
+  { id: "param49", type: "toggle",  label: "CLOCK",        min: 0,  max: 1,   step: 1, init: 0 },
+  { id: "param50", type: "stepper", label: "SWING",        min: 0,  max: 100, step: 1, init: 0,        format: v => `${Math.round(v)}%` },
 ];
 
 const STEP_PITCH_DEFAULTS = [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7];
@@ -29,6 +35,34 @@ const STEP_FLAG_IDS = [
   "param37", "param38", "param39", "param40", "param41", "param42", "param43", "param44",
 ];
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const DISTORTION_NAMES = ["PURE", "MACKIE", "PHONO"];
+const GENERATION_SCALES = [
+  { id: "minor-pentatonic", label: "MIN PENTA", degrees: [0, 3, 5, 7, 10] },
+  { id: "minor", label: "MINOR", degrees: [0, 2, 3, 5, 7, 8, 10] },
+  { id: "major", label: "MAJOR", degrees: [0, 2, 4, 5, 7, 9, 11] },
+  { id: "chromatic", label: "CHROMA", degrees: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+];
+const TOOLTIP_STORAGE_KEY = "acidify.tooltips.enabled";
+const CONTROL_TOOLTIPS = {
+  param1: "Fine-tunes the instrument by one semitone up or down. Drag or use the arrow keys; hold Shift for finer movement. Double-click to reset.",
+  param2: "Sets the filter cutoff frequency. Higher values make the sound brighter. Hold Shift while dragging for finer movement.",
+  param3: "Sets filter resonance around the cutoff frequency. Higher values increase the characteristic acid peak.",
+  param4: "Controls how strongly the filter envelope moves the cutoff frequency.",
+  param5: "Sets the filter-envelope decay time.",
+  param6: "Sets the global intensity of accented steps and high-velocity MIDI notes.",
+  param7: "Selects the oscillator waveform: sawtooth or the modelled 303-style square wave.",
+  param8: "Sets the final output level in decibels.",
+  param9: "Sets the internal clock tempo. Wheel or arrow keys change 0.1 BPM; hold Shift for 0.01 BPM. In DAW mode the knob follows the host tempo.",
+  param10: "Starts or stops the internal pattern clock. In DAW mode this follows host transport when available.",
+  param11: "Sets the active pattern length from 1 to 16 steps.",
+  param12: "Sets the MIDI root note used by the 16-step pattern.",
+  param45: "Turns the optional post-output distortion stage on or off.",
+  param46: "Selects the distortion character: Pure, Mackie or Phono.",
+  param47: "Sets the amount of drive applied by the selected distortion character.",
+  param48: "Blends the distorted signal with the clean instrument output.",
+  param49: "Selects the clock source. INT uses the internal tempo and RUN/STOP; DAW follows host tempo, transport and position.",
+  param50: "Adds swing to each pair of sixteenth notes. 0% is straight; 100% reaches a 2:1 triplet feel.",
+};
 
 function noteName(note) {
   const n = Math.max(0, Math.min(127, Math.round(Number(note) || 0)));
@@ -41,9 +75,16 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, n));
 }
 
+function formatTempo(value) {
+  const rounded = Math.round(clamp(value, 0, 999) * 100) / 100;
+  const decimals = Number.isInteger(rounded) ? 0 : Number.isInteger(rounded * 10) ? 1 : 2;
+  return `${rounded.toFixed(decimals)} BPM`;
+}
+
 class DialControl {
-  constructor({ patchConnection, node, config }) {
+  constructor({ patchConnection, sendValue, node, config }) {
     this.pc = patchConnection;
+    this.sendValue = sendValue;
     this.node = node;
     this.config = config;
     this.dial = node.querySelector(".dial");
@@ -54,8 +95,11 @@ class DialControl {
     this.startValue = config.init;
     this.feedbackTimer = null;
     this.node.style.setProperty("--default-norm", (config.init - config.min) / (config.max - config.min || 1));
+    this.isDisabled = () => this.dial.getAttribute("aria-disabled") === "true"
+      || this.node.getAttribute("aria-disabled") === "true";
 
     this.onPointerDown = e => {
+      if (this.isDisabled()) return;
       this.dragging = true;
       this.startY = e.clientY;
       this.startValue = this.value;
@@ -78,6 +122,7 @@ class DialControl {
       this.pc.sendParameterGestureEnd?.(this.config.id);
     };
     this.onDoubleClick = () => {
+      if (this.isDisabled()) return;
       this.pc.sendParameterGestureStart?.(this.config.id);
       this.showFeedback();
       this.setValue(this.config.init, true);
@@ -85,17 +130,23 @@ class DialControl {
     };
     this.onWheel = e => {
       e.preventDefault();
-      const increment = this.config.step || (this.config.max - this.config.min) / 100;
+      if (this.isDisabled()) return;
+      const increment = e.shiftKey
+        ? (this.config.fineStep || this.config.step || (this.config.max - this.config.min) / 100)
+        : (this.config.coarseStep || this.config.step || (this.config.max - this.config.min) / 100);
       this.pc.sendParameterGestureStart?.(this.config.id);
       this.showFeedback();
-      this.setValue(this.value + (e.deltaY < 0 ? increment : -increment) * (e.shiftKey ? 0.2 : 1), true);
+      this.setValue(this.value + (e.deltaY < 0 ? increment : -increment), true);
       this.pc.sendParameterGestureEnd?.(this.config.id);
     };
     this.onKeyDown = e => {
-      const increment = this.config.step || (this.config.max - this.config.min) / 100;
+      if (this.isDisabled()) return;
+      const increment = e.shiftKey
+        ? (this.config.fineStep || this.config.step || (this.config.max - this.config.min) / 100)
+        : (this.config.coarseStep || this.config.step || (this.config.max - this.config.min) / 100);
       let next = null;
-      if (e.key === "ArrowUp" || e.key === "ArrowRight") next = this.value + increment * (e.shiftKey ? 0.2 : 1);
-      if (e.key === "ArrowDown" || e.key === "ArrowLeft") next = this.value - increment * (e.shiftKey ? 0.2 : 1);
+      if (e.key === "ArrowUp" || e.key === "ArrowRight") next = this.value + increment;
+      if (e.key === "ArrowDown" || e.key === "ArrowLeft") next = this.value - increment;
       if (e.key === "Home") next = this.config.min;
       if (e.key === "End") next = this.config.max;
       if (next === null) return;
@@ -124,11 +175,16 @@ class DialControl {
     }, 900);
   }
 
+  dispose() {
+    if (this.feedbackTimer) window.clearTimeout(this.feedbackTimer);
+    this.feedbackTimer = null;
+  }
+
   setValue(raw, notify) {
     if (this.dragging && !notify) return;
     const { min, max, step } = this.config;
     let value = clamp(raw, min, max);
-    if (step > 0) value = Math.round(value / step) * step;
+    if (step > 0) value = Number((Math.round(value / step) * step).toFixed(8));
     value = clamp(value, min, max);
     this.value = value;
     const norm = (value - min) / (max - min || 1);
@@ -137,19 +193,21 @@ class DialControl {
     const formatted = this.config.format(value);
     this.dial.setAttribute("aria-valuetext", formatted);
     this.valueLabel.textContent = formatted;
-    if (notify) this.pc.sendEventOrValue(this.config.id, value);
+    if (notify) this.sendValue(this.config.id, value);
   }
 }
 
 class ToggleControl {
-  constructor({ patchConnection, node, config, onChange }) {
+  constructor({ patchConnection, sendValue, node, config, onChange }) {
     this.pc = patchConnection;
+    this.sendValue = sendValue;
     this.node = node;
     this.config = config;
     this.onChange = onChange;
     this.value = config.init;
     this.buttons = [...node.querySelectorAll("[data-value]")];
     this.onClick = e => {
+      if (node.getAttribute("aria-disabled") === "true") return;
       const button = e.target.closest("[data-value]");
       if (!button) return;
       const value = node.classList.contains("run-switch")
@@ -171,13 +229,14 @@ class ToggleControl {
     });
     this.node.classList.toggle("is-on", value >= 0.5);
     this.onChange?.(value);
-    if (notify) this.pc.sendEventOrValue(this.config.id, value);
+    if (notify) this.sendValue(this.config.id, value);
   }
 }
 
 class StepperControl {
-  constructor({ patchConnection, node, config, onChange }) {
+  constructor({ patchConnection, sendValue, node, config, onChange }) {
     this.pc = patchConnection;
+    this.sendValue = sendValue;
     this.node = node;
     this.config = config;
     this.onChange = onChange;
@@ -196,8 +255,8 @@ class StepperControl {
     const value = clamp(Math.round((Number(raw) || min) / step) * step, min, max);
     this.value = value;
     this.valueLabel.textContent = this.config.format(value);
+    if (notify) this.sendValue(this.config.id, value);
     this.onChange?.(value);
-    if (notify) this.pc.sendEventOrValue(this.config.id, value);
   }
 }
 
@@ -212,38 +271,91 @@ class AcidifyPatchView extends HTMLElement {
     this._selectionAnchor = 0;
     this._playingStep = -1;
     this._studioMode = false;
+    this._distortionOpen = false;
+    this._pitchMenuOpen = false;
+    this._pitchMenuTargets = [];
+    this._pitchMenuReturnFocus = null;
     this._history = [];
     this._future = [];
     this._clipboard = null;
+    this._generationScaleIndex = 0;
     this._paintState = null;
     this._paramListener = null;
     this._stepListener = null;
     this._meterListener = null;
+    this._tempoListener = null;
+    this._transportListener = null;
+    this._syncListener = null;
     this._resizeFn = null;
     this._resizeObserver = null;
     this._scaleTimer = null;
     this._meter = 0;
+    this._effectiveTempo = 128;
+    this._transportRunning = false;
+    this._hostSyncFlags = 0;
+    this._tooltipsEnabled = this._loadTooltipPreference();
+    this._tooltipTimer = null;
+    this._tooltipTarget = null;
+    this._tooltipToggleClick = null;
+    this._tooltipPointerOver = null;
+    this._tooltipPointerOut = null;
+    this._tooltipFocusIn = null;
+    this._tooltipFocusOut = null;
     this._studioPointerEnd = null;
     this._studioKeyDown = null;
-    this.innerHTML = this.getHTML();
+    this._distortionKeyDown = null;
+    this._pitchMenuKeyDown = null;
+    this._pitchMenuOutsidePointer = null;
+    this._midiHandler = null;
+    this._recentSends = [];
+    this._mounted = false;
   }
 
   connectedCallback() {
+    if (this._mounted) return;
+    this._mounted = true;
+    this._distortionOpen = false;
+    this._pitchMenuOpen = false;
+    this._pitchMenuTargets = [];
+    this._pitchMenuReturnFocus = null;
+    this.innerHTML = this.getHTML();
+    this._controls.clear();
+    this._values.clear();
+    this._recentSends = [];
     this._buildControls();
     this._wireSteps();
     this._wireKeyboard();
     this._wireStudio();
+    this._wirePitchMenu();
+    this._wireDistortion();
+    this._wireTooltips();
+    this._renderStepStrip();
     this._renderStepEditor();
     this._renderStudio();
 
     this._paramListener = ({ endpointID, value }) => {
+      if (this._consumeEcho(endpointID, value)) return;
       this._values.set(endpointID, Number(value));
       const control = this._controls.get(endpointID);
       if (control) control.setValue(value, false);
+      if (endpointID === "param45" || endpointID === "param46"
+          || endpointID === "param47" || endpointID === "param48") {
+        this._renderDistortionState();
+      }
+      if (endpointID === "param9" || endpointID === "param10" || endpointID === "param49") {
+        this._renderTransportState();
+      }
+      if (endpointID === "param12") {
+        this._renderStepStrip();
+        this._renderStepEditor();
+        this._renderStudio();
+        if (this._pitchMenuOpen) this._refreshPitchMenu();
+      }
       if (this._isStepParam(endpointID)) {
         this._renderStepStrip();
         this._renderStepEditor();
         this._renderStudio();
+        if (this._pitchMenuOpen) this._refreshPitchMenu();
       }
     };
     this.pc.addAllParameterListener(this._paramListener);
@@ -264,13 +376,35 @@ class AcidifyPatchView extends HTMLElement {
     };
     this.pc.addEndpointListener("meterOut", this._meterListener);
 
-    window.__amorphProcessMidi = messages => {
+    this._tempoListener = value => {
+      const n = typeof value === "object" ? Number(value.value ?? value.bpm ?? 0) : Number(value);
+      if (Number.isFinite(n) && n > 0) this._effectiveTempo = n;
+      this._renderTransportState();
+    };
+    this.pc.addEndpointListener("effectiveTempo", this._tempoListener);
+
+    this._transportListener = value => {
+      const n = typeof value === "object" ? Number(value.value ?? value.running ?? 0) : Number(value);
+      this._transportRunning = Number.isFinite(n) && n >= 0.5;
+      this._renderTransportState();
+    };
+    this.pc.addEndpointListener("transportRunning", this._transportListener);
+
+    this._syncListener = value => {
+      const n = typeof value === "object" ? Number(value.value ?? value.flags ?? 0) : Number(value);
+      this._hostSyncFlags = Number.isFinite(n) ? clamp(Math.round(n), 0, 7) : 0;
+      this._renderTransportState();
+    };
+    this.pc.addEndpointListener("hostSyncStatus", this._syncListener);
+
+    this._midiHandler = messages => {
       messages.forEach(({ s, d1, d2 }) => {
         const kind = s & 0xf0;
         if (kind === 0x90 && d2 > 0) this._showMidiNote(d1, true);
         else if (kind === 0x80 || (kind === 0x90 && d2 === 0)) this._showMidiNote(d1, false);
       });
     };
+    window.__amorphProcessMidi = this._midiHandler;
 
     let parent = this.parentElement;
     while (parent && parent !== document.body) {
@@ -288,45 +422,247 @@ class AcidifyPatchView extends HTMLElement {
     this._resizeObserver?.observe(document.documentElement);
     this._scaleTimer = window.setInterval(() => this._doScale(), 250);
     this._doScale();
+    this._renderTransportState();
   }
 
   disconnectedCallback() {
+    if (!this._mounted) return;
     if (this._paramListener) this.pc.removeAllParameterListener(this._paramListener);
     if (this._stepListener) this.pc.removeEndpointListener("currentStep", this._stepListener);
     if (this._meterListener) this.pc.removeEndpointListener("meterOut", this._meterListener);
+    if (this._tempoListener) this.pc.removeEndpointListener("effectiveTempo", this._tempoListener);
+    if (this._transportListener) this.pc.removeEndpointListener("transportRunning", this._transportListener);
+    if (this._syncListener) this.pc.removeEndpointListener("hostSyncStatus", this._syncListener);
     window.removeEventListener("resize", this._resizeFn);
     this._resizeObserver?.disconnect();
     if (this._scaleTimer) window.clearInterval(this._scaleTimer);
     if (this._toastTimer) window.clearTimeout(this._toastTimer);
     if (this._studioKeyDown) this.removeEventListener("keydown", this._studioKeyDown);
-    delete window.__amorphProcessMidi;
+    if (this._distortionKeyDown) this.removeEventListener("keydown", this._distortionKeyDown);
+    if (this._pitchMenuKeyDown) this.removeEventListener("keydown", this._pitchMenuKeyDown);
+    if (this._pitchMenuOutsidePointer) this.removeEventListener("pointerdown", this._pitchMenuOutsidePointer, true);
+    if (this._tooltipToggleClick) this.querySelector(".tooltip-toggle")?.removeEventListener("click", this._tooltipToggleClick);
+    if (this._tooltipPointerOver) this.removeEventListener("pointerover", this._tooltipPointerOver);
+    if (this._tooltipPointerOut) this.removeEventListener("pointerout", this._tooltipPointerOut);
+    if (this._tooltipFocusIn) this.removeEventListener("focusin", this._tooltipFocusIn);
+    if (this._tooltipFocusOut) this.removeEventListener("focusout", this._tooltipFocusOut);
+    if (window.__amorphProcessMidi === this._midiHandler) delete window.__amorphProcessMidi;
+    this._hideTooltip();
+    this._controls.forEach(control => control.dispose?.());
+    this._controls.clear();
+    this._values.clear();
+    this._recentSends = [];
+    this._paramListener = null;
+    this._stepListener = null;
+    this._meterListener = null;
+    this._tempoListener = null;
+    this._transportListener = null;
+    this._syncListener = null;
+    this._resizeFn = null;
+    this._resizeObserver = null;
+    this._scaleTimer = null;
+    this._toastTimer = null;
+    this._studioPointerEnd = null;
+    this._studioKeyDown = null;
+    this._distortionKeyDown = null;
+    this._pitchMenuKeyDown = null;
+    this._pitchMenuOutsidePointer = null;
+    this._tooltipToggleClick = null;
+    this._tooltipPointerOver = null;
+    this._tooltipPointerOut = null;
+    this._tooltipFocusIn = null;
+    this._tooltipFocusOut = null;
+    this._tooltipTarget = null;
+    this._pitchMenuTargets = [];
+    this._pitchMenuReturnFocus = null;
+    this._midiHandler = null;
+    this._mounted = false;
+  }
+
+  _loadTooltipPreference() {
+    try {
+      return window.localStorage.getItem(TOOLTIP_STORAGE_KEY) !== "false";
+    } catch {
+      return true;
+    }
+  }
+
+  _wireTooltips() {
+    Object.entries(CONTROL_TOOLTIPS).forEach(([id, text]) => {
+      const node = this.querySelector(`.control[data-param="${id}"]`);
+      if (node) node.dataset.tooltip = text;
+    });
+    this.querySelectorAll("[title]").forEach(node => {
+      if (!node.dataset.tooltip) node.dataset.tooltip = node.getAttribute("title") || "";
+      node.removeAttribute("title");
+    });
+    this.querySelectorAll("button[aria-label]").forEach(node => {
+      if (!node.dataset.tooltip) node.dataset.tooltip = node.getAttribute("aria-label") || "";
+    });
+
+    const toggle = this.querySelector(".tooltip-toggle");
+    this._tooltipToggleClick = () => this._setTooltipsEnabled(!this._tooltipsEnabled, true);
+    toggle?.addEventListener("click", this._tooltipToggleClick);
+
+    this._tooltipPointerOver = event => {
+      const target = this._findTooltipTarget(event.target);
+      if (!target || target === this._findTooltipTarget(event.relatedTarget)) return;
+      this._scheduleTooltip(target, 360);
+    };
+    this._tooltipPointerOut = event => {
+      const target = this._findTooltipTarget(event.target);
+      if (!target || target === this._findTooltipTarget(event.relatedTarget)) return;
+      if (this._tooltipTarget === target) this._hideTooltip();
+    };
+    this._tooltipFocusIn = event => {
+      const target = this._findTooltipTarget(event.target);
+      if (target) this._scheduleTooltip(target, 120);
+    };
+    this._tooltipFocusOut = event => {
+      const target = this._findTooltipTarget(event.target);
+      if (!target || target === this._findTooltipTarget(event.relatedTarget)) return;
+      if (this._tooltipTarget === target) this._hideTooltip();
+    };
+    this.addEventListener("pointerover", this._tooltipPointerOver);
+    this.addEventListener("pointerout", this._tooltipPointerOut);
+    this.addEventListener("focusin", this._tooltipFocusIn);
+    this.addEventListener("focusout", this._tooltipFocusOut);
+    this._setTooltipsEnabled(this._tooltipsEnabled, false);
+  }
+
+  _findTooltipTarget(node) {
+    if (!(node instanceof Element)) return null;
+    const target = node.closest("[data-tooltip]");
+    return target && this.contains(target) ? target : null;
+  }
+
+  _setTooltipsEnabled(enabled, persist) {
+    this._tooltipsEnabled = Boolean(enabled);
+    this.classList.toggle("tooltips-off", !this._tooltipsEnabled);
+    const toggle = this.querySelector(".tooltip-toggle");
+    toggle?.setAttribute("aria-pressed", `${this._tooltipsEnabled}`);
+    toggle?.setAttribute("aria-label", `Tooltips ${this._tooltipsEnabled ? "on" : "off"}; click to turn them ${this._tooltipsEnabled ? "off" : "on"}`);
+    const state = toggle?.querySelector(".tooltip-toggle-state");
+    if (state) state.textContent = this._tooltipsEnabled ? "ON" : "OFF";
+    if (!this._tooltipsEnabled) this._hideTooltip();
+    if (persist) {
+      try {
+        window.localStorage.setItem(TOOLTIP_STORAGE_KEY, `${this._tooltipsEnabled}`);
+      } catch {
+        // Some embedded or file-based hosts intentionally disable local storage.
+      }
+    }
+  }
+
+  _scheduleTooltip(target, delay) {
+    if (!this._tooltipsEnabled || !target?.dataset.tooltip) return;
+    if (this._tooltipTimer) window.clearTimeout(this._tooltipTimer);
+    this._tooltipTarget = target;
+    this._tooltipTimer = window.setTimeout(() => {
+      this._tooltipTimer = null;
+      this._showTooltip(target);
+    }, delay);
+  }
+
+  _showTooltip(target) {
+    if (!this._tooltipsEnabled || !target?.isConnected || this._tooltipTarget !== target) return;
+    const bubble = this.querySelector(".tooltip-bubble");
+    const chassis = this.querySelector(".chassis");
+    const text = target.dataset.tooltip?.trim();
+    if (!bubble || !chassis || !text) return;
+    bubble.textContent = text;
+    bubble.hidden = false;
+
+    const chassisBounds = chassis.getBoundingClientRect();
+    const targetBounds = target.getBoundingClientRect();
+    const scaleX = chassisBounds.width / 1180 || 1;
+    const scaleY = chassisBounds.height / 580 || 1;
+    const targetLeft = (targetBounds.left - chassisBounds.left) / scaleX;
+    const targetTop = (targetBounds.top - chassisBounds.top) / scaleY;
+    const targetWidth = targetBounds.width / scaleX;
+    const targetHeight = targetBounds.height / scaleY;
+    let left = targetLeft + targetWidth / 2 - bubble.offsetWidth / 2;
+    let top = targetTop - bubble.offsetHeight - 10;
+    if (top < 10) top = targetTop + targetHeight + 10;
+    left = clamp(left, 10, 1180 - bubble.offsetWidth - 10);
+    top = clamp(top, 10, 580 - bubble.offsetHeight - 10);
+    bubble.style.left = `${left}px`;
+    bubble.style.top = `${top}px`;
+  }
+
+  _hideTooltip() {
+    if (this._tooltipTimer) window.clearTimeout(this._tooltipTimer);
+    this._tooltipTimer = null;
+    this._tooltipTarget = null;
+    const bubble = this.querySelector(".tooltip-bubble");
+    if (bubble) bubble.hidden = true;
+  }
+
+  _sendParameter(endpointID, rawValue) {
+    const value = Number(rawValue);
+    const now = performance.now();
+    this._values.set(endpointID, value);
+    if (endpointID === "param45" || endpointID === "param46"
+        || endpointID === "param47" || endpointID === "param48") {
+      this._renderDistortionState();
+    }
+    if (endpointID === "param9" || endpointID === "param10" || endpointID === "param49") {
+      this._renderTransportState();
+    }
+    this._recentSends = this._recentSends.filter(entry => now - entry.time < 1500);
+    this._recentSends.push({ endpointID, value, time: now });
+    if (this._recentSends.length > 64) this._recentSends.shift();
+    this.pc.sendEventOrValue(endpointID, rawValue);
+  }
+
+  _consumeEcho(endpointID, rawValue) {
+    const value = Number(rawValue);
+    const now = performance.now();
+    this._recentSends = this._recentSends.filter(entry => now - entry.time < 1500);
+    const index = this._recentSends.findIndex(entry =>
+      entry.endpointID === endpointID && Math.abs(entry.value - value) <= 1e-6
+    );
+    if (index < 0) return false;
+    this._recentSends.splice(index, 1);
+    return true;
   }
 
   _buildControls() {
+    const sendValue = (endpointID, value) => this._sendParameter(endpointID, value);
     ACIDIFY_GLOBALS.forEach(config => {
       const node = this.querySelector(`.control[data-param="${config.id}"]`);
       if (!node) return;
       let control;
       if (config.type === "dial") {
-        control = new DialControl({ patchConnection: this.pc, node, config });
+        control = new DialControl({ patchConnection: this.pc, sendValue, node, config });
       } else if (config.type === "toggle") {
         control = new ToggleControl({
           patchConnection: this.pc,
+          sendValue,
           node,
           config,
           onChange: value => {
-            if (config.id === "param10") {
-              this.querySelector(".run-lamp")?.classList.toggle("lit", value >= 0.5);
+            if (config.id === "param10" || config.id === "param49") {
+              this._renderTransportState();
+            }
+            if (config.id === "param45" || config.id === "param46") {
+              this._renderDistortionState();
             }
           },
         });
       } else {
         control = new StepperControl({
           patchConnection: this.pc,
+          sendValue,
           node,
           config,
           onChange: () => {
-            if (config.id === "param12") this._renderStepEditor();
+            if (config.id === "param12") {
+              this._renderStepStrip();
+              this._renderStepEditor();
+              this._renderStudio();
+              if (this._pitchMenuOpen) this._refreshPitchMenu();
+            }
           },
         });
       }
@@ -362,6 +698,32 @@ class AcidifyPatchView extends HTMLElement {
         this._renderStepStrip();
         this._renderStepEditor();
         this._renderStudio();
+      });
+      node.addEventListener("wheel", event => {
+        event.preventDefault();
+        const index = Number(node.dataset.step);
+        const offset = event.deltaY < 0 ? 1 : -1;
+        if (this._studioMode) {
+          if (!this._selectedSteps.has(index)) {
+            this._selectedStep = index;
+            this._selectedSteps = new Set([index]);
+            this._selectionAnchor = index;
+          }
+          this._transposeSelection(offset, "Step-strip pitch wheel");
+        } else {
+          this._selectedStep = index;
+          this._selectedSteps = new Set([index]);
+          this._selectionAnchor = index;
+          this._setStepValue(index, "pitch", this._stepPitch(index) + offset, true);
+        }
+      }, { passive: false });
+      node.addEventListener("contextmenu", event => {
+        event.preventDefault();
+        this._openPitchMenu(Number(node.dataset.step), event.clientX, event.clientY, node);
+      });
+      node.addEventListener("dblclick", event => {
+        event.preventDefault();
+        this._openPitchMenu(Number(node.dataset.step), event.clientX, event.clientY, node);
       });
     });
   }
@@ -402,8 +764,26 @@ class AcidifyPatchView extends HTMLElement {
       this._setStudioMode(!this._studioMode);
     });
 
+    this.querySelector(".studio-scale")?.addEventListener("click", () => {
+      this._generationScaleIndex = (this._generationScaleIndex + 1) % GENERATION_SCALES.length;
+      this._updateStudioToolbar();
+      this._showStudioToast(`SCALE · ${this._generationScale().label}`);
+    });
+
     this.querySelectorAll("[data-studio-action]").forEach(button => {
-      button.addEventListener("click", () => this._runStudioAction(button.dataset.studioAction));
+      button.addEventListener("click", () => {
+        if (button.dataset.studioAction === "choose-note") {
+          const box = button.getBoundingClientRect();
+          this._openPitchMenu(
+            this._selectedStep,
+            box.left + box.width / 2,
+            box.top + box.height / 2,
+            button
+          );
+        } else {
+          this._runStudioAction(button.dataset.studioAction);
+        }
+      });
     });
 
     this.querySelectorAll(".studio-cell").forEach(cell => {
@@ -411,6 +791,7 @@ class AcidifyPatchView extends HTMLElement {
       const kind = cell.dataset.kind;
       cell.addEventListener("pointerdown", event => {
         if (!this._studioMode) return;
+        if (event.button !== 0) return;
         if (kind === "pitch") {
           this._selectStudioStep(index, event);
           this._renderStepStrip();
@@ -449,6 +830,14 @@ class AcidifyPatchView extends HTMLElement {
           }
           this._transposeSelection(event.deltaY < 0 ? 1 : -1, "Pitch wheel");
         }, { passive: false });
+        cell.addEventListener("contextmenu", event => {
+          event.preventDefault();
+          this._openPitchMenu(index, event.clientX, event.clientY, cell);
+        });
+        cell.addEventListener("dblclick", event => {
+          event.preventDefault();
+          this._openPitchMenu(index, event.clientX, event.clientY, cell);
+        });
       }
     });
 
@@ -466,6 +855,8 @@ class AcidifyPatchView extends HTMLElement {
     this._studioKeyDown = event => {
       const command = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
+      if (this._distortionOpen && event.key === "Escape") return;
+      if (this._pitchMenuOpen && event.key === "Escape") return;
       if (!command && key === "m") {
         event.preventDefault();
         this._setStudioMode(!this._studioMode);
@@ -492,12 +883,272 @@ class AcidifyPatchView extends HTMLElement {
     this.addEventListener("keydown", this._studioKeyDown);
   }
 
+  _wirePitchMenu() {
+    this.querySelector(".pitch-menu-close")?.addEventListener("click", () => {
+      this._closePitchMenu();
+    });
+    this.querySelectorAll(".pitch-menu-choice").forEach(button => {
+      button.addEventListener("click", () => {
+        this._setPitchMenuChoice(Number(button.dataset.pitchValue));
+      });
+    });
+    this._pitchMenuKeyDown = event => {
+      if (!this._pitchMenuOpen || event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      this._closePitchMenu();
+    };
+    this._pitchMenuOutsidePointer = event => {
+      if (!this._pitchMenuOpen || event.target.closest(".pitch-menu")) return;
+      this._closePitchMenu(false);
+    };
+    this.addEventListener("keydown", this._pitchMenuKeyDown);
+    this.addEventListener("pointerdown", this._pitchMenuOutsidePointer, true);
+  }
+
+  _octaveLabel(pitch) {
+    return `OCT +${Math.floor(clamp(Math.round(pitch), 0, 24) / 12)}`;
+  }
+
+  _openPitchMenu(index, clientX, clientY, returnFocus) {
+    const target = clamp(Math.round(index), 0, 15);
+    if (this._studioMode && this._selectedSteps.has(target)) {
+      this._selectedStep = target;
+    } else {
+      this._selectedStep = target;
+      this._selectedSteps = new Set([target]);
+      this._selectionAnchor = target;
+    }
+    this._pitchMenuTargets = this._studioMode ? this._selectedIndices() : [target];
+    this._pitchMenuReturnFocus = returnFocus ?? null;
+    this._pitchMenuOpen = true;
+    this._renderStepStrip();
+    this._renderStepEditor();
+    this._renderStudio();
+
+    const menu = this.querySelector(".pitch-menu");
+    const chassis = this.querySelector(".chassis");
+    if (!menu || !chassis) return;
+    menu.hidden = false;
+    menu.setAttribute("aria-hidden", "false");
+    const bounds = chassis.getBoundingClientRect();
+    const scaleX = bounds.width / 1180 || 1;
+    const scaleY = bounds.height / 580 || 1;
+    const localX = (Number(clientX) - bounds.left) / scaleX;
+    const localY = (Number(clientY) - bounds.top) / scaleY;
+    const menuWidth = 394;
+    const menuHeight = 278;
+    const left = clamp(localX - menuWidth / 2, 18, 1180 - menuWidth - 18);
+    const preferredTop = localY + 12;
+    const top = preferredTop + menuHeight <= 562
+      ? preferredTop
+      : clamp(localY - menuHeight - 12, 18, 562 - menuHeight);
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    this._refreshPitchMenu();
+    queueMicrotask(() => {
+      const initialFocus = menu.querySelector(".pitch-menu-choice.active")
+        ?? menu.querySelector(".pitch-menu-choice");
+      initialFocus?.focus();
+    });
+  }
+
+  _refreshPitchMenu() {
+    if (!this._pitchMenuOpen) return;
+    const root = Math.round(this._values.get("param12") ?? 36);
+    const targets = this._pitchMenuTargets.length ? this._pitchMenuTargets : [this._selectedStep];
+    const pitches = targets.map(index => this._stepPitch(index));
+    const commonPitch = pitches.every(pitch => pitch === pitches[0]) ? pitches[0] : -1;
+    const title = this.querySelector(".pitch-menu-title");
+    if (title) {
+      title.textContent = targets.length === 1
+        ? `STEP ${String(targets[0] + 1).padStart(2, "0")} · ${noteName(root + pitches[0]).replace("#", "♯")}`
+        : `${targets.length} STEPS · ${commonPitch >= 0
+          ? noteName(root + commonPitch).replace("#", "♯")
+          : "MIXED NOTES"}`;
+    }
+    this.querySelectorAll(".pitch-menu-choice").forEach(button => {
+      const pitch = Number(button.dataset.pitchValue);
+      const absolute = noteName(root + pitch).replace("#", "♯");
+      button.querySelector("strong").textContent = absolute;
+      button.querySelector("small").textContent = this._octaveLabel(pitch);
+      button.classList.toggle("active", pitch === commonPitch);
+      button.setAttribute("aria-checked", `${pitch === commonPitch}`);
+      button.setAttribute("aria-label", `Set ${targets.length === 1 ? `step ${targets[0] + 1}` : `${targets.length} selected steps`} to ${absolute}, ${this._octaveLabel(pitch)}`);
+      button.dataset.tooltip = `Set ${targets.length === 1 ? `step ${targets[0] + 1}` : `${targets.length} selected steps`} to ${absolute} (${this._octaveLabel(pitch)}).`;
+    });
+  }
+
+  _setPitchMenuChoice(rawPitch) {
+    const pitch = clamp(Math.round(rawPitch), 0, 24);
+    const targets = this._pitchMenuTargets.length
+      ? [...this._pitchMenuTargets]
+      : [this._selectedStep];
+    this._mutatePattern("Choose note", draft => {
+      targets.forEach(index => {
+        draft[index].pitch = pitch;
+      });
+    });
+    const root = Math.round(this._values.get("param12") ?? 36);
+    this._showStudioToast(`${noteName(root + pitch).replace("#", "♯")} · ${this._octaveLabel(pitch)}`);
+    this._closePitchMenu();
+  }
+
+  _closePitchMenu(restoreFocus = true) {
+    if (!this._pitchMenuOpen) return;
+    const focusTarget = this._pitchMenuReturnFocus;
+    this._pitchMenuOpen = false;
+    this._pitchMenuTargets = [];
+    this._pitchMenuReturnFocus = null;
+    const menu = this.querySelector(".pitch-menu");
+    if (menu) {
+      menu.hidden = true;
+      menu.setAttribute("aria-hidden", "true");
+    }
+    if (restoreFocus) focusTarget?.focus?.();
+  }
+
+  _wireDistortion() {
+    this.querySelector(".distortion-trigger")?.addEventListener("click", () => {
+      this._setDistortionOpen(true);
+    });
+    this.querySelector(".distortion-close")?.addEventListener("click", () => {
+      this._setDistortionOpen(false);
+    });
+    this.querySelector(".distortion-scrim")?.addEventListener("pointerdown", event => {
+      if (event.target === event.currentTarget) this._setDistortionOpen(false);
+    });
+    this._distortionKeyDown = event => {
+      if (!this._distortionOpen || event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      this._setDistortionOpen(false);
+    };
+    this.addEventListener("keydown", this._distortionKeyDown);
+    this._renderDistortionState();
+  }
+
+  _setDistortionOpen(enabled) {
+    this._distortionOpen = Boolean(enabled);
+    if (this._distortionOpen) this._closePitchMenu(false);
+    this.classList.toggle("distortion-open", this._distortionOpen);
+    const trigger = this.querySelector(".distortion-trigger");
+    const scrim = this.querySelector(".distortion-scrim");
+    trigger?.setAttribute("aria-expanded", `${this._distortionOpen}`);
+    if (scrim) {
+      scrim.hidden = !this._distortionOpen;
+      scrim.setAttribute("aria-hidden", `${!this._distortionOpen}`);
+    }
+    if (this._distortionOpen) {
+      queueMicrotask(() => this.querySelector(".distortion-close")?.focus());
+    } else {
+      trigger?.focus();
+    }
+  }
+
+  _mirrorHostTempoToParameter() {
+    const control = this._controls.get("param9");
+    const config = ACIDIFY_GLOBALS.find(item => item.id === "param9");
+    if (!control || !config || control.dragging) return null;
+    control.setValue(clamp(this._effectiveTempo, config.min, config.max), false);
+    const mirroredTempo = control.value;
+    const storedTempo = Number(this._values.get("param9"));
+    if (!Number.isFinite(storedTempo) || Math.abs(storedTempo - mirroredTempo) > 0.0001) {
+      this._sendParameter("param9", mirroredTempo);
+    }
+    return mirroredTempo;
+  }
+
+  _renderTransportState() {
+    const dawMode = Number(this._values.get("param49") ?? 0) >= 0.5;
+    const manualRunning = Number(this._values.get("param10") ?? 0) >= 0.5;
+    const hasTempo = (this._hostSyncFlags & 1) !== 0;
+    const hasTransport = (this._hostSyncFlags & 2) !== 0;
+    const hasPosition = (this._hostSyncFlags & 4) !== 0;
+    const hostReady = hasTempo && hasTransport;
+    const runHostControlled = dawMode && hasTransport;
+    const tempoHostControlled = dawMode && hasTempo;
+    const mirroredTempo = tempoHostControlled ? this._mirrorHostTempoToParameter() : null;
+    const internalTempo = Number(mirroredTempo ?? this._values.get("param9") ?? 128);
+    const effectiveTempo = Number(dawMode && hasTempo ? this._effectiveTempo : internalTempo);
+    const running = runHostControlled ? this._transportRunning : manualRunning;
+
+    this.querySelector(".run-lamp")?.classList.toggle("lit", running);
+    const runSwitch = this.querySelector('.run-switch[data-param="param10"]');
+    runSwitch?.classList.toggle("is-on", running);
+    runSwitch?.classList.toggle("daw-controlled", runHostControlled);
+    runSwitch?.setAttribute("aria-disabled", `${runHostControlled}`);
+    if (runSwitch) runSwitch.dataset.tooltip = runHostControlled
+      ? "Transport follows the DAW"
+      : dawMode
+        ? "No DAW transport received; RUN/STOP controls the internal fallback"
+        : CONTROL_TOOLTIPS.param10;
+    const runButton = runSwitch?.querySelector('[data-value="0"]');
+    if (runButton) runButton.textContent = runHostControlled ? "DAW FOLLOW" : "RUN / STOP";
+
+    const tempoBox = this.querySelector(".tempo-box");
+    tempoBox?.classList.toggle("daw-locked", tempoHostControlled);
+    const tempoDial = tempoBox?.querySelector(".dial");
+    tempoDial?.setAttribute("aria-disabled", `${tempoHostControlled}`);
+    if (tempoDial) tempoDial.tabIndex = tempoHostControlled ? -1 : 0;
+    if (tempoBox) tempoBox.dataset.tooltip = tempoHostControlled
+      ? "Tempo follows the DAW and is mirrored to this knob. Switch to INT to keep the current BPM and make fine manual adjustments."
+      : dawMode
+        ? "No DAW tempo received; this sets the internal fallback BPM"
+        : CONTROL_TOOLTIPS.param9;
+
+    const readout = this.querySelector(".clock-readout");
+    if (readout) {
+      readout.textContent = !dawMode
+        ? `INT · ${formatTempo(internalTempo)}`
+        : hostReady
+          ? `DAW · ${formatTempo(effectiveTempo)}`
+          : hasTempo
+            ? `DAW ${formatTempo(effectiveTempo)} · INT RUN`
+            : hasTransport
+              ? `INT ${formatTempo(internalTempo)} · DAW RUN`
+              : "DAW · INT FALLBACK";
+      readout.classList.toggle("locked", dawMode && hostReady);
+      readout.classList.toggle("waiting", dawMode && !hostReady);
+      readout.dataset.tooltip = dawMode
+        ? (hostReady
+          ? (hasPosition
+            ? "DAW tempo, transport and timeline position locked"
+            : "DAW tempo and transport locked; timeline position unavailable")
+          : hasTempo
+            ? "DAW tempo received; transport uses manual RUN/STOP fallback"
+            : hasTransport
+              ? "DAW transport received; tempo uses the internal BPM fallback"
+              : "Host sent no Cmajor timeline events; internal BPM and RUN/STOP remain active")
+        : "Internal clock";
+    }
+  }
+
+  _renderDistortionState() {
+    const enabled = Number(this._values.get("param45") ?? 0) >= 0.5;
+    const typeIndex = clamp(Math.round(Number(this._values.get("param46") ?? 0)), 0, 2);
+    const name = DISTORTION_NAMES[typeIndex];
+    const trigger = this.querySelector(".distortion-trigger");
+    trigger?.classList.toggle("active", enabled);
+    trigger?.setAttribute("aria-label", `Distortion ${enabled ? `${name} enabled` : "disabled"}; open controls`);
+    if (trigger) trigger.dataset.tooltip = enabled
+      ? `${name} distortion is active. Click to open the distortion controls.`
+      : "Distortion is bypassed. Click to open the distortion controls.";
+    const status = this.querySelector(".distortion-status");
+    if (status) status.textContent = enabled ? `${name} ACTIVE` : "TRUE BYPASS";
+    this.querySelector(".distortion-led")?.classList.toggle("lit", enabled);
+  }
+
   _setStudioMode(enabled) {
+    if (this._pitchMenuOpen) this._closePitchMenu(false);
     this._studioMode = Boolean(enabled);
     this.classList.toggle("studio-mode", this._studioMode);
     const toggle = this.querySelector(".studio-toggle");
     toggle?.setAttribute("aria-pressed", `${this._studioMode}`);
     toggle?.setAttribute("aria-label", this._studioMode ? "Return to Classic mode" : "Open Studio edit mode");
+    if (toggle) toggle.dataset.tooltip = this._studioMode
+      ? "Return to the Classic step-programming view. Keyboard shortcut: M."
+      : "Open the Studio matrix for multi-step editing. Keyboard shortcut: M.";
     const modeStatus = this.querySelector(".program-context");
     if (modeStatus) modeStatus.textContent = this._studioMode ? "STUDIO MATRIX" : "CLASSIC PROGRAMMING";
     this.querySelector(".classic-editor")?.setAttribute("aria-hidden", `${this._studioMode}`);
@@ -552,11 +1203,11 @@ class AcidifyPatchView extends HTMLElement {
       const flags = clamp(Math.round(step.flags), 0, 7);
       if (pitch !== this._stepPitch(index)) {
         this._values.set(pitchID, pitch);
-        if (notify) this.pc.sendEventOrValue(pitchID, pitch);
+        if (notify) this._sendParameter(pitchID, pitch);
       }
       if (flags !== this._stepFlags(index)) {
         this._values.set(flagsID, flags);
-        if (notify) this.pc.sendEventOrValue(flagsID, flags);
+        if (notify) this._sendParameter(flagsID, flags);
       }
     });
     this._renderStepStrip();
@@ -597,6 +1248,41 @@ class AcidifyPatchView extends HTMLElement {
         draft[index].pitch = clamp(draft[index].pitch + offset, 0, 24);
       });
     });
+  }
+
+  _generationScale() {
+    return GENERATION_SCALES[this._generationScaleIndex] || GENERATION_SCALES[0];
+  }
+
+  _scalePitches() {
+    const pitches = [];
+    const degrees = this._generationScale().degrees;
+    for (let octave = 0; octave < 2; octave += 1) {
+      degrees.forEach(degree => pitches.push(octave * 12 + degree));
+    }
+    pitches.push(24);
+    return [...new Set(pitches)].filter(pitch => pitch >= 0 && pitch <= 24).sort((a, b) => a - b);
+  }
+
+  _nearestScalePitch(rawPitch) {
+    const pitch = clamp(Math.round(rawPitch), 0, 24);
+    return this._scalePitches().reduce((nearest, candidate) =>
+      Math.abs(candidate - pitch) < Math.abs(nearest - pitch) ? candidate : nearest
+    );
+  }
+
+  _adjacentScalePitch(rawPitch, direction) {
+    const scale = this._scalePitches();
+    const nearest = this._nearestScalePitch(rawPitch);
+    const index = scale.indexOf(nearest);
+    return scale[clamp(index + (direction < 0 ? -1 : 1), 0, scale.length - 1)];
+  }
+
+  _generatedScalePitch() {
+    const scale = this._scalePitches();
+    // Bias generation toward the lower octave while retaining the full range.
+    const shaped = Math.pow(Math.random(), 1.35);
+    return scale[Math.min(scale.length - 1, Math.floor(shaped * scale.length))];
   }
 
   _runStudioAction(action) {
@@ -652,13 +1338,68 @@ class AcidifyPatchView extends HTMLElement {
           draft[index] = source[sourcePosition];
         });
       });
-    } else if (action === "randomize") {
-      this._mutatePattern("Smart randomize", draft => {
-        selected.forEach(index => {
-          draft[index].pitch = Math.floor(Math.random() * 25);
-          draft[index].flags = 1 | (Math.random() < .28 ? 2 : 0) | (Math.random() < .2 ? 4 : 0);
+    } else if (action === "reverse") {
+      const targets = selected.length > 1 ? selected : Array.from({ length: 16 }, (_, index) => index);
+      this._mutatePattern("Reverse", draft => {
+        const source = targets.map(index => ({ ...draft[index] })).reverse();
+        targets.forEach((index, position) => {
+          draft[index] = source[position];
         });
       });
+      this._showStudioToast("ORDER REVERSED");
+    } else if (action === "pitch-mirror") {
+      const targets = selected.length > 1 ? selected : Array.from({ length: 16 }, (_, index) => index);
+      this._mutatePattern("Pitch mirror", draft => {
+        const pitches = targets.map(index => draft[index].pitch);
+        const low = Math.min(...pitches);
+        const high = Math.max(...pitches);
+        targets.forEach(index => {
+          draft[index].pitch = low + high - draft[index].pitch;
+        });
+      });
+      this._showStudioToast("PITCH CONTOUR MIRRORED");
+    } else if (action === "generate") {
+      this._mutatePattern(`Generate ${this._generationScale().label}`, draft => {
+        selected.forEach(index => {
+          const gate = Math.random() < .84;
+          const accent = gate && Math.random() < .28;
+          const slide = gate && Math.random() < .2;
+          draft[index].pitch = this._generatedScalePitch();
+          draft[index].flags = (gate ? 1 : 0) | (accent ? 2 : 0) | (slide ? 4 : 0);
+        });
+        if (selected.every(index => (draft[index].flags & 1) === 0))
+          draft[selected[0]].flags |= 1;
+      });
+      this._showStudioToast(`GENERATED · ${this._generationScale().label}`);
+    } else if (action === "mutate") {
+      this._mutatePattern(`Mutate ${this._generationScale().label}`, draft => {
+        let changed = false;
+        selected.forEach(index => {
+          const before = { ...draft[index] };
+          if (Math.random() < .35) {
+            const direction = Math.random() < .5 ? -1 : 1;
+            draft[index].pitch = this._adjacentScalePitch(draft[index].pitch, direction);
+          }
+          if (Math.random() < .1) draft[index].flags ^= 1;
+          if ((draft[index].flags & 1) !== 0) {
+            if (Math.random() < .18) draft[index].flags ^= 2;
+            if (Math.random() < .12) draft[index].flags ^= 4;
+          } else {
+            draft[index].flags &= 1;
+          }
+          if (before.pitch !== draft[index].pitch || before.flags !== draft[index].flags)
+            changed = true;
+        });
+        if (!changed) {
+          const index = selected[0];
+          const direction = draft[index].pitch >= 12 ? -1 : 1;
+          let next = this._adjacentScalePitch(draft[index].pitch, direction);
+          if (next === draft[index].pitch)
+            next = this._adjacentScalePitch(draft[index].pitch, -direction);
+          draft[index].pitch = next;
+        }
+      });
+      this._showStudioToast(`MUTATED · ${this._generationScale().label}`);
     } else if (action === "rest") {
       this._mutatePattern("Toggle rest", draft => {
         const makeGate = selected.every(index => (draft[index].flags & 1) === 0);
@@ -683,11 +1424,23 @@ class AcidifyPatchView extends HTMLElement {
 
   _updateStudioToolbar() {
     const selected = this._selectedIndices();
+    const scale = this._generationScale();
+    const scaleButton = this.querySelector(".studio-scale");
+    const scaleValue = scaleButton?.querySelector("strong");
+    if (scaleValue) scaleValue.textContent = scale.label;
+    if (scaleButton) {
+      scaleButton.setAttribute("aria-label", `Generation scale ${scale.label}; click for next scale`);
+      scaleButton.dataset.tooltip = `Generate and Mutate currently use the root-relative ${scale.label} scale. Click to choose the next scale.`;
+    }
     const selection = this.querySelector(".studio-selection");
     if (selection) {
+      const root = Math.round(this._values.get("param12") ?? 36);
+      const pitches = selected.map(index => this._stepPitch(index));
+      const octaves = pitches.map(pitch => Math.floor(pitch / 12));
+      const commonOctave = octaves.every(octave => octave === octaves[0]) ? octaves[0] : -1;
       selection.textContent = selected.length === 1
-        ? `STEP ${String(selected[0] + 1).padStart(2, "0")}`
-        : `${selected.length} STEPS`;
+        ? `STEP ${String(selected[0] + 1).padStart(2, "0")} · ${noteName(root + pitches[0]).replace("#", "♯")} · OCT +${octaves[0]}`
+        : `${selected.length} STEPS · ${commonOctave >= 0 ? `OCT +${commonOctave}` : "MIXED OCT"}`;
     }
     const undo = this.querySelector('[data-studio-action="undo"]');
     const redo = this.querySelector('[data-studio-action="redo"]');
@@ -716,10 +1469,11 @@ class AcidifyPatchView extends HTMLElement {
     const id = isPitch ? STEP_PITCH_IDS[index] : STEP_FLAG_IDS[index];
     const value = clamp(Math.round(Number(raw) || 0), 0, isPitch ? 24 : 7);
     this._values.set(id, value);
-    if (notify) this.pc.sendEventOrValue(id, value);
+    if (notify) this._sendParameter(id, value);
     this._renderStepStrip();
     this._renderStepEditor();
     this._renderStudio();
+    if (this._pitchMenuOpen) this._refreshPitchMenu();
     if (before) this._pushHistory(before, isPitch ? "Edit pitch" : "Edit timing");
   }
 
@@ -732,8 +1486,67 @@ class AcidifyPatchView extends HTMLElement {
       node.classList.toggle("rest", (flags & 1) === 0);
       node.classList.toggle("accented", (flags & 2) !== 0);
       node.classList.toggle("sliding", (flags & 4) !== 0);
-      node.querySelector(".step-note").textContent = NOTE_NAMES[this._stepPitch(index) % 12];
+      const root = Math.round(this._values.get("param12") ?? 36);
+      const pitch = this._stepPitch(index);
+      const absoluteNote = noteName(root + pitch).replace("#", "♯");
+      const states = [
+        (flags & 1) !== 0 ? "Gate" : "Rest",
+        (flags & 2) !== 0 ? "Accent" : "",
+        (flags & 4) !== 0 ? "Slide" : "",
+      ].filter(Boolean).join(", ");
+      node.querySelector(".step-note").textContent = absoluteNote;
+      node.querySelector(".step-octave").textContent = `+${Math.floor(pitch / 12)}`;
+      node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}; click to edit, wheel changes semitone, right-click or double-click chooses a note`);
+      node.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}. Wheel changes one semitone; right-click or double-click opens direct note selection.`;
     });
+    this._renderBassline();
+  }
+
+  _renderBassline() {
+    const path = this.querySelector(".bassline-path");
+    const slidePath = this.querySelector(".bassline-slide-path");
+    const nodes = [...this.querySelectorAll(".bassline-node")];
+    if (!path || !slidePath || nodes.length !== 16) return;
+
+    const root = Math.round(this._values.get("param12") ?? 36);
+    const points = Array.from({ length: 16 }, (_, index) => {
+      const pitch = this._stepPitch(index);
+      return {
+        index,
+        pitch,
+        flags: this._stepFlags(index),
+        x: 35 + index * (199 / 15),
+        y: 24 - pitch * (18 / 24),
+      };
+    });
+    path.setAttribute("d", points.map((point, index) =>
+      `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`
+    ).join(" "));
+    slidePath.setAttribute("d", points.slice(0, -1)
+      .filter(point => (point.flags & 4) !== 0)
+      .map(point => {
+        const next = points[point.index + 1];
+        return `M ${point.x.toFixed(2)} ${point.y.toFixed(2)} L ${next.x.toFixed(2)} ${next.y.toFixed(2)}`;
+      }).join(" "));
+
+    nodes.forEach((node, index) => {
+      const point = points[index];
+      const absoluteNote = noteName(root + point.pitch).replace("#", "♯");
+      node.setAttribute("cx", point.x.toFixed(2));
+      node.setAttribute("cy", point.y.toFixed(2));
+      node.dataset.pitch = `${point.pitch}`;
+      node.classList.toggle("rest", (point.flags & 1) === 0);
+      node.classList.toggle("accented", (point.flags & 2) !== 0);
+      node.classList.toggle("sliding", (point.flags & 4) !== 0);
+      node.classList.toggle("selected", this._selectedSteps.has(index));
+      node.classList.toggle("playing", index === this._playingStep);
+      node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}`);
+    });
+
+    const visual = this.querySelector(".bassline-visual");
+    if (visual) {
+      visual.dataset.tooltip = "Live pitch contour for all 16 steps. Red nodes are accented, amber links are slides, dim nodes are rests, and the bright ring follows playback.";
+    }
   }
 
   _renderStepEditor() {
@@ -751,7 +1564,8 @@ class AcidifyPatchView extends HTMLElement {
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", `${active}`);
     });
-    this.querySelector(".octave-indicator")?.classList.toggle("high", pitch >= 12);
+    const octave = this.querySelector(".octave-indicator");
+    if (octave) octave.textContent = `${this._octaveLabel(pitch)} · +${pitch} SEMITONES FROM ROOT`;
   }
 
   _renderStudio() {
@@ -766,7 +1580,19 @@ class AcidifyPatchView extends HTMLElement {
       cell.classList.toggle("selected", this._selectedSteps.has(index));
       cell.classList.toggle("playing", index === this._playingStep);
       cell.setAttribute("aria-pressed", `${active}`);
-      if (kind === "pitch") cell.textContent = NOTE_NAMES[this._stepPitch(index) % 12].replace("#", "♯");
+      if (kind === "pitch") {
+        const root = Math.round(this._values.get("param12") ?? 36);
+        const pitch = this._stepPitch(index);
+        const absoluteNote = noteName(root + pitch).replace("#", "♯");
+        cell.textContent = absoluteNote;
+        cell.setAttribute("aria-label", `Step ${index + 1} note ${absoluteNote}, ${this._octaveLabel(pitch)}; wheel changes semitone, right-click or double-click chooses a note`);
+        cell.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${this._octaveLabel(pitch)}. Wheel changes one semitone; right-click or double-click opens direct note selection.`;
+      } else {
+        const label = kind === "gate" ? "Gate" : kind === "accent" ? "Accent" : "Slide";
+        const state = active ? "on" : "off";
+        cell.setAttribute("aria-label", `Step ${index + 1} ${label}, ${state}`);
+        cell.dataset.tooltip = `${label} is ${state} for step ${index + 1}. Click or drag across the lane to change it.`;
+      }
     });
     this._updateStudioToolbar();
   }
@@ -798,7 +1624,7 @@ class AcidifyPatchView extends HTMLElement {
     const dial = id => {
       const c = ACIDIFY_GLOBALS.find(item => item.id === id);
       return `
-        <div class="control knob-control" data-param="${c.id}" data-min="${c.min}" data-max="${c.max}" data-step="${c.step}" data-init="${c.init}" data-control="dial">
+        <div class="control knob-control" data-param="${c.id}" data-endpoint-id="${c.id}" data-min="${c.min}" data-max="${c.max}" data-step="${c.step}" data-init="${c.init}" data-control="dial">
           <div class="tick-ring"></div>
           <div class="dial" role="slider" tabindex="0" aria-label="${c.label}" aria-valuemin="${c.min}" aria-valuemax="${c.max}">
             <div class="dial-cap"><i class="dial-pointer"></i></div>
@@ -812,13 +1638,16 @@ class AcidifyPatchView extends HTMLElement {
         ${Array.from({ length: 4 }, (_, position) => {
           const index = group * 4 + position;
           return `
-            <button class="sequence-step" data-step="${index}" aria-label="Step ${index + 1}">
-              <span class="step-led"></span><span class="step-index">${index + 1}</span><span class="step-note">--</span>
+            <button class="sequence-step" data-step="${index}" aria-label="Step ${index + 1}"
+              aria-haspopup="dialog">
+              <span class="step-led"></span><span class="step-octave">+0</span>
+              <span class="step-index">${index + 1}</span><span class="step-note">--</span>
             </button>`;
         }).join("")}
       </div>`).join("");
     const pitchKeys = NOTE_NAMES.map((name, index) => `
-      <button class="pitch-key ${name.includes("#") ? "black-key" : "white-key"}" data-pitch="${index}">
+      <button class="pitch-key ${name.includes("#") ? "black-key" : "white-key"}" data-pitch="${index}"
+        aria-label="Set selected step to ${name}" title="Set selected step to ${name}">
         <span>${name.replace("#", "♯")}</span>
       </button>`).join("");
     const studioLanes = [
@@ -835,6 +1664,7 @@ class AcidifyPatchView extends HTMLElement {
               ${Array.from({ length: 4 }, (_, position) => {
                 const index = group * 4 + position;
                 return `<button class="studio-cell" data-kind="${lane.kind}" data-step="${index}"
+                  ${lane.kind === "pitch" ? 'aria-haspopup="dialog"' : ""}
                   aria-label="Step ${index + 1} ${lane.label}" aria-pressed="false"></button>`;
               }).join("")}
             </div>`).join("")}
@@ -847,6 +1677,14 @@ class AcidifyPatchView extends HTMLElement {
           return `<span>${String(index + 1).padStart(2, "0")}</span>`;
         }).join("")}
       </div>`).join("");
+    const pitchChoices = Array.from({ length: 25 }, (_, pitch) => `
+      <button class="pitch-menu-choice" type="button" role="radio" data-pitch-value="${pitch}"
+        aria-checked="false">
+        <strong>--</strong><small>OCT +${Math.floor(pitch / 12)}</small>
+      </button>`).join("");
+    const basslineNodes = Array.from({ length: 16 }, (_, index) =>
+      `<circle class="bassline-node" data-step="${index}" cx="${35 + index * (199 / 15)}" cy="24" r="2"></circle>`
+    ).join("");
 
     return `
 <style>
@@ -920,21 +1758,6 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(180deg, transparent, rgba(57,57,53,.17));
     pointer-events: none;
   }
-  acidify-patch-view .screw {
-    position: absolute; width: 16px; height: 16px; border-radius: 50%; z-index: 5;
-    background:
-      radial-gradient(circle at 36% 29%, rgba(255,255,255,.95) 0 5%, transparent 7%),
-      conic-gradient(from 28deg, #777872, #d7d8d3, #73746f, #c7c8c3, #676863, #b8b9b4, #777872);
-    border: 1px solid #686963;
-    box-shadow: 0 1px 2px rgba(0,0,0,.46), inset 0 0 0 1px rgba(255,255,255,.22);
-  }
-  acidify-patch-view .screw::after {
-    content: ""; position: absolute; left: 2px; right: 2px; top: 6px; height: 2px;
-    border-radius: 2px; background: linear-gradient(#4a4b47, #898a84);
-    box-shadow: 0 1px rgba(255,255,255,.35); transform: rotate(-17deg);
-  }
-  acidify-patch-view .s1 { left: 12px; top: 12px; } .s2 { right: 12px; top: 12px; }
-  acidify-patch-view .s3 { left: 12px; bottom: 12px; } .s4 { right: 12px; bottom: 12px; }
   acidify-patch-view .top-strip {
     --fib-1: 8px;
     --fib-2: 13px;
@@ -1215,8 +2038,44 @@ class AcidifyPatchView extends HTMLElement {
     grid-column: 1 / -1; margin-top: 3px;
     color: #66665f; font-size: 5.5px; line-height: 6px; letter-spacing: 1.45px;
   }
+  acidify-patch-view .bassline-visual {
+    position: relative; flex: 1 1 190px; min-width: 170px; max-width: 250px; height: 30px;
+    margin: 0 10px; overflow: hidden; border: 1px solid #171714; border-radius: 5px;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+      linear-gradient(#292a26, #151613);
+    background-size: 13px 100%, 100% 6px, 100% 100%;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.62), 0 1px rgba(255,255,255,.5);
+  }
+  acidify-patch-view .bassline-visual > span {
+    position: absolute; z-index: 2; left: 5px; top: 4px;
+    color: #76776f; font-size: 4.5px; font-weight: 900; letter-spacing: .65px;
+  }
+  acidify-patch-view .bassline-visual svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  acidify-patch-view .bassline-path,
+  acidify-patch-view .bassline-slide-path {
+    fill: none; stroke-linecap: round; stroke-linejoin: round;
+  }
+  acidify-patch-view .bassline-path { stroke: #8c8d84; stroke-width: 1; opacity: .72; }
+  acidify-patch-view .bassline-slide-path {
+    stroke: #efb34e; stroke-width: 1.8; opacity: .92;
+    filter: drop-shadow(0 0 1.5px rgba(239,179,78,.45));
+  }
+  acidify-patch-view .bassline-node {
+    fill: #deddd3; stroke: #171714; stroke-width: .8;
+    transition: fill 90ms ease, stroke 90ms ease, opacity 90ms ease;
+  }
+  acidify-patch-view .bassline-node.rest { opacity: .28; fill: #66675f; }
+  acidify-patch-view .bassline-node.accented { fill: #e2493a; }
+  acidify-patch-view .bassline-node.sliding { stroke: #f0b34d; stroke-width: 1.2; }
+  acidify-patch-view .bassline-node.selected { stroke: #fff8ec; stroke-width: 1.45; }
+  acidify-patch-view .bassline-node.playing {
+    fill: #ffefe8; stroke: #ff4937; stroke-width: 2;
+    filter: drop-shadow(0 0 2.5px rgba(255,60,42,.85));
+  }
   acidify-patch-view .utility {
-    display: flex; align-items: center; gap: 13px; height: 100%;
+    flex: 0 0 auto; display: flex; align-items: center; gap: 13px; height: 100%;
   }
   acidify-patch-view .studio-toggle {
     position: relative; width: 140px; height: 29px; padding: 0 7px; cursor: pointer; border-radius: 5px;
@@ -1264,6 +2123,7 @@ class AcidifyPatchView extends HTMLElement {
     color: #fff1e9; text-shadow: 0 1px #5b0c08;
   }
   acidify-patch-view .studio-toggle:focus-visible,
+  acidify-patch-view .studio-scale:focus-visible,
   acidify-patch-view .stepper button:focus-visible,
   acidify-patch-view .sequence-step:focus-visible,
   acidify-patch-view .function-button:focus-visible,
@@ -1367,10 +2227,22 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: 0 0 5px #ff2918, 0 0 10px rgba(255,41,24,.52), inset 0 0 2px #fff;
   }
   acidify-patch-view .sequence-step.accented::before {
-    content: "A"; position: absolute; left: 5px; bottom: 4px; color: #a91e17; font-size: 7px; font-weight: 900;
+    content: "A"; position: absolute; left: 3px; top: 17px; z-index: 2;
+    width: 18px; height: 18px; display: grid; place-items: center;
+    border: 1px solid #6d100b; border-radius: 4px;
+    color: #fff8f2; background: linear-gradient(180deg, #e75243, #981b14);
+    font-size: 12px; line-height: 1; font-weight: 950;
+    text-shadow: 0 1px #5b0b07;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.3), 0 1px 3px rgba(60,4,2,.42);
   }
   acidify-patch-view .sequence-step.sliding::after {
-    content: "↗"; position: absolute; right: 5px; bottom: 3px; color: #222; font-size: 10px; font-weight: 900;
+    content: "↗"; position: absolute; right: 3px; top: 17px; z-index: 2;
+    width: 18px; height: 18px; display: grid; place-items: center;
+    border: 1px solid #70520b; border-radius: 4px;
+    color: #261800; background: linear-gradient(180deg, #ffe17a, #d89d22);
+    font-size: 15px; line-height: 1; font-weight: 950;
+    text-shadow: 0 1px rgba(255,255,255,.5);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.34), 0 1px 3px rgba(51,36,0,.38);
   }
   acidify-patch-view .sequence-step.rest { opacity: .55; }
   acidify-patch-view .step-index { display: block; margin-top: 20px; font-size: 8px; font-weight: 900; }
@@ -1384,7 +2256,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view.studio-mode .classic-editor { display: none; }
   acidify-patch-view.studio-mode .studio-editor {
     position: relative; height: 122px; padding-top: 8px;
-    display: grid; grid-template-columns: 292px 1fr; gap: 13px;
+    display: grid; grid-template-columns: 404px 1fr; gap: 13px;
     border-top: 1px solid rgba(255,255,255,.62);
     box-shadow: inset 0 1px rgba(61,61,57,.18);
     animation: studio-enter 140ms ease-out both;
@@ -1409,8 +2281,18 @@ class AcidifyPatchView extends HTMLElement {
     font-size: 6px; letter-spacing: 1px; color: #65655e;
   }
   acidify-patch-view .studio-selection { color: #9b2019; font-size: 8px; letter-spacing: 1.25px; }
+  acidify-patch-view .studio-scale {
+    height: 16px; min-width: 105px; padding: 0 6px; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between; gap: 7px;
+    border: 1px solid #1a1a17; border-radius: 3px;
+    color: #b9b8af; background: linear-gradient(#55544e, #292925);
+    box-shadow: inset 0 1px rgba(255,255,255,.16), 0 1px rgba(255,255,255,.32);
+    font-size: 5px; font-weight: 900; letter-spacing: .55px;
+  }
+  acidify-patch-view .studio-scale strong { color: #ff9a89; font-size: 5.5px; letter-spacing: .45px; }
+  acidify-patch-view .studio-scale:active { transform: translateY(1px); }
   acidify-patch-view .studio-actions {
-    display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; align-content: start;
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; align-content: start;
   }
   acidify-patch-view .studio-actions button {
     height: 34px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -1638,9 +2520,9 @@ class AcidifyPatchView extends HTMLElement {
     text-shadow: 0 .5px rgba(255,255,255,.34);
   }
 
-  /* 0.4 — modern performance surface.
-     The interaction model above stays untouched; this layer replaces the
-     prototype's beige hardware skin with one coherent product system. */
+  /* 0.4 geometry baseline.
+     The interaction model stays untouched. The reconciled hardware surface
+     below supersedes this release's unapproved graphite palette. */
   acidify-patch-view {
     --surface-0: #0b0d11;
     --surface-1: #11151a;
@@ -1707,8 +2589,6 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(90deg, transparent, var(--acid) 22% 48%, rgba(255, 180, 84, .72) 64%, transparent);
     opacity: .7;
   }
-  acidify-patch-view .screw { display: none; }
-
   acidify-patch-view .top-strip {
     left: 22px; right: 22px; top: 20px; height: 198px;
     border: 0; box-shadow: none;
@@ -1980,8 +2860,14 @@ class AcidifyPatchView extends HTMLElement {
     background: radial-gradient(circle at 34% 28%, #fff7dc 0 8%, #ff796b 16%, #ff3e31 48%, #8c120c 76%);
     box-shadow: 0 0 6px var(--acid), 0 0 13px rgba(255, 78, 62, .4);
   }
-  acidify-patch-view .sequence-step.accented::before { color: var(--acid-hot); }
-  acidify-patch-view .sequence-step.sliding::after { color: var(--amber); }
+  acidify-patch-view .sequence-step.accented::before {
+    color: #fff8f2; background: linear-gradient(180deg, #ff6858, #b9231a);
+    border-color: #7b1711; box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 0 9px rgba(255,78,62,.34);
+  }
+  acidify-patch-view .sequence-step.sliding::after {
+    color: #221500; background: linear-gradient(180deg, #ffd96b, #bf821a);
+    border-color: #75500d; box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 0 8px rgba(226,166,48,.27);
+  }
   acidify-patch-view .step-note { color: var(--acid-hot); }
   acidify-patch-view .sequence-step.rest { opacity: .42; }
 
@@ -1991,7 +2877,7 @@ class AcidifyPatchView extends HTMLElement {
     border-top: 1px solid var(--line-soft); box-shadow: none;
   }
   acidify-patch-view .editor { grid-template-columns: 160px minmax(0, 1fr) 288px; }
-  acidify-patch-view.studio-mode .studio-editor { grid-template-columns: 306px 1fr; }
+  acidify-patch-view.studio-mode .studio-editor { grid-template-columns: 404px 1fr; }
   acidify-patch-view .edit-status,
   acidify-patch-view .keyboard,
   acidify-patch-view .time-controls,
@@ -2113,10 +2999,785 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .footer-mark {
     right: 28px; bottom: 7px; color: #4f5a67; font-size: 5.5px; letter-spacing: 1.35px; text-shadow: none;
   }
+
+  /* Textured silver hardware surface.
+     Keeps the established ACIDIFY geometry while matching the cool metallic
+     material of the hardware references. */
+  acidify-patch-view {
+    --metal-edge: #f7f8f7;
+    --metal-high: #d8dad9;
+    --metal-mid: #bec0bf;
+    --metal-low: #a4a7a6;
+    --metal-dark: #747877;
+    --metal-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.62' numOctaves='2' seed='29' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.52'/%3E%3C/svg%3E");
+    --metal-brush: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='96'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.014 .58' numOctaves='2' seed='17' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23b)' opacity='.1'/%3E%3C/svg%3E");
+    --line: #666a69;
+    --line-soft: rgba(50, 53, 52, .22);
+    --ink: #202221;
+    --muted: #515453;
+    --faint: #676a69;
+    --acid: #b52921;
+    --acid-hot: #d33a2f;
+    --amber: #bb712d;
+    color: var(--ink);
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  }
+  acidify-patch-view .chassis {
+    border: 1px solid #565a59;
+    border-radius: 33px 33px 27px 27px;
+    background:
+      var(--metal-grain),
+      var(--metal-brush),
+      radial-gradient(ellipse at 48% -24%, rgba(255,255,255,.72) 0 7%, transparent 48%),
+      linear-gradient(104deg, rgba(255,255,255,.46) 0%, rgba(255,255,255,.08) 9%, rgba(67,70,69,.08) 24%, rgba(255,255,255,.29) 43%, rgba(66,69,68,.12) 61%, rgba(255,255,255,.23) 78%, rgba(45,48,47,.28) 100%),
+      linear-gradient(180deg, #e1e3e2 0%, #c9cbca 31%, #b2b5b4 73%, #8d9190 100%);
+    background-blend-mode: overlay, soft-light, screen, normal, normal;
+    background-size: 96px 96px, 160px 96px, auto, auto, auto;
+    box-shadow:
+      0 30px 46px rgba(0,0,0,.46),
+      0 7px 12px rgba(0,0,0,.32),
+      inset 0 3px 1px rgba(255,255,255,.92),
+      inset 0 -10px 14px rgba(38,41,40,.42),
+      inset 5px 0 6px rgba(255,255,255,.28),
+      inset -5px 0 7px rgba(35,38,37,.25);
+  }
+  acidify-patch-view .chassis::before {
+    left: 9px; right: 9px; top: 9px; bottom: 10px;
+    border-radius: 24px 24px 18px 18px;
+    border-color: rgba(42,45,44,.72);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.88),
+      inset 0 -1px 0 rgba(24,27,26,.26),
+      0 1px 0 rgba(255,255,255,.42);
+  }
+  acidify-patch-view .chassis::after {
+    background: linear-gradient(180deg, rgba(58,64,62,.025), rgba(36,42,40,.34));
+  }
+  acidify-patch-view .panel {
+    border-color: #686b6a;
+    background:
+      var(--metal-grain),
+      var(--metal-brush),
+      radial-gradient(ellipse at 34% -14%, rgba(255,255,255,.5), transparent 48%),
+      linear-gradient(101deg, rgba(255,255,255,.24) 0%, rgba(255,255,255,.04) 17%, rgba(48,51,50,.1) 35%, rgba(255,255,255,.18) 56%, rgba(46,49,48,.12) 78%, rgba(255,255,255,.13) 92%, rgba(43,46,45,.15) 100%),
+      linear-gradient(180deg, #cacccb 0%, #b5b8b7 48%, #999d9b 100%);
+    background-blend-mode: overlay, soft-light, screen, normal, normal;
+    background-size: 96px 96px, 160px 96px, auto, auto, auto;
+    box-shadow:
+      inset 0 1px 0 #f8f9f8,
+      inset 0 -3px 5px rgba(35,38,37,.3),
+      inset 1px 0 1px rgba(255,255,255,.5),
+      inset -1px 0 1px rgba(45,48,47,.16),
+      0 3px 4px rgba(0,0,0,.4);
+  }
+  acidify-patch-view .panel::before {
+    opacity: .42;
+    mix-blend-mode: soft-light;
+    background:
+      linear-gradient(96deg, rgba(255,255,255,.18) 0%, transparent 12%, rgba(33,36,35,.08) 27%, transparent 39%, rgba(255,255,255,.24) 55%, transparent 70%, rgba(38,41,40,.09) 83%, rgba(255,255,255,.14) 100%);
+    background-size: auto;
+    -webkit-mask: none;
+            mask: none;
+  }
+  acidify-patch-view .panel::after {
+    left: 24px; right: 24px; top: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(181, 41, 33, .76) 25% 48%, rgba(183, 113, 45, .54) 65%, transparent);
+    opacity: .52;
+  }
+  acidify-patch-view .transport-bank,
+  acidify-patch-view .tone-bank,
+  acidify-patch-view .volume-bank {
+    border-color: rgba(55,58,57,.74);
+    background:
+      var(--metal-grain),
+      linear-gradient(112deg, rgba(255,255,255,.24), transparent 31%, rgba(41,44,43,.1) 58%, rgba(255,255,255,.11) 83%, rgba(39,42,41,.12)),
+      linear-gradient(180deg, #c4c6c5, #a8aba9);
+    background-blend-mode: overlay, normal, normal;
+    background-size: 96px 96px, auto, auto;
+    box-shadow:
+      inset 0 1px rgba(255,255,255,.76),
+      inset 1px 0 rgba(255,255,255,.3),
+      inset 0 -1px rgba(30,33,32,.25),
+      0 5px 12px rgba(25,28,27,.2);
+  }
+  acidify-patch-view .brand {
+    color: #1c1c19;
+    font-family: Impact, "Arial Black", sans-serif;
+    font-size: 29px;
+    line-height: 29px;
+    font-weight: 900;
+    letter-spacing: .6px;
+  }
+  acidify-patch-view .brand .acid { color: #aa211b; }
+  acidify-patch-view .model { color: #22292b; font-size: 8px; letter-spacing: 1.65px; }
+  acidify-patch-view .computer { color: #566063; }
+  acidify-patch-view .bank-title,
+  acidify-patch-view .master-head {
+    color: #4b5558;
+    text-shadow: 0 .5px rgba(255,255,255,.52);
+  }
+  acidify-patch-view .mini-title { color: #252d2f; }
+  acidify-patch-view .mode-box {
+    gap: 3px;
+    border-left-color: rgba(68,68,63,.45);
+    box-shadow: inset 1px 0 rgba(255,255,255,.42);
+  }
+  acidify-patch-view .clock-mode {
+    display: grid; grid-template-columns: 1fr 1fr; width: 108px; height: 19px;
+    padding: 2px; border: 1px solid #2a2a26; border-radius: 4px;
+    background: linear-gradient(#2b2b27, #151512);
+    box-shadow: inset 0 1px 2px #090908, 0 1px rgba(255,255,255,.52);
+  }
+  acidify-patch-view .clock-mode button {
+    min-width: 0; cursor: pointer; border-radius: 2px;
+    color: #aaa99f; background: transparent;
+    font-size: 6px; line-height: 13px; font-weight: 900; letter-spacing: .75px;
+  }
+  acidify-patch-view .clock-mode button.active {
+    color: #fff2ee;
+    background: linear-gradient(#b72b22, #6e1712);
+    box-shadow: inset 0 1px rgba(255,255,255,.18), 0 0 6px rgba(174,32,25,.24);
+  }
+  acidify-patch-view .clock-mode button:focus-visible {
+    outline: 2px solid rgba(169,32,26,.72); outline-offset: 2px;
+  }
+  acidify-patch-view .clock-readout {
+    height: 9px; color: #575850; font: 700 6px/9px "Courier New", monospace;
+    letter-spacing: .25px; white-space: nowrap;
+  }
+  acidify-patch-view .clock-readout.locked { color: #8d1d17; }
+  acidify-patch-view .clock-readout.waiting { color: #776d51; }
+  acidify-patch-view .mode-box > .run-switch { height: 35px; }
+  acidify-patch-view .run-switch.daw-controlled,
+  acidify-patch-view .tempo-box.daw-locked .knob-control {
+    cursor: default;
+  }
+  acidify-patch-view .run-switch.daw-controlled button { cursor: default; }
+  acidify-patch-view .tempo-box.daw-locked .dial {
+    pointer-events: none; opacity: .52; filter: saturate(.35);
+  }
+  acidify-patch-view .tempo-box.daw-locked .value-label { color: #77776f; }
+  acidify-patch-view .master-output { color: #666861; }
+
+  acidify-patch-view .run-switch {
+    background: linear-gradient(180deg, #171714, #33332e 14%, #1c1c19 100%);
+    border-color: #10100e;
+    box-shadow: inset 0 3px 5px #050504, inset 0 -1px rgba(255,255,255,.14), 0 1px 0 rgba(255,255,255,.66);
+  }
+  acidify-patch-view .run-switch button {
+    color: #e6eaeb;
+    background:
+      linear-gradient(100deg, rgba(255,255,255,.13), transparent 30% 72%, rgba(0,0,0,.25)),
+      linear-gradient(180deg, #697174 0%, #484f52 43%, #272d2f 100%);
+    border-color: #1a2022;
+    box-shadow: 0 3px 2px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  acidify-patch-view .run-switch.is-on button {
+    color: #ffb3a9;
+    border-color: #641811;
+    background: linear-gradient(#49332d, #211916);
+    box-shadow: 0 1px 1px #050504, inset 0 2px 4px rgba(0,0,0,.45), 0 0 10px rgba(181,41,33,.18);
+  }
+  acidify-patch-view .run-lamp,
+  acidify-patch-view .output-lamp {
+    border-color: #4f1a15;
+    background:
+      radial-gradient(circle at 34% 25%, rgba(255,255,255,.38) 0 5%, transparent 8%),
+      radial-gradient(circle at 45% 42%, #7f241c, #4a1511 48%, #210906 78%);
+  }
+
+  acidify-patch-view .wave-buttons button {
+    color: #e0e5e6;
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.16), transparent 35% 75%, rgba(0,0,0,.25)),
+      linear-gradient(#687174, #353d40 62%, #22282a);
+    border-color: #151b1d;
+    box-shadow: 0 3px 2px rgba(0,0,0,.52), inset 0 1px rgba(255,255,255,.25), 0 0 0 2px rgba(78,78,72,.12);
+  }
+  acidify-patch-view .wave-buttons button.active {
+    color: #ff5545;
+    border-color: #5f1812;
+    background: linear-gradient(#383530, #1b1a17);
+    box-shadow: 0 1px 1px rgba(0,0,0,.6), inset 0 2px 5px #0b0b09, 0 0 8px rgba(181,41,33,.18);
+  }
+  acidify-patch-view .wave-title { color: #252d2f; font-size: 8px; }
+  acidify-patch-view .dial {
+    border-color: #11110f;
+    background:
+      radial-gradient(circle, transparent 0 62%, rgba(255,255,255,.09) 63%, transparent 67%),
+      repeating-conic-gradient(from 1deg, #0c0c0a 0 5deg, #3a3934 5deg 8deg, #11110f 8deg 13deg);
+    box-shadow:
+      0 8px 9px rgba(0,0,0,.38),
+      0 2px 2px rgba(0,0,0,.6),
+      inset 0 2px 2px rgba(255,255,255,.12),
+      inset 0 -4px 4px #050504;
+  }
+  acidify-patch-view .dial::before {
+    border-color: #11110f;
+    background:
+      radial-gradient(circle at 34% 24%, rgba(255,255,255,.28) 0 2%, rgba(255,255,255,.07) 16%, transparent 36%),
+      radial-gradient(circle at 50% 48%, #56564f 0%, #272723 58%, #0b0b09 84%);
+    box-shadow: inset 0 2px 2px rgba(255,255,255,.1), inset -3px -6px 9px rgba(0,0,0,.64);
+  }
+  acidify-patch-view .dial::after { border-top-color: rgba(255,255,255,.09); }
+  acidify-patch-view .dial-pointer {
+    background: linear-gradient(90deg, #b9c0c2, #f4f7f8 48%, #929b9e);
+    box-shadow: 0 1px 1px #050504;
+  }
+  acidify-patch-view .tick-ring {
+    background: repeating-conic-gradient(from 222deg, #34342f 0 1.3deg, transparent 1.3deg 13.5deg);
+    opacity: .82;
+  }
+  acidify-patch-view .tick-ring::after { background: #a7211a; box-shadow: 0 0 3px rgba(167,33,26,.22); }
+  acidify-patch-view .control-label {
+    color: #252d2f;
+    font-size: 8px;
+    letter-spacing: .72px;
+    text-shadow: 0 .5px rgba(255,255,255,.46);
+  }
+  acidify-patch-view .value-label {
+    color: #741812;
+    font-size: 7.5px;
+    font-family: "Courier New", monospace;
+  }
+
+  acidify-patch-view .program-strip {
+    border-color: rgba(60,67,65,.7);
+    background:
+      var(--metal-grain),
+      linear-gradient(108deg, rgba(255,255,255,.24), transparent 29%, rgba(42,45,44,.1) 56%, rgba(255,255,255,.11) 82%, rgba(39,42,41,.12)),
+      linear-gradient(180deg, #bfc2c0, #a4a7a5);
+    background-blend-mode: overlay, normal, normal;
+    background-size: 96px 96px, auto, auto;
+    box-shadow: inset 0 1px rgba(255,255,255,.72), inset 0 -1px rgba(31,34,33,.27), 0 8px 16px rgba(28,31,30,.17);
+  }
+  acidify-patch-view .program-header {
+    border-bottom-color: rgba(75,75,69,.58);
+    box-shadow: 0 1px rgba(255,255,255,.5);
+  }
+  acidify-patch-view .program-title { color: #252d2f; }
+  acidify-patch-view .program-title b { color: #a51d17; }
+  acidify-patch-view .program-context { color: #505a5d; }
+  acidify-patch-view .studio-toggle {
+    color: #505a5d;
+    background:
+      linear-gradient(104deg, rgba(255,255,255,.32), transparent 34% 75%, rgba(49,52,51,.16)),
+      linear-gradient(180deg, #d0d4d2, #b6bcb8 58%, #9da4a1);
+    border-color: #666d6a;
+    box-shadow: inset 0 1px #e9edee, inset 0 -1px rgba(30,39,42,.25), 0 1px rgba(255,255,255,.34), 0 2px 2px rgba(0,0,0,.24);
+  }
+  acidify-patch-view .studio-toggle i {
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.17), transparent 35% 78%, rgba(0,0,0,.25)),
+      linear-gradient(#5a5953, #2c2c28);
+    border-color: #20201d;
+  }
+  acidify-patch-view .studio-toggle .classic-label { color: #edf1f2; text-shadow: 0 1px #171d1f; }
+  acidify-patch-view .studio-toggle[aria-pressed="true"] i {
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.16), transparent 38% 78%, rgba(63,0,0,.18)),
+      linear-gradient(#b63329, #72150f);
+    border-color: #68130e;
+  }
+  acidify-patch-view .studio-toggle[aria-pressed="true"] .classic-label { color: #505a5d; }
+  acidify-patch-view .studio-toggle[aria-pressed="true"] .studio-label { color: #fff1e9; text-shadow: 0 1px #5b0c08; }
+  acidify-patch-view .stepper {
+    background: #262622;
+    border-color: #121210;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.62), 0 1px 0 rgba(255,255,255,.55);
+  }
+  acidify-patch-view .stepper button {
+    color: #e4e9ea;
+    background: linear-gradient(#626b6e, #343c3f);
+  }
+  acidify-patch-view .stepper-value {
+    color: #ff6756;
+    background: #17120f;
+    border-inline-color: #080807;
+    text-shadow: 0 0 4px rgba(255,57,37,.58);
+  }
+  acidify-patch-view .stepper-label { color: #364043; }
+
+  acidify-patch-view .step-group:not(:last-child)::after { display: block; }
+  acidify-patch-view .sequence-step {
+    color: #222a2c;
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.36) 0, transparent 20% 76%, rgba(51,59,57,.17) 100%),
+      linear-gradient(180deg, #dadddb 0%, #c1c6c3 46%, #a7aeaa 82%, #8f9793 100%);
+    border-color: #6b726f;
+    box-shadow: 0 4px 2px rgba(0,0,0,.38), 0 1px 1px rgba(0,0,0,.28), inset 0 1px #edf1f2;
+  }
+  acidify-patch-view .sequence-step:hover {
+    border-color: #59615e;
+    background: linear-gradient(180deg, #e2e4e2, #b9bfbb 78%, #99a19d);
+  }
+  acidify-patch-view .sequence-step:active,
+  acidify-patch-view .sequence-step.selected {
+    color: #1d2426;
+    background: linear-gradient(#899396, #b9c0c2 36%, #a0a9ac);
+    border-color: #a92720;
+    box-shadow: 0 1px 1px rgba(0,0,0,.3), inset 0 3px 5px rgba(0,0,0,.28);
+  }
+  acidify-patch-view .sequence-step.multi-selected { outline-color: rgba(165,29,23,.72); }
+  acidify-patch-view .step-led {
+    border-color: #2b0806;
+    background: radial-gradient(circle at 34% 27%, rgba(255,255,255,.22) 0 5%, transparent 9%), radial-gradient(circle, #651b15, #3c0e0b 60%, #1e0705);
+  }
+  acidify-patch-view .step-note { color: #8b1b15; }
+  acidify-patch-view .sequence-step.accented::before {
+    color: #fff8f2; background: linear-gradient(180deg, #d94336, #8b1711);
+    border-color: #6d100b; box-shadow: 0 0 0 1px rgba(255,255,255,.3), 0 1px 3px rgba(60,4,2,.42);
+  }
+  acidify-patch-view .sequence-step.sliding::after {
+    color: #261800; background: linear-gradient(180deg, #ffe17a, #d89d22);
+    border-color: #70520b; box-shadow: 0 0 0 1px rgba(255,255,255,.34), 0 1px 3px rgba(51,36,0,.38);
+  }
+  acidify-patch-view .step-octave {
+    position: absolute; right: 4px; top: 4px;
+    color: #4f595c; font: 6px "Courier New", monospace; font-weight: 900;
+  }
+
+  acidify-patch-view .editor,
+  acidify-patch-view.studio-mode .studio-editor {
+    border-top-color: rgba(255,255,255,.6);
+    box-shadow: inset 0 1px rgba(61,61,57,.18);
+  }
+  acidify-patch-view .edit-status,
+  acidify-patch-view .keyboard,
+  acidify-patch-view .time-controls,
+  acidify-patch-view .studio-tools {
+    border-color: rgba(60,67,65,.7);
+    background:
+      var(--metal-grain),
+      linear-gradient(111deg, rgba(255,255,255,.22), transparent 34%, rgba(41,44,43,.1) 61%, rgba(255,255,255,.1)),
+      linear-gradient(180deg, #bfc2c1, #a6aaa8);
+    background-blend-mode: overlay, normal, normal;
+    background-size: 96px 96px, auto, auto;
+    box-shadow: inset 0 1px rgba(255,255,255,.7), inset 1px 0 rgba(255,255,255,.24), inset 0 -1px rgba(30,33,32,.23);
+  }
+  acidify-patch-view .edit-caption { color: #4b5558; }
+  acidify-patch-view .edit-readout {
+    color: #ff513b;
+    background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.05) 3px 4px), #1c100d;
+    border-color: #0a0706;
+    text-shadow: 0 0 4px #e32418, 0 0 8px rgba(227,36,24,.38);
+  }
+  acidify-patch-view .octave-indicator {
+    color: #4b5558; min-height: 9px;
+    font-family: "Courier New", monospace; font-weight: 900; letter-spacing: .3px;
+  }
+  acidify-patch-view .octave-indicator::after { content: none; }
+  acidify-patch-view .pitch-key {
+    color: #222a2c;
+    border-color: #626c6f;
+    background:
+      linear-gradient(100deg, rgba(92,102,105,.2), transparent 15% 77%, rgba(45,55,58,.24)),
+      linear-gradient(180deg, #e7ebec 0%, #d3d8da 55%, #b3bbbd 84%, #909a9d 100%);
+  }
+  acidify-patch-view .pitch-key.black-key {
+    color: #e7ebec;
+    border-color: #050505;
+    background:
+      linear-gradient(100deg, rgba(255,255,255,.09), transparent 24% 74%, rgba(0,0,0,.4)),
+      linear-gradient(180deg, #393934 0%, #272723 57%, #11110f 84%, #070706 100%);
+  }
+  acidify-patch-view .pitch-key.active,
+  acidify-patch-view .pitch-key.midi { color: #b42018; }
+  acidify-patch-view .function-button {
+    color: #222a2c;
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)),
+      linear-gradient(180deg, #d6dad7 0%, #bbc1bd 55%, #9da5a1 100%);
+    border-color: #69706d;
+    box-shadow: 0 4px 2px rgba(0,0,0,.38), inset 0 1px #edf1f2;
+  }
+  acidify-patch-view .function-button strong { color: #222a2c; }
+  acidify-patch-view .function-button small { color: #525c5f; }
+  acidify-patch-view .function-button:active,
+  acidify-patch-view .function-button.active {
+    color: #a51d17;
+    background: linear-gradient(#879194, #b7bec0 44%, #9ba4a7);
+    border-color: #a42a22;
+    box-shadow: 0 1px 1px rgba(0,0,0,.25), inset 0 3px 5px rgba(0,0,0,.28);
+  }
+  acidify-patch-view .function-button.active strong { color: #a51d17; }
+
+  acidify-patch-view .studio-tool-head { color: #525c5f; }
+  acidify-patch-view .studio-selection { color: #9b2019; }
+  acidify-patch-view .studio-actions button {
+    color: #e4e9ea;
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.12), transparent 32% 78%, rgba(0,0,0,.28)),
+      linear-gradient(#535c5f, #282f31);
+    border-color: #171d1f;
+    box-shadow: 0 2px 2px rgba(0,0,0,.32), inset 0 1px rgba(255,255,255,.18);
+  }
+  acidify-patch-view .studio-actions button small { color: #a9b0b2; }
+  acidify-patch-view .studio-matrix {
+    background:
+      linear-gradient(110deg, rgba(255,255,255,.035), transparent 27% 75%, rgba(0,0,0,.22)),
+      linear-gradient(#242520, #151613);
+    border-color: #090a08;
+    box-shadow: inset 0 2px 7px rgba(0,0,0,.58), 0 1px rgba(255,255,255,.52);
+  }
+  acidify-patch-view .studio-lane-label { color: #85867d; }
+  acidify-patch-view .studio-ruler-group span { color: #575851; }
+  acidify-patch-view .studio-ruler-group:not(:last-child)::after { background: rgba(125,126,116,.2); }
+  acidify-patch-view .studio-cell {
+    color: #6d6e67;
+    background: linear-gradient(#30312d, #22231f);
+    border-color: #11120f;
+  }
+  acidify-patch-view .studio-cell.selected { border-color: #77302a; }
+  acidify-patch-view .studio-cell[data-kind="pitch"].active {
+    color: #ff8b79;
+    background: linear-gradient(#44312c, #2c1d19);
+  }
+  acidify-patch-view .studio-lane[data-lane="gate"] .studio-cell.active {
+    background: linear-gradient(#d4d3c9, #85867e);
+    border-color: #e0dfd5;
+  }
+  acidify-patch-view .studio-lane[data-lane="accent"] .studio-cell.active {
+    background: linear-gradient(#ed5b49, #971c13);
+    border-color: #ff7666;
+  }
+  acidify-patch-view .studio-lane[data-lane="slide"] .studio-cell.active {
+    background: linear-gradient(#d09252, #71431e);
+    border-color: #dba05c;
+  }
+  acidify-patch-view .studio-hint { color: #4c5659; }
+  acidify-patch-view.studio-mode .value-label {
+    color: #ff7768;
+    background: linear-gradient(#282a27, #121311);
+    border-color: #080907;
+  }
+  acidify-patch-view .footer-mark {
+    color: #4a5457;
+    text-shadow: 0 .5px rgba(255,255,255,.38);
+  }
+  acidify-patch-view .tooltip-toggle {
+    position: absolute; z-index: 8; left: 37px; bottom: 3px;
+    width: 76px; height: 16px; padding: 1px 4px; border-radius: 4px; cursor: pointer;
+    display: grid; grid-template-columns: 12px 1fr 22px; align-items: center; gap: 2px;
+    color: #414b4e; background: linear-gradient(#c4cacb, #929b9e);
+    border: 1px solid #586266;
+    box-shadow: inset 0 1px rgba(255,255,255,.66), 0 1px rgba(255,255,255,.24);
+    font-size: 6px; line-height: 11px; font-weight: 900; letter-spacing: .75px;
+  }
+  acidify-patch-view .tooltip-toggle > i {
+    width: 10px; height: 10px; border-radius: 50%; font-style: normal;
+    display: grid; place-items: center; color: #eef2f3; background: #4d575a;
+    font-size: 7px; line-height: 10px; letter-spacing: 0;
+  }
+  acidify-patch-view .tooltip-toggle-state {
+    height: 11px; border-radius: 2px; color: #fff2ed; background: linear-gradient(#b92e24, #74150f);
+    box-shadow: inset 0 1px rgba(255,255,255,.15); text-align: center;
+  }
+  acidify-patch-view .tooltip-toggle[aria-pressed="false"] .tooltip-toggle-state {
+    color: #a9aaa4; background: linear-gradient(#4b4c47, #292a27);
+  }
+  acidify-patch-view .tooltip-toggle:focus-visible {
+    outline: 2px solid rgba(169,32,26,.82); outline-offset: 2px;
+  }
+  acidify-patch-view .tooltip-bubble[hidden] { display: none; }
+  acidify-patch-view .tooltip-bubble {
+    position: absolute; z-index: 140; width: max-content; max-width: 260px;
+    padding: 8px 10px; border-radius: 5px; pointer-events: none;
+    color: #f1efe5; background: rgba(27, 28, 25, .96);
+    border: 1px solid rgba(228, 225, 211, .28);
+    box-shadow: 0 8px 18px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.06);
+    font: 700 9px/1.35 "Helvetica Neue", Arial, sans-serif;
+    letter-spacing: .12px; text-align: left; white-space: normal;
+  }
+  acidify-patch-view .pitch-menu[hidden] { display: none; }
+  acidify-patch-view .pitch-menu {
+    position: absolute; z-index: 95; width: 394px; height: 278px; overflow: hidden;
+    color: #242724; border: 1px solid #565d5b; border-radius: 8px;
+    background:
+      var(--metal-grain),
+      radial-gradient(ellipse at 36% -10%, rgba(255,255,255,.38), transparent 50%),
+      linear-gradient(155deg, #d0d4d1, #a4aba7);
+    background-blend-mode: overlay, screen, normal;
+    background-size: 96px 96px, auto, auto;
+    box-shadow:
+      0 16px 30px rgba(35,32,25,.46),
+      0 5px 10px rgba(35,32,25,.35),
+      inset 0 1px #edf1f2,
+      inset 0 -2px 4px rgba(0,0,0,.2);
+    animation: pitch-menu-enter 110ms ease-out both;
+  }
+  @keyframes pitch-menu-enter {
+    from { opacity: 0; transform: translateY(-3px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  acidify-patch-view .pitch-menu-head {
+    height: 42px; padding: 7px 8px 5px 11px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(69,69,64,.55);
+    box-shadow: 0 1px rgba(255,255,255,.55);
+  }
+  acidify-patch-view .pitch-menu-head > div {
+    min-width: 0; display: flex; flex-direction: column; gap: 2px;
+  }
+  acidify-patch-view .pitch-menu-title {
+    overflow: hidden; color: #9f1e18; font-size: 10px; letter-spacing: 1.2px;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  acidify-patch-view .pitch-menu-head span {
+    color: #505a5d; font-size: 5.5px; font-weight: 900; letter-spacing: .85px;
+  }
+  acidify-patch-view .pitch-menu-close {
+    flex: 0 0 auto; width: 23px; height: 21px; border-radius: 3px; cursor: pointer;
+    color: #e4e9ea; font: 18px/17px Arial, sans-serif;
+    background: linear-gradient(#555e61, #282f31);
+    border: 1px solid #171d1f;
+    box-shadow: inset 0 1px rgba(255,255,255,.18), 0 1px rgba(255,255,255,.42);
+  }
+  acidify-patch-view .pitch-menu-grid {
+    height: 211px; padding: 7px 8px;
+    display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); gap: 4px;
+  }
+  acidify-patch-view .pitch-menu-choice {
+    min-width: 0; cursor: pointer; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    color: #e4e9ea;
+    background:
+      linear-gradient(105deg, rgba(255,255,255,.13), transparent 34% 77%, rgba(0,0,0,.25)),
+      linear-gradient(#576063, #282f31);
+    border: 1px solid #171d1f;
+    box-shadow: 0 2px 2px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.18);
+  }
+  acidify-patch-view .pitch-menu-choice strong {
+    font: 10px "Courier New", monospace; letter-spacing: .3px;
+  }
+  acidify-patch-view .pitch-menu-choice small {
+    color: #a9b0b2; font: 5px "Courier New", monospace; font-weight: 900;
+  }
+  acidify-patch-view .pitch-menu-choice:hover,
+  acidify-patch-view .pitch-menu-choice:focus-visible {
+    color: #ff9a87; border-color: #8f3932;
+  }
+  acidify-patch-view .pitch-menu-choice:focus-visible,
+  acidify-patch-view .pitch-menu-close:focus-visible {
+    outline: 2px solid rgba(169,32,26,.78); outline-offset: 1px;
+  }
+  acidify-patch-view .pitch-menu-choice.active {
+    color: #fff0e9; border-color: #75160f;
+    background: linear-gradient(#ae3026, #67140f);
+    box-shadow: inset 0 2px 4px rgba(52,5,2,.4), 0 0 5px rgba(181,41,33,.24);
+  }
+  acidify-patch-view .pitch-menu-choice.active small { color: #ffc0b5; }
+  acidify-patch-view .pitch-menu-foot {
+    height: 25px; padding: 5px 9px 0; border-top: 1px solid rgba(69,69,64,.35);
+    color: #505a5d; font-size: 5px; font-weight: 900; letter-spacing: .85px;
+    text-align: right;
+  }
+  acidify-patch-view .distortion-trigger {
+    display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+    width: 40px; height: 15px; padding: 0 4px; border-radius: 3px; cursor: pointer;
+    color: #424c4f; font-size: 5.5px; line-height: 1; font-weight: 900; letter-spacing: .65px;
+    background: linear-gradient(#c8ced0, #919a9d);
+    border: 1px solid #5d676a;
+    box-shadow: inset 0 1px rgba(255,255,255,.75), 0 1px rgba(255,255,255,.38);
+  }
+  acidify-patch-view .distortion-trigger:hover { color: #272823; }
+  acidify-patch-view .distortion-trigger:active,
+  acidify-patch-view .distortion-trigger.active {
+    transform: translateY(1px);
+    color: #fff0e8; border-color: #751911;
+    background: linear-gradient(#a72a21, #64130e);
+    box-shadow: inset 0 2px 3px rgba(41,3,1,.52), 0 0 6px rgba(181,41,33,.22);
+  }
+  acidify-patch-view .distortion-trigger:focus-visible,
+  acidify-patch-view .distortion-close:focus-visible,
+  acidify-patch-view .distortion-types button:focus-visible,
+  acidify-patch-view .distortion-power button:focus-visible {
+    outline: 2px solid rgba(169,32,26,.72); outline-offset: 2px;
+  }
+  acidify-patch-view .distortion-led {
+    display: block; width: 5px; height: 5px; border-radius: 50%;
+    background: #3d1612; border: 1px solid #2b0a07;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.16);
+  }
+  acidify-patch-view .distortion-led.lit {
+    background: #ff4f3c;
+    box-shadow: 0 0 4px #ff3826, inset 0 0 1px #fff;
+  }
+  acidify-patch-view .distortion-scrim[hidden] { display: none; }
+  acidify-patch-view .distortion-scrim {
+    position: absolute; z-index: 80; inset: 0; border-radius: 15px;
+    background: rgba(25,24,20,.2);
+  }
+  acidify-patch-view .distortion-overlay {
+    position: absolute; right: 22px; top: 20px; width: 514px; height: 198px;
+    overflow: hidden; border: 1px solid #595f5e; border-radius: 8px;
+    color: #242724;
+    background:
+      var(--metal-grain),
+      radial-gradient(ellipse at 36% -10%, rgba(255,255,255,.38), transparent 50%),
+      linear-gradient(155deg, #d0d4d1, #a4aba7);
+    background-blend-mode: overlay, screen, normal;
+    background-size: 96px 96px, auto, auto;
+    box-shadow:
+      0 14px 28px rgba(35,32,25,.42),
+      0 4px 9px rgba(35,32,25,.34),
+      inset 0 1px #edf1f2,
+      inset 0 -2px 4px rgba(0,0,0,.2);
+    animation: distortion-enter 130ms ease-out both;
+  }
+  @keyframes distortion-enter {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  acidify-patch-view .distortion-overlay-head {
+    height: 35px; padding: 7px 9px 5px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(69,69,64,.55);
+    box-shadow: 0 1px rgba(255,255,255,.55);
+  }
+  acidify-patch-view .distortion-overlay-head > div {
+    display: flex; align-items: baseline; gap: 11px;
+  }
+  acidify-patch-view .distortion-overlay-head strong {
+    color: #9f1e18; font-size: 10px; letter-spacing: 1.8px;
+  }
+  acidify-patch-view .distortion-status {
+    color: #505a5d; font: 7px "Courier New", monospace; letter-spacing: .75px;
+  }
+  acidify-patch-view .distortion-close {
+    width: 23px; height: 21px; border-radius: 3px; cursor: pointer;
+    color: #e4e9ea; font: 18px/17px Arial, sans-serif;
+    background: linear-gradient(#555e61, #282f31);
+    border: 1px solid #171d1f;
+    box-shadow: inset 0 1px rgba(255,255,255,.18), 0 1px rgba(255,255,255,.42);
+  }
+  acidify-patch-view .distortion-overlay-body {
+    height: 137px; padding: 9px 10px 6px;
+    display: grid; grid-template-columns: 76px 190px 96px 96px; gap: 8px;
+    align-items: stretch;
+  }
+  acidify-patch-view .distortion-power-cell,
+  acidify-patch-view .distortion-type-cell,
+  acidify-patch-view .distortion-knob-cell {
+    position: relative; min-width: 0; border: 1px solid rgba(49,59,62,.58); border-radius: 5px;
+    background:
+      var(--metal-grain),
+      linear-gradient(135deg, rgba(255,255,255,.2), rgba(61,68,66,.06));
+    background-blend-mode: overlay, normal;
+    background-size: 96px 96px, auto;
+    box-shadow: inset 0 1px rgba(255,255,255,.45);
+  }
+  acidify-patch-view .distortion-cell-label {
+    display: block; margin-top: 7px; text-align: center;
+    color: #4b5558; font-size: 6px; font-weight: 900; letter-spacing: 1.15px;
+  }
+  acidify-patch-view .distortion-power-cell {
+    display: flex; flex-direction: column; align-items: center;
+  }
+  acidify-patch-view .distortion-power-cell > small {
+    margin-top: 8px; color: #535d60; font-size: 5px; font-weight: 900; letter-spacing: .55px;
+  }
+  acidify-patch-view .distortion-power.run-switch {
+    width: 54px; height: 42px; margin-top: 11px; padding: 4px;
+  }
+  acidify-patch-view .distortion-power.run-switch button {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    font-size: 7px; letter-spacing: .8px;
+  }
+  acidify-patch-view .distortion-power button i {
+    width: 7px; height: 7px; border-radius: 50%; background: #48140f;
+    box-shadow: inset 0 1px rgba(255,255,255,.18);
+  }
+  acidify-patch-view .distortion-power.is-on button i {
+    background: #ff503d; box-shadow: 0 0 5px rgba(255,50,32,.9), inset 0 0 1px #fff;
+  }
+  acidify-patch-view .distortion-type-cell { padding: 0 7px; }
+  acidify-patch-view .distortion-types {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;
+    margin-top: 13px;
+  }
+  acidify-patch-view .distortion-types button {
+    height: 59px; border-radius: 4px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+    color: #e2e7e8; font-size: 7px; font-weight: 900; letter-spacing: .6px;
+    background: linear-gradient(105deg, rgba(255,255,255,.13), transparent 34% 77%, rgba(0,0,0,.25)),
+                linear-gradient(#576063, #282f31);
+    border: 1px solid #171d1f;
+    box-shadow: 0 3px 2px rgba(0,0,0,.33), inset 0 1px rgba(255,255,255,.2);
+  }
+  acidify-patch-view .distortion-types button small {
+    color: #a9b0b2; font-size: 5px; letter-spacing: .8px;
+  }
+  acidify-patch-view .distortion-types button.active {
+    transform: translateY(2px); color: #fff0e9; border-color: #75160f;
+    background: linear-gradient(#ae3026, #67140f);
+    box-shadow: 0 1px 1px rgba(0,0,0,.52), inset 0 2px 4px rgba(52,5,2,.4);
+  }
+  acidify-patch-view .distortion-types button.active small { color: #ffc0b5; }
+  acidify-patch-view .distortion-knob-cell {
+    display: flex; align-items: flex-start; justify-content: center; padding-top: 13px;
+  }
+  acidify-patch-view .distortion-overlay .knob-control { width: 82px; height: 112px; }
+  acidify-patch-view .distortion-overlay .dial { width: 61px; height: 61px; }
+  acidify-patch-view .distortion-overlay .dial::before,
+  acidify-patch-view .distortion-overlay .dial-cap { inset: 6px; }
+  acidify-patch-view .distortion-overlay .dial-pointer { top: 3px; height: 16px; }
+  acidify-patch-view .distortion-overlay .tick-ring {
+    top: -8px; width: 78px; height: 78px;
+  }
+  acidify-patch-view .distortion-overlay .tick-ring::after {
+    left: 37px; transform-origin: 2px 38px;
+  }
+  acidify-patch-view .distortion-overlay .control-label {
+    margin-top: 10px; font-size: 7px; letter-spacing: .8px;
+  }
+  acidify-patch-view .distortion-overlay .value-label {
+    margin-top: 2px; font-size: 7px;
+  }
+  acidify-patch-view .distortion-overlay footer {
+    height: 25px; padding: 4px 12px 0; border-top: 1px solid rgba(69,69,64,.35);
+    color: #505a5d; font-size: 5px; font-weight: 900; letter-spacing: 1.1px;
+    text-align: right;
+  }
+  @media (max-width: 700px), (max-height: 360px) {
+    acidify-patch-view .model { font-size: 10px; letter-spacing: 1.35px; }
+    acidify-patch-view .computer { font-size: 8px; letter-spacing: 1.45px; }
+    acidify-patch-view .bank-title,
+    acidify-patch-view .master-head { font-size: 8px; }
+    acidify-patch-view .mini-title { font-size: 9px; }
+    acidify-patch-view .clock-mode button { font-size: 8px; }
+    acidify-patch-view .clock-readout { font-size: 7px; }
+    acidify-patch-view .wave-title,
+    acidify-patch-view .control-label { font-size: 10px; letter-spacing: .55px; }
+    acidify-patch-view .value-label { font-size: 9px; }
+    acidify-patch-view .program-title { font-size: 13px; }
+    acidify-patch-view .program-context { font-size: 7px; }
+    acidify-patch-view .studio-toggle { font-size: 8px; }
+    acidify-patch-view .stepper-label { font-size: 8px; }
+    acidify-patch-view .step-index,
+    acidify-patch-view .step-note { font-size: 10px; }
+    acidify-patch-view .edit-caption { font-size: 8px; }
+    acidify-patch-view .octave-indicator { font-size: 8px; }
+    acidify-patch-view .function-button strong { font-size: 9px; }
+    acidify-patch-view .function-button small { font-size: 6.5px; }
+    acidify-patch-view .studio-tool-head { font-size: 7px; }
+    acidify-patch-view .studio-selection { font-size: 9px; }
+    acidify-patch-view .studio-actions button { font-size: 11px; }
+    acidify-patch-view .studio-actions button small { font-size: 6.5px; }
+    acidify-patch-view .studio-lane-label { font-size: 7px; }
+    acidify-patch-view .studio-ruler-group span { font-size: 6px; }
+    acidify-patch-view .studio-cell { font-size: 8px; }
+    acidify-patch-view .studio-hint { font-size: 6px; }
+    acidify-patch-view .distortion-trigger { font-size: 6.5px; }
+    acidify-patch-view .distortion-overlay-head strong { font-size: 11px; }
+    acidify-patch-view .distortion-status { font-size: 8px; }
+    acidify-patch-view .distortion-cell-label { font-size: 7px; }
+    acidify-patch-view .distortion-types button { font-size: 8px; }
+    acidify-patch-view .distortion-types button small { font-size: 6px; }
+  }
 </style>
 <div class="chassis">
   <div class="panel">
-    <i class="screw s1"></i><i class="screw s2"></i><i class="screw s3"></i><i class="screw s4"></i>
     <section class="top-strip">
       <header class="branding">
         <div class="brand"><span class="acid">ACID</span>IFY</div>
@@ -2131,8 +3792,15 @@ class AcidifyPatchView extends HTMLElement {
         </div>
         <div class="mode-box">
           <div class="mini-title">PATTERN PLAY</div>
+          <div class="control clock-mode" data-param="param49" data-endpoint-id="param49"
+            data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons"
+            aria-label="Clock source">
+            <button data-value="0" type="button">INT</button>
+            <button data-value="1" type="button">DAW</button>
+          </div>
+          <span class="clock-readout" role="status">INT · 128 BPM</span>
           <span class="run-lamp"></span>
-          <div class="control run-switch" data-param="param10" data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+          <div class="control run-switch" data-param="param10" data-endpoint-id="param10" data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
             <button data-value="0">RUN / STOP</button>
             <button data-value="1" hidden>RUN</button>
           </div>
@@ -2141,7 +3809,7 @@ class AcidifyPatchView extends HTMLElement {
       <div class="tone-bank">
         <div class="bank-title">SYNTHESIS</div>
         <div class="tone-controls">
-          <div class="control waveform" data-param="param7" data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons">
+          <div class="control waveform" data-param="param7" data-endpoint-id="param7" data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons">
             <div class="wave-buttons">
               <button data-value="0" aria-label="Saw"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M2 16L9 4v12l7-12v12l7-12"/></svg></button>
               <button data-value="1" aria-label="Square"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M2 16V4h10v12h10V4h4"/></svg></button>
@@ -2154,11 +3822,49 @@ class AcidifyPatchView extends HTMLElement {
       <div class="volume-bank">
         <div class="master-head">
           <span>MASTER</span>
+          <button class="distortion-trigger" type="button" aria-expanded="false"
+            aria-controls="distortion-overlay" aria-label="Distortion disabled; open controls"
+            title="Distortion · OFF"><i class="distortion-led"></i><span>DIST</span></button>
           <span class="master-output"><span class="output-lamp"></span>OUT</span>
         </div>
         ${dial("param8")}
       </div>
     </section>
+
+    <div class="distortion-scrim" hidden aria-hidden="true">
+      <section class="distortion-overlay" id="distortion-overlay" role="dialog" aria-modal="true"
+        aria-labelledby="distortion-title">
+        <header class="distortion-overlay-head">
+          <div>
+            <strong id="distortion-title">DISTORTION STAGE</strong>
+            <span class="distortion-status" role="status">TRUE BYPASS</span>
+          </div>
+          <button class="distortion-close" type="button" aria-label="Close distortion controls">×</button>
+        </header>
+        <div class="distortion-overlay-body">
+          <div class="distortion-power-cell">
+            <span class="distortion-cell-label">POWER</span>
+            <div class="control run-switch distortion-power" data-param="param45" data-endpoint-id="param45"
+              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+              <button data-value="1" type="button"><i></i><span>ON</span></button>
+            </div>
+            <small>CLEAN BYPASS</small>
+          </div>
+          <div class="distortion-type-cell">
+            <span class="distortion-cell-label">CHARACTER</span>
+            <div class="control distortion-types" data-param="param46" data-endpoint-id="param46"
+              data-min="0" data-max="2" data-step="1" data-init="0" data-control="buttons">
+              <button data-value="0" type="button">PURE<small>SUBTLE</small></button>
+              <button data-value="1" type="button">MACKIE<small>1202</small></button>
+              <button data-value="2" type="button">PHONO<small>RIAA</small></button>
+            </div>
+          </div>
+          <div class="distortion-knob-cell">${dial("param47")}</div>
+          <div class="distortion-knob-cell">${dial("param48")}</div>
+        </div>
+        <footer>POST OUTPUT · 4× OVERSAMPLED · TYPE CHANGES CROSSFADED</footer>
+      </section>
+    </div>
 
     <section class="program-strip">
       <div class="program-header">
@@ -2166,16 +3872,29 @@ class AcidifyPatchView extends HTMLElement {
           <b>16 STEP</b><span>PATTERN PROGRAMMER</span>
           <small class="program-context">CLASSIC PROGRAMMING</small>
         </div>
+        <div class="bassline-visual" role="img" aria-label="Live 16-step bassline pitch contour"
+          data-tooltip="Live pitch contour for all 16 steps. Red nodes are accented, amber links are slides, dim nodes are rests, and the bright ring follows playback.">
+          <span>PITCH MAP</span>
+          <svg viewBox="0 0 240 30" aria-hidden="true" focusable="false">
+            <path class="bassline-path"></path>
+            <path class="bassline-slide-path"></path>
+            ${basslineNodes}
+          </svg>
+        </div>
         <div class="utility">
           <button class="studio-toggle" aria-pressed="false" aria-label="Open Studio edit mode" aria-keyshortcuts="M"
             title="Switch editor · keyboard shortcut M">
             <i></i><span class="classic-label">CLASSIC</span><span class="studio-label">STUDIO</span>
           </button>
-          <div class="control" data-param="param11" data-min="1" data-max="16" data-step="1" data-init="16" data-control="stepper">
+          <div class="control swing-control" data-param="param50" data-endpoint-id="param50" data-min="0" data-max="100" data-step="1" data-init="0" data-control="stepper">
+            <div class="stepper"><button data-step="-1">−</button><span class="stepper-value">--</span><button data-step="1">+</button></div>
+            <div class="stepper-label">SWING</div>
+          </div>
+          <div class="control" data-param="param11" data-endpoint-id="param11" data-min="1" data-max="16" data-step="1" data-init="16" data-control="stepper">
             <div class="stepper"><button data-step="-1">−</button><span class="stepper-value">--</span><button data-step="1">+</button></div>
             <div class="stepper-label">LENGTH</div>
           </div>
-          <div class="control" data-param="param12" data-min="24" data-max="60" data-step="1" data-init="36" data-control="stepper">
+          <div class="control" data-param="param12" data-endpoint-id="param12" data-min="24" data-max="60" data-step="1" data-init="36" data-control="stepper">
             <div class="stepper"><button data-step="-1">−</button><span class="stepper-value">--</span><button data-step="1">+</button></div>
             <div class="stepper-label">ROOT</div>
           </div>
@@ -2184,25 +3903,28 @@ class AcidifyPatchView extends HTMLElement {
       <div class="step-row">${steps}</div>
       <div class="editor classic-editor" aria-hidden="false">
         <div class="edit-status">
-          <span class="edit-caption">STEP / PITCH</span>
+          <span class="edit-caption">SELECT STEP · CHOOSE KEY</span>
           <strong class="edit-readout">--</strong>
           <span class="octave-indicator"></span>
         </div>
         <div class="keyboard"><div class="keyboard-keys">${pitchKeys}</div></div>
         <div class="time-controls">
-          <button class="function-button" data-transpose="-12"><strong>OCT −</strong><small>TRANSPOSE</small></button>
-          <button class="function-button" data-transpose="12"><strong>OCT +</strong><small>TRANSPOSE</small></button>
-          <button class="function-button" data-flag="1"><strong>GATE</strong><small>REST / ON</small></button>
-          <button class="function-button" data-flag="2"><strong>ACCENT</strong><small>DYNAMICS</small></button>
-          <button class="function-button" data-flag="4"><strong>SLIDE</strong><small>LEGATO</small></button>
-          <button class="function-button" data-classic-action="clear-step"><strong>CLEAR</strong><small>THIS STEP</small></button>
+          <button class="function-button" data-transpose="-12" title="Transpose the selected step down one octave."><strong>OCT −</strong><small>TRANSPOSE</small></button>
+          <button class="function-button" data-transpose="12" title="Transpose the selected step up one octave."><strong>OCT +</strong><small>TRANSPOSE</small></button>
+          <button class="function-button" data-flag="1" title="Toggle the selected step between Gate and Rest."><strong>GATE</strong><small>REST / ON</small></button>
+          <button class="function-button" data-flag="2" title="Toggle Accent for the selected step."><strong>ACCENT</strong><small>DYNAMICS</small></button>
+          <button class="function-button" data-flag="4" title="Toggle Slide into the next active step."><strong>SLIDE</strong><small>LEGATO</small></button>
+          <button class="function-button" data-classic-action="clear-step" title="Reset the selected step to its default pitch and timing state."><strong>CLEAR</strong><small>THIS STEP</small></button>
         </div>
       </div>
       <div class="studio-editor" aria-hidden="true">
         <div class="studio-tools">
           <div class="studio-tool-head">
             <strong class="studio-selection">STEP 01</strong>
-            <span>SMART EDIT</span>
+            <button class="studio-scale" type="button" aria-label="Generation scale Minor Pentatonic; click for next scale"
+              data-tooltip="Generate and Mutate currently use the root-relative Minor Pentatonic scale. Click to choose the next scale.">
+              <span>SCALE</span><strong>MIN PENTA</strong>
+            </button>
           </div>
           <div class="studio-actions">
             <button data-studio-action="undo" title="Undo (Ctrl/Cmd+Z)">↶<small>UNDO</small></button>
@@ -2211,23 +3933,47 @@ class AcidifyPatchView extends HTMLElement {
             <button data-studio-action="paste" title="Paste steps">▣<small>PASTE</small></button>
             <button data-studio-action="rotate-left" title="Rotate selection left">◀<small>ROTATE</small></button>
             <button data-studio-action="rotate-right" title="Rotate selection right">▶<small>ROTATE</small></button>
+            <button data-studio-action="reverse" title="Reverse the selected step order">⇄<small>REVERSE</small></button>
+            <button data-studio-action="pitch-mirror" title="Mirror pitches inside their current range">◇<small>MIRROR</small></button>
             <button data-studio-action="transpose-down" title="Transpose octave down">−12<small>OCT</small></button>
             <button data-studio-action="transpose-up" title="Transpose octave up">+12<small>OCT</small></button>
             <button data-studio-action="select-all" title="Select all steps">16<small>ALL</small></button>
-            <button data-studio-action="randomize" title="Smart-randomize selection">✣<small>RAND</small></button>
+            <button data-studio-action="generate" title="Generate a new scale-aware phrase">✣<small>GENERATE</small></button>
+            <button data-studio-action="mutate" title="Mutate the phrase gently within the selected scale">≈<small>MUTATE</small></button>
             <button data-studio-action="rest" title="Toggle gate/rest for selection">—<small>REST</small></button>
+            <button data-studio-action="choose-note" aria-haspopup="dialog"
+              title="Choose an exact note for the selected steps">♪<small>NOTE</small></button>
           </div>
           <span class="studio-toast" role="status"></span>
         </div>
         <div class="studio-matrix" aria-label="Studio step editor">
           <div class="studio-ruler"><span></span><div class="studio-lane-cells">${studioRuler}</div></div>
           ${studioLanes}
-          <span class="studio-hint">DRAG PAINT · SHIFT SELECT · WHEEL NOTE · M VIEW</span>
+          <span class="studio-hint">RIGHT/DOUBLE CLICK NOTE · WHEEL ±1 · SHIFT SELECT · M VIEW</span>
         </div>
       </div>
     </section>
-    <div class="footer-mark">ACIDIFY 0.4.0 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
+    <button class="tooltip-toggle" type="button" aria-pressed="true"
+      data-tooltip="Turn the English control tooltips on or off.">
+      <i>?</i><span>TIPS</span><strong class="tooltip-toggle-state">ON</strong>
+    </button>
+    <div class="footer-mark">ACIDIFY 0.7.2 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
   </div>
+  <section class="pitch-menu" role="dialog" aria-modal="false" aria-hidden="true"
+    aria-labelledby="pitch-menu-title" hidden>
+    <header class="pitch-menu-head">
+      <div>
+        <strong class="pitch-menu-title" id="pitch-menu-title">CHOOSE NOTE</strong>
+        <span>DIRECT STEP PITCH · ROOT-RELATIVE RANGE</span>
+      </div>
+      <button class="pitch-menu-close" type="button" aria-label="Close note chooser">×</button>
+    </header>
+    <div class="pitch-menu-grid" role="radiogroup" aria-label="Available notes">
+      ${pitchChoices}
+    </div>
+    <footer class="pitch-menu-foot">25 SEMITONES · THREE VISIBLE OCTAVE LEVELS</footer>
+  </section>
+  <div class="tooltip-bubble" role="tooltip" hidden></div>
 </div>`;
   }
 }

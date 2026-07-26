@@ -1,5 +1,5 @@
 /*
-    ACIDIFY 0.2.1 — analog-modelled 303-class bassline for Amorph.
+    ACIDIFY 0.7.2 — analog-modelled 303-class bassline for Amorph.
 
     MIDI/16-step sequencer -> oscillator -> coupling HP -> four-stage ladder
     -> coupling HP -> accent VCA -> output stage.
@@ -12,14 +12,25 @@
       https://github.com/RobinSchmidt/Open303
 
     The implementation is an original Cmajor port and adaptation for Amorph.
+    The optional post stage also ports the signal paths of the MIT-licensed
+    Airwindows PurestDrive and Mackity processors. PHONO is a clearly labelled
+    generic RIAA/overload model rather than a claim to emulate one specific
+    mixer.
 */
 
 processor AcidifyCore
 {
     input  event std::midi::Message midiIn;
+    input  event float64 transportIn;
+    input  event std::timeline::Tempo tempoIn;
+    input  event std::timeline::TransportState transportStateIn;
+    input  event std::timeline::Position positionIn;
     output stream float<2> out;
     output event float currentStep;
     output event float meterOut;
+    output event float effectiveTempo;
+    output event float transportRunning;
+    output event float hostSyncStatus;
 
     input event float param1  [[ name: "Tuning",         min: -1.0, max: 1.0,   init: 0.0,   unit: "st" ]];
     input event float param2  [[ name: "Cut Off Freq",   min: 0.0,  max: 1.0,   init: 0.45 ]];
@@ -29,7 +40,7 @@ processor AcidifyCore
     input event float param6  [[ name: "Accent",         min: 0.0,  max: 1.0,   init: 0.65 ]];
     input event float param7  [[ name: "Waveform",       min: 0.0,  max: 1.0,   init: 0.0,   step: 1.0 ]];
     input event float param8  [[ name: "Volume",         min: -36.0, max: 0.0,  init: -6.0,  unit: "dB" ]];
-    input event float param9  [[ name: "Tempo",          min: 40.0, max: 300.0, init: 128.0, unit: "bpm" ]];
+    input event float param9  [[ name: "Tempo",          min: 40.0, max: 300.0, init: 128.0, step: 0.01, unit: "bpm" ]];
     input event float param10 [[ name: "Run",            min: 0.0,  max: 1.0,   init: 0.0,   step: 1.0 ]];
     input event float param11 [[ name: "Pattern Length", min: 1.0,  max: 16.0,  init: 16.0,  step: 1.0 ]];
     input event float param12 [[ name: "Root Note",      min: 24.0, max: 60.0,  init: 36.0,  step: 1.0 ]];
@@ -68,6 +79,14 @@ processor AcidifyCore
     input event float param42 [[ name: "Step 14 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
     input event float param43 [[ name: "Step 15 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
     input event float param44 [[ name: "Step 16 Flags", min: 0.0, max: 7.0, init: 5.0, step: 1.0 ]];
+    input event float param45 [[ name: "Distortion Enable", min: 0.0, max: 1.0, init: 0.0, step: 1.0 ]];
+    input event float param46 [[ name: "Distortion Type",   min: 0.0, max: 2.0, init: 0.0, step: 1.0 ]];
+    input event float param47 [[ name: "Distortion Drive",  min: 0.0, max: 1.0, init: 0.35 ]];
+    input event float param48 [[ name: "Distortion Mix",    min: 0.0, max: 1.0, init: 1.0 ]];
+    input event float param49 [[ name: "Clock Mode",         min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Internal|DAW" ]];
+    input event float param50 [[ name: "Swing",              min: 0.0, max: 100.0, init: 0.0, step: 1.0,
+                                 unit: "%" ]];
 
     float tuning = 0.0f;
     float cutoffControl = 0.45f;
@@ -77,8 +96,34 @@ processor AcidifyCore
     float accentControl = 0.65f;
     int waveform = 0;
     float volumeDb = -6.0f;
+    bool distortionEnabled = false;
+    int distortionType = 0;
+    float distortionDrive = 0.35f;
+    float distortionMix = 1.0f;
     float tempo = 128.0f;
-    bool running = false;
+    float swingControl = 0.0f;
+    bool manualRunning = false;
+    bool dawSyncEnabled = false;
+    bool dawPlaying = false;
+    bool hostTempoSeen = false;
+    bool hostTransportSeen = false;
+    bool hostPositionSeen = false;
+    float hostTempo = 128.0f;
+    float64 hostQuarterNote = 0.0;
+    int amorphTransportSlot = 0;
+    int amorphPlaySlot = 0;
+    int amorphTempoSlot = 1;
+    float64[6] amorphPlaySlotScore;
+    float64[6] amorphTempoSlotScore;
+    bool dawTickReady = false;
+    int64 lastDawTick = 0;
+    float64 dawGateOffQuarterNote = 0.0;
+    bool dawGateArmed = false;
+    int reportedSyncFlags = -1;
+    int reportedRunning = -1;
+    float reportedTempo = -1.0f;
+    int clockReportCountdown = 1;
+    int clockReportPeriod = 1;
     int patternLength = 16;
     int rootNote = 36;
 
@@ -101,39 +146,115 @@ processor AcidifyCore
 
     float filterEnvelope = 0.0f;
     float filterEnvelopeRC = 0.0f;
-    float accentEnvelope = 0.0f;
-    float accentEnvelopeRC = 0.0f;
     float ampEnvelope = 0.0f;
+    float accentCapVoltage = 0.0f;
+    float accentVcaRC = 0.0f;
 
-    float preLowpass = 0.0f;
-    float feedbackLowpass = 0.0f;
-    float postLowpass = 0.0f;
+    float preHighpassInput = 0.0f;
+    float preHighpassOutput = 0.0f;
+    float feedbackHighpassInput = 0.0f;
+    float feedbackHighpassOutput = 0.0f;
+    float postHighpassInput = 0.0f;
+    float postHighpassOutput = 0.0f;
     float ladder1 = 0.0f;
     float ladder2 = 0.0f;
     float ladder3 = 0.0f;
     float ladder4 = 0.0f;
 
     float baseCutoff = 780.0f;
+    float baseCutoffTarget = 780.0f;
     float envScaler = 3.5f;
+    float envScalerTarget = 3.5f;
     float envOffset = 0.32f;
+    float envOffsetTarget = 0.32f;
     float resonanceSkewed = 0.0f;
+    float resonanceSkewedTarget = 0.0f;
     float normalDecayMs = 563.0f;
     float outputGain = 0.501187f;
+    float outputGainTarget = 0.501187f;
+    float waveformBlend = 0.0f;
+    float smoothedDistortionDrive = 0.35f;
+    float smoothedDistortionMix = 1.0f;
+    float smoothedDistortionType = 0.0f;
+    float smoothedDistortionWet = 0.0f;
 
     float cachedRate = 0.0f;
     float glideCoeff = 0.0f;
     float filterAttackAlpha = 0.0f;
-    float accentAttackAlpha = 0.0f;
     float normalDecayCoeff = 0.0f;
     float accentDecayCoeff = 0.0f;
-    float ampAttackAlpha = 0.0f;
     float ampBodyCoeff = 0.0f;
     float ampReleaseCoeff = 0.0f;
     float ampAccentReleaseCoeff = 0.0f;
-    float preHighpassAlpha = 0.0f;
-    float feedbackHighpassAlpha = 0.0f;
-    float postHighpassAlpha = 0.0f;
+    float accentVcaAlpha = 0.0f;
+    float preHighpassPole = 0.0f;
+    float preHighpassGain = 0.0f;
+    float feedbackHighpassPole = 0.0f;
+    float feedbackHighpassGain = 0.0f;
+    float postHighpassPole = 0.0f;
+    float postHighpassGain = 0.0f;
     float meterAlpha = 0.0f;
+    float parameterSmoothingAlpha = 1.0f;
+    float distortionSmoothingAlpha = 1.0f;
+
+    float64 allpassB0 = 0.0;
+    float64 allpassA1 = 0.0;
+    float64 allpassX1 = 0.0;
+    float64 allpassY1 = 0.0;
+
+    float64 notchB0 = 1.0;
+    float64 notchB1 = 0.0;
+    float64 notchB2 = 0.0;
+    float64 notchA1 = 0.0;
+    float64 notchA2 = 0.0;
+    float64 notchX1 = 0.0;
+    float64 notchX2 = 0.0;
+    float64 notchY1 = 0.0;
+    float64 notchY2 = 0.0;
+
+    float64 ampB0 = 1.0;
+    float64 ampB1 = 0.0;
+    float64 ampB2 = 0.0;
+    float64 ampA1 = 0.0;
+    float64 ampA2 = 0.0;
+    float64 ampX1 = 0.0;
+    float64 ampX2 = 0.0;
+    float64 ampY1 = 0.0;
+    float64 ampY2 = 0.0;
+
+    float64 purePrevious = 0.0;
+    float64 mackHP1 = 0.0;
+    float64 mackHP2 = 0.0;
+    float64 mackIirAmountA = 0.0;
+    float64 mackIirAmountB = 0.0;
+    float64 mackAB0 = 1.0;
+    float64 mackAB1 = 0.0;
+    float64 mackAB2 = 0.0;
+    float64 mackAA1 = 0.0;
+    float64 mackAA2 = 0.0;
+    float64 mackAX1 = 0.0;
+    float64 mackAX2 = 0.0;
+    float64 mackAY1 = 0.0;
+    float64 mackAY2 = 0.0;
+    float64 mackBB0 = 1.0;
+    float64 mackBB1 = 0.0;
+    float64 mackBB2 = 0.0;
+    float64 mackBA1 = 0.0;
+    float64 mackBA2 = 0.0;
+    float64 mackBX1 = 0.0;
+    float64 mackBX2 = 0.0;
+    float64 mackBY1 = 0.0;
+    float64 mackBY2 = 0.0;
+
+    float64 riaaB0 = 1.0;
+    float64 riaaB1 = 0.0;
+    float64 riaaB2 = 0.0;
+    float64 riaaA1 = 0.0;
+    float64 riaaA2 = 0.0;
+    float64 riaaX1 = 0.0;
+    float64 riaaX2 = 0.0;
+    float64 riaaY1 = 0.0;
+    float64 riaaY2 = 0.0;
 
     int sequenceCountdown = 0;
     int gateCountdown = 0;
@@ -141,6 +262,9 @@ processor AcidifyCore
     int meterCountdown = 1;
     int meterPeriod = 1;
     float meterEnvelope = 0.0f;
+    int[128] heldNotes;
+    int[128] heldVelocities;
+    int heldNoteCount = 0;
     bool modelReady = false;
 
     float exponentialAlpha (float hz, float sampleRate)
@@ -186,6 +310,231 @@ processor AcidifyCore
     float softClip (float x)
     {
         return float (tanh (float64 (x)));
+    }
+
+    void updateOutputNetworkCoefficients (float sampleRate)
+    {
+        let rate = max (float64 (sampleRate), 1.0);
+
+        // Open303 output network: 14.008 Hz one-pole allpass.
+        let allpassT = tan (float64 (pi) * 14.008 / rate);
+        allpassB0 = (allpassT - 1.0) / (allpassT + 1.0);
+        allpassA1 = -allpassB0;
+
+        // Open303 output network: 7.5164 Hz, 4.7-octave band reject.
+        let notchW = float64 (twoPi) * 7.5164 / rate;
+        let notchS = sin (notchW);
+        let notchC = cos (notchW);
+        let safeS = abs (notchS) < 1.0e-12 ? 1.0e-12 : notchS;
+        let notchAlpha = notchS * sinh (0.5 * log (2.0) * 4.7 * notchW / safeS);
+        let notchScale = 1.0 / (1.0 + notchAlpha);
+        notchB0 = notchScale;
+        notchB1 = -2.0 * notchC * notchScale;
+        notchB2 = notchScale;
+        notchA1 = 2.0 * notchC * notchScale;
+        notchA2 = (notchAlpha - 1.0) * notchScale;
+
+        // Open303's 200 Hz Butterworth de-clicker for the VCA control signal.
+        let ampK = tan (float64 (pi) * 200.0 / rate);
+        let ampNorm = 1.0 / (1.0 + ampK / 0.7071067811865476 + ampK * ampK);
+        ampB0 = ampK * ampK * ampNorm;
+        ampB1 = 2.0 * ampB0;
+        ampB2 = ampB0;
+        ampA1 = 2.0 * (ampK * ampK - 1.0) * ampNorm;
+        ampA2 = (1.0 - ampK / 0.7071067811865476 + ampK * ampK) * ampNorm;
+    }
+
+    void updateMackityCoefficients (float sampleRate)
+    {
+        let rate = max (float64 (sampleRate), 1.0);
+        const float64 referenceRate = 44.1 * 1000.0;
+        let overallScale = rate / referenceRate;
+        mackIirAmountA = 0.001860867 / overallScale;
+        mackIirAmountB = 0.000287496 / overallScale;
+        let cutoff = min (19160.0, rate * 0.45);
+        let k = tan (float64 (pi) * cutoff / rate);
+
+        let normA = 1.0 / (1.0 + k / 0.431684981684982 + k * k);
+        mackAB0 = k * k * normA;
+        mackAB1 = 2.0 * mackAB0;
+        mackAB2 = mackAB0;
+        mackAA1 = 2.0 * (k * k - 1.0) * normA;
+        mackAA2 = (1.0 - k / 0.431684981684982 + k * k) * normA;
+
+        let normB = 1.0 / (1.0 + k / 1.1582298 + k * k);
+        mackBB0 = k * k * normB;
+        mackBB1 = 2.0 * mackBB0;
+        mackBB2 = mackBB0;
+        mackBA1 = 2.0 * (k * k - 1.0) * normB;
+        mackBA2 = (1.0 - k / 1.1582298 + k * k) * normB;
+    }
+
+    void updateRiaaCoefficients (float sampleRate)
+    {
+        let rate = max (float64 (sampleRate), 1.0);
+        let bilinear = 2.0 * rate;
+        let t1 = 0.003180;
+        let t2 = 0.000318;
+        let t3 = 0.000075;
+        let p1 = bilinear * t1;
+        let z2 = bilinear * t2;
+        let p3 = bilinear * t3;
+
+        let d0 = (1.0 + p1) * (1.0 + p3);
+        let d1 = 2.0 * (1.0 - p1 * p3);
+        let d2 = (1.0 - p1) * (1.0 - p3);
+
+        // Normalise the standard 3180/318/75 us playback curve at 1 kHz.
+        let referenceW = float64 (twoPi) * 1000.0;
+        let referenceMagnitude = sqrt (1.0 + referenceW * referenceW * t2 * t2)
+                               / sqrt ((1.0 + referenceW * referenceW * t1 * t1)
+                                     * (1.0 + referenceW * referenceW * t3 * t3));
+        let normalise = 1.0 / max (referenceMagnitude, 1.0e-12);
+        riaaB0 = normalise * (1.0 + z2) / d0;
+        riaaB1 = normalise * 2.0 / d0;
+        riaaB2 = normalise * (1.0 - z2) / d0;
+        riaaA1 = d1 / d0;
+        riaaA2 = d2 / d0;
+    }
+
+    float processAllpass (float signal)
+    {
+        let x = float64 (signal);
+        let y = allpassB0 * x + allpassX1 + allpassA1 * allpassY1;
+        allpassX1 = x;
+        allpassY1 = y;
+        return float (y);
+    }
+
+    float processNotch (float signal)
+    {
+        let x = float64 (signal);
+        let y = notchB0 * x + notchB1 * notchX1 + notchB2 * notchX2
+              + notchA1 * notchY1 + notchA2 * notchY2;
+        notchX2 = notchX1;
+        notchX1 = x;
+        notchY2 = notchY1;
+        notchY1 = y;
+        return float (y);
+    }
+
+    float processAmpSmoother (float signal)
+    {
+        let x = float64 (signal);
+        let y = ampB0 * x + ampB1 * ampX1 + ampB2 * ampX2
+              - ampA1 * ampY1 - ampA2 * ampY2;
+        ampX2 = ampX1;
+        ampX1 = x;
+        ampY2 = ampY1;
+        ampY1 = y;
+        return float (y);
+    }
+
+    float processPurestDrive (float signal, float drive)
+    {
+        let x = float64 (signal);
+        let shaped = sin (x);
+        let apply = min (1.0, 0.5 * abs (purePrevious + shaped) * float64 (drive));
+        let driven = x * (1.0 - apply) + shaped * apply;
+        purePrevious = sin (x);
+        return float (driven);
+    }
+
+    float processMackity (float signal, float drive)
+    {
+        let macroGain = 1.0 + 9.0 * float64 (drive);
+        let inputTrim = macroGain * macroGain;
+        var x = float64 (signal);
+
+        mackHP1 = mackHP1 * (1.0 - mackIirAmountA) + x * mackIirAmountA;
+        x -= mackHP1;
+        x *= inputTrim;
+
+        let a = mackAB0 * x + mackAB1 * mackAX1 + mackAB2 * mackAX2
+              - mackAA1 * mackAY1 - mackAA2 * mackAY2;
+        mackAX2 = mackAX1;
+        mackAX1 = x;
+        mackAY2 = mackAY1;
+        mackAY1 = a;
+        x = clamp (a, -1.0, 1.0);
+        x -= x * x * x * x * x * 0.1768;
+
+        let b = mackBB0 * x + mackBB1 * mackBX1 + mackBB2 * mackBX2
+              - mackBA1 * mackBY1 - mackBA2 * mackBY2;
+        mackBX2 = mackBX1;
+        mackBX1 = x;
+        mackBY2 = mackBY1;
+        mackBY1 = b;
+        x = b;
+
+        mackHP2 = mackHP2 * (1.0 - mackIirAmountB) + x * mackIirAmountB;
+        x -= mackHP2;
+
+        // One macro control replaces Mackity's separate trim and pad controls.
+        return float (x / macroGain);
+    }
+
+    float processPhono (float signal, float drive)
+    {
+        let preGain = pow (10.0, 2.0 * float64 (drive));
+        let overloaded = tanh (float64 (signal) * preGain);
+        let colored = riaaB0 * overloaded + riaaB1 * riaaX1 + riaaB2 * riaaX2
+                    - riaaA1 * riaaY1 - riaaA2 * riaaY2;
+        riaaX2 = riaaX1;
+        riaaX1 = overloaded;
+        riaaY2 = riaaY1;
+        riaaY1 = colored;
+        return softClip (float (colored * 0.18));
+    }
+
+    float processDistortion (float signal)
+    {
+        let pure = processPurestDrive (signal, smoothedDistortionDrive);
+        let mackie = processMackity (signal, smoothedDistortionDrive);
+        let phono = processPhono (signal, smoothedDistortionDrive);
+        if (smoothedDistortionWet <= 0.000001f)
+            return signal;
+
+        let type = clamp (smoothedDistortionType, 0.0f, 2.0f);
+        let wet = type <= 1.0f
+                ? pure + (mackie - pure) * type
+                : mackie + (phono - mackie) * (type - 1.0f);
+        return signal + (wet - signal) * smoothedDistortionWet;
+    }
+
+    float processAccentSweep (float source, float sampleRate)
+    {
+        // Ideal-diode nodal model of the stock 47k + dual 100k resonance pot
+        // + 100k summing resistor + 1uF accent-sweep capacitor network.
+        let potPosition = clamp (resonanceSkewed, 0.0f, 1.0f);
+        let rAW = max (0.001f, 100.0f * potPosition);
+        let rWB = max (0.001f, 100.0f * (1.0f - potPosition));
+        let gSource = 1.0f / 47.0f;
+        let gAW = 1.0f / rAW;
+        let gWB = 1.0f / rWB;
+        let gMix = 1.0f / 100.0f;
+        let a = gSource + gAW;
+        let d = gAW + gWB + gMix;
+        let determinant = max (a * d - gAW * gAW, 0.0000001f);
+        let positiveSource = max (source, 0.0f);
+        let nodeAOn = (gSource * positiveSource * d + gAW * gWB * accentCapVoltage)
+                    / determinant;
+        var wiper = 0.0f;
+
+        if (positiveSource > 0.0f && nodeAOn <= positiveSource)
+        {
+            wiper = (a * gWB * accentCapVoltage
+                    + gAW * gSource * positiveSource) / determinant;
+        }
+        else
+        {
+            wiper = accentCapVoltage * gWB / (gWB + gMix);
+        }
+
+        let capacitorCurrent = (wiper - accentCapVoltage) * gWB;
+        accentCapVoltage += capacitorCurrent * (1000.0f / max (sampleRate, 1.0f));
+        accentCapVoltage = clamp (accentCapVoltage, 0.0f, 2.0f);
+        return max (wiper, 0.0f);
     }
 
     int getPitch (int index)
@@ -234,18 +583,18 @@ processor AcidifyCore
         const float highCutoff = 2394.411987f;
         let c = clamp (cutoffControl, 0.0f, 1.0f);
         let e = clamp (envModControl, 0.0f, 1.0f);
-        baseCutoff = lowCutoff * float (pow (float64 (highCutoff / lowCutoff), float64 (c)));
+        baseCutoffTarget = lowCutoff * float (pow (float64 (highCutoff / lowCutoff), float64 (c)));
         let scalerLow = 3.773996325f * e + 0.736965594f;
         let scalerHigh = 4.194548788f * e + 0.864344901f;
-        envScaler = (1.0f - c) * scalerLow + c * scalerHigh;
-        envOffset = 0.048292931f * c + 0.294391201f;
+        envScalerTarget = (1.0f - c) * scalerLow + c * scalerHigh;
+        envOffsetTarget = 0.048292931f * c + 0.294391201f;
     }
 
     void updateResonanceMapping()
     {
         let r = clamp (resonanceControl, 0.0f, 1.0f);
-        resonanceSkewed = (1.0f - float (exp (-3.0 * float64 (r))))
-                        / (1.0f - float (exp (-3.0)));
+        resonanceSkewedTarget = (1.0f - float (exp (-3.0 * float64 (r))))
+                              / (1.0f - float (exp (-3.0)));
     }
 
     void updateDecayMapping()
@@ -259,19 +608,29 @@ processor AcidifyCore
         cachedRate = sampleRate;
         glideCoeff = timeCoefficient (12.0f, sampleRate);  // Open303 scales 60 ms slide by 0.2.
         filterAttackAlpha = 1.0f - timeCoefficient (3.0f, sampleRate);
-        accentAttackAlpha = 1.0f - timeCoefficient (15.0f, sampleRate);
         normalDecayCoeff = timeCoefficient (normalDecayMs, sampleRate);
         accentDecayCoeff = timeCoefficient (200.0f, sampleRate);
-        ampAttackAlpha = 1.0f - timeCoefficient (1.0f, sampleRate);
         ampBodyCoeff = timeCoefficient (1230.0f, sampleRate);
-        ampReleaseCoeff = timeCoefficient (8.0f, sampleRate);
+        ampReleaseCoeff = timeCoefficient (1.0f, sampleRate);
         ampAccentReleaseCoeff = timeCoefficient (50.0f, sampleRate);
-        preHighpassAlpha = exponentialAlpha (44.486f, sampleRate);
-        feedbackHighpassAlpha = exponentialAlpha (150.0f, sampleRate);
-        postHighpassAlpha = exponentialAlpha (24.167f, sampleRate);
+        // 47k * 0.033uF RC between the accent switch and VCA summing node.
+        accentVcaAlpha = exponentialAlpha (102.616f, sampleRate);
+        preHighpassPole = float (exp (-float64 (twoPi) * 44.486 / float64 (sampleRate)));
+        preHighpassGain = 0.5f * (1.0f + preHighpassPole);
+        feedbackHighpassPole = float (exp (-float64 (twoPi) * 150.0 / float64 (sampleRate)));
+        feedbackHighpassGain = 0.5f * (1.0f + feedbackHighpassPole);
+        postHighpassPole = float (exp (-float64 (twoPi) * 24.167 / float64 (sampleRate)));
+        postHighpassGain = 0.5f * (1.0f + postHighpassPole);
         meterAlpha = 1.0f - timeCoefficient (12.0f, sampleRate);
+        parameterSmoothingAlpha = 1.0f - timeCoefficient (5.0f, sampleRate);
+        distortionSmoothingAlpha = 1.0f - timeCoefficient (20.0f, sampleRate);
+        updateOutputNetworkCoefficients (sampleRate);
+        updateMackityCoefficients (sampleRate);
+        updateRiaaCoefficients (sampleRate);
         meterPeriod = max (1, int (sampleRate * 0.03f));
         meterCountdown = min (meterCountdown, meterPeriod);
+        clockReportPeriod = max (1, int (sampleRate * 0.05f));
+        clockReportCountdown = min (clockReportCountdown, clockReportPeriod);
     }
 
     void initialiseModel (float sampleRate)
@@ -279,35 +638,97 @@ processor AcidifyCore
         updateFilterMapping();
         updateResonanceMapping();
         updateDecayMapping();
-        outputGain = float (std::levels::dBtoGain (float64 (volumeDb)));
+        outputGainTarget = float (std::levels::dBtoGain (float64 (volumeDb)));
         updateRateConstants (sampleRate);
+        baseCutoff = baseCutoffTarget;
+        envScaler = envScalerTarget;
+        envOffset = envOffsetTarget;
+        resonanceSkewed = resonanceSkewedTarget;
+        outputGain = outputGainTarget;
+        waveformBlend = float (waveform);
+        smoothedDistortionDrive = distortionDrive;
+        smoothedDistortionMix = distortionMix;
+        smoothedDistortionType = float (distortionType);
+        smoothedDistortionWet = distortionEnabled ? distortionMix : 0.0f;
         modelReady = true;
     }
 
-    void resetFilter()
+    void smoothParameters()
     {
-        preLowpass = 0.0f;
-        feedbackLowpass = 0.0f;
-        postLowpass = 0.0f;
-        ladder1 = 0.0f;
-        ladder2 = 0.0f;
-        ladder3 = 0.0f;
-        ladder4 = 0.0f;
+        baseCutoff += parameterSmoothingAlpha * (baseCutoffTarget - baseCutoff);
+        envScaler += parameterSmoothingAlpha * (envScalerTarget - envScaler);
+        envOffset += parameterSmoothingAlpha * (envOffsetTarget - envOffset);
+        resonanceSkewed += parameterSmoothingAlpha * (resonanceSkewedTarget - resonanceSkewed);
+        outputGain += parameterSmoothingAlpha * (outputGainTarget - outputGain);
+        waveformBlend += parameterSmoothingAlpha * (float (waveform) - waveformBlend);
+        smoothedDistortionDrive += parameterSmoothingAlpha
+                                 * (distortionDrive - smoothedDistortionDrive);
+        smoothedDistortionMix += parameterSmoothingAlpha
+                               * (distortionMix - smoothedDistortionMix);
+        smoothedDistortionType += distortionSmoothingAlpha
+                                * (float (distortionType) - smoothedDistortionType);
+        let wetTarget = distortionEnabled ? smoothedDistortionMix : 0.0f;
+        smoothedDistortionWet += distortionSmoothingAlpha
+                              * (wetTarget - smoothedDistortionWet);
+    }
+
+    void clearHeldNotes()
+    {
+        heldNoteCount = 0;
+    }
+
+    void holdNote (int note, int velocity)
+    {
+        int existing = -1;
+        for (int i = 0; i < heldNoteCount; i += 1)
+            if (heldNotes.at (i) == note)
+                existing = i;
+
+        if (existing >= 0)
+        {
+            for (int i = existing; i < heldNoteCount - 1; i += 1)
+            {
+                heldNotes.at (i) = heldNotes.at (i + 1);
+                heldVelocities.at (i) = heldVelocities.at (i + 1);
+            }
+            heldNoteCount -= 1;
+        }
+
+        if (heldNoteCount < 128)
+        {
+            heldNotes.at (heldNoteCount) = note;
+            heldVelocities.at (heldNoteCount) = velocity;
+            heldNoteCount += 1;
+        }
+    }
+
+    bool removeHeldNote (int note)
+    {
+        int existing = -1;
+        for (int i = 0; i < heldNoteCount; i += 1)
+            if (heldNotes.at (i) == note)
+                existing = i;
+
+        if (existing < 0)
+            return false;
+
+        for (int i = existing; i < heldNoteCount - 1; i += 1)
+        {
+            heldNotes.at (i) = heldNotes.at (i + 1);
+            heldVelocities.at (i) = heldVelocities.at (i + 1);
+        }
+        heldNoteCount -= 1;
+        return true;
     }
 
     void triggerNote (int note, bool hasAccent)
     {
         let frequency = midiFrequency (note);
-        if (ampEnvelope < 0.0001f)
-        {
-            phase = 0.0;
-            resetFilter();
-        }
         currentNote = note;
         targetFrequency = frequency;
         currentFrequency = frequency;
         filterEnvelope = 1.0f;
-        accentEnvelope = hasAccent ? 1.0f : 0.0f;
+        ampEnvelope = 1.0f;
         accented = hasAccent;
         gateOpen = true;
     }
@@ -317,8 +738,6 @@ processor AcidifyCore
         currentNote = note;
         targetFrequency = midiFrequency (note);
         accented = hasAccent;
-        if (hasAccent)
-            accentEnvelope = max (accentEnvelope, filterEnvelope);
         gateOpen = true;
     }
 
@@ -327,19 +746,143 @@ processor AcidifyCore
         gateOpen = false;
     }
 
-    void startSequenceStep (float sampleRate)
+    float activeTempo()
+    {
+        return dawSyncEnabled && hostTempoSeen ? hostTempo : tempo;
+    }
+
+    bool sequencerRunning()
+    {
+        // A host that does not send transport events must not leave the instrument
+        // dead. DAW mode hands control over as soon as a real transport event
+        // arrives; until then RUN/STOP remains a deterministic INT fallback.
+        return dawSyncEnabled && hostTransportSeen ? dawPlaying : manualRunning;
+    }
+
+    int hostSyncFlags()
+    {
+        return (hostTempoSeen ? 1 : 0)
+             + (hostTransportSeen ? 2 : 0)
+             + (hostPositionSeen ? 4 : 0);
+    }
+
+    void reportClockState()
+    {
+        let nextTempo = activeTempo();
+        if (abs (nextTempo - reportedTempo) > 0.001f)
+        {
+            effectiveTempo <- nextTempo;
+            reportedTempo = nextTempo;
+        }
+
+        let nextRunning = sequencerRunning() ? 1 : 0;
+        if (nextRunning != reportedRunning)
+        {
+            transportRunning <- float (nextRunning);
+            reportedRunning = nextRunning;
+        }
+
+        let nextSyncFlags = hostSyncFlags();
+        if (nextSyncFlags != reportedSyncFlags)
+        {
+            hostSyncStatus <- float (nextSyncFlags);
+            reportedSyncFlags = nextSyncFlags;
+        }
+    }
+
+    void broadcastClockState()
+    {
+        let nextTempo = activeTempo();
+        let nextRunning = sequencerRunning() ? 1 : 0;
+        let nextSyncFlags = hostSyncFlags();
+        effectiveTempo <- nextTempo;
+        transportRunning <- float (nextRunning);
+        hostSyncStatus <- float (nextSyncFlags);
+        reportedTempo = nextTempo;
+        reportedRunning = nextRunning;
+        reportedSyncFlags = nextSyncFlags;
+    }
+
+    void acceptHostTempo (float nextTempo)
+    {
+        let boundedTempo = clamp (nextTempo, 1.0f, 999.0f);
+        let changed = ! hostTempoSeen || abs (boundedTempo - hostTempo) > 0.001f;
+        hostTempo = boundedTempo;
+        hostTempoSeen = true;
+        if (dawSyncEnabled)
+            tempo = clamp (boundedTempo, 40.0f, 300.0f);
+        if (changed)
+            reportClockState();
+    }
+
+    void acceptHostTransport (bool nextPlaying)
+    {
+        let changed = ! hostTransportSeen || nextPlaying != dawPlaying;
+        hostTransportSeen = true;
+        dawPlaying = nextPlaying;
+        if (changed && dawSyncEnabled)
+            resetSequencer();
+        if (changed)
+            reportClockState();
+    }
+
+    void acceptHostPosition (float64 nextQuarterNote)
+    {
+        hostQuarterNote = nextQuarterNote;
+        if (! hostPositionSeen)
+        {
+            hostPositionSeen = true;
+            reportClockState();
+        }
+    }
+
+    void resetSequencer()
+    {
+        clearHeldNotes();
+        sequenceStep = -1;
+        sequenceCountdown = 0;
+        gateCountdown = 0;
+        dawTickReady = false;
+        dawGateArmed = false;
+        currentStep <- -1.0f;
+        releaseNote();
+    }
+
+    int wrapSequenceStep (int64 absoluteStep)
+    {
+        let length = int64 (clamp (patternLength, 1, 16));
+        var wrapped = int (absoluteStep % length);
+        if (wrapped < 0)
+            wrapped += int (length);
+        return wrapped;
+    }
+
+    float64 swingDelayQuarterNote()
+    {
+        // At 100%, move the second sixteenth to the final triplet division.
+        // The pair still spans exactly one eighth note: 2/3 + 1/3.
+        return float64 (clamp (swingControl, 0.0f, 100.0f)) / 1200.0;
+    }
+
+    float stepDurationQuarterNotes (int step)
+    {
+        let delay = float (swingDelayQuarterNote());
+        return (step & 1) == 0 ? 0.25f + delay : 0.25f - delay;
+    }
+
+    void startSequenceStepAt (int nextStep, float sampleRate, float bpm)
     {
         let length = clamp (patternLength, 1, 16);
         let previousFlags = sequenceStep >= 0 ? getFlags (sequenceStep) : 0;
-        sequenceStep += 1;
-        if (sequenceStep >= length)
-            sequenceStep = 0;
+        sequenceStep = clamp (nextStep, 0, length - 1);
 
         let flags = getFlags (sequenceStep);
         let hasGate = (flags & 1) != 0;
         let hasAccent = (flags & 2) != 0;
         let previousSlide = (previousFlags & 4) != 0;
-        let stepSamples = max (1, int (sampleRate * 15.0f / max (tempo, 1.0f)));
+        let stepDuration = stepDurationQuarterNotes (sequenceStep);
+        let stepSamples = max (1, int (sampleRate * 60.0f * stepDuration
+                                      / max (bpm, 1.0f) + 0.5f));
 
         if (hasGate)
         {
@@ -355,13 +898,63 @@ processor AcidifyCore
         }
 
         sequenceCountdown = stepSamples;
-        gateCountdown = (flags & 4) != 0 ? stepSamples + 1 : max (1, int (float (stepSamples) * 0.55f));
+        gateCountdown = (flags & 4) != 0 ? stepSamples + 1 : max (1, stepSamples / 2);
         currentStep <- float (sequenceStep);
+    }
+
+    void startNextInternalStep (float sampleRate)
+    {
+        let length = clamp (patternLength, 1, 16);
+        var nextStep = sequenceStep + 1;
+        if (nextStep >= length)
+            nextStep = 0;
+        startSequenceStepAt (nextStep, sampleRate, activeTempo());
+    }
+
+    void processInternalClock (float sampleRate)
+    {
+        if (sequenceCountdown <= 0)
+            startNextInternalStep (sampleRate);
+
+        sequenceCountdown -= 1;
+        gateCountdown -= 1;
+        if (gateCountdown == 0)
+            releaseNote();
+    }
+
+    void processDawClock (float sampleRate)
+    {
+        let pairIndex = int64 (floor (hostQuarterNote * 2.0));
+        let pairStart = float64 (pairIndex) * 0.5;
+        let oddStepStart = pairStart + 0.25 + swingDelayQuarterNote();
+        let isOddStep = hostQuarterNote >= oddStepStart;
+        let absoluteStep = pairIndex * 2 + (isOddStep ? 1 : 0);
+
+        if (! dawTickReady || absoluteStep != lastDawTick)
+        {
+            startSequenceStepAt (wrapSequenceStep (absoluteStep), sampleRate, activeTempo());
+            lastDawTick = absoluteStep;
+            dawTickReady = true;
+
+            let flags = getFlags (sequenceStep);
+            dawGateArmed = (flags & 1) != 0 && (flags & 4) == 0;
+            let stepStart = isOddStep ? oddStepStart : pairStart;
+            let stepEnd = isOddStep ? pairStart + 0.5 : oddStepStart;
+            dawGateOffQuarterNote = stepStart + (stepEnd - stepStart) * 0.5;
+        }
+
+        if (dawGateArmed && hostQuarterNote >= dawGateOffQuarterNote)
+        {
+            releaseNote();
+            dawGateArmed = false;
+        }
+
+        hostQuarterNote += float64 (activeTempo() / (60.0f * sampleRate));
     }
 
     float processLadder (float signal, float cutoffHz, float sampleRate)
     {
-        let boundedCutoff = clamp (cutoffHz, 20.0f, sampleRate * 0.11f);
+        let boundedCutoff = clamp (cutoffHz, 200.0f, min (20000.0f, sampleRate * 0.45f));
         let wc = float (twoPi) * boundedCutoff / sampleRate;
         let fx = wc * 0.7071067812f / float (twoPi);
 
@@ -378,17 +971,21 @@ processor AcidifyCore
         let feedback = rawK * resonanceSkewed;
 
         let feedbackSignal = feedback * ladder4;
-        feedbackLowpass += feedbackHighpassAlpha * (feedbackSignal - feedbackLowpass);
-        let feedbackHighpass = feedbackSignal - feedbackLowpass;
+        let feedbackHighpass = feedbackHighpassGain
+                             * (feedbackSignal - feedbackHighpassInput)
+                             + feedbackHighpassPole * feedbackHighpassOutput;
+        feedbackHighpassInput = feedbackSignal;
+        feedbackHighpassOutput = feedbackHighpass;
 
-        // Mild front-end and ladder-output saturation. The non-linear node is 4x oversampled.
-        let ladderIn = softClip (signal * 0.82f) * 1.18f - feedbackHighpass;
+        // Measured Open303 TB-303 recurrence. External colour is handled only
+        // in the optional post stage, so bypass remains a genuinely clean core.
+        let ladderIn = signal - feedbackHighpass;
         ladder1 += 2.0f * b0 * (ladderIn - ladder1 + ladder2);
         ladder2 += b0 * (ladder1 - 2.0f * ladder2 + ladder3);
         ladder3 += b0 * (ladder2 - 2.0f * ladder3 + ladder4);
         ladder4 += b0 * (ladder3 - 2.0f * ladder4);
 
-        return softClip (2.0f * gain * ladder4 * 1.08f);
+        return 2.0f * gain * ladder4;
     }
 
     event param1 (float v)
@@ -406,17 +1003,23 @@ processor AcidifyCore
     event param8 (float v)
     {
         volumeDb = clamp (v, -36.0f, 0.0f);
-        outputGain = float (std::levels::dBtoGain (float64 (volumeDb)));
+        outputGainTarget = float (std::levels::dBtoGain (float64 (volumeDb)));
     }
-    event param9 (float v) { tempo = clamp (v, 40.0f, 300.0f); }
+    event param9 (float v)
+    {
+        tempo = clamp (v, 40.0f, 300.0f);
+        reportClockState();
+    }
     event param10 (float v)
     {
-        running = v >= 0.5f;
-        sequenceStep = -1;
-        sequenceCountdown = 0;
-        gateCountdown = 0;
-        if (! running)
-            releaseNote();
+        let nextRunning = v >= 0.5f;
+        if (nextRunning != manualRunning)
+        {
+            manualRunning = nextRunning;
+            if (! dawSyncEnabled || ! hostTransportSeen)
+                resetSequencer();
+        }
+        reportClockState();
     }
     event param11 (float v) { patternLength = int (clamp (v, 1.0f, 16.0f)); }
     event param12 (float v) { rootNote = int (clamp (v, 24.0f, 60.0f)); }
@@ -454,29 +1057,135 @@ processor AcidifyCore
     event param42 (float v) { flags14 = int (clamp (v, 0.0f, 7.0f)); }
     event param43 (float v) { flags15 = int (clamp (v, 0.0f, 7.0f)); }
     event param44 (float v) { flags16 = int (clamp (v, 0.0f, 7.0f)); }
+    event param45 (float v) { distortionEnabled = v >= 0.5f; }
+    event param46 (float v) { distortionType = int (clamp (v, 0.0f, 2.0f)); }
+    event param47 (float v) { distortionDrive = clamp (v, 0.0f, 1.0f); }
+    event param48 (float v) { distortionMix = clamp (v, 0.0f, 1.0f); }
+    event param49 (float v)
+    {
+        let nextMode = v >= 0.5f;
+        if (nextMode != dawSyncEnabled)
+        {
+            if (! nextMode && hostTempoSeen)
+                tempo = clamp (hostTempo, 40.0f, 300.0f);
+            dawSyncEnabled = nextMode;
+            resetSequencer();
+        }
+        reportClockState();
+    }
+    event param50 (float v) { swingControl = clamp (v, 0.0f, 100.0f); }
+
+    // Amorph sends its DAW playhead as a rolling six-value float64 event stream:
+    // play state, BPM, time-signature numerator, denominator, absolute PPQ, and
+    // one reserved slot. The small learner preserves compatibility with runtimes
+    // that place the binary play and tempo values in different slots.
+    event transportIn (float64 v)
+    {
+        int slot = amorphTransportSlot;
+        let isBinary = (abs (v) < 0.0001 || abs (v - 1.0) < 0.0001) ? 1.0 : 0.0;
+        let isTempo = (v >= 20.0 && v <= 300.0) ? 1.0 : 0.0;
+        amorphPlaySlotScore.at (slot) =
+            amorphPlaySlotScore.at (slot) * 0.98 + isBinary;
+        amorphTempoSlotScore.at (slot) =
+            amorphTempoSlotScore.at (slot) * 0.98 + isTempo;
+
+        if (slot == amorphTempoSlot)
+            acceptHostTempo (float (clamp (v, 20.0, 300.0)));
+        if (slot == amorphPlaySlot)
+            acceptHostTransport (abs (v - 1.0) < 0.0001);
+        if (slot == 4 && v >= 0.0 && v < 1.0e9)
+            acceptHostPosition (v);
+
+        amorphTransportSlot = (amorphTransportSlot + 1) % 6;
+        if (amorphTransportSlot == 0)
+        {
+            int bestPlay = 0;
+            float64 bestPlayScore = -1.0;
+            for (int candidate = 0; candidate < 6; candidate += 1)
+                if (amorphPlaySlotScore.at (candidate) > bestPlayScore)
+                {
+                    bestPlayScore = amorphPlaySlotScore.at (candidate);
+                    bestPlay = candidate;
+                }
+            amorphPlaySlot = bestPlay;
+
+            int bestTempo = 1;
+            float64 bestTempoScore = -1.0;
+            for (int candidate = 0; candidate < 6; candidate += 1)
+                if (candidate != amorphPlaySlot
+                    && amorphTempoSlotScore.at (candidate) > bestTempoScore)
+                {
+                    bestTempoScore = amorphTempoSlotScore.at (candidate);
+                    bestTempo = candidate;
+                }
+            amorphTempoSlot = bestTempo;
+        }
+    }
+
+    event tempoIn (std::timeline::Tempo newTempo)
+    {
+        acceptHostTempo (newTempo.bpm);
+    }
+
+    event transportStateIn (std::timeline::TransportState newState)
+    {
+        acceptHostTransport (newState.isPlaying());
+    }
+
+    event positionIn (std::timeline::Position newPosition)
+    {
+        acceptHostPosition (newPosition.quarterNote);
+    }
 
     event midiIn (std::midi::Message message)
     {
-        if (running)
+        if (sequencerRunning())
             return;
 
-        if (message.isNoteOn())
+        if (message.isControllerNumber (120) || message.isControllerNumber (123))
+        {
+            clearHeldNotes();
+            releaseNote();
+        }
+        else if (message.isNoteOn())
         {
             let note = message.getNoteNumber();
-            let hasAccent = message.getVelocity() >= 100;
-            if (gateOpen)
+            let velocity = message.getVelocity();
+            let hasAccent = velocity >= 100;
+            let wasHoldingNotes = heldNoteCount > 0;
+            holdNote (note, velocity);
+            if (wasHoldingNotes && gateOpen)
                 slideToNote (note, hasAccent);
             else
                 triggerNote (note, hasAccent);
         }
-        else if (message.isNoteOff() && message.getNoteNumber() == currentNote)
+        else if (message.isNoteOff())
         {
-            releaseNote();
+            let note = message.getNoteNumber();
+            let releasedCurrent = note == currentNote;
+            if (removeHeldNote (note) && releasedCurrent)
+            {
+                if (heldNoteCount > 0)
+                {
+                    let previousIndex = heldNoteCount - 1;
+                    slideToNote (heldNotes.at (previousIndex),
+                                 heldVelocities.at (previousIndex) >= 100);
+                }
+                else
+                {
+                    releaseNote();
+                }
+            }
         }
     }
 
     void main()
     {
+        // The working Amorph transport protocol normally uses slot 0 for play
+        // and slot 1 for BPM. Bias the learner toward that known startup layout.
+        amorphPlaySlotScore.at (0) = 8.0;
+        amorphTempoSlotScore.at (1) = 8.0;
+
         loop
         {
             let sampleRate = float (processor.frequency);
@@ -486,15 +1195,14 @@ processor AcidifyCore
             else if (abs (sampleRate - cachedRate) > 0.5f)
                 updateRateConstants (sampleRate);
 
-            if (running)
-            {
-                if (sequenceCountdown <= 0)
-                    startSequenceStep (sampleRate);
+            smoothParameters();
 
-                sequenceCountdown -= 1;
-                gateCountdown -= 1;
-                if (gateCountdown == 0)
-                    releaseNote();
+            if (sequencerRunning())
+            {
+                if (dawSyncEnabled && hostPositionSeen)
+                    processDawClock (sampleRate);
+                else
+                    processInternalClock (sampleRate);
             }
 
             currentFrequency = targetFrequency + glideCoeff * (currentFrequency - targetFrequency);
@@ -505,36 +1213,47 @@ processor AcidifyCore
 
             let phaseValue = float (phase);
             let saw = phaseValue + phaseValue - 1.0f - polyBlep (phaseValue, phaseIncrement);
-            float square = phaseValue < 0.5f ? 1.0f : -1.0f;
-            square += polyBlep (phaseValue, phaseIncrement);
-            var shiftedPhase = phaseValue + 0.5f;
-            if (shiftedPhase >= 1.0f)
-                shiftedPhase -= 1.0f;
-            square -= polyBlep (shiftedPhase, phaseIncrement);
-            square *= 0.5f;
-            let oscillator = waveform == 0 ? saw : square;
+
+            // The stock square is derived from the saw comparator rather than
+            // generated by an independent oscillator. Open303's measured
+            // shaper constants imply a 46.88% transition point and half level.
+            const float squareDuty = 0.4687857f;
+            float square303 = phaseValue < squareDuty ? 1.0f : -1.0f;
+            square303 += polyBlep (phaseValue, phaseIncrement);
+            var squareEdge = phaseValue - squareDuty;
+            if (squareEdge < 0.0f)
+                squareEdge += 1.0f;
+            square303 -= polyBlep (squareEdge, phaseIncrement);
+            square303 *= 0.5f;
+            let oscillator = saw + (square303 - saw) * waveformBlend;
 
             // Coupling capacitor before the ladder.
-            preLowpass += preHighpassAlpha * (oscillator - preLowpass);
-            let preFiltered = oscillator - preLowpass;
+            let preFiltered = preHighpassGain * (oscillator - preHighpassInput)
+                            + preHighpassPole * preHighpassOutput;
+            preHighpassInput = oscillator;
+            preHighpassOutput = preFiltered;
 
             filterEnvelope *= accented ? accentDecayCoeff : normalDecayCoeff;
-            accentEnvelope *= accentDecayCoeff;
             filterEnvelopeRC += filterAttackAlpha * (filterEnvelope - filterEnvelopeRC);
-            accentEnvelopeRC += accentAttackAlpha * (accentEnvelope - accentEnvelopeRC);
 
             let exponent = envScaler * (filterEnvelopeRC - envOffset)
-                         + accentControl * 1.75f * accentEnvelopeRC;
+                         + processAccentSweep (accented && gateOpen
+                                                ? accentControl * filterEnvelope
+                                                : 0.0f,
+                                               sampleRate);
             let instantaneousCutoff = baseCutoff * float (pow (2.0, float64 (exponent)));
             let filtered = processLadder (preFiltered, instantaneousCutoff, sampleRate);
 
-            // Output coupling capacitor.
-            postLowpass += postHighpassAlpha * (filtered - postLowpass);
-            let coupled = filtered - postLowpass;
+            // Full Open303 output coupling network.
+            let allPassed = processAllpass (filtered);
+            let postFiltered = postHighpassGain * (allPassed - postHighpassInput)
+                             + postHighpassPole * postHighpassOutput;
+            postHighpassInput = allPassed;
+            postHighpassOutput = postFiltered;
+            let coupled = processNotch (postFiltered);
 
             if (gateOpen)
             {
-                ampEnvelope += ampAttackAlpha * (1.0f - ampEnvelope);
                 ampEnvelope *= ampBodyCoeff;
             }
             else
@@ -542,9 +1261,21 @@ processor AcidifyCore
                 ampEnvelope *= accented ? ampAccentReleaseCoeff : ampReleaseCoeff;
             }
 
-            let accentGain = 1.0f + accentControl
-                           * (0.45f * filterEnvelopeRC + 3.2f * accentEnvelopeRC);
-            let voice = softClip (coupled * ampEnvelope * accentGain * 1.45f) * outputGain;
+            var ampControl = ampEnvelope;
+            if (gateOpen)
+            {
+                let accentVcaSource = accented ? accentControl * filterEnvelope : 0.0f;
+                accentVcaRC += accentVcaAlpha * (accentVcaSource - accentVcaRC);
+                ampControl += 0.45f * filterEnvelope + 4.0f * accentVcaRC;
+            }
+            else
+            {
+                accentVcaRC += accentVcaAlpha * (0.0f - accentVcaRC);
+            }
+            ampControl = processAmpSmoother (max (ampControl, 0.0f));
+
+            let cleanVoice = coupled * ampControl * 0.42f * outputGain;
+            let voice = processDistortion (cleanVoice);
             let sample = abs (voice) < 0.0000000001f ? 0.0f : voice;
 
             meterEnvelope += meterAlpha * (abs (sample) - meterEnvelope);
@@ -553,6 +1284,13 @@ processor AcidifyCore
             {
                 meterOut <- clamp (meterEnvelope * 2.0f, 0.0f, 1.0f);
                 meterCountdown = meterPeriod;
+            }
+
+            clockReportCountdown -= 1;
+            if (clockReportCountdown <= 0)
+            {
+                broadcastClockState();
+                clockReportCountdown = clockReportPeriod;
             }
 
             out <- float<2> (sample, sample);
@@ -564,9 +1302,16 @@ processor AcidifyCore
 graph Acidify [[ main ]]
 {
     input  event std::midi::Message midiIn;
+    input  event float64 transportIn;
+    input  event std::timeline::Tempo tempoIn;
+    input  event std::timeline::TransportState transportStateIn;
+    input  event std::timeline::Position positionIn;
     output stream float<2> out;
     output event float currentStep;
     output event float meterOut;
+    output event float effectiveTempo;
+    output event float transportRunning;
+    output event float hostSyncStatus;
 
     input event float param1  [[ name: "Tuning",         min: -1.0, max: 1.0,   init: 0.0,   unit: "st" ]];
     input event float param2  [[ name: "Cut Off Freq",   min: 0.0,  max: 1.0,   init: 0.45 ]];
@@ -576,7 +1321,7 @@ graph Acidify [[ main ]]
     input event float param6  [[ name: "Accent",         min: 0.0,  max: 1.0,   init: 0.65 ]];
     input event float param7  [[ name: "Waveform",       min: 0.0,  max: 1.0,   init: 0.0,   step: 1.0 ]];
     input event float param8  [[ name: "Volume",         min: -36.0, max: 0.0,  init: -6.0,  unit: "dB" ]];
-    input event float param9  [[ name: "Tempo",          min: 40.0, max: 300.0, init: 128.0, unit: "bpm" ]];
+    input event float param9  [[ name: "Tempo",          min: 40.0, max: 300.0, init: 128.0, step: 0.01, unit: "bpm" ]];
     input event float param10 [[ name: "Run",            min: 0.0,  max: 1.0,   init: 0.0,   step: 1.0 ]];
     input event float param11 [[ name: "Pattern Length", min: 1.0,  max: 16.0,  init: 16.0,  step: 1.0 ]];
     input event float param12 [[ name: "Root Note",      min: 24.0, max: 60.0,  init: 36.0,  step: 1.0 ]];
@@ -614,15 +1359,30 @@ graph Acidify [[ main ]]
     input event float param42 [[ name: "Step 14 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
     input event float param43 [[ name: "Step 15 Flags", min: 0.0, max: 7.0, init: 1.0, step: 1.0 ]];
     input event float param44 [[ name: "Step 16 Flags", min: 0.0, max: 7.0, init: 5.0, step: 1.0 ]];
+    input event float param45 [[ name: "Distortion Enable", min: 0.0, max: 1.0, init: 0.0, step: 1.0 ]];
+    input event float param46 [[ name: "Distortion Type",   min: 0.0, max: 2.0, init: 0.0, step: 1.0 ]];
+    input event float param47 [[ name: "Distortion Drive",  min: 0.0, max: 1.0, init: 0.35 ]];
+    input event float param48 [[ name: "Distortion Mix",    min: 0.0, max: 1.0, init: 1.0 ]];
+    input event float param49 [[ name: "Clock Mode",         min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Internal|DAW" ]];
+    input event float param50 [[ name: "Swing",              min: 0.0, max: 100.0, init: 0.0, step: 1.0,
+                                 unit: "%" ]];
 
     node core = AcidifyCore * 4;
 
     connection
     {
         midiIn -> core.midiIn;
+        transportIn -> core.transportIn;
+        tempoIn -> core.tempoIn;
+        transportStateIn -> core.transportStateIn;
+        positionIn -> core.positionIn;
         core.out -> out;
         core.currentStep -> currentStep;
         core.meterOut -> meterOut;
+        core.effectiveTempo -> effectiveTempo;
+        core.transportRunning -> transportRunning;
+        core.hostSyncStatus -> hostSyncStatus;
 
         param1 -> core.param1;   param2 -> core.param2;
         param3 -> core.param3;   param4 -> core.param4;
@@ -648,5 +1408,9 @@ graph Acidify [[ main ]]
         param39 -> core.param39; param40 -> core.param40;
         param41 -> core.param41; param42 -> core.param42;
         param43 -> core.param43; param44 -> core.param44;
+        param45 -> core.param45; param46 -> core.param46;
+        param47 -> core.param47; param48 -> core.param48;
+        param49 -> core.param49;
+        param50 -> core.param50;
     }
 }
