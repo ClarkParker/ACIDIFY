@@ -156,10 +156,10 @@ processor AcidifyCore
     float feedbackHighpassOutput = 0.0f;
     float postHighpassInput = 0.0f;
     float postHighpassOutput = 0.0f;
-    float ladder1 = 0.0f;
-    float ladder2 = 0.0f;
-    float ladder3 = 0.0f;
-    float ladder4 = 0.0f;
+    float64 zdfS1 = 0.0;
+    float64 zdfS2 = 0.0;
+    float64 zdfS3 = 0.0;
+    float64 zdfS4 = 0.0;
 
     float baseCutoff = 780.0f;
     float baseCutoffTarget = 780.0f;
@@ -976,53 +976,121 @@ processor AcidifyCore
         hostQuarterNote += float64 (activeTempo() / (60.0f * sampleRate));
     }
 
+    // Topologiehergeleitete Diodenleiter, Zero-Delay-Feedback nach Zavalishins
+    // topologieerhaltender Transformation, fuer die Diodenleiter hergeleitet
+    // von Pirkle (AN-6). Referenzumsetzung: Faust `vaeffects.diodeLadder` von
+    // Eric Tarr, MIT-style STK-4.3, lizenzkompatibel.
+    //
+    // Ersetzt den Open303-Polynomfit. Der Fit war eine Anpassung an gemessenes
+    // Verhalten — „Measured Open303 TB-303 recurrence" stand als Kommentar
+    // daneben. Kein Bauteil, kein Knoten, keine Diode.
+    //
+    // Der Kern ist die Rekursion G4..G1: Jede Stufenverstaerkung haengt von der
+    // darunterliegenden ab. DAS ist die fehlende Entkopplung der Diodenleiter,
+    // der Punkt, an dem sie sich vom Moog-Transistorstack unterscheidet. Sie
+    // wird nicht nachgebildet, sie faellt aus der Topologie an.
+    //
+    // Schaltplan: C98 = C99 = C100 = 33 nF, aber C101 = 18 nF. Die vier Stufen
+    // sind NICHT gleich; der Pol der vierten liegt um 33/18 hoeher. Weder
+    // Open303 noch ein generischer ZDF-Diodenleiter bilden das ab.
+    //
+    // Kein Rueckkopplungs-Hochpass mehr: Die 150 Hz stammten aus Open303 und
+    // sind im vermessenen Prototyp nicht enthalten. Er wird hier so eingesetzt,
+    // wie er gemessen wurde.
     float processLadder (float signal, float cutoffHz, float sampleRate)
     {
-        let boundedCutoff = clamp (cutoffHz, 200.0f, min (20000.0f, sampleRate * 0.45f));
-        let wc = float (twoPi) * boundedCutoff / sampleRate;
-        let fx = wc * 0.7071067812f / float (twoPi);
+        // Der Modellparameter fuehrt nicht den hoerbaren Eckpunkt, sondern
+        // liegt darueber. Gemessen bei Schaltplan-Kondensatoren, tools/bench/zdf:
+        // Parameter 1610 -> Spitze 1197 Hz bei k = 14. Skalar 1,345, kalibriert
+        // bei k = 14, also bei der Vorgabe-Resonanz 0,72. Das Verhaeltnis
+        // haengt schwach von k ab (1,26 bei k = 16,5 … 1,44 bei k = 12);
+        // es ist eine Einheitenumrechnung, keine Verhaltensanpassung.
+        const float peakToParameter = 1.345f;
 
-        let numerator = 0.00045522346f + 6.1922189f * fx;
-        let denominator = 1.0f + 12.358354f * fx + 4.4156345f * fx * fx;
-        let b0 = numerator / max (denominator, 0.000001f);
+        let bounded = clamp (cutoffHz * peakToParameter,
+                             20.0f, min (20000.0f, sampleRate * 0.45f));
 
-        let rawK = fx * (fx * (fx * (fx * (fx * (fx + 7198.6997f)
-                    - 5837.7917f) - 476.47308f) + 614.95611f)
-                    + 213.87126f) + 16.998792f;
-        let feedback = rawK * resonanceSkewed;
+        let T  = 1.0 / float64 (sampleRate);
+        let wd = float64 (twoPi) * float64 (bounded);
+        let wa = (2.0 / T) * tan (wd * T * 0.5);   // bilineare Vorverzerrung
+        let g  = wa * T * 0.5;
 
-        // Die resonanzabhaengige Pegelkorrektur sass frueher hier, als
-        // Open303-Makeup `(1+r) * ((rawK*0.0588 - 1)*r + 1)`. Sie ist entfernt,
-        // weil sie in der Schaltung nicht im Filter sitzt: Der Ausgleich
-        // entsteht am VCA-Eingang aus zwei Summenzweigen (R121/R122), siehe
-        // resonanceCompensation() und docs/HARDWARE_AUDIT.md.
-        //
-        // Der Unterschied ist messbar und strukturell: Das Makeup war
-        // cutoff-abhaengig (+6,5 dB bei 300 Hz, +12,5 dB bei 5 kHz ueber den
-        // Reglerweg), weil `rawK` von der Eckfrequenz abhaengt. R121 und R122
-        // sind feste Widerstaende — die Schaltung kann diese Abhaengigkeit gar
-        // nicht haben.
-        //
-        // Bei r = 0 ist das alte Makeup fuer jeden Cutoff exakt 2,0; der
-        // Faktor bleibt deshalb hier stehen und der Tausch ist dort
-        // pegelneutral.
+        let g1 = g;
+        let g2 = g;
+        let g3 = g;
+        let g4 = g * (33.0 / 18.0);                // C101 = 18 nF
 
-        let feedbackSignal = feedback * ladder4;
-        let feedbackHighpass = feedbackHighpassGain
-                             * (feedbackSignal - feedbackHighpassInput)
-                             + feedbackHighpassPole * feedbackHighpassOutput;
-        feedbackHighpassInput = feedbackSignal;
-        feedbackHighpassOutput = feedbackHighpass;
+        let G4 = 0.5 * g4 / (1.0 + g4);
+        let G3 = 0.5 * g3 / (1.0 + g3 - 0.5 * g3 * G4);
+        let G2 = 0.5 * g2 / (1.0 + g2 - 0.5 * g2 * G3);
+        let G1 =       g1 / (1.0 + g1 -       g1 * G2);
 
-        // Measured Open303 TB-303 recurrence. External colour is handled only
-        // in the optional post stage, so bypass remains a genuinely clean core.
-        let ladderIn = signal - feedbackHighpass;
-        ladder1 += 2.0f * b0 * (ladderIn - ladder1 + ladder2);
-        ladder2 += b0 * (ladder1 - 2.0f * ladder2 + ladder3);
-        ladder3 += b0 * (ladder2 - 2.0f * ladder3 + ladder4);
-        ladder4 += b0 * (ladder3 - 2.0f * ladder4);
+        let bigGamma = G1 * G2 * G3 * G4;
 
-        return 2.0f * ladder4;
+        let SG1 = G4 * G3 * G2;
+        let SG2 = G4 * G3;
+        let SG3 = G4;
+
+        // VR4 ist ein lineares B-Poti: Rueckkopplung linear ueber den Reglerweg.
+        // kMax knapp unter der gemessenen Anschwinggrenze (zwischen 19,4 und
+        // 19,6 bei Schaltplan-Kondensatoren). Der Serien-303 schwingt
+        // absichtlich NICHT an — ein handverloeteter Widerstand trimmt „just
+        // under that required for self-oscillation". Selbstoszillation waere
+        // ein Fehler, kein Fortschritt.
+        const float64 kMax = 19.4;
+        let k = kMax * float64 (clamp (resonanceSkewed, 0.0f, 1.0f));
+
+        let alpha1 = g1 / (1.0 + g1);
+        let alpha2 = g2 / (1.0 + g2);
+        let alpha3 = g3 / (1.0 + g3);
+        let alpha4 = g4 / (1.0 + g4);
+        let alpha0 = 1.0 / (1.0 + k * bigGamma);
+
+        let gam1 = 1.0 + G1 * G2;
+        let gam2 = 1.0 + G2 * G3;
+        let gam3 = 1.0 + G3 * G4;
+
+        let B1 = 1.0 / (1.0 + g1 -       g1 * G2);
+        let B2 = 1.0 / (1.0 + g2 - 0.5 * g2 * G3);
+        let B3 = 1.0 / (1.0 + g3 - 0.5 * g3 * G4);
+        let B4 = 1.0 / (1.0 + g4);
+
+        let d1 = g1, d2 = 0.5 * g2, d3 = 0.5 * g3;
+
+        let x = float64 (signal);
+
+        // Zustandsbeitraege, von unten nach oben aufgesammelt.
+        let S4 = zdfS4 * B4;
+        let S3 = (S4 * d3 + zdfS3) * B3;
+        let S2 = (S3 * d2 + zdfS2) * B2;
+        let S1 = (S2 * d1 + zdfS1) * B1;
+
+        // Abweichung von der Faust-Vorlage: dort steht fuer die zweite Stufe
+        // SG3; der Pfad von Stufe 2 zum Ausgang laeuft aber ueber G3*G4 = SG2.
+        let sigma = S1 * SG1 + S2 * SG2 + S3 * SG3 + S4;
+
+        let u = (x - k * sigma) * alpha0;          // ZDF in einem Schritt geloest
+
+        let in1 = u * gam1 + S2 + S1 * G2;
+        let v1 = (in1 - zdfS1) * alpha1;
+        let y1 = v1 + zdfS1;
+        zdfS1 += 2.0 * v1;
+
+        let in2 = y1 * gam2 + S3 + S2 * G3;
+        let v2 = (in2 * 0.5 - zdfS2) * alpha2;
+        let y2 = v2 + zdfS2;
+        zdfS2 += 2.0 * v2;
+
+        let in3 = y2 * gam3 + S4 + S3 * G4;
+        let v3 = (in3 * 0.5 - zdfS3) * alpha3;
+        let y3 = v3 + zdfS3;
+        zdfS3 += 2.0 * v3;
+
+        let v4 = (y3 * 0.5 - zdfS4) * alpha4;
+        let y4 = v4 + zdfS4;
+        zdfS4 += 2.0 * v4;
+
+        return 2.0f * float (y4);
     }
 
     // Die beiden Summenzweige am Eingang des VCA (IC15 BA662A, Pin 3), aus dem

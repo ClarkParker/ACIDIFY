@@ -298,3 +298,71 @@ gemessen und abgehakt, wäre der Fehler stehen geblieben.
 Smoke-Peak 0,921 → **0,907** (der OTA komprimiert). `preflight --strict`
 sauber, `dsp_matrix_test` 11/11 `ok` mit höchstem Effekt-Peak **0,9339**,
 `dsp_articulation_test` `ok`.
+
+---
+
+## Filterkern eingebaut
+
+`processLadder` rechnet nicht mehr den Open303-Polynomfit, sondern die
+topologiehergeleitete Diodenleiter (ZDF/TPT, Zavalishin/Pirkle, Referenz
+Faust `vaeffects.diodeLadder`, MIT-style STK-4.3).
+
+Schaltplanwerte: `C98 = C99 = C100 = 33 nF`, **`C101 = 18 nF`** — die vier
+Stufen sind nicht gleich. Resonanz **linear** über den Reglerweg abgebildet,
+weil VR4 ein B-Poti ist, mit `kMax = 19,4` knapp unter der gemessenen
+Anschwinggrenze. Der **Rückkopplungs-Hochpass bei 150 Hz ist entfallen** — er
+stammte aus Open303 und ist im vermessenen Prototyp nicht enthalten.
+
+### Übertragung geprüft
+
+Handübertragener Code braucht eine Gegenprobe. Der eingebaute Kern wurde als
+eigenständiger Prozessor herausgezogen und gegen den Prototyp gemessen:
+
+| Messung | Prototyp | eingebaut |
+|---|---:|---:|
+| k = 14, Parameter 1610 | +14,44 dB @ 1196,8 Hz | **+14,44 dB @ 1196,8 Hz** |
+| k = 16,5 | +20,53 dB | **+20,53 dB** |
+| k = 19,4 | +48,21 dB | **+48,21 dB** |
+| Steilheit, Parameter 1000 | −14,82 / −19,63 / −22,68 | **−14,82 / −19,63 / −22,68** |
+
+Stellengenau identisch. Die Übertragung ist belegt, nicht angenommen.
+
+Nebenbefund: Die **Steilheitstabelle** in `FILTER_TOPOLOGY.md` war ebenfalls
+eine 33-nF-Messung — nachgeprüft, `CAP4 = 33` liefert exakt die dokumentierten
+−16,23 / −20,68 / −23,13. Als **K4** dort eingetragen.
+
+### Der Prüfstein, der zählt
+
+Der Serien-303 schwingt **absichtlich nicht** an. Tail-RMS 0,6 s nach Note-off:
+
+| Resonanz | 0,0 | 0,25 | 0,5 | 0,75 | 1,0 |
+|---|---:|---:|---:|---:|---:|
+| Tail-RMS | 0,0 | 0,0 | 0,0 | 0,0 | **0,0** |
+
+Kein Anschwingen, auch bei voller Resonanz nicht. **Bestanden.**
+
+### Was die Messung sonst zeigt
+
+RMS des Notenkörpers über den Reglerweg: 0,0740 → 0,0356 → 0,0297 → 0,0303 →
+0,1255. Erst der Durchlassbereichseinbruch, dann die Resonanzspitze, die ihn
+überholt. Der Sprung im letzten Reglerviertel ist groß (rund 12 dB) und folgt
+aus `kMax = 19,4` dicht an der Grenze, wo `1/(1+k·H)` steil wird.
+
+**Offen, ausdrücklich nicht nachgezogen:** Ob `kMax = 19,4` musikalisch richtig
+sitzt, hängt am handverlöteten Widerstand und ruht weiter auf Whittle plus der
+Nachbaubeobachtung (siehe `HARDWARE_AUDIT.md`). `kMax` gegen den Höreindruck
+oder eine Testschwelle zu verschieben wäre das verbotene Tunen.
+
+### Kalibrierung
+
+`peakToParameter = 1,345` rechnet vom hörbaren Eckpunkt auf den Modellparameter
+um, kalibriert bei k = 14, also bei der Vorgabe-Resonanz 0,72. Das Verhältnis
+hängt schwach von k ab (1,26 bei k = 16,5 … 1,44 bei k = 12); es ist eine
+Einheitenumrechnung, keine Verhaltensanpassung.
+
+### Pegel
+
+Smoke-Peak 0,907 → **0,910**, RMS 0,0692 → 0,0437 — der Kern hat den echten
+Durchlassbereichseinbruch, den der Fit nicht hatte. `preflight --strict`
+sauber, `dsp_matrix_test` 11/11 `ok` mit höchstem Effekt-Peak **0,9124**,
+`dsp_articulation_test` `ok`.

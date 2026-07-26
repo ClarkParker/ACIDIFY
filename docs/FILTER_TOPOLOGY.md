@@ -3,12 +3,16 @@
 Stand der Prüfung gegen 0.7.2. Alle Zahlen mit Cmajor 1.0.3175 gemessen,
 Messstand in [`tools/bench/`](../tools/bench/), reproduzierbar.
 
-**Status: geprüfter Prototyp, noch nicht integriert.** `ACIDIFYDSP.cmajor` ist
-unverändert.
+**Status: eingebaut.** `processLadder` in `ACIDIFYDSP.cmajor` rechnet seit dem
+dritten Anlauf diesen Kern. Übertragung stellengenau gegen den Prototyp
+gemessen, Ergebnisse in [`DSP_AUDIT.md`](DSP_AUDIT.md#filterkern-eingebaut).
+Die Abschnitte „Was heute im DSP steht" und die beiden gescheiterten
+Einbauversuche stehen weiter unten als **Verlaufsprotokoll** — sie beschreiben
+den Weg, nicht den Stand.
 
 ---
 
-## Was heute im DSP steht
+## Was vor dem Einbau im DSP stand (überholt)
 
 `processLadder` rechnet mit Polynomen aus Open303:
 
@@ -85,11 +89,16 @@ hineingeschrieben wird.
 
 Gemessen, Eckfrequenz-Parameter 1000 Hz, ohne Resonanz:
 
-| Bereich | Steilheit |
-|---|---:|
-| 1000 → 2000 Hz | −16,2 dB/Okt |
-| 2000 → 4000 Hz | −20,7 dB/Okt |
-| 4000 → 8000 Hz | −23,1 dB/Okt |
+| Bereich | Steilheit (33 nF, **überholt**) | Steilheit (18 nF, Schaltplan) |
+|---|---:|---:|
+| 1000 → 2000 Hz | −16,2 dB/Okt | **−14,8 dB/Okt** |
+| 2000 → 4000 Hz | −20,7 dB/Okt | **−19,6 dB/Okt** |
+| 4000 → 8000 Hz | −23,1 dB/Okt | **−22,7 dB/Okt** |
+
+> Die linke Spalte ist mit vier gleichen 33-nF-Stufen gemessen — siehe **K4**
+> unter „Korrektur". Die rechte gilt für die Schaltplanwerte. Die Aussage
+> bleibt in beiden Spalten dieselbe: steigende Steilheit über der Frequenz,
+> asymptotisch 24 dB, im Hörbereich flacher.
 
 Asymptotisch 24 dB, im Hörbereich flacher. Genau die beschriebene Eigenschaft,
 ungetrimmt. Der bisherige Fit liefert konstante 18 dB/Okt über den ganzen
@@ -312,6 +321,14 @@ jeweils auf ~1000 Hz, Schaltplan-Kondensatoren:
 Die dokumentierten „18 dB" entsprechen zufällig der 20-Hz-Zeile, entstanden
 aber aus der Mischung beider Referenzen. Die Spanne kommt daher, dass sich die
 Kerne im **Tieftonverhalten** unterscheiden, nicht nur in der Resonanz.
+
+**K4 — auch die Steilheitstabelle galt für die falschen Kondensatoren.**
+Derselbe Fehler wie K1, an einer weiteren Stelle: Die Tabelle unter „Steilheit"
+stammt ebenfalls vom 33-nF-Prototyp. Mit den Schaltplanwerten sind es
+**−14,8 / −19,6 / −22,7** statt −16,2 / −20,7 / −23,1. Beide Messungen wurden
+nachgeprüft und reproduzieren sich exakt; K1 hatte nur Resonanztabelle und
+Anschwinggrenze aufgeführt. Die *Aussage* der Messung — Steilheit steigt mit
+der Frequenz, im Hörbereich flacher als 24 dB — trägt in beiden Fällen.
 
 **K3 — `tools/bench/filter/Filt.cmajor` war veraltet**, obwohl die README das
 ausdrücklich verbietet: enthielt noch die in `e676bd8` entfernte
