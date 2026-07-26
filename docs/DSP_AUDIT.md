@@ -462,3 +462,73 @@ Existenz der Spitze.
 Smoke-Peak 0,910 → **0,888**, RMS 0,0437 → 0,0435. `preflight --strict` sauber,
 `dsp_matrix_test` 11/11 `ok` mit höchstem Effekt-Peak **0,9395**,
 `dsp_articulation_test` `ok`, `dsp_transport_test` 12/12 `ok`.
+
+---
+
+## Anschwinggrenze über die Frequenz — Test gescheitert, Ursache gefunden
+
+`FILTER_TOPOLOGY.md` führte als offen: Whittle sagt, der Filter schwinge
+„only self oscillate at **mid and high** frequencies" an. Zeigt das Modell diese
+Frequenzabhängigkeit von selbst?
+
+Gemessen am eingebauten Kern, Schaltplan-Kondensatoren, Grenze per Bisektion:
+
+| Parameter / Hz | 150 | 300 | 700 | 1610 | 4000 | 9000 |
+|---|---:|---:|---:|---:|---:|---:|
+| k-Grenze | 19,63 | 20,45 | 19,63 | 19,63 | 19,63 | 19,63 |
+
+**Flach.** Das Modell zeigt die Frequenzabhängigkeit **nicht**. Der Test konnte
+bestätigen und hat es nicht getan.
+
+### Die Ursache ist dieselbe wie beim 8-Hz-Peak
+
+Naheliegende Erklärung: In der Schaltung sitzt das Koppelnetz **innerhalb** der
+Resonanzschleife. Seine Hochpasswirkung entzieht der Schleife bei tiefen
+Eckfrequenzen Verstärkung — dort reicht es dann nicht mehr zum Anschwingen.
+
+Am Messstand geprüft, ein Hochpass erster Ordnung in den Rückkopplungspfad des
+Prototyps eingesetzt:
+
+| Hochpass in der Schleife | Grenze @ 150 Hz | @ 4000 Hz | Spreizung |
+|---|---:|---:|---:|
+| ~0 Hz | 20,90 | 19,18 | 1,72 |
+| 15 Hz | 23,48 | 20,04 | 3,44 |
+| 30 Hz | 26,91 | 20,04 | **6,87** |
+
+Die Spreizung wächst monoton mit der Eckfrequenz des eingefügten Hochpasses.
+Bei tiefer Filtereckfrequenz steigt die Anschwinggrenze stark, bei hoher kaum —
+bei festem k hieße das: unten schwingt er nicht an, oben schon. Genau Whittles
+Aussage.
+
+**Einschränkung, die ich nicht übergehe:** Die Zeile „~0 Hz" ist **kein**
+sauberer Nullversuch. Das eingefügte Glied bringt auch ohne Hochpasswirkung
+eine Verzögerung in den Rückkopplungspfad und bricht damit die
+Zero-Delay-Eigenschaft; ihre Absolutwerte sind deshalb nicht mit der Tabelle
+darüber vergleichbar. Belastbar ist der **Trend** über die drei Zeilen, und der
+ist eindeutig.
+
+### Damit steht der nächste Schritt fest
+
+Zwei getrennte Hardwarebefunde haben dieselbe Ursache:
+
+1. Die 8-Hz-Spitze entsteht nur, wenn die Rückkopplung das Koppelnetz
+   einschließt (aus Stinchcombes Übertragungsfunktion hergeleitet).
+2. Die Anschwinggrenze wird nur dann frequenzabhängig (hier gemessen).
+
+**Das Koppelnetz gehört in die Schleife, verteilt zwischen die Leiterstufen** —
+Audit-Punkt 5, „um den Filterkern verteilt, nicht gebündelt". Das ist keine
+Verfeinerung mehr, sondern die Erklärung für zwei bekannte Lücken.
+
+Technisch heißt das: Der ZDF-Kern löst die Schleife geschlossen auf. Glieder in
+den Rückkopplungspfad zu setzen, ohne diese Eigenschaft zu verlieren, verlangt,
+sie **in die Auflösung mit aufzunehmen** — nicht, sie davorzuhängen. Das ist der
+Umbau, der als Nächstes ansteht.
+
+### Nachtrag zu einer früheren Entfernung
+
+Open303 hatte einen 150-Hz-Hochpass im Rückkopplungspfad, den ich mit dem
+Kerntausch entfernt habe — zu Recht, denn er war ein Fit und im vermessenen
+Prototyp nicht enthalten. Nach dieser Messung ist aber klar, **wofür** er dort
+stand: als grobe Näherung genau dieses Effekts. Die Entfernung war richtig, sie
+hat aber eine Näherung eines echten Verhaltens mitgenommen. Das ist kein Grund,
+sie zurückzunehmen — der richtige Ersatz ist die Struktur, nicht der Fit.
