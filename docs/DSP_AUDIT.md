@@ -592,3 +592,51 @@ Diodenleiter, die aus der fehlenden Entkopplung folgt.
 
 Die Zeile bei Reglerstellung 0,0 (+3,63 dB bei 97 Hz) ist **keine** Resonanz,
 sondern der Tieftonverlauf des Koppelnetzes.
+
+
+---
+
+## VCA-Steuerkonstanten — die Lücke ist jetzt exakt benannt
+
+`0.45`, `4.0` und `0.42` sind weiterhin ohne Bauteil dahinter. Die Umgebung ist
+inzwischen vollständig verfolgt (`tools/bench/nettrace.py`):
+
+- **IC15 Pin 1 und Pin 3 liegen auf demselben Netz.** Dort treffen `R121 = 220 k`,
+  `R122 = 100 k` und `R124 = 2,2 k` mit `C37 = 10 µF`. Das ist der Audioeingang,
+  und er ist modelliert. *Korrektur an einer früheren Notiz: dort stand nur
+  „Pin 3".*
+- **Pin 2** hängt an `R125 = 2,2 k` und `R126 = 2,2 k` — der andere
+  Differenzeingang, auf +5,333 V bezogen.
+- `Q31` (2SA733P) wird von der VEG (`R123 = 1,5 M`, `C42 = 1 µF`) gesteuert und
+  speist in **denselben Knoten** wie der Accent-Pfad `D27` → `R120 = 22 k` →
+  `C36 = 33 nF`; `R119 = 47 k` koppelt diesen Knoten zur Ausgangsstufe.
+
+**Was zum Ersetzen der drei Konstanten fehlt, ist eine einzige Angabe: die
+Pinbelegung des BA662A.** Ohne sie lässt sich nicht entscheiden, welcher Pin den
+Steuerstrom führt, und damit nicht, in welchem Verhältnis Hüllkurve und Accent
+in ihn eingehen. Alle beteiligten Bauteilwerte sind gelesen; es fehlt nur die
+Zuordnung.
+
+Ein Hinweis, ausdrücklich als **unbelegt** markiert: Das Verhältnis der
+ACIDIFY-Konstanten ist `4,0 / 0,45 = 8,9`, und im Netz stehen `R129 = 22 k`
+gegen `R128 = 220 k`, Verhältnis `10`. Das ist auffällig nah, aber es ist eine
+Beobachtung, keine Herleitung — die Zuordnung der beiden Widerstände zu Accent
+und Hüllkurve ist nicht verfolgt.
+
+## VCO — bewusst nicht ersetzt
+
+Der Kern ist gelesen: Komparator `IC11` mit `C34 = 1 nF`, Stromquelle über das
+`2SC1583`-Paar, `Thermistor 7,5` zur Temperaturkompensation, `Q8 = 2SA733P` mit
+`R35 = 100 k` und `R36 = 10 k` für die Rechteckableitung.
+
+**Nicht umgesetzt, und das ist eine Entscheidung, keine Lücke im Lesen.** Der
+vorhandene PolyBLEP-Oszillator ist antialiasiert; ein direkt nachgebildeter
+Komparator-Sägezahn wäre es nicht und würde bei hohen Noten hörbar aliasen. Ein
+physikalischer VCO braucht eine eigene Antialiasing-Strategie (Oversampling oder
+BLEP-Korrektur an den Reset-Kanten). Das ist ein eigener Arbeitsschritt, kein
+Konstantentausch — und ein halb fertiger VCO wäre schlechter als der jetzige.
+
+Die eine Konstante, die ohne diesen Umbau ersetzbar wäre, ist die Rechteck-
+Schwelle `0,4687857` (Open303, gemessen). Sie folgt aus dem Spannungsbereich des
+Sägezahns gegen die Komparatorschwelle an `Q8` — beides ist im Plan vorhanden,
+aber noch nicht ausgewertet.
