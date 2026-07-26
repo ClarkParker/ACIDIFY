@@ -1,3 +1,17 @@
+# Validierung 0.11.0
+
+## 0.11.0
+
+| Prüfung | Ergebnis |
+|---|---|
+| `preflight --strict` | sauber |
+| `smoke_test` | peak 0,75355 |
+| `dsp_matrix_test` 48/44,1/96/192 kHz | alle `ok`, `cleanPeak` 0,79224…0,79283 |
+| `dsp_articulation_test` | `ok` |
+| `hardware_checks.py` | 8/8 bestanden |
+
+---
+
 # Validierung 0.10.0
 
 ## 0.10.0

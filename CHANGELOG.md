@@ -6,6 +6,23 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-07-26
+
+### Changed
+
+- **Cutoff- und Env-Mod-Abbildung** aus der Schaltung: `highCutoff = 2500 Hz`
+  (Whittle, belegt) und `octaves = 3` (VR3+R47 und VR5+R61 sind identische
+  Netze, also gleiche Spanne). Sieben Open303-Polynomkoeffizienten entfallen.
+- **VCA-Steuerglaettung** aus `R132 = 100 Ω` mit `C42 = 1 µF` → einpolig
+  1591,5 Hz statt Open303s 200-Hz-Butterworth zweiter Ordnung.
+
+### Fixed
+
+- `envScaler` lieferte bei Env Mod **null** 0,864 statt 0 — Restmodulation
+  ohne Bauteil dahinter. `envOffset`, das nur als Gegengewicht existierte,
+  entfällt mit.
+
+
 ## [0.10.0] - 2026-07-26
 
 ### Changed
