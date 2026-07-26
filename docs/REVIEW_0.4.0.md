@@ -1,3 +1,14 @@
+> **ÜBERHOLT — nicht als Befundlage verwenden.**
+>
+> Dieses Dokument prüft `main` (0.4.0). Der tatsächliche Arbeitsstand ist 0.7.2
+> auf `agent/dual-mode-ui-repair-20260725` (PR #1), vierzehn Commits weiter.
+> Verzerrerstufe, Accent-Sweep-Schaltung sowie `allpass` und `notch` sind dort
+> gebaut — die entsprechenden Befunde hier sind gegenstandslos, ebenso alle
+> UI-Messungen, die gegen die abgelöste Graphit-Oberfläche entstanden.
+>
+> Ursache: Der Ausgangsklon enthielt den Branch nicht, und ich habe `git branch -a`
+> statt `git ls-remote` geprüft. Eine Neuprüfung gegen 0.7.2 steht aus.
+
 # Technische Prüfung 0.4.0 — DSP, Signalfluss und UI
 
 Unabhängige Prüfung mit eigenem Messstand (`tools/bench/`), nicht mit den
