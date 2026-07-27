@@ -6,6 +6,21 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-07-27
+
+### Changed
+
+- **Silver-UI 1:1 auf das dc-Template gezogen** (mechanischer Abgleich,
+  Template-Render vs. Produkt-Render auf 1180×580, `tools/uiport/`):
+  randlose Silberplatte statt Beige-Chassis (Footerzeile entfällt),
+  Deck-A/B-Feinkorrekturen aus den Analyse-Listen (`tools/uiport/fixes_*.json`),
+  Step-Reihe mit Template-Wippen/Chips/Notenfeldern und Beyond-Length-Dimmen,
+  Editor mit 24-px-Readout und Template-Klaviatur, Studio-Matrix neu
+  (ACCENT/SLIDE-Lanes, BASS-LINE-Kontur, PITCH-GATE-Wippen, 296-px-Werkzeugpanel
+  mit EDIT/ARRANGE/SELECTED STEP/GENERATE), Distortion-Sheet 588×180 und
+  Mods-Zellenraster 788×300 oben rechts. PITCH-MAP im Classic-Kopf entfernt
+  (nicht im Template). Notenwahl im Pitch-Menü setzt jetzt auch das Gate.
+
 ## [2.0.3] - 2026-07-27
 
 ### Fixed
@@ -820,6 +835,7 @@ vollständigen Repository-Commit. `0.2.0` führte den modernen Studio-Workflow
 ein. Sie werden hier ausdrücklich als historische Vorstufen festgehalten,
 besitzen aber keinen eigenen Commit-Anker im Repository.
 
+[2.1.0]: https://github.com/ClarkParker/ACIDIFY/commit/PENDING
 [2.0.3]: https://github.com/ClarkParker/ACIDIFY/commit/98bffd00749c85967fd162034e57db0bfa95f6ab
 [2.0.2]: https://github.com/ClarkParker/ACIDIFY/commit/87f504ea32ddfb5114b9e234326cf3c243af5573
 [2.0.1]: https://github.com/ClarkParker/ACIDIFY/commit/01dbec5888bab34203999cecae5f95cfd254f083

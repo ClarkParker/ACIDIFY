@@ -4655,7 +4655,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .studio-lane-label { text-align: right; color: #c9cfca; font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; width: auto; background: none; }
   acidify-patch-view .studio-lane .studio-lane-cells { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 12px; }
   acidify-patch-view .studio-cell-group { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 3px; background: none; border: 0; box-shadow: none; padding: 0; }
-  acidify-patch-view .studio-cell:not(.studio-step) { height: 15px; width: auto; border-radius: 2px; cursor: pointer; font-size: 0; color: transparent;
+  acidify-patch-view .studio-cell:not(.studio-step) { height: 17px; width: auto; border-radius: 2px; cursor: pointer; font-size: 0; color: transparent;
     background: linear-gradient(180deg,#3a403c,#262b28); border: 1px solid #171b19; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
   acidify-patch-view .studio-cell:not(.studio-step).playing { border-color: #7d5a52; }
   acidify-patch-view .studio-cell[data-kind="accent"].active { background: linear-gradient(180deg,#ff6a58,#a4211a); border-color: #ff8878;
@@ -4663,7 +4663,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .studio-cell[data-kind="slide"].active { background: linear-gradient(180deg,#ffc46f,#8a5312); border-color: #ffd191;
     box-shadow: 0 0 7px rgba(255,168,60,.32), inset 0 1px 0 rgba(255,255,255,.3); }
   acidify-patch-view .studio-contour { margin-top: 6px; }
-  acidify-patch-view .studio-contour-groups { height: 66px; border-top: 1px solid rgba(255,255,255,.05); border-bottom: 1px solid rgba(255,255,255,.05); }
+  acidify-patch-view .studio-contour-groups { height: 68px; border-top: 1px solid rgba(255,255,255,.05); border-bottom: 1px solid rgba(255,255,255,.05); }
   acidify-patch-view .studio-contour-svg { width: 100%; height: 100%; display: block; }
   acidify-patch-view .contour-slide { fill: none; stroke: #d8862c; stroke-width: 2; opacity: .85; }
   acidify-patch-view .contour-path { fill: none; stroke: #ff4a33; stroke-width: 2.4; stroke-linecap: round; }
@@ -4685,7 +4685,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .studio-step .cap-rocker { height: 33px; }
   acidify-patch-view .studio-step .cap-nub { top: 11px; height: 11px; }
   acidify-patch-view .studio-step .step-playbar { left: 3px; right: 3px; top: 55px; }
-  acidify-patch-view .studio-step .step-note-field { height: 16px; border: 1px solid rgba(255,255,255,.06);
+  acidify-patch-view .studio-step .step-note-field { height: 18px; border: 1px solid rgba(255,255,255,.06);
     background: linear-gradient(180deg,#1e211d,#0e100d); box-shadow: inset 0 1px 2px rgba(0,0,0,.6); }
   acidify-patch-view .studio-step .step-note { font: 900 11px/1 'Courier New',monospace; letter-spacing: .4px; }
   acidify-patch-view .studio-tools { width: 296px; flex: 0 0 auto; box-sizing: border-box; padding: 6px 8px 8px; border-radius: 2px;
@@ -4712,7 +4712,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view.studio-mode .studio-matrix { height: auto; min-height: 0; }
   acidify-patch-view .studio-matrix .studio-lane, acidify-patch-view .studio-matrix .studio-ruler { height: auto; min-height: 0; }
   acidify-patch-view .studio-matrix .studio-ruler { height: 11px; }
-  acidify-patch-view .studio-matrix .studio-contour-groups { height: 66px; }
+  acidify-patch-view .studio-matrix .studio-contour-groups { height: 68px; }
   acidify-patch-view .studio-matrix .studio-lane .studio-cell.studio-step { height: 76px; }
   acidify-patch-view.studio-mode .studio-tools { height: auto; min-height: 0; }
   acidify-patch-view .studio-hint { margin-top: 6px; text-align: right; color: #8d9698; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .9px;
@@ -4774,7 +4774,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="tooltip-toggle" type="button" aria-pressed="true" data-tooltip="Turn the English control tooltips on or off."><span>? TIPS</span><strong class="tooltip-toggle-state">ON</strong></button>
             <span class="power-cell"><span class="power-label">POWER</span><span class="power-ring"><i class="power-led"></i></span></span>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.0.3</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.1.0</span></div>
         </div>
       </header>
       <div class="osc-cell">

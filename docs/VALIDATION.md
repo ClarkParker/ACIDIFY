@@ -1,3 +1,15 @@
+# Validierung 2.1.0
+
+## 2.1.0
+
+Mechanischer Soll/Ist-Abgleich gegen das dc-Template (`tools/uiport/`,
+4 Zustände auf 1180×580, 16-Zonen-Diff): schlechteste Zone Classic 13 %,
+Distortion 11 %, Mods 11 %, Studio 33 % (Restdeltas Wippen-Glanz/Glow).
+`ui_smoke_test` dreifach grün, DSP-Smoke 0,34552, `ui_lint --strict` sauber,
+Sync sauber, partcheck 28/28, Messstand 11/11.
+
+---
+
 # Validierung 2.0.3
 
 ## 2.0.3
