@@ -3993,10 +3993,27 @@ class AcidifyPatchView extends HTMLElement {
 
 
   /* ================= SILVER SERIES (Design-Port) ================= */
-  acidify-patch-view .panel { display: flex; flex-direction: column; box-sizing: border-box; padding: 14px 20px; }
+  acidify-patch-view .chassis {
+    border-radius: 7px; border: 0;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='2' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E"),
+      repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.02) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg,#dfe1e0 0%,#c8cac9 40%,#aeb1b0 78%,#8f9392 100%);
+    background-blend-mode: overlay, overlay, normal;
+    background-size: 96px 96px, auto, auto;
+    box-shadow: 0 26px 44px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.85), inset 0 -6px 10px rgba(38,41,40,.35);
+  }
+  acidify-patch-view .chassis::before, acidify-patch-view .chassis::after { content: none; }
+  acidify-patch-view .panel {
+    position: static; left: auto; top: auto; width: 100%; height: 100%;
+    display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; padding: 8px;
+    border: 0; border-radius: 0; background: none; box-shadow: none;
+  }
+  acidify-patch-view .panel::before, acidify-patch-view .panel::after { content: none; }
+  acidify-patch-view .footer-mark { display: none; }
   acidify-patch-view .top-strip.deck-a { position: static; left: auto; right: auto; top: auto; flex: 0 0 auto; border-bottom: 1px solid #6f7573; }
   acidify-patch-view .deck-b { position: static; flex: 0 0 auto; }
-  acidify-patch-view .panel > .program-strip { position: static; left: auto; right: auto; top: auto; height: auto; flex: 1; min-height: 0; margin-top: 10px; }
+  acidify-patch-view .panel > .program-strip { position: static; left: auto; right: auto; top: auto; height: auto; flex: 1; min-height: 0; margin-top: 0; }
   acidify-patch-view .deck-a .branding { position: static; left: auto; top: auto; height: auto; }
   acidify-patch-view .deck-a .tone-bank, acidify-patch-view .deck-a .volume-bank { position: static; left: auto; right: auto; top: auto; bottom: auto; width: auto; height: auto; }
   acidify-patch-view .deck-a .volume-bank { width: 206px; }
@@ -4137,7 +4154,7 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4); }
 
-  acidify-patch-view .deck-b { display: flex; margin-top: 10px; height: 104px; border: 1px solid #6f7573; border-radius: 3px; overflow: hidden;
+  acidify-patch-view .deck-b { display: flex; margin-top: 0; height: 104px; border: 1px solid #6f7573; border-radius: 3px; overflow: hidden;
     background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),
       linear-gradient(180deg,#eef0ef 0%,#dcdedd 46%,#c5c8c7 100%);
     box-shadow: inset 0 1px 0 #fff, inset 0 -2px 3px rgba(30,34,33,.2); }

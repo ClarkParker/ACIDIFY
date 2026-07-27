@@ -1,0 +1,108 @@
+{
+ "area": "master",
+ "findings": [
+  {
+   "element": ".deck-a .volume-bank (Gesamtbreite der MASTER/OUTPUT-Zelle)",
+   "delta": "Soll (Template Z. 218 + 220 + 233): div width:206px, aber feste Kopfbreiten 96px + 99px + gap:10px + padding 2×12px ergeben min-content 229px — der Template-Render löst das zu einer 229px breiten Zelle auf (gemessen: MASTER-Kopf beginnt bei x=13, Bankkante x=1..230). Ist (Port Z. 4136): width:206px mit flex:0 0 auto → Bank nur 206px, alles ~23px nach rechts gestaucht.",
+   "fix": "In /home/user/ACIDIFY/ACIDIFYUI.js Z. 4136 `acidify-patch-view .deck-a .volume-bank`: width: 206px → width: auto (flex: 0 0 auto behalten; ergibt mit den Fixes der Kopfbreiten 96+99+10+24 = 229px wie im Soll-Render). Redundante width:206px in Z. 4019 ebenfalls auf auto setzen.",
+   "severity": "struktur"
+  },
+  {
+   "element": ".master-cell .cell-title (MASTER-Kopf)",
+   "delta": "Soll (Template Z. 220): width:96px; height:15px → Unterstreichung 96px breit (gemessen x=13..108). Ist (Port Z. 4075 width:100% des inhaltsbreiten .master-cell): nur 72px breit (gemessen x=37..108).",
+   "fix": "In der Silver-Sektion ergänzen: `acidify-patch-view .master-cell .cell-title { width: 96px; }` (nach Z. 4137). Dadurch wird .master-cell 96px breit und der Knopf bleibt zentriert wie im Template.",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".output-cell (+ dessen .cell-title, OUTPUT-Kopf)",
+   "delta": "Soll (Template Z. 233): Kopf width:99px, Spalte inhaltsbreit (Unterstreichung gemessen x=119..217 = 99px). Ist (Port Z. 4142): .output-cell { flex: 1 } → Kopf/Unterstreichung 113px (gemessen x=119..231), reicht bis an die Bankkante.",
+   "fix": "Z. 4142 `acidify-patch-view .output-cell`: flex: 1 → flex: 0 0 auto; zusätzlich `acidify-patch-view .output-cell .cell-title { width: 99px; }` ergänzen (Template Z. 233).",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".deck-a .volume-bank (vertikale Ausrichtung der Zellen)",
+   "delta": "Soll (Template Z. 218): kein align-items → stretch, MASTER-Kopf-Unterstreichung bei y=36 (gemessen). Ist: Legacy-Regel Z. 2145-2148 `.volume-bank { align-items:center }` überlebt in die Silver-Row → master-cell wird vertikal zentriert und sitzt ~6px zu tief (Unterstreichung gemessen y=42).",
+   "fix": "In Z. 4136 `acidify-patch-view .deck-a .volume-bank` explizit `align-items: stretch;` ergänzen (neutralisiert das align-items:center aus Z. 2147).",
+   "severity": "sichtbar"
+  },
+  {
+   "element": "span.master-output (verstecktes Legacy-Element rechts neben MOD-Button)",
+   "delta": "Soll (Template Z. 240-243): Trigger-Reihe enthält nur die zwei Buttons. Ist (Port Z. 4454): `<span class=\"master-output\" hidden>` rendert trotzdem (Legacy-Regel Z. 2156 setzt display:flex und schlägt das UA-[hidden]) → sichtbares Ring-/\"O\"-Glyphen-Artefakt bei x≈222-228, y≈150 rechts neben MOD; verfälscht nach dem flex-Fix auch die Zentrierung der Button-Reihe.",
+   "fix": "Span in getHTML() Z. 4454 komplett entfernen (kein JS referenziert .master-output), oder in der Silver-Sektion `acidify-patch-view .master-output { display: none; }` ergänzen.",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".distortion-led / .mods-led (LED in DIST/MOD-Buttons) — Border/Größe",
+   "delta": "Soll (Template Z. 241/242): LED i ohne Border, 5×5px. Ist (Port Z. 3818-3822): border: 1px solid #2b0a07 → 7×7px Gesamt, im lit-Zustand sichtbarer dunkler Ring um den roten Kern (Donut-Optik, im Pixelvergleich klar erkennbar).",
+   "fix": "Silver-Override ergänzen: `acidify-patch-view .distortion-led, acidify-patch-view .mods-led { border: 0; }` (oder border in Z. 3820 entfernen).",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".led-box .value-label im master-cell (dB-Wert \"-6.0 dB\")",
+   "delta": "Soll (Template Z. 230): font:8px/1 'Courier New', color #6c1710, KEIN letter-spacing (Textbreite gemessen 33px). Ist: Z. 4141 überschreibt Font/Farbe korrekt, aber letter-spacing:.5px aus Z. 4120 erbt durch → Text 37px breit (gemessen), spürbar gesperrter.",
+   "fix": "Z. 4141 `acidify-patch-view .master-cell .silver-knob .led-box .value-label` um `letter-spacing: normal;` ergänzen.",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".master-cell .silver-knob .dial-pointer (Zeiger des Master-Knopfs)",
+   "delta": "Soll (Template Z. 225): width:3px; height:21px; top:5px; margin-left:-1.5px (Balken gemessen 3px dick, ~19px sichtbar). Ist (Port Z. 4116): width:4px; height:23px; top:4px; margin-left:-2px (gemessen 4px dick, ~21px).",
+   "fix": "Silver-Override ergänzen: `acidify-patch-view .master-cell .silver-knob .dial-pointer { width: 3px; height: 21px; top: 5px; margin-left: -1.5px; }` (Rotation weiter über var(--norm) im .pointer-wrap).",
+   "severity": "fein"
+  },
+  {
+   "element": ".master-cell .silver-knob .dial-cap und .pointer-wrap (Kappen-/Zeiger-Inset)",
+   "delta": "Soll (Template Z. 223/224): inset:8px beim 72px-Master-Knopf. Ist (Port Z. 4110/4114): inset:9px (generischer Tone-Knob-Wert).",
+   "fix": "Silver-Override: `acidify-patch-view .master-cell .silver-knob .dial-cap, acidify-patch-view .master-cell .silver-knob .pointer-wrap { inset: 8px; }`.",
+   "severity": "fein"
+  },
+  {
+   "element": ".master-cell .silver-knob .dial (Knopf-Schatten)",
+   "delta": "Soll (Template Z. 222): box-shadow: 0 7px 9px rgba(0,0,0,.3), inset 0 2px 2px rgba(255,255,255,.9), inset 0 -6px 8px rgba(40,47,49,.55) — OHNE den Zusatz `0 2px 2px rgba(0,0,0,.4)`. Ist (Port Z. 4109): enthält zusätzlich 0 2px 2px rgba(0,0,0,.4).",
+   "fix": "Silver-Override: `acidify-patch-view .master-cell .silver-knob .dial { box-shadow: 0 7px 9px rgba(0,0,0,.3), inset 0 2px 2px rgba(255,255,255,.9), inset 0 -6px 8px rgba(40,47,49,.55); }`.",
+   "severity": "fein"
+  },
+  {
+   "element": ".master-cell .silver-knob .dial-cap (Kappen-Schatten)",
+   "delta": "Soll (Template Z. 223): box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -5px -7px 12px rgba(96,106,109,.26) — ohne die Extras. Ist (Port Z. 4113): zusätzlich `inset 4px 5px 10px rgba(255,255,255,.3)`.",
+   "fix": "Silver-Override: `acidify-patch-view .master-cell .silver-knob .dial-cap { box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -5px -7px 12px rgba(96,106,109,.26); }`.",
+   "severity": "fein"
+  },
+  {
+   "element": ".master-cell .silver-knob .control-label (VOLUME)",
+   "delta": "Soll (Template Z. 229): letter-spacing:1.1px, font 8.5px. Ist (Port): font-size 8.5px korrekt (Z. 4139), aber letter-spacing 1.15px erbt aus Z. 4097 (Textbreite ~42px statt ~41px).",
+   "fix": "Z. 4139 um `letter-spacing: 1.1px;` ergänzen.",
+   "severity": "fein"
+  },
+  {
+   "element": ".master-cell .tick-ring (Skalenring am Master-Knopf)",
+   "delta": "Soll (Template Z. 221-227): Master-Knopf hat KEINEN Tick-Ring (anders als die Tone-Knobs Z. 192). Ist: dial()-Helper (Z. 1842) rendert .tick-ring auch für param8; per .silver-knob-Regel Z. 4099 gestylt (aktuell visuell kaum sichtbar, aber vorhanden).",
+   "fix": "Silver-Override: `acidify-patch-view .master-cell .tick-ring { display: none; }`.",
+   "severity": "fein"
+  },
+  {
+   "element": "DIST/MOD-Buttons — text-shadow-Vererbung über Legacy .master-head",
+   "delta": "Soll (Template Z. 241/242): Button-Text ohne text-shadow. Ist: Trigger-Reihe trägt Klasse master-head (Z. 4447); Legacy-Regeln Z. 2150-2154/3336-3339 setzen text-shadow (0 .5px rgba(255,255,255,.52)) + justify-content:space-between, die in die Buttons erben bzw. auf die Reihe wirken.",
+   "fix": "Klasse `master-head` aus dem div in getHTML() Z. 4447 entfernen (kein JS nutzt sie; .trigger-row Z. 4151 liefert das komplette Soll-Layout). Alternativ in Z. 4152 `text-shadow: none;` ergänzen.",
+   "severity": "fein"
+  },
+  {
+   "element": "LED-Farben off-Zustand (.distortion-led/.mods-led)",
+   "delta": "Soll (Template Z. 1485/1493): off-Background #48140f, box-shadow `inset 0 1px rgba(255,255,255,.18)`. Ist (Port Z. 3820-3821): background #3d1612, box-shadow inset 0 1px 1px rgba(255,255,255,.16).",
+   "fix": "Regel Z. 3818: background: #48140f; box-shadow: inset 0 1px rgba(255,255,255,.18); (Border-Entfernung siehe eigenes Finding).",
+   "severity": "fein"
+  },
+  {
+   "element": "LED-Farben lit-Zustand (.distortion-led.lit)",
+   "delta": "Soll (Template Z. 1485/1486, 1493/1494): lit-Background #ff503d, Glow `0 0 6px rgba(255,50,32,.9), inset 0 0 1px #fff`. Ist (Port Z. 3823-3826): background #ff4f3c, Glow 0 0 4px #ff3826, inset 0 0 1px #fff.",
+   "fix": "Regel Z. 3823: background: #ff503d; box-shadow: 0 0 6px rgba(255,50,32,.9), inset 0 0 1px #fff;",
+   "severity": "fein"
+  },
+  {
+   "element": "VU-Meter Ruhezustand + DIST-LED-Zustand",
+   "delta": "VU-Meter: Geometrie exakt gleich (44×88px, Skalen links/rechts 6px/14px, bottom/top 4px, Farben identisch); BEIDE Renders idle dunkel (Ist max. Innenhelligkeit ≈ Soll, --level:0 default in Z. 4144 korrekt). DIST-LED leuchtet in BEIDEN Hälften rot (Harness-Zustand distOn=true), MOD-LED in beiden aus — kein Stilfehler, nur Zustand.",
+   "fix": "Keine Änderung nötig (Farb-/Border-Abweichungen der LED sind als eigene Findings erfasst).",
+   "severity": "fein",
+   "stateOnly": true
+  }
+ ]
+}

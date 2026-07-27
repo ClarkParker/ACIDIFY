@@ -1,0 +1,73 @@
+{
+ "area": "toneknobs",
+ "findings": [
+  {
+   "element": "acidify-patch-view .silver-knob .control-label (Titelzeile TUNING…ACCENT und damit die gesamte Knopfspalte)",
+   "delta": "Soll (Template Z.190): Label ohne Margin, sitzt direkt an padding-top:14px der Tone-Bank (Z.187) — Label-Caps gemessen bei y=24–29 unter der Deckkante. Ist (Port): Basis-Regel ACIDIFYUI.js Z.2225 '.control-label { margin-top:13px }' wirkt weiter, weil die Silver-Regel Z.4097 kein margin setzt — Label-Caps gemessen bei rel. y=36–41, d.h. Label, Knopf, LED-Box und Slot sitzen alle 12–13px zu tief (LED-Box Soll y=119, Ist rel. y=131).",
+   "fix": "In ACIDIFYUI.js Z.4097 der Regel 'acidify-patch-view .silver-knob .control-label' hinzufügen: margin: 0;",
+   "severity": "struktur"
+  },
+  {
+   "element": "acidify-patch-view .deck-a .volume-bank (Breite bestimmt den Knopf-Pitch der Tone-Bank)",
+   "delta": "Soll (Template Z.218): Volume-Bank width:206px + padding 12px×2 + border-left 1px OHNE box-sizing = 231px außen → Tone-Bank-Spaltenpitch gemessen 87px (LED-Boxen bei x=17,104,191,278,365,452). Ist (Port Z.4019/4136): width:206px unter globalem border-box (Z.1912) = 206px außen → Tone-Bank (flex:1) ist 24px zu breit, Pitch 91px (Boxen bei x=21,112,203,294,385,476), Knöpfe rücken pro Spalte 4px auseinander/nach rechts.",
+   "fix": "In ACIDIFYUI.js Z.4136 (und Z.4019) 'acidify-patch-view .deck-a .volume-bank' auf width: 230px setzen (230px border-box + 1px border-right der Tone-Bank aus Z.4044 entspricht exakt den 231px des Templates).",
+   "severity": "struktur"
+  },
+  {
+   "element": "acidify-patch-view .silver-knob .dial-pointer (Zeiger)",
+   "delta": "Soll (Template Z.196): top:5px; width:3px; height:20px; margin-left:-1.5px — gemessen 3px breit, ~20px lang. Ist (Port Z.4116–4117): top:4px; width:4px; height:23px; margin-left:-2px — gemessen 4px breit, 23px lang; Zeiger ist dicker, länger und beginnt 1px höher.",
+   "fix": "In ACIDIFYUI.js Z.4116 'acidify-patch-view .silver-knob .dial-pointer' ändern auf: top: 5px; width: 3px; height: 20px; margin-left: -1.5px; (Rest unverändert: border-radius:2px, background linear-gradient(90deg,#141819 0,#343a3c 45%,#0f1314 100%), box-shadow 1px 0 0 rgba(255,255,255,.55)).",
+   "severity": "sichtbar"
+  },
+  {
+   "element": "acidify-patch-view .led-box (rote LCD-Readout-Box)",
+   "delta": "Soll (Template Z.200): width:66px; height:20px; border:1px #0a0706 OHNE box-sizing = 68×22px außen (gemessen 68×22, y=119–140). Ist (Port Z.4118): identische Werte, aber globales '*{box-sizing:border-box}' (Z.1912) → nur 66×20px außen (gemessen 66×20, rel. y=131–150) — Box ist 2px schmaler und 2px niedriger, Rahmen frisst Innenfläche.",
+   "fix": "In ACIDIFYUI.js Z.4118 'acidify-patch-view .led-box' ändern auf: width: 68px; height: 22px; (border-box-kompensiert; margin-top:10px und alle Farben bleiben).",
+   "severity": "sichtbar"
+  },
+  {
+   "element": "acidify-patch-view .led-box .value-label (rote LCD-Ziffern)",
+   "delta": "Soll (Template Z.200): span nur mit color:#ff6756; font:12px/1 'Courier New'; letter-spacing:.5px; text-shadow:0 0 5px rgba(255,57,37,.5) — volle Deckkraft, gemessen max R=255, Ziffern mittig (+5…+13px in der Box). Ist (Port): Basis-Regel Z.2228–2231 '.value-label { margin-top:4px; min-width:50px; opacity:.86; letter-spacing:.25px }' wird von Z.4120 nur teilweise überschrieben — opacity:.86 und margin-top:4px bleiben aktiv: gemessen max R=232 (Rot sichtbar matter), Ziffern sitzen 1–2px zu tief in der Box.",
+   "fix": "In ACIDIFYUI.js Z.4120 der Regel 'acidify-patch-view .led-box .value-label, .led-box .stepper-value' hinzufügen: margin: 0; min-width: 0; opacity: 1;",
+   "severity": "sichtbar"
+  },
+  {
+   "element": "acidify-patch-view .top-strip.deck-a (Deck-A-Gesamthöhe, beeinflusst Unterkante hinter den Slots)",
+   "delta": "Soll (Template Z.148): height:168px content-box + 2×1px Border = 170px außen (Borderzeilen gemessen y=8 und y=177). Ist (Port Z.4038): height:168px border-box = 168px außen (Borderzeilen rel. y=8 und y=175) — Deck ist 2px niedriger, Unterkante rückt an die Slots heran.",
+   "fix": "In ACIDIFYUI.js Z.4038 'acidify-patch-view .top-strip.deck-a' height auf 170px setzen (analog wäre .deck-b Z.4157 von 104px auf 106px zu heben).",
+   "severity": "sichtbar"
+  },
+  {
+   "element": "acidify-patch-view .silver-knob .dial-cap (Kappen-Gradient/Schatten)",
+   "delta": "Soll (Template Z.194): box-shadow enthält vier Einträge, darunter 'inset 0 -1px 0 rgba(255,255,255,.5)' (heller Unterkanten-Ring der Kappe). Ist (Port Z.4113): nur drei Einträge — 'inset 0 -1px 0 rgba(255,255,255,.5)' fehlt.",
+   "fix": "In ACIDIFYUI.js Z.4113 box-shadow ergänzen zu: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.5), inset -5px -7px 12px rgba(96,106,109,.26), inset 4px 5px 10px rgba(255,255,255,.3);",
+   "severity": "fein"
+  },
+  {
+   "element": "acidify-patch-view .silver-knob .tick-ring (Skalenkranz)",
+   "delta": "Soll (Template Z.192): kein filter auf dem Tick-Ring. Ist (Port): Basis-Regel Z.2212 '.tick-ring { filter: drop-shadow(0 1px rgba(255,255,255,.24)) }' wird von der Silver-Regel Z.4099–4103 nicht zurückgesetzt — Tick-Marken bekommen einen weißen Schlagschatten.",
+   "fix": "In ACIDIFYUI.js Z.4099 der Regel 'acidify-patch-view .silver-knob .tick-ring' hinzufügen: filter: none;",
+   "severity": "fein"
+  },
+  {
+   "element": "acidify-patch-view .silver-knob .control-label (aktive Labelfarbe bei aktivem Circuit-Mod)",
+   "delta": "Soll (Template JS Z.999): labelColor = '#9b2019' wenn der Mod-Slot des Knopfes aktiv ist (mSlide/mOd/mAtk), sonst '#1c2224'. Ist (Port Z.4097): statisch #1c2224, keine Regel für den aktiven Zustand. Im aktuellen Crop nicht sichtbar (beide Renders ohne aktive Mods), aber fehlende Zustands-Stilregel.",
+   "fix": "In ACIDIFYUI.js im Silver-Block ergänzen: acidify-patch-view .silver-knob:has(.mod-slider:not([hidden])) .control-label { color: #9b2019; }",
+   "severity": "fein",
+   "stateOnly": false
+  },
+  {
+   "element": "acidify-patch-view .mod-slider-value (Mod-Wertbox unter dem Slot, nur bei aktivem Mod sichtbar)",
+   "delta": "Soll (Template Z.210): width:48px; height:13px; border:1px content-box = 50×15px außen; zudem opacity-Übergang (transition:opacity .12s). Ist (Port Z.4129–4131): gleiche Zahlen unter border-box = 48×13px außen, 2px kleiner; keine transition (Sichtbarkeit via hidden-Attribut).",
+   "fix": "In ACIDIFYUI.js Z.4129 'acidify-patch-view .mod-slider-value' ändern auf: width: 50px; height: 15px; (border-box-kompensiert).",
+   "severity": "fein",
+   "stateOnly": false
+  },
+  {
+   "element": "acidify-patch-view .deck-a > * (rechte Kante der Tone-Bank vor MASTER)",
+   "delta": "Soll (Template): weißer 1px-Highlight-Schatten '1px 0 0 rgba(255,255,255,.6)' nur nach Brand- und Osc-Zelle (Z.149, Z.169); die Tone-Bank (Z.187) hat keinen, die Volume-Bank trennt sich nur per border-left (Z.218). Ist (Port Z.4044): '.deck-a > *' gibt JEDER Zelle inkl. Tone-Bank border-right + weißen Highlight-Schatten — zusätzliche helle 1px-Linie rechts neben der ACCENT-Spalte.",
+   "fix": "In ACIDIFYUI.js im Silver-Block ergänzen: acidify-patch-view .deck-a .tone-bank { box-shadow: none; } (border-right als Ersatz für die Template-border-left der Volume-Bank behalten).",
+   "severity": "fein"
+  }
+ ]
+}

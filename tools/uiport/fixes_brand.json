@@ -1,0 +1,73 @@
+{
+ "area": "brand",
+ "findings": [
+  {
+   "element": ".deck-a .tooltip-toggle (Button-Fläche '? TIPS')",
+   "delta": "Soll (Template Z.159 + Z.1397–1398, Konstanten Z.1158–1161): Zustandsabhängige Rocker-Fläche — ON (tips=true) = ROCKER_DOWN 'linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%)' mit Shadow 'inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5)'; OFF = ROCKER 'linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%)' mit Shadow 'inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45)'. Ist (Port Z.4058–4061): statische, zustandslose Fläche 'linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%)' + 'inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4)' — entspricht keinem der beiden Soll-Zustände. Im Pixelvergleich: Soll-Button dunkel/eingedrückt, Ist-Button hell/erhaben.",
+   "fix": "In /home/user/ACIDIFY/ACIDIFYUI.js Regel 'acidify-patch-view .deck-a .tooltip-toggle' (Z.4058–4061): background auf ROCKER-Wert 'linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%)' und box-shadow auf 'inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45)' setzen; zusätzlich neue Regel 'acidify-patch-view .deck-a .tooltip-toggle[aria-pressed=\"true\"] { background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5); }' (aria-pressed wird von _setTooltipsEnabled bereits gepflegt, Amorph-Kontrakt unberührt).",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".deck-a .tooltip-toggle[aria-pressed=\"false\"] .tooltip-toggle-state (OFF-Badge)",
+   "delta": "Soll (Template Z.1400–1401, OFF-Zweig): color '#a9aaa4' auf dunklem Badge 'linear-gradient(#4b4c47,#292a27)'. Ist (Port Z.4064): color '#3d4547' auf hellem Badge 'linear-gradient(#9aa3a1,#7c8583)' — Kontrastschema invertiert (hell-auf-dunkel vs. dunkel-auf-hell). Im aktuellen Render nicht sichtbar (ON-Zustand), aber bindende Zustandsoptik.",
+   "fix": "Regel Z.4064 ändern zu: color: #a9aaa4; background: linear-gradient(#4b4c47,#292a27);",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".deck-a .tooltip-toggle .tooltip-toggle-state (ON-Badge)",
+   "delta": "Soll (Template Z.1400–1401, ON-Zweig): color '#fff2ed', background 'linear-gradient(#b92e24,#74150f)'. Ist (Port Z.4063): color '#ffe9e4', background 'linear-gradient(#ae3026,#67140f)'. Pixelmessung Badge-Rot: Soll ~rgb(176,43,33), Ist ~rgb(151,39,31) — Ist-Badge dunkler.",
+   "fix": "Regel Z.4062–4063: color: #fff2ed; background: linear-gradient(#b92e24,#74150f);",
+   "severity": "fein"
+  },
+  {
+   "element": ".deck-a .brand (ACIDIFY-Logo, Grundtext IFY)",
+   "delta": "Soll (Template Z.151): text-shadow mit 4 Termen '0 -1px 0 rgba(14,18,17,.85), 0 1px 0 rgba(255,255,255,.98), 0 2px 2px rgba(255,255,255,.45), 0 -2px 3px rgba(14,18,17,.35)'. Ist (Port Z.4047–4048): nur 3 Terme — der weiche dunkle Ober-Schatten '0 -2px 3px rgba(14,18,17,.35)' fehlt.",
+   "fix": "Regel Z.4048: text-shadow um ', 0 -2px 3px rgba(14,18,17,.35)' ergänzen (volle Soll-Liste übernehmen).",
+   "severity": "fein"
+  },
+  {
+   "element": ".deck-a .brand .acid (ACID-Span)",
+   "delta": "Soll (Template Z.151): text-shadow '0 -1px 0 rgba(38,4,2,.95), 0 1px 0 rgba(255,255,255,.95), 0 -2px 4px rgba(96,14,8,.55), 0 0 9px rgba(196,32,20,.28)'. Ist (Port Z.4049): dritter Term '0 -2px 4px rgba(96,14,8,.55)' fehlt — im Pixelvergleich ist der dunkelrote Halo oberhalb von ACID im Soll kräftiger, im Ist blasser/rosiger.",
+   "fix": "Regel Z.4049: text-shadow ergänzen zu '0 -1px 0 rgba(38,4,2,.95), 0 1px 0 rgba(255,255,255,.95), 0 -2px 4px rgba(96,14,8,.55), 0 0 9px rgba(196,32,20,.28)'.",
+   "severity": "fein"
+  },
+  {
+   "element": ".deck-a .model (AC-303 BASSLINE SYNTHESIZER)",
+   "delta": "Soll (Template Z.153): text-shadow '0 -.5px 0 rgba(20,24,23,.5), 0 1px 0 rgba(255,255,255,.9)' und white-space:nowrap. Ist (Port Z.4053): nur '0 1px 0 rgba(255,255,255,.9)', kein white-space:nowrap.",
+   "fix": "Regel Z.4053: text-shadow: 0 -.5px 0 rgba(20,24,23,.5), 0 1px 0 rgba(255,255,255,.9); white-space: nowrap; ergänzen.",
+   "severity": "fein"
+  },
+  {
+   "element": ".deck-a .computer (MONOPHONIC · 4× MODELLED CORE)",
+   "delta": "Soll (Template Z.154): white-space:nowrap gesetzt; Font/Farbe/Spacing (900 6.5px/10px, ls .8px, #798382) stimmen im Port überein. Ist (Port Z.4054): white-space:nowrap fehlt (bei 206px-Zelle aktuell ohne sichtbare Folge, aber bindend).",
+   "fix": "Regel Z.4054: white-space: nowrap; ergänzen.",
+   "severity": "fein"
+  },
+  {
+   "element": ".power-ring (POWER-Fassung)",
+   "delta": "Soll (Template Z.160): box-shadow 'inset 0 1px 0 rgba(255,255,255,.9), inset 0 -2px 3px rgba(48,54,52,.35), 0 1px 0 rgba(255,255,255,.65)'. Ist (Port Z.4067–4068): dritter Term '0 1px 0 rgba(255,255,255,.65)' (äußere weiße Unterkante) fehlt.",
+   "fix": "Regel Z.4068: box-shadow um ', 0 1px 0 rgba(255,255,255,.65)' ergänzen.",
+   "severity": "fein"
+  },
+  {
+   "element": ".brand-legal (Zeile COMPUTER CONTROLLED / Version)",
+   "delta": "Soll (Template Z.162–164): Container mit gap:8px; beide Spans white-space:nowrap; Versions-Span text-shadow '0 1px 0 rgba(255,255,255,.7)'. Ist (Port Z.4071–4073): kein gap, kein nowrap, Versions-Span erbt text-shadow '0 1px 0 rgba(255,255,255,.8)' aus '.brand-legal span' statt .7.",
+   "fix": "Regel Z.4071: gap: 8px; ergänzen. Regel Z.4072: white-space: nowrap; ergänzen. Regel Z.4073 ('.brand-legal .brand-version'): text-shadow: 0 1px 0 rgba(255,255,255,.7); ergänzen.",
+   "severity": "fein"
+  },
+  {
+   "element": ".brand-version (Versionstext)",
+   "delta": "Soll (Template Z.164): Text 'v0.7.2'. Ist (Port getHTML Z.4422): Text 'v2.0.3'. Reiner Inhaltsunterschied (reale Plugin-Version), Stil identisch.",
+   "fix": "Kein Stil-Fix; nur angleichen, falls die Versionsangabe des Templates wörtlich bindend sein soll (Z.4422: 'v0.7.2').",
+   "severity": "fein",
+   "stateOnly": true
+  },
+  {
+   "element": ".power-cell (POWER als statisches Span statt Bypass-Button)",
+   "delta": "Soll (Template Z.160 + Z.1487–1490): POWER ist ein Button (toggleBypass) mit zweitem Zustand — Label 'BYPASS' in #8e1f16, LED dunkel 'radial-gradient(circle at 35% 30%, #55201a, #2c0b07 70%, #1a0503)', Glow reduziert 'inset 0 1px 1px rgba(255,255,255,.16)'. Ist (Port Z.4420): statisches <span>, LED dauerhaft an. Im gerenderten Default-Zustand (Power an) sind Label #6d7776, LED-Gradient und Glow pixelidentisch zum Soll — kein sichtbarer Stilunterschied, nur fehlende Zustandslogik/Interaktivität.",
+   "fix": "Kein CSS-Fix nötig für den Default-Look. Falls Bypass-Funktion gewünscht: span.power-cell in einen button innerhalb eines .control-Wrappers mit passendem data-param/data-endpoint-id (Amorph-Kontrakt) umbauen und die BYPASS-Zustandsfarben aus Template Z.1487–1490 als Klassenregeln ergänzen.",
+   "severity": "fein",
+   "stateOnly": true
+  }
+ ]
+}

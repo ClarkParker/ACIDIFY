@@ -1,0 +1,127 @@
+{
+ "area": "tempo",
+ "findings": [
+  {
+   "element": ".clock-cell .clock-readout (Zusatzzeile \"INT · 128 BPM\")",
+   "delta": "Soll: Template Deck-B CLOCK-Zelle (Z.271–283) endet mit den beiden Rocker-Buttons — keine Textzeile darunter. Ist: Port rendert unter INT/DAW eine Zeile \"INT · 128 BPM\" (Markup Z.4479, CSS Z.4192, im Render deutlich sichtbar).",
+   "fix": "Markup Z.4479 <span class=\"clock-readout\" role=\"status\">INT · 128 BPM</span> entfernen (JS-Zugriff in _renderTransportState Z.1291 ist bereits mit if (readout) abgesichert, kein weiterer Codeeingriff nötig). CSS-Regel Z.4192 .deck-b .clock-readout mit löschen.",
+   "severity": "struktur"
+  },
+  {
+   "element": ".deck-b .run-switch (Transport-Container)",
+   "delta": "Soll: Template Z.288 setzt den Control-Wrapper auf display:contents, Button (Z.289) 140×36 zentriert in der Zelle — Render: Button x=364–503, mittig. Ist: .deck-b .run-switch (Z.4196) erbt width:104px, height:38px, perspective:100px, border-radius:5px aus der Basisregel .run-switch (Z.2062–2064); der 140px-Button startet am linken Rand des zentrierten 104px-Containers — Render: Button x=346–486, ca. +17px nach rechts verschoben und ragt über die Zellgrenze (x=478) in die Nachbarzelle.",
+   "fix": "In Z.4196 acidify-patch-view .deck-b .run-switch ergänzen: width: auto; height: auto; perspective: none; border-radius: 0; (margin-top: 6px bleibt; entspricht Template Z.288/289 display:contents + margin-top:6px am Button).",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".clock-cell (Breite)",
+   "delta": "Soll: Template Z.271 width:120px (content-box) + padding 9px 11px + border-right 1px = 143px gesamt; Render-Soll: Zelle x=200–342 (143px). Ist: Z.4178 width:120px bei globalem box-sizing:border-box (Z.1912) = 120px gesamt; Render-Ist: x=199–318. INT/DAW-Buttons kleben dadurch fast am Zellrand (1px statt 12px Randabstand).",
+   "fix": "Z.4178: acidify-patch-view .clock-cell { width: 143px; }. Zusätzlich Titelbreite fixieren: .clock-cell .cell-title { width: 100px; } (Template Z.272: width:100px, nicht 100%).",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".transport-cell (Breite)",
+   "delta": "Soll: Template Z.285 width:160px content-box + 22px padding + 1px border = 183px; Render-Soll x=343–525. Ist: Z.4194 width:160px border-box = 160px; Render-Ist x=319–478. RUN/STOP (140px) passt dadurch nicht mehr in den Content (138px).",
+   "fix": "Z.4194: acidify-patch-view .transport-cell { width: 183px; }. Zusätzlich .transport-cell .cell-title { width: 140px; } (Template Z.286: width:140px, nicht 100%).",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".stepper-cell (Breite, Folgefehler im Tempo-Deck-Layout)",
+   "delta": "Soll: Template Z.293 width:292px content-box + 22px padding + 1px border = 315px; Stepper beginnt bei x=526 (außerhalb des Crops). Ist: Z.4204 width:292px border-box = 292px; Stepper beginnt bereits bei x=479 — im Diff taucht \"SW…\" rechts im Tempo-Crop auf, alle Zellen sind nach links verschoben.",
+   "fix": "Z.4204: acidify-patch-view .stepper-cell { width: 315px; }.",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".deck-b .clock-mode button.active (INT gedrückt)",
+   "delta": "Soll: aktiver Rocker = ROCKER_DOWN-Silber, Schriftfarbe bleibt #1d2426 (Template Z.276 + Z.1159 linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%), Z.1161 Schatten inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5)) — Render-Soll: INT ist gedrücktes helles Silber. Ist: Z.4189–4191 färbt aktiv anthrazit (linear-gradient(#576063,#282f31)) mit heller Schrift #f4f6f5 — Render-Ist: INT ist fast schwarz.",
+   "fix": "Z.4189–4191 ersetzen: acidify-patch-view .deck-b .clock-mode button.active { color: #1d2426; background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5); }",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".deck-b .clock-mode button (INT/DAW inaktiv)",
+   "delta": "Soll: ROCKER-Gradient linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%) + Schatten inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45) (Template Z.276/280 + Z.1158/1160) — heller, quergestreifter Metall-Look mit kräftigem Drop-Shadow. Ist: Z.4187–4188 nutzt flacheren 105deg/180deg-Verlauf (#d6dad7→#9da5a1) mit 0 2px 3px rgba(0,0,0,.34). Maße 44×34 stimmen (Render bestätigt).",
+   "fix": "In Z.4185–4188 background und box-shadow durch die Template-Werte ersetzen (ROCKER + ROCKER_SHADOW, s. Delta).",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".deck-b .run-switch button (RUN/STOP, Aus-Zustand)",
+   "delta": "Soll: Template Z.289 + Z.1389–1392 (nicht laufend): background ROCKER (Z.1158), box-shadow ROCKER_SHADOW (Z.1160), border 1px solid #1a1e1f, color #1d2426, kein text-shadow — Render-Soll: heller Rocker mit dunkler Kontur. Ist: Z.4197–4200: border #5d6668 (zu hell), flacher 105deg-Verlauf, Schatten 0 2px 3px rgba(0,0,0,.34); zusätzlich erbt der Button text-shadow: 0 1px #151512 aus Basisregel Z.2080. Größe 140×36 ist korrekt (Render: 140px breit).",
+   "fix": "Z.4197–4200 ändern: border: 1px solid #1a1e1f; text-shadow: none; background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45);",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".deck-b .run-switch.is-on button (RUN/STOP, laufend)",
+   "delta": "Soll: laufend = gedrückter Silber-Rocker: background ROCKER_DOWN (Z.1159), box-shadow ROCKER_SHADOW_DOWN + 0 0 14px rgba(181,41,33,.3) (Z.1390), border #8c2c23, color #8c1a12 (Z.1391/1392) — kein Transform. Ist: Z.4201–4202 macht den Button rot (linear-gradient(#ae3026,#67140f), color #ffd9d1, border #4c130e); zusätzlich erbt er transform: translateY(2px) rotateX(-4deg) aus Basisregel Z.2085. Nur im Laufzustand sichtbar, aber klarer Stilfehler.",
+   "fix": "Z.4201–4202 ersetzen: acidify-patch-view .deck-b .run-switch.is-on button { transform: none; color: #8c1a12; border-color: #8c2c23; background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5), 0 0 14px rgba(181,41,33,.3); }",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".silver-knob.compact .dial-pointer (Tempo-Knopf-Zeiger)",
+   "delta": "Soll: Template Z.258: Zeiger 3×12px, top:5px, margin-left:-1.5px, ohne box-shadow — Render-Soll: kurzer Strich am Kappenrand. Ist: erbt 4×23px, top:4px, margin-left:-2px, box-shadow 1px 0 0 rgba(255,255,255,.55) aus Z.4116 (68px-Knopf-Regel) — Render-Ist: Zeiger reicht bis über die Kappenmitte.",
+   "fix": "Neue Regel nach Z.4169: acidify-patch-view .silver-knob.compact .dial-pointer { top: 5px; width: 3px; height: 12px; margin-left: -1.5px; box-shadow: none; }",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".tempo-row (Abstand unter dem Zellentitel)",
+   "delta": "Soll: Template Z.253 margin-top:9px — Render-Soll: Knopfoberkante 34px unter Deckoberkante. Ist: Z.4165 margin-top:6px — Render-Ist: 31px, Knopf/Readout sitzen 3px zu hoch.",
+   "fix": "Z.4165: margin-top: 9px;",
+   "severity": "sichtbar"
+  },
+  {
+   "element": ".silver-knob.compact .dial-cap / .pointer-wrap (Kappen-Inset)",
+   "delta": "Soll: Template Z.256/257: inset:8px beim 56px-Knopf (Kappe 40px). Ist: erbt inset:9px aus Z.4110/4114 (Kappe 38px) — Rändelring 1px zu breit sichtbar.",
+   "fix": "Neue Regel nach Z.4169: acidify-patch-view .silver-knob.compact .dial-cap, acidify-patch-view .silver-knob.compact .pointer-wrap { inset: 8px; }",
+   "severity": "fein"
+  },
+  {
+   "element": ".silver-knob.compact .dial / .dial-cap (Schatten- und Glanz-Nuancen)",
+   "delta": "Soll: Template Z.255: Außenschatten 0 5px 7px rgba(0,0,0,.3), inset 0 2px 2px rgba(255,255,255,.85), inset 0 -5px 6px rgba(40,47,49,.5); Z.256: Kappen-Highlight rgba(255,255,255,.45), Kappenschatten inset 0 1px 0 rgba(255,255,255,.9), inset -4px -5px 9px rgba(96,106,109,.26). Ist: erbt vom 68px-Knopf (Z.4109/4111–4113): 0 7px 9px + 0 2px 2px, inset 0 -6px 8px …,.55; Kappe .5-Highlight und zusätzlicher inset 4px 5px 10px rgba(255,255,255,.3) — Render-Ist: Knopf wirft sichtbar stärkeren Schatten (Messung: 2px längerer Schattensaum).",
+   "fix": "In die compact-Overrides aufnehmen: .silver-knob.compact .dial { box-shadow: 0 5px 7px rgba(0,0,0,.3), inset 0 2px 2px rgba(255,255,255,.85), inset 0 -5px 6px rgba(40,47,49,.5); } .silver-knob.compact .dial-cap { background: radial-gradient(ellipse at 50% 118%, rgba(255,255,255,.45) 0 16%, rgba(255,255,255,0) 54%), radial-gradient(ellipse 132% 114% at 34% 15%, #ffffff 0 5%, #f1f4f4 17%, #cdd3d4 39%, #a8b0b2 65%, #8c9598 88%, #a3abad 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), inset -4px -5px 9px rgba(96,106,109,.26); }",
+   "severity": "fein"
+  },
+  {
+   "element": ".deck-b (Deckhöhe)",
+   "delta": "Soll: Template Z.250 height:104px content-box + 2×1px Rahmen = 106px gesamt (Render-Soll: y=6–111). Ist: Z.4157 height:104px bei border-box = 104px gesamt (Render-Ist: y=122–225) — Deck B ist 2px flacher.",
+   "fix": "Z.4157: height: 106px;",
+   "severity": "fein"
+  },
+  {
+   "element": ".tempo-cell (Breite)",
+   "delta": "Soll: Template Z.251: 168px content + 22px padding + 1px border-right = 191px (Render-Soll: Trennlinie x=199). Ist: Z.4164 width:190px border-box (Render-Ist: x=198) — 1px zu schmal, LED-Box 100 statt 101px breit.",
+   "fix": "Z.4164: width: 191px;",
+   "severity": "fein"
+  },
+  {
+   "element": ".deck-b .run-lamp (Transport-Lampe)",
+   "delta": "Soll: Template Z.287: 9px Content + 1px Rand #4f1a15 (content-box) = 11px sichtbar; Glow aus (Z.1433/1434): 0 1px 0 rgba(255,255,255,.62), inset 0 -2px 3px #170403 — Render-Soll: 11px-Dom ohne grauen Ring. Ist: Z.4195: 9px border-box = 9px sichtbar (Render bestätigt), plus geerbter Extra-Ring 0 0 0 2px rgba(72,72,67,.26) und inset 1px 1px 2px rgba(255,255,255,.2) aus Basisregel Z.2045–2049.",
+   "fix": "Z.4195 ergänzen: width: 11px; height: 11px; box-shadow: 0 1px 0 rgba(255,255,255,.62), inset 0 -2px 3px #170403;",
+   "severity": "fein"
+  },
+  {
+   "element": ".deck-b .run-lamp.lit (Lauf-Glow)",
+   "delta": "Soll: Template Z.1434 (laufend): 0 0 6px rgba(255,51,31,.85), 0 0 13px rgba(255,42,25,.5), inset 0 0 2px #fff. Ist: Basisregel Z.2051–2060: 0 0 5px …,.8, 0 0 11px …,.44, zusätzlich 0 1px 0 rgba(255,255,255,.55) und 2px-Ring. Nur im Laufzustand sichtbar.",
+   "fix": "Neue Regel: acidify-patch-view .deck-b .run-lamp.lit { box-shadow: 0 0 6px rgba(255,51,31,.85), 0 0 13px rgba(255,42,25,.5), inset 0 0 2px #fff; }",
+   "severity": "fein"
+  },
+  {
+   "element": ".clock-lamp (INT/DAW-Lämpchen, Glow-Werte)",
+   "delta": "Soll: an (Z.1162/1164): Glow 0 0 7px rgba(255,72,48,.9) plus inset 0 0 2px rgba(255,255,255,.6); aus (Z.1165): inset 0 -1px 1px rgba(0,0,0,.7). Ist: Z.4181–4184: an nur 0 0 6px rgba(255,72,48,.85) ohne inneres Highlight; aus rgba(0,0,0,.65). Hintergrund-Gradients stimmen.",
+   "fix": "Z.4182: box-shadow: inset 0 -1px 1px rgba(0,0,0,.7); Z.4184: box-shadow: 0 0 7px rgba(255,72,48,.9), inset 0 0 2px rgba(255,255,255,.6);",
+   "severity": "fein"
+  },
+  {
+   "element": ".clock-mode[data-control] (Attribut-Delta)",
+   "delta": "Soll: Template Z.273: data-control=\"toggle\". Ist: Markup Z.4474: data-control=\"buttons\". Nicht sichtbar, reine Markup-/Kontrakt-Abweichung.",
+   "fix": "Nur angleichen (data-control=\"toggle\"), falls die Control-Factory des Ports die INT/DAW-Buttongruppe unter \"toggle\" identisch bedient — sonst belassen, da funktional und unsichtbar.",
+   "severity": "fein",
+   "stateOnly": true
+  },
+  {
+   "element": "RUN/STOP-Beschriftung im DAW-Modus (JS-Verhalten)",
+   "delta": "Soll: Template Z.289: Beschriftung konstant \"RUN / STOP\". Ist: _renderTransportState Z.1277–1278 ersetzt den Text im DAW-Modus durch \"DAW FOLLOW\". Nur im DAW-Zustand sichtbar; im Render (INT-Modus) identisch.",
+   "fix": "Z.1278: Text-Swap entfernen bzw. auf \"RUN / STOP\" festschreiben, wenn 1:1-Treue auch im DAW-Zustand gefordert ist (Host-Info steckt bereits im Tooltip Z.1272–1276).",
+   "severity": "fein",
+   "stateOnly": true
+  }
+ ]
+}

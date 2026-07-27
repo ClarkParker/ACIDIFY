@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ACIDIFY UI Mockup</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #20211f; }
+  </style>
+</head>
+<body>
+  <script type="module">
+    import createPatchView from "../ACIDIFYUI.js";
+
+    const defaults = new Map([
+      ["param1", 0], ["param2", .45], ["param3", .72], ["param4", .68],
+      ["param5", .45], ["param6", .65], ["param7", 0], ["param8", -6],
+      ["param9", 128], ["param10", 0], ["param11", 16], ["param12", 36],
+      ["param45", 1], ["param46", 1], ["param47", .35], ["param48", 1],
+      ["param49", 0], ["param50", 0],
+      ["param51", 0], ["param52", 0.3], ["param53", 0], ["param54", 0], ["param55", 0],
+      ["param56", 0], ["param57", 0], ["param58", 0], ["param59", 0.25],
+    ]);
+    [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7]
+      .forEach((v, i) => defaults.set(`param${13 + i}`, v));
+    [3, 5, 1, 1, 3, 5, 1, 1, 0, 1, 3, 5, 1, 1, 1, 5]
+      .forEach((v, i) => defaults.set(`param${29 + i}`, v));
+
+    const parameterListeners = new Set();
+    const endpointListeners = new Map();
+    const patchConnection = {
+      sendEventOrValue(id, value) {
+        defaults.set(id, value);
+        parameterListeners.forEach(fn => fn({ endpointID: id, value }));
+      },
+      addAllParameterListener(fn) { parameterListeners.add(fn); },
+      removeAllParameterListener(fn) { parameterListeners.delete(fn); },
+      requestParameterValue(id) {
+        queueMicrotask(() => parameterListeners.forEach(fn => fn({ endpointID: id, value: defaults.get(id) ?? 0 })));
+      },
+      addEndpointListener(id, fn) {
+        if (!endpointListeners.has(id)) endpointListeners.set(id, new Set());
+        endpointListeners.get(id).add(fn);
+      },
+      removeEndpointListener(id, fn) { endpointListeners.get(id)?.delete(fn); },
+      sendParameterGestureStart() {},
+      sendParameterGestureEnd() {},
+      sendMIDIInputEvent() {},
+    };
+
+    const view = createPatchView(patchConnection);
+    document.body.appendChild(view);
+    const previewMode = new URLSearchParams(location.search).get("mode");
+    if (previewMode === "studio") {
+      view._setStudioMode(true);
+    } else if (previewMode === "pitch") {
+      view._setStudioMode(true);
+      const target = view.querySelector('.studio-cell[data-kind="pitch"][data-step="4"]');
+      const bounds = target.getBoundingClientRect();
+      view._openPitchMenu(4, bounds.left + bounds.width / 2, bounds.top + bounds.height / 2, target);
+    } else if (previewMode === "distortion") {
+      patchConnection.sendEventOrValue("param45", 1);
+      patchConnection.sendEventOrValue("param46", 1);
+      view._setDistortionOpen(true);
+    } else if (previewMode === "sync") {
+      patchConnection.sendEventOrValue("param49", 1);
+      endpointListeners.get("effectiveTempo")?.forEach(fn => fn(135));
+      endpointListeners.get("hostSyncStatus")?.forEach(fn => fn(7));
+      endpointListeners.get("transportRunning")?.forEach(fn => fn(1));
+    }
+  </script>
+</body>
+</html>

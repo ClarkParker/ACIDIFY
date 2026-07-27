@@ -1,0 +1,54 @@
+{
+ "area": "osc",
+ "findings": [
+  {
+   "element": "acidify-patch-view .osc-cell .wave-buttons button.active (ACIDIFYUI.js Z.4086–4088)",
+   "delta": "Soll (Template Z.173 background:{{ sawRocker }} → ROCKER_DOWN Z.1159, Shadow Z.1161): gedrückter Silber-Rocker linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%) mit box-shadow inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5) — Pixelprobe Soll ~RGB(190,196,197). Ist (Port Z.4087f): dunkles Anthrazit linear-gradient(105deg, rgba(255,255,255,.13), transparent 34% 77%, rgba(0,0,0,.25)), linear-gradient(#576063,#282f31) mit inset 0 2px 3px rgba(0,0,0,.4), inset 0 -1px 0 rgba(255,255,255,.22) — Pixelprobe Ist ~RGB(56,63,66).",
+   "fix": "In Regel `.osc-cell .wave-buttons button.active` (Z.4086–4088) setzen: background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5);",
+   "severity": "sichtbar"
+  },
+  {
+   "element": "acidify-patch-view .osc-cell .wave-buttons button (inaktiv, ACIDIFYUI.js Z.4082–4085)",
+   "delta": "Soll (Template Z.179 background:{{ sqrRocker }} → ROCKER Z.1158, Shadow Z.1160): glänzender Metallic-Rocker linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%) mit box-shadow inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45) — Pixelprobe Soll oben links exakt #fdfefe. Ist (Port Z.4084f): linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%) mit inset 0 1px 0 rgba(255,255,255,.9), 0 2px 3px rgba(0,0,0,.34) — flacher und dunkler (~RGB 214,218,215 → 163,170,166), Sheen-Banding fehlt.",
+   "fix": "In Regel `.osc-cell .wave-buttons button` (Z.4082–4085) setzen: background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45);",
+   "severity": "sichtbar"
+  },
+  {
+   "element": "acidify-patch-view .osc-cell .wave-buttons svg (ACIDIFYUI.js Z.4089)",
+   "delta": "Soll (Template Z.174/180): nur stroke-width:2.4 ohne linecap-Override und ohne Filter → gemessene Strichstärke ~3–4px. Ist: Silver-Regel Z.4089 setzt stroke-width 2.4, neutralisiert aber die geerbten Deklarationen aus der Alt-Regel Z.2116–2120 nicht (stroke-linecap: square; filter: drop-shadow(0 1px #151512)) → gemessene Strichstärke ~5px, Wellenformen wirken fetter/verschmierter.",
+   "fix": "Regel `.osc-cell .wave-buttons svg` (Z.4089) ergänzen um: stroke-linecap: butt; filter: none; (stroke-linejoin: miter ist Default und kann bleiben).",
+   "severity": "sichtbar"
+  },
+  {
+   "element": "acidify-patch-view .wave-name (inaktives Label, z. B. SQR; ACIDIFYUI.js Z.4090)",
+   "delta": "Soll (Template Z.182 color:{{ sqrLabelColor }} → Z.1415): inaktiv #67716f (hellgrau, Pixelprobe Soll ~RGB 140,143,142 mit AA). Ist (Port Z.4090): color #4d5658 — deutlich dunkler (Pixelprobe ~RGB 118,125,126).",
+   "fix": "In Regel `.wave-name` (Z.4090) color: #67716f setzen.",
+   "severity": "sichtbar"
+  },
+  {
+   "element": "acidify-patch-view .osc-cell .wave-buttons button.active — Icon-Farbe (ACIDIFYUI.js Z.4086)",
+   "delta": "Soll (Template Z.173 color:{{ sawColor }} → waveStyle Z.1139): aktiv #ff5545 (Pixelprobe Soll max exakt RGB 255,85,69). Ist (Port Z.4086): color #ff5f4a (Pixelprobe max RGB 255,95,74) — minimal oranger/heller.",
+   "fix": "In Regel `.osc-cell .wave-buttons button.active` (Z.4086) color: #ff5545 setzen.",
+   "severity": "fein"
+  },
+  {
+   "element": "acidify-patch-view .wave-choice:has(button.active) .wave-name (aktives SAW-Label; ACIDIFYUI.js Z.4091)",
+   "delta": "Soll (Template Z.176 color:{{ sawLabelColor }} → Z.1414): aktiv #8e1f16. Ist (Port Z.4091): #9b2019 — etwas heller/roter (Pixelprobe Soll ~RGB 153,58,50 vs. Ist ~RGB 163,55,49).",
+   "fix": "In Regel `.wave-choice:has(button.active) .wave-name` (Z.4091) color: #8e1f16 setzen.",
+   "severity": "fein"
+  },
+  {
+   "element": "acidify-patch-view .osc-cell .waveform (Flex-Container; ACIDIFYUI.js Z.4079)",
+   "delta": "Soll (Template Z.171): flex:1; min-height:0; display:flex; gap:14px; align-items:center; justify-content:center. Ist (Port Z.4079): min-height:0 fehlt (gap:14px liegt äquivalent auf .wave-buttons Z.4080). Im Crop kein sichtbarer Effekt, reine Paritätslücke gegen Überlauf-Fälle.",
+   "fix": "Regel `.osc-cell .waveform` (Z.4079) um min-height: 0 ergänzen.",
+   "severity": "fein"
+  },
+  {
+   "element": "Wellenform-Buttonzeile — vertikale Position innerhalb der Zelle",
+   "delta": "Soll: Abstand Titel-Unterstrich → Button-Oberkante gemessen 32px (Unterstrich y=36, Button-Top y=68). Ist: 31px (y=35 → y=66) — 1px höher. Buttongeometrie selbst identisch (62px breit, 14px Gap, Höhe deckungsgleich). Wahrscheinlich Rundungs-/Crop-Artefakt des Render-Harness (globaler 1px-Versatz der beiden Hälften), kein identifizierbarer CSS-Unterschied.",
+   "fix": "Kein CSS-Fix; nach Anwendung der übrigen Fixes (insb. min-height:0) Re-Render prüfen.",
+   "severity": "fein",
+   "stateOnly": true
+  }
+ ]
+}
