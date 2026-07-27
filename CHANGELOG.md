@@ -6,6 +6,21 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-07-27
+
+### Fixed
+
+- **Studio-Modus war im Silver-Layout real kaputt** (Eigenjagd, Option 1 des
+  Nutzers): leere LED-Wertdisplays (eine Studio-Regel versteckte
+  `.value-label` bis zum Drag — für Silver-LEDs falsch), SLIDE-Lane und
+  Aktionszeile liefen aus dem Panel, Note-Displays der Steps beschnitten.
+  Jetzt: Kompakt-Steps (54 px) im Studio, Matrix/Tools auf 110 px eingepasst
+  (Lanes 17 px, Zellen 12 px, Ruler 10 px), Aktionstasten 24 px — alle vier
+  Lanes, alle 15 Aktionen und die Scale-Zeile sichtbar.
+- Referenzklärung dokumentiert: verbindlich ist das dc-Template aus beiden
+  Übergaben; der alte Session-Screenshot enthielt einen früheren Stand
+  („PERFORMANCE BASSLINE", TIPS im Programmer-Kopf).
+
 ## [2.0.2] - 2026-07-27
 
 ### Fixed

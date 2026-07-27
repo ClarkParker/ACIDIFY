@@ -3963,6 +3963,35 @@ class AcidifyPatchView extends HTMLElement {
   }
   acidify-patch-view .mods-scrim[hidden] { display: none; }
 
+  /* ---------- Studio-Modus im Silver-Layout ---------- */
+  acidify-patch-view.studio-mode .silver-knob .value-label {
+    position: static; opacity: 1; transform: none; pointer-events: none;
+    padding: 0; min-width: 0; width: auto; border: 0; background: none; box-shadow: none;
+    color: #ff6756; font: 12px/1 'Courier New',monospace; letter-spacing: .5px; text-shadow: 0 0 5px rgba(255,57,37,.5);
+  }
+  acidify-patch-view.studio-mode .master-cell .silver-knob .value-label { color: #6c1710; font: 8px/1 'Courier New',monospace; text-shadow: none; }
+  acidify-patch-view.studio-mode .sequence-step { height: 54px; }
+  acidify-patch-view.studio-mode .step-well { top: 15px; height: 20px; }
+  acidify-patch-view.studio-mode .step-cap { top: 16px; height: 17px; }
+  acidify-patch-view.studio-mode .cap-rocker { height: 12px; }
+  acidify-patch-view.studio-mode .cap-nub { top: 4px; height: 9px; }
+  acidify-patch-view.studio-mode .step-playbar { top: 36px; }
+  acidify-patch-view.studio-mode .step-sel { bottom: 16px; }
+  acidify-patch-view.studio-mode .editor,
+  acidify-patch-view.studio-mode .studio-editor { height: 118px; }
+  acidify-patch-view.studio-mode .edit-status,
+  acidify-patch-view.studio-mode .keyboard,
+  acidify-patch-view.studio-mode .time-controls,
+  acidify-patch-view.studio-mode .studio-tools,
+  acidify-patch-view.studio-mode .studio-matrix { height: 110px; }
+  acidify-patch-view .studio-actions button { height: 24px; font-size: 9px; line-height: 9px; }
+  acidify-patch-view.studio-mode .studio-matrix { padding: 4px 8px 6px; }
+  acidify-patch-view.studio-mode .studio-ruler { height: 10px; }
+  acidify-patch-view.studio-mode .studio-lane { height: 17px; }
+  acidify-patch-view.studio-mode .studio-cell { height: 12px; }
+  acidify-patch-view .studio-actions button small { font-size: 5.5px; }
+
+
   /* ================= SILVER SERIES (Design-Port) ================= */
   acidify-patch-view .panel { display: flex; flex-direction: column; box-sizing: border-box; padding: 14px 20px; }
   acidify-patch-view .top-strip.deck-a { position: static; left: auto; right: auto; top: auto; flex: 0 0 auto; border-bottom: 1px solid #6f7573; }
@@ -4373,7 +4402,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="tooltip-toggle" type="button" aria-pressed="true" data-tooltip="Turn the English control tooltips on or off."><span>? TIPS</span><strong class="tooltip-toggle-state">ON</strong></button>
             <span class="power-cell"><span class="power-label">POWER</span><span class="power-ring"><i class="power-led"></i></span></span>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.0.2</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.0.3</span></div>
         </div>
       </header>
       <div class="osc-cell">

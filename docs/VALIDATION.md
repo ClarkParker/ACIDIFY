@@ -1,3 +1,12 @@
+# Validierung 2.0.3
+
+## 2.0.3
+
+Studio-Modus nachgemessen (Matrix 562, Panel 563 — kein Überlauf mehr),
+`ui_smoke_test` dreifach grün, DSP-Smoke 0,34552, `ui_lint --strict` sauber.
+
+---
+
 # Validierung 2.0.2
 
 ## 2.0.2
