@@ -1,3 +1,12 @@
+# Validierung 2.0.1
+
+## 2.0.1
+
+Fidelity-Pass: `ui_smoke_test` dreifach grün, DSP-Smoke 0,34552,
+`ui_lint --strict` sauber, Sync sauber.
+
+---
+
 # Validierung 2.0.0
 
 ## 2.0.0

@@ -1685,11 +1685,18 @@ class AcidifyPatchView extends HTMLElement {
         (flags & 2) !== 0 ? "Accent" : "",
         (flags & 4) !== 0 ? "Slide" : "",
       ].filter(Boolean).join(", ");
-      node.querySelector(".step-note").textContent = absoluteNote;
+      node.querySelector(".step-note").textContent = (flags & 1) !== 0 ? absoluteNote : "REST";
       node.querySelector(".step-octave").textContent = `+${Math.floor(pitch / 12)}`;
       node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}; click to edit, wheel changes semitone, right-click or double-click chooses a note`);
       node.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}. Wheel changes one semitone; right-click or double-click opens direct note selection.`;
     });
+    const position = this.querySelector(".step-position");
+    if (position) {
+      const length = Math.max(1, Math.round(this._values.get("param11") ?? 16));
+      position.textContent = this._playingStep >= 0
+        ? `${String(this._playingStep + 1).padStart(2, "0")} / ${length}`
+        : `-- / ${length}`;
+    }
     this._renderBassline();
   }
 
@@ -1820,7 +1827,8 @@ class AcidifyPatchView extends HTMLElement {
               <div class="mod-slider-track" role="slider" tabindex="0" aria-label="Mod amount"><i class="mod-slider-rail"></i><i class="mod-slider-thumb"></i></div>
               <span class="mod-slider-value"></span>
             </div>
-          </div>` : "";
+          </div>` : (opts.plainSlot ? `
+          <div class="mod-slot"></div>` : "");
       return `
         <div class="control knob-control silver-knob${opts.size ? ` ${opts.size}` : ""}" data-param="${c.id}" data-endpoint-id="${c.id}" data-min="${c.min}" data-max="${c.max}" data-step="${c.step}" data-init="${c.init}" data-control="dial">
           <div class="control-label">${c.label}</div>
@@ -2455,7 +2463,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .step-index { display: block; margin-top: 20px; font-size: 8px; font-weight: 900; }
   acidify-patch-view .step-note { display: block; margin-top: 1px; font-size: 9px; color: #5f1713; font-weight: 900; }
   acidify-patch-view .editor {
-    height: 112px; display: grid; grid-template-columns: 144px minmax(0, 1fr) 280px; gap: 13px;
+    height: 106px; display: grid; grid-template-columns: 144px minmax(0, 1fr) 280px; gap: 13px;
     border-top: 1px solid rgba(255,255,255,.62); padding-top: 8px;
     box-shadow: inset 0 1px rgba(61,61,57,.18);
   }
@@ -4051,7 +4059,7 @@ class AcidifyPatchView extends HTMLElement {
     background: radial-gradient(ellipse at 50% 118%, rgba(255,255,255,.5) 0 16%, rgba(255,255,255,0) 54%),
       radial-gradient(ellipse 132% 114% at 34% 15%, #ffffff 0 5%, #f1f4f4 17%, #cdd3d4 39%, #a8b0b2 65%, #8c9598 88%, #a3abad 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -5px -7px 12px rgba(96,106,109,.26), inset 4px 5px 10px rgba(255,255,255,.3); }
-  acidify-patch-view .silver-knob .pointer-wrap { position: absolute; inset: 9px; border-radius: 50%; pointer-events: none;
+  acidify-patch-view .silver-knob .pointer-wrap { position: absolute; inset: 9px; border-radius: 50%; pointer-events: none; z-index: 5;
     transform: rotate(calc(-135deg + var(--norm) * 270deg)); }
   acidify-patch-view .silver-knob .dial-pointer { position: absolute; left: 50%; top: 5px; width: 3px; height: 20px; margin-left: -1.5px; border-radius: 2px;
     transform: none; background: linear-gradient(90deg,#141819 0,#343a3c 45%,#0f1314 100%); box-shadow: 1px 0 0 rgba(255,255,255,.55); }
@@ -4177,6 +4185,18 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .scope-legend span { color: #8d9698; font: 900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .9px; }
   acidify-patch-view .scope-legend b { color: #ff6756; font: 8px/1 'Courier New',monospace; text-shadow: 0 0 5px rgba(255,57,37,.5); }
 
+  acidify-patch-view .program-title { display: flex; flex-wrap: nowrap; align-items: baseline; gap: 10px; white-space: nowrap; }
+  acidify-patch-view .program-legend { display: inline-flex; align-items: center; gap: 5px; margin-left: 12px; padding-left: 12px; border-left: 1px solid rgba(58,66,64,.28); }
+  acidify-patch-view .program-legend i { width: 14px; height: 10px; display: grid; place-items: center; border-radius: 2px; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; font-style: normal; }
+  acidify-patch-view .program-legend .legend-a { color: #fff2ee; border: 1px solid #5d1611; background: linear-gradient(180deg,#ff7361,#a3201a); box-shadow: 0 0 6px rgba(255,72,48,.5); }
+  acidify-patch-view .program-legend .legend-s { color: #2a1a02; border: 1px solid #5b3908; background: linear-gradient(180deg,#ffc776,#8d5410); box-shadow: 0 0 6px rgba(255,168,60,.45); }
+  acidify-patch-view .program-legend .legend-play { width: 12px; height: 8px; border-radius: 4px; border: 0;
+    background: radial-gradient(ellipse at 50% 28%, #fff4ec 0 22%, #ff8a63 46%, #ff3a1c 78%, #b81c0c 100%); box-shadow: 0 0 8px rgba(255,86,52,.7); }
+  acidify-patch-view .program-legend em { font: 900 7px/1 'Arial Narrow',Arial,sans-serif; font-style: normal; letter-spacing: 1.2px; color: #3d4749; }
+  acidify-patch-view .step-position { min-width: 56px; text-align: center; padding: 2px 6px; border-radius: 2px; border: 1px solid #0a0706;
+    background: linear-gradient(180deg,#241512,#130b09); color: #ff6756; font: 9px/1 'Courier New',monospace; letter-spacing: 1px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.7); }
+
   /* ---------- Deck C: Silver Step-Wippen ---------- */
   acidify-patch-view .program-strip { border: 1px solid #6f7573; border-radius: 3px; overflow: hidden; padding: 0 12px 8px;
     background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),
@@ -4228,6 +4248,15 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .sequence-step.playing .step-note { color: #ffd9d1; }
 
   /* ---------- Deck C: Editor, Keyboard, Funktionsmatrix ---------- */
+  acidify-patch-view .pitch-key::after { content: ""; position: absolute; left: 50%; top: 4px; margin-left: -4.5px; width: 9px; height: 9px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.2) 0 12%, #4a4a44 55%, #262622 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.6); }
+  acidify-patch-view .pitch-key.black-key::after { top: 5px; width: 8px; height: 8px; }
+  acidify-patch-view .pitch-key.active::after {
+    background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%); box-shadow: 0 0 7px rgba(255,72,48,.8); }
+  acidify-patch-view .pitch-key.active { background:
+    linear-gradient(100deg, rgba(119,117,107,.2), transparent 15% 77%, rgba(75,74,69,.22)),
+    linear-gradient(180deg, #f5d9d3 0%, #ecc4bc 55%, #d3a49b 84%, #b98a81 100%); }
+
   acidify-patch-view .classic-editor { display: flex; gap: 8px; }
   acidify-patch-view .edit-status { box-sizing: border-box; width: 196px; padding: 6px 8px 8px; display: flex; flex-direction: column; border-radius: 2px;
     border: 1px solid #7c827f; background: linear-gradient(180deg,#bcc0be,#a9adab);
@@ -4330,7 +4359,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="tooltip-toggle" type="button" aria-pressed="true" data-tooltip="Turn the English control tooltips on or off."><span>? TIPS</span><strong class="tooltip-toggle-state">ON</strong></button>
             <span class="power-cell"><span class="power-label">POWER</span><span class="power-ring"><i class="power-led"></i></span></span>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">SILVER SERIES</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.0.1</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -4344,7 +4373,7 @@ class AcidifyPatchView extends HTMLElement {
       </div>
       <div class="tone-bank">
         <div class="tone-controls">
-          ${dial("param1")}${dial("param2", { modSlot: "param52" })}${dial("param3")}${dial("param4")}${dial("param5")}${dial("param6", { modSlot: "param59" })}
+          ${dial("param1", { plainSlot: true })}${dial("param2", { modSlot: "param52" })}${dial("param3", { plainSlot: true })}${dial("param4", { plainSlot: true })}${dial("param5", { plainSlot: true })}${dial("param6", { modSlot: "param59" })}
         </div>
       </div>
       <div class="volume-bank">
@@ -4361,7 +4390,7 @@ class AcidifyPatchView extends HTMLElement {
               title="Distortion · OFF"><i class="distortion-led"></i><span>DIST</span></button>
             <button class="mods-trigger" type="button" aria-expanded="false"
               aria-controls="mods-overlay" aria-label="Circuit mods stock; open controls"
-              title="Circuit Mods · STOCK"><i class="distortion-led mods-led"></i><span>MODS</span></button>
+              title="Circuit Mods · STOCK"><i class="distortion-led mods-led"></i><span>MOD</span></button>
             <span class="master-output" hidden><span></span>OUT</span>
           </div>
         </div>
@@ -4548,6 +4577,7 @@ class AcidifyPatchView extends HTMLElement {
         <div class="program-title">
           <b>16 STEP</b><span>PATTERN PROGRAMMER</span>
           <small class="program-context">CLASSIC PROGRAMMING</small>
+          <span class="program-legend" aria-hidden="true"><i class="legend-a">A</i><em>ACCENT</em><i class="legend-s">S</i><em>SLIDE</em><i class="legend-play"></i><em>PLAYING</em></span>
         </div>
         <div class="bassline-visual" role="img" aria-label="Live 16-step bassline pitch contour"
           data-tooltip="Live pitch contour for all 16 steps. Red nodes are accented, amber links are slides, dim nodes are rests, and the bright ring follows playback.">
@@ -4559,6 +4589,7 @@ class AcidifyPatchView extends HTMLElement {
           </svg>
         </div>
         <div class="utility">
+          <span class="step-position" role="status">-- / 16</span>
           <button class="studio-toggle" aria-pressed="false" aria-label="Open Studio edit mode" aria-keyshortcuts="M"
             title="Switch editor · keyboard shortcut M">
             <i></i><span class="classic-label">CLASSIC</span><span class="studio-label">STUDIO</span>

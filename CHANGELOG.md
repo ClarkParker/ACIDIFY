@@ -6,6 +6,22 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-07-27
+
+### Fixed
+
+- **Fidelity-Pass gegen den Design-Entwurf** (Abgleich Screenshot gegen
+  Screenshot): Knopfzeiger lagen unter dem Chrom-Cap (Stacking) — auf allen
+  Knöpfen sichtbar gemacht; Mod-Slots jetzt unter allen sechs Klangreglern
+  (nicht nur CUTOFF/ACCENT); Rest-Steps zeigen **REST** statt gedimmter Note;
+  Programmer-Kopf trägt Legende (A/S/PLAYING) und Positionsdisplay; MOD-Taste
+  heißt MOD; Keyboard-Tasten haben LED-Punkte und rosa Aktiv-Färbung;
+  Versionszeile im Brand zeigt die Release-Nummer; Editor-Zeile passt ohne
+  Beschnitt ins 580-px-Fenster.
+- Übergabe 2 geprüft: Design-Dateien byte-identisch mit Übergabe 1; die
+  enthaltenen `mockup/*.png` sind Vorher-Renders der alten v0.7-Optik,
+  keine neuen Vorgaben. LED-Detail-Scraps als Referenz gesichtet.
+
 ## [2.0.0] - 2026-07-27
 
 ### Changed
