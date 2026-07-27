@@ -1690,6 +1690,12 @@ class AcidifyPatchView extends HTMLElement {
       node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}; click to edit, wheel changes semitone, right-click or double-click chooses a note`);
       node.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}. Wheel changes one semitone; right-click or double-click opens direct note selection.`;
     });
+    const caption = this.querySelector(".selection-caption");
+    if (caption) {
+      const root = Math.round(this._values.get("param12") ?? 36);
+      const pitch = this._stepPitch(this._selectedStep);
+      caption.textContent = `STEP ${String(this._selectedStep + 1).padStart(2, "0")} · ${noteName(root + pitch).replace("#", "♯")} · ${this._octaveLabel(pitch).toUpperCase()}`;
+    }
     const position = this.querySelector(".step-position");
     if (position) {
       const length = Math.max(1, Math.round(this._values.get("param11") ?? 16));
@@ -2463,7 +2469,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .step-index { display: block; margin-top: 20px; font-size: 8px; font-weight: 900; }
   acidify-patch-view .step-note { display: block; margin-top: 1px; font-size: 9px; color: #5f1713; font-weight: 900; }
   acidify-patch-view .editor {
-    height: 106px; display: grid; grid-template-columns: 144px minmax(0, 1fr) 280px; gap: 13px;
+    height: 102px; display: grid; grid-template-columns: 144px minmax(0, 1fr) 280px; gap: 13px;
     border-top: 1px solid rgba(255,255,255,.62); padding-top: 8px;
     box-shadow: inset 0 1px rgba(61,61,57,.18);
   }
@@ -2628,7 +2634,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .octave-indicator::after { content: "NORMAL"; font-weight: 900; }
   acidify-patch-view .octave-indicator.high::after { content: "UP"; color: #a51d17; }
   acidify-patch-view .keyboard {
-    position: relative; min-width: 0; height: 100px; padding: 6px;
+    position: relative; min-width: 0; height: auto; padding: 6px;
     border: 1px solid rgba(74,74,68,.72); border-radius: 5px;
     background:
       linear-gradient(135deg, rgba(255,255,255,.13), transparent 46%),
@@ -3088,7 +3094,7 @@ class AcidifyPatchView extends HTMLElement {
 
   acidify-patch-view .editor,
   acidify-patch-view.studio-mode .studio-editor {
-    height: 128px; padding-top: 10px; gap: 13px;
+    height: 96px; padding-top: 6px; gap: 8px;
     border-top: 1px solid var(--line-soft); box-shadow: none;
   }
   acidify-patch-view .editor { grid-template-columns: 160px minmax(0, 1fr) 288px; }
@@ -3097,7 +3103,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .keyboard,
   acidify-patch-view .time-controls,
   acidify-patch-view .studio-tools {
-    height: 114px; border-radius: 9px; border: 1px solid var(--line);
+    height: 88px; border-radius: 9px; border: 1px solid var(--line);
     background:
       linear-gradient(145deg, rgba(255, 255, 255, .025), transparent 45%),
       linear-gradient(180deg, #202630, #191e25);
@@ -3168,7 +3174,7 @@ class AcidifyPatchView extends HTMLElement {
     color: var(--acid-hot); background: rgba(8, 10, 13, .94); border: 1px solid #313944;
   }
   acidify-patch-view .studio-matrix {
-    height: 114px; padding: 7px 9px 13px; border-radius: 9px;
+    height: 88px; padding: 6px 9px 10px; border-radius: 9px;
     background:
       linear-gradient(90deg, rgba(255, 255, 255, .018) 1px, transparent 1px),
       linear-gradient(rgba(255, 255, 255, .012) 1px, transparent 1px),
@@ -4061,7 +4067,7 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -5px -7px 12px rgba(96,106,109,.26), inset 4px 5px 10px rgba(255,255,255,.3); }
   acidify-patch-view .silver-knob .pointer-wrap { position: absolute; inset: 9px; border-radius: 50%; pointer-events: none; z-index: 5;
     transform: rotate(calc(-135deg + var(--norm) * 270deg)); }
-  acidify-patch-view .silver-knob .dial-pointer { position: absolute; left: 50%; top: 5px; width: 3px; height: 20px; margin-left: -1.5px; border-radius: 2px;
+  acidify-patch-view .silver-knob .dial-pointer { position: absolute; left: 50%; top: 4px; width: 4px; height: 23px; margin-left: -2px; border-radius: 2px;
     transform: none; background: linear-gradient(90deg,#141819 0,#343a3c 45%,#0f1314 100%); box-shadow: 1px 0 0 rgba(255,255,255,.55); }
   acidify-patch-view .led-box { margin-top: 10px; width: 66px; height: 20px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
     background: linear-gradient(180deg,#241512,#130b09); box-shadow: inset 0 2px 4px rgba(0,0,0,.72); }
@@ -4124,7 +4130,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .tempo-scale i { flex: 1; margin: 0 5px; height: 1px; background: linear-gradient(90deg, rgba(45,50,49,.35), rgba(255,255,255,.5)); }
 
   acidify-patch-view .clock-cell { width: 120px; flex: 0 0 auto; }
-  acidify-patch-view .deck-b .clock-mode { margin-top: 8px; display: flex; gap: 8px; background: none; border: 0; box-shadow: none; padding: 0; }
+  acidify-patch-view .deck-b .clock-mode { margin-top: 8px; display: flex; gap: 8px; background: none; border: 0; box-shadow: none; padding: 0; width: auto; height: auto; }
   acidify-patch-view .clock-choice { display: flex; flex-direction: column; align-items: center; gap: 6px; }
   acidify-patch-view .clock-lamp { width: 7px; height: 7px; border-radius: 50%;
     background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.65); }
@@ -4193,6 +4199,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .program-legend .legend-play { width: 12px; height: 8px; border-radius: 4px; border: 0;
     background: radial-gradient(ellipse at 50% 28%, #fff4ec 0 22%, #ff8a63 46%, #ff3a1c 78%, #b81c0c 100%); box-shadow: 0 0 8px rgba(255,86,52,.7); }
   acidify-patch-view .program-legend em { font: 900 7px/1 'Arial Narrow',Arial,sans-serif; font-style: normal; letter-spacing: 1.2px; color: #3d4749; }
+  acidify-patch-view .selection-caption { color: #4f5a5b; font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; white-space: nowrap; }
   acidify-patch-view .step-position { min-width: 56px; text-align: center; padding: 2px 6px; border-radius: 2px; border: 1px solid #0a0706;
     background: linear-gradient(180deg,#241512,#130b09); color: #ff6756; font: 9px/1 'Courier New',monospace; letter-spacing: 1px;
     box-shadow: inset 0 2px 4px rgba(0,0,0,.7); }
@@ -4203,7 +4210,7 @@ class AcidifyPatchView extends HTMLElement {
       linear-gradient(180deg,#eef0ef 0%,#dcdedd 46%,#c5c8c7 100%);
     box-shadow: inset 0 1px 0 #fff; }
   acidify-patch-view .step-row { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 15px; box-sizing: border-box;
-    padding: 6px 9px 5px; border-radius: 2px; border: 1px solid #6f7573; background: linear-gradient(180deg,#bcc0be,#a9adab);
+    padding: 5px 9px 4px; border-radius: 2px; border: 1px solid #6f7573; background: linear-gradient(180deg,#bcc0be,#a9adab);
     box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
   acidify-patch-view .step-group { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 5px; background: none; border: 0; box-shadow: none; padding: 0; }
   acidify-patch-view .sequence-step { position: relative; height: 74px; padding: 0; border: 0; background: transparent; cursor: pointer;
@@ -4248,6 +4255,13 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .sequence-step.playing .step-note { color: #ffd9d1; }
 
   /* ---------- Deck C: Editor, Keyboard, Funktionsmatrix ---------- */
+  acidify-patch-view .keyboard { display: flex; flex-direction: column; }
+  acidify-patch-view .keyboard-head { display: flex; gap: 6px; align-items: center; height: 12px; flex: 0 0 auto; }
+  acidify-patch-view .keyboard-title { width: 88px; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.4);
+    color: #26302f; text-shadow: 0 1px 0 rgba(255,255,255,.8); font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; }
+  acidify-patch-view .keyboard-hint { flex: 1; text-align: right; color: #4f5a5b; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; }
+  acidify-patch-view .keyboard-keys { flex: 1; min-height: 0; height: auto; margin-top: 5px; }
+  acidify-patch-view .pitch-key span { position: absolute; left: 0; right: 0; bottom: 3px; text-align: center; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; }
   acidify-patch-view .pitch-key::after { content: ""; position: absolute; left: 50%; top: 4px; margin-left: -4.5px; width: 9px; height: 9px; border-radius: 50%;
     background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.2) 0 12%, #4a4a44 55%, #262622 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.6); }
   acidify-patch-view .pitch-key.black-key::after { top: 5px; width: 8px; height: 8px; }
@@ -4263,7 +4277,7 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
   acidify-patch-view .edit-caption { width: 100%; height: 12px; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.4);
     color: #26302f; text-shadow: 0 1px 0 rgba(255,255,255,.8); font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; }
-  acidify-patch-view .edit-readout { margin-top: 6px; flex: 1; min-height: 26px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
+  acidify-patch-view .edit-readout { margin-top: 5px; flex: 1; min-height: 22px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
     background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.09) 3px 4px), linear-gradient(180deg,#251614,#130b09);
     box-shadow: inset 0 3px 6px rgba(0,0,0,.78); color: #ff513b; font: 24px/1 'Courier New',monospace; letter-spacing: 2px; white-space: nowrap;
     text-shadow: 0 0 5px #e32418, 0 0 10px rgba(227,36,24,.4); font-size: 19px; }
@@ -4273,7 +4287,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .time-controls { box-sizing: border-box; width: 300px; padding: 6px 8px 8px; display: grid;
     grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(2,1fr); gap: 6px; border-radius: 2px; border: 1px solid #7c827f;
     background: linear-gradient(180deg,#bcc0be,#a9adab); box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
-  acidify-patch-view .function-button { position: relative; height: 100%; min-height: 36px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  acidify-patch-view .function-button { position: relative; height: auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 2px; border-radius: 2px; cursor: pointer; border: 1px solid #1a1e1f;
     background: linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.42); }
@@ -4359,7 +4373,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="tooltip-toggle" type="button" aria-pressed="true" data-tooltip="Turn the English control tooltips on or off."><span>? TIPS</span><strong class="tooltip-toggle-state">ON</strong></button>
             <span class="power-cell"><span class="power-label">POWER</span><span class="power-ring"><i class="power-led"></i></span></span>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.0.1</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.0.2</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -4589,6 +4603,7 @@ class AcidifyPatchView extends HTMLElement {
           </svg>
         </div>
         <div class="utility">
+          <span class="selection-caption">STEP 01 · C2 · OCT +0</span>
           <span class="step-position" role="status">-- / 16</span>
           <button class="studio-toggle" aria-pressed="false" aria-label="Open Studio edit mode" aria-keyshortcuts="M"
             title="Switch editor · keyboard shortcut M">
@@ -4604,7 +4619,7 @@ class AcidifyPatchView extends HTMLElement {
           <strong class="edit-readout">--</strong>
           <span class="octave-indicator"></span>
         </div>
-        <div class="keyboard"><div class="keyboard-keys">${pitchKeys}</div></div>
+        <div class="keyboard"><div class="keyboard-head"><span class="keyboard-title">KEYBOARD</span><span class="keyboard-hint">TONHÖHE DES GEWÄHLTEN STEPS</span></div><div class="keyboard-keys">${pitchKeys}</div></div>
         <div class="time-controls">
           <button class="function-button" data-transpose="-12" title="Transpose the selected step down one octave."><strong>OCT −</strong><small>TRANSPOSE</small></button>
           <button class="function-button" data-transpose="12" title="Transpose the selected step up one octave."><strong>OCT +</strong><small>TRANSPOSE</small></button>

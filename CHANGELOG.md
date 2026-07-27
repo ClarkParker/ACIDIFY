@@ -6,6 +6,25 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-07-27
+
+### Fixed
+
+- **Mechanischer Referenzabgleich eingeführt und abgearbeitet**: Design-Render
+  und Produkt-Render werden auf 1180×580 normalisiert und regionsweise
+  übereinandergelegt (`cmp_*.png`-Paare, oben Soll / unten Ist). Daraus behoben:
+  - INT/DAW waren kleine Pillen statt 44×34-Wippen — der alte
+    `.clock-mode`-Container erzwang `height: 19px`.
+  - Editor-Zeile lief 18 px über den Panelrand: eine späte Theme-Regel setzte
+    `.edit-status/.keyboard/.time-controls` auf feste 114 px in einer
+    96-px-Zeile; dazu `.keyboard-keys { height: 100% }` gegen das Flex-Layout.
+    Jetzt sichtbar: weiße Tastenbeschriftung (C–B), „OCT +0 · +0 SEMITONES…",
+    Funktions-Untertitel.
+  - Programmer-Kopf trägt die Auswahl-Caption „STEP nn · Note · OCT ±n".
+  - Keyboard-Kopfzeile („KEYBOARD" / „TONHÖHE DES GEWÄHLTEN STEPS") ergänzt.
+  - Knopfzeiger dicker/länger (4×23) wie im Entwurf.
+- `ui_smoke_test`: Studio-Werkzeugabstand an den neuen Editor-Gap angepasst.
+
 ## [2.0.1] - 2026-07-27
 
 ### Fixed

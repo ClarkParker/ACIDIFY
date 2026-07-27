@@ -1,3 +1,13 @@
+# Validierung 2.0.2
+
+## 2.0.2
+
+Referenzabgleich regionsweise (Soll/Ist-Paare), Layout im Browser nachgemessen
+statt geschätzt (Editor 96 px, Kinder ≤ 88 px). `ui_smoke_test` dreifach grün,
+DSP-Smoke 0,34552, `ui_lint --strict` sauber, Sync sauber.
+
+---
+
 # Validierung 2.0.1
 
 ## 2.0.1

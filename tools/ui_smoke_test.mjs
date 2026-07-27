@@ -580,7 +580,7 @@ try {
   });
   if (workflow.toggle.width < 130 || workflow.toggle.height < 28
       || workflow.tools.width < 390 || workflow.matrix.width < 620
-      || workflow.matrix.left - workflow.tools.right < 12
+      || workflow.matrix.left - workflow.tools.right < 6
       || workflow.scale.width < 100 || workflow.scale.height < 15
       || workflow.actionRows !== 2
       || workflow.context !== "STUDIO MATRIX"
