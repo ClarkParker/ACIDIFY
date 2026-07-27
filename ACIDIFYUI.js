@@ -3817,7 +3817,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .distortion-overlay .value-label {
     margin-top: 2px; font-size: 7px;
   }
-  acidify-patch-view .mods-overlay { width: min(560px, 92vw); }
+  acidify-patch-view .mods-overlay { width: 560px; max-width: 96%; }
   acidify-patch-view .mods-scrim {
     position: absolute; inset: 0; z-index: 90; border-radius: 15px;
     display: grid; place-items: center;
