@@ -351,6 +351,7 @@ class AcidifyPatchView extends HTMLElement {
     this._wirePitchMenu();
     this._wireDistortion();
     this._wireMods();
+    this._wireModMirrors();
     this._renderScope();
     this._wireTooltips();
     this._renderStepStrip();
@@ -1162,6 +1163,60 @@ class AcidifyPatchView extends HTMLElement {
     const status = this.querySelector(".mods-status");
     if (status) status.textContent = count > 0 ? `${count} MOD${count > 1 ? "S" : ""} ACTIVE` : "STOCK 303";
     this.querySelector(".mods-led")?.classList.toggle("lit", count > 0);
+    this._renderModMirrors();
+  }
+
+  _renderModMirrors() {
+    const pairs = [["param52", "param51"], ["param59", "param58"]];
+    pairs.forEach(([amountId, enableId]) => {
+      const mirror = this.querySelector(`.mod-slider[data-mirrors="${amountId}"]`);
+      if (!mirror) return;
+      const on = Number(this._values.get(enableId) ?? 0) >= 0.5;
+      mirror.hidden = !on;
+      if (!on) return;
+      const cfg = ACIDIFY_GLOBALS.find(c => c.id === amountId);
+      const value = Number(this._values.get(amountId) ?? cfg.init);
+      const norm = (value - cfg.min) / (cfg.max - cfg.min || 1);
+      const thumb = mirror.querySelector(".mod-slider-thumb");
+      if (thumb) thumb.style.left = `${(4 + norm * 58).toFixed(1)}px`;
+      const label = mirror.querySelector(".mod-slider-value");
+      if (label) label.textContent = cfg.format ? cfg.format(value) : value.toFixed(2);
+    });
+  }
+
+  _wireModMirrors() {
+    this.querySelectorAll(".mod-slider").forEach(mirror => {
+      const amountId = mirror.dataset.mirrors;
+      const cfg = ACIDIFY_GLOBALS.find(c => c.id === amountId);
+      const apply = norm => {
+        const value = cfg.min + clamp(norm, 0, 1) * (cfg.max - cfg.min);
+        const owner = this._controls.get(amountId);
+        if (owner) owner.setValue(value, true);
+        else this._sendParameter(amountId, value);
+        queueMicrotask(() => this._renderModMirrors());
+      };
+      const track = mirror.querySelector(".mod-slider-track");
+      if (!track) return;
+      track.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        track.setPointerCapture(event.pointerId);
+        const box = track.getBoundingClientRect();
+        const move = e => apply((e.clientX - box.left - 4) / 58);
+        move(event);
+        const up = () => {
+          track.removeEventListener("pointermove", move);
+          track.removeEventListener("pointerup", up);
+        };
+        track.addEventListener("pointermove", move);
+        track.addEventListener("pointerup", up);
+      });
+      track.addEventListener("wheel", event => {
+        event.preventDefault();
+        const value = Number(this._values.get(amountId) ?? cfg.init);
+        const norm = (value - cfg.min) / (cfg.max - cfg.min || 1);
+        apply(norm + (event.deltaY > 0 ? -0.02 : 0.02));
+      }, { passive: false });
+    });
   }
 
   _setDistortionOpen(enabled) {
@@ -1222,7 +1277,7 @@ class AcidifyPatchView extends HTMLElement {
     const runButton = runSwitch?.querySelector('[data-value="0"]');
     if (runButton) runButton.textContent = runHostControlled ? "DAW FOLLOW" : "RUN / STOP";
 
-    const tempoBox = this.querySelector(".tempo-box");
+    const tempoBox = this.querySelector(".tempo-cell");
     tempoBox?.classList.toggle("daw-locked", tempoHostControlled);
     const tempoDial = tempoBox?.querySelector(".dial");
     tempoDial?.setAttribute("aria-disabled", `${tempoHostControlled}`);
@@ -3301,14 +3356,14 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .clock-readout.waiting { color: #776d51; }
   acidify-patch-view .mode-box > .run-switch { height: 35px; }
   acidify-patch-view .run-switch.daw-controlled,
-  acidify-patch-view .tempo-box.daw-locked .knob-control {
+  acidify-patch-view .tempo-cell.daw-locked .knob-control {
     cursor: default;
   }
   acidify-patch-view .run-switch.daw-controlled button { cursor: default; }
-  acidify-patch-view .tempo-box.daw-locked .dial {
+  acidify-patch-view .tempo-cell.daw-locked .dial {
     pointer-events: none; opacity: .52; filter: saturate(.35);
   }
-  acidify-patch-view .tempo-box.daw-locked .value-label { color: #77776f; }
+  acidify-patch-view .tempo-cell.daw-locked .value-label { color: #77776f; }
   acidify-patch-view .master-output { color: #666861; }
 
   acidify-patch-view .run-switch {
@@ -4004,6 +4059,16 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(180deg,#241512,#130b09); box-shadow: inset 0 2px 4px rgba(0,0,0,.72); }
   acidify-patch-view .led-box .value-label, acidify-patch-view .led-box .stepper-value { position: static; color: #ff6756; font: 12px/1 'Courier New',monospace; letter-spacing: .5px;
     text-shadow: 0 0 5px rgba(255,57,37,.5); width: auto; }
+  acidify-patch-view .mod-slider { position: absolute; inset: 0; }
+  acidify-patch-view .mod-slider-track { position: absolute; inset: 0; cursor: ew-resize; touch-action: none; }
+  acidify-patch-view .mod-slider-rail { position: absolute; left: 4px; right: 4px; top: 6px; height: 2px; border-radius: 1px;
+    background: linear-gradient(90deg, rgba(142,31,22,.75), rgba(255,90,66,.5)); }
+  acidify-patch-view .mod-slider-thumb { position: absolute; top: 1px; left: 4px; width: 9px; height: 11px; margin-left: -4.5px; border-radius: 2px;
+    border: 1px solid #4a5153; background: linear-gradient(180deg,#f4f6f6 0 30%,#c9cfd0 55%,#98a1a3 100%);
+    box-shadow: 0 1px 2px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.9); }
+  acidify-patch-view .mod-slider-value { position: absolute; left: 50%; top: 14px; margin-left: -24px; width: 48px; height: 13px; z-index: 6;
+    display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706; background: linear-gradient(180deg,#241512,#130b09);
+    box-shadow: 0 3px 6px rgba(0,0,0,.45); color: #ff6756; font: 10px/1 'Courier New',monospace; }
   acidify-patch-view .mod-slot { position: relative; margin-top: 7px; width: 66px; height: 13px; border-radius: 7px;
     background: linear-gradient(180deg, rgba(52,58,57,.3), rgba(210,214,212,.16));
     box-shadow: inset 0 2px 3px rgba(40,46,45,.5), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
@@ -4262,7 +4327,7 @@ class AcidifyPatchView extends HTMLElement {
         </div>
         <div class="brand-foot">
           <div class="tips-power-row">
-            <button class="tooltip-toggle" type="button" aria-pressed="true"><span>? TIPS</span><strong class="tooltip-toggle-state">ON</strong></button>
+            <button class="tooltip-toggle" type="button" aria-pressed="true" data-tooltip="Turn the English control tooltips on or off."><span>? TIPS</span><strong class="tooltip-toggle-state">ON</strong></button>
             <span class="power-cell"><span class="power-label">POWER</span><span class="power-ring"><i class="power-led"></i></span></span>
           </div>
           <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">SILVER SERIES</span></div>
@@ -4554,11 +4619,7 @@ class AcidifyPatchView extends HTMLElement {
         </div>
       </div>
     </section>
-    <button class="tooltip-toggle" type="button" aria-pressed="true"
-      data-tooltip="Turn the English control tooltips on or off.">
-      <i>?</i><span>TIPS</span><strong class="tooltip-toggle-state">ON</strong>
-    </button>
-    <div class="footer-mark">ACIDIFY 0.7.2 · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
+    <div class="footer-mark">ACIDIFY · SILVER SERIES · ANALOG-MODELLED BASSLINE · AMORPH EDITION</div>
   </div>
   <section class="pitch-menu" role="dialog" aria-modal="false" aria-hidden="true"
     aria-labelledby="pitch-menu-title" hidden>

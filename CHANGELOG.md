@@ -6,6 +6,32 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-07-27
+
+### Changed
+
+- **Silver-Series-UI — der komplette Port der Design-Übergabe.** `ACIDIFYUI.js`
+  trägt jetzt die Optik aus `design/ACIDIFY GUI.dc.html` auf allen drei Decks:
+  - **Deck A**: Logo-Zelle mit TIPS/POWER-Reihe, OSCILLATOR-Modul mit
+    SAW/SQR-Wippen, sechs Chromknöpfe mit roten LED-Wertdisplays und
+    Mod-Slots, MASTER-Knopf, VU-Meter (zweikanalig, pegelgetrieben),
+    DIST/MODS-Tasten mit Lampen.
+  - **Deck B**: Tempo-Knopf mit großem LED-Display, INT/DAW-Wippen mit
+    Lampen, RUN/STOP-Wippe, drei Stepper mit LED-Displays, **Filter-Response-
+    Visualizer** (Live-Kurve aus Cutoff/Resonanz, Hüllkurvenpfad aus
+    Env Mod/Decay, Cutoff-Cursor, RES/ENV/DEC/ACC-Readouts).
+  - **Deck C**: 16 Wippschalter-Steps mit klickbaren A/S-Pills, Kappen-LEDs,
+    Playbar und LED-Notendisplays; Editor/Keyboard/Funktionsmatrix im
+    Silver-Look mit Status-LEDs.
+  - **Spiegel-Slider** unter CUTOFF und ACCENT gemäß Portierungsnotizen
+    (`data-mirrors`, kein zweites Control; Drag/Wheel steuert den
+    Endpoint-Besitzer param52/param59; sichtbar nur bei aktivem Mod).
+- `ui_smoke_test` auf die neue Geometrie umgeschrieben (Deck-Struktur,
+  Pill-Prüfung, Scope/VU-Existenz; Interaktionspfade unverändert).
+  Dreifach-Lauf stabil. Alle Verhaltensflüsse (Transport, Studio, Tooltips,
+  Distortion, Mods, Reconnect, 590×290) laufen im neuen Markup unverändert.
+- DSP unangetastet: Smoke-Peak bit-identisch 0,34552.
+
 ## [1.2.0] - 2026-07-27
 
 ### Added

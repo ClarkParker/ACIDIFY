@@ -1,3 +1,14 @@
+# Validierung 2.0.0
+
+## 2.0.0
+
+Silver-Series-UI (voller Design-Port). `ui_smoke_test` dreifach grün auf der
+neuen Geometrie, DSP-Smoke bit-identisch (0,34552), `cmajor_lint` nur die
+dokumentierte Parameterzahl-Notiz, `ui_lint --strict` sauber, Sync und
+Manifest sauber.
+
+---
+
 # Validierung 1.2.0
 
 ## 1.2.0

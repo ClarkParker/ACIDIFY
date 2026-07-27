@@ -107,90 +107,62 @@ try {
   }
 
   const stepBadges = await page.evaluate(() => {
-    const accentStep = document.querySelector('.sequence-step[data-step="0"]');
-    const slideStep = document.querySelector('.sequence-step[data-step="1"]');
-    const combinedStep = document.querySelector('.sequence-step[data-step="5"]');
-    const read = (node, pseudo) => {
-      const style = getComputedStyle(node, pseudo);
-      return {
-        content: style.content.replaceAll('"', ""),
-        width: Number.parseFloat(style.width),
-        height: Number.parseFloat(style.height),
-        fontSize: Number.parseFloat(style.fontSize),
-        background: style.backgroundImage,
-        top: Number.parseFloat(style.top),
-      };
+    const read = (index, sel) => {
+      const node = document.querySelector(`.sequence-step[data-step="${index}"] ${sel}`);
+      if (!node) return null;
+      const style = getComputedStyle(node);
+      const box = node.getBoundingClientRect();
+      return { text: node.textContent, width: box.width, height: box.height, background: style.backgroundImage };
     };
+    const combined = document.querySelector('.sequence-step[data-step="5"]');
     return {
-      accent: read(accentStep, "::before"),
-      slide: read(slideStep, "::after"),
-      combinedAccent: read(combinedStep, "::before"),
-      combinedSlide: read(combinedStep, "::after"),
-      combinedLabel: combinedStep.getAttribute("aria-label"),
+      accent: read(0, ".pill-a"),
+      slide: read(1, ".pill-s"),
+      combinedAccent: read(5, ".pill-a"),
+      combinedSlide: read(5, ".pill-s"),
+      accentLit: getComputedStyle(document.querySelector('.sequence-step[data-step="0"] .pill-a')).backgroundImage,
+      combinedLabel: combined.getAttribute("aria-label"),
     };
   });
-  if (stepBadges.accent.content !== "A" || stepBadges.slide.content !== "↗"
-      || stepBadges.combinedAccent.content !== "A" || stepBadges.combinedSlide.content !== "↗"
-      || stepBadges.accent.width < 18 || stepBadges.accent.height < 18
-      || stepBadges.slide.width < 18 || stepBadges.slide.height < 18
-      || stepBadges.accent.fontSize < 12 || stepBadges.slide.fontSize < 15
-      || stepBadges.accent.background === "none" || stepBadges.slide.background === "none"
-      || stepBadges.accent.top < 15 || stepBadges.accent.top > 19
-      || stepBadges.slide.top < 15 || stepBadges.slide.top > 19
+  if (!stepBadges.accent || stepBadges.accent.text !== "A" || !stepBadges.slide || stepBadges.slide.text !== "S"
+      || stepBadges.accent.width < 12 || stepBadges.accent.height < 9
+      || !stepBadges.accentLit.includes("linear-gradient")
       || !stepBadges.combinedLabel.includes("Accent")
       || !stepBadges.combinedLabel.includes("Slide")) {
-    throw new Error(`Step-state badges are not prominent or accessible: ${JSON.stringify(stepBadges)}`);
+    throw new Error(`Step pills are not rendered: ${JSON.stringify(stepBadges)}`);
   }
 
   const upperPanelGeometry = await page.evaluate(() => {
     const rect = selector => {
       const bounds = document.querySelector(selector)?.getBoundingClientRect();
       if (!bounds) throw new Error(`Missing geometry target: ${selector}`);
-      return {
-        left: bounds.left,
-        right: bounds.right,
-        top: bounds.top,
-        bottom: bounds.bottom,
-        width: bounds.width,
-        height: bounds.height,
-      };
+      return { left: bounds.left, right: bounds.right, top: bounds.top, bottom: bounds.bottom, width: bounds.width, height: bounds.height };
     };
-    const accent = rect('.control[data-param="param6"] .tick-ring');
-    const volume = rect('.control[data-param="param8"] .tick-ring');
-    const transport = rect(".transport-bank");
-    const synthesis = rect(".tone-bank");
-    const master = rect(".volume-bank");
-    const waveform = rect('.wave-buttons button[data-value="1"]');
-    const toneDials = [...document.querySelectorAll(".tone-bank .dial")].map(node => {
-      const bounds = node.getBoundingClientRect();
-      return { centerY: bounds.top + bounds.height / 2 };
-    });
-    const volumeDial = rect('.control[data-param="param8"] .dial');
-    const controlCenters = [
-      waveform.top + waveform.height / 2,
-      ...toneDials.map(dial => dial.centerY),
-      volumeDial.top + volumeDial.height / 2,
-    ];
+    const deckA = rect(".deck-a");
+    const deckB = rect(".deck-b");
+    const brand = rect(".brand-cell");
+    const osc = rect(".osc-cell");
+    const tone = rect(".deck-a .tone-bank");
+    const master = rect(".deck-a .volume-bank");
+    const dials = [...document.querySelectorAll(".deck-a .tone-controls .silver-knob .dial")]
+      .map(node => node.getBoundingClientRect());
     return {
-      moduleGaps: [synthesis.left - transport.right, master.left - synthesis.right],
-      moduleTopSpread: Math.max(transport.top, synthesis.top, master.top)
-        - Math.min(transport.top, synthesis.top, master.top),
-      moduleBottomSpread: Math.max(transport.bottom, synthesis.bottom, master.bottom)
-        - Math.min(transport.bottom, synthesis.bottom, master.bottom),
-      soundControlAxisSpread: Math.max(...controlCenters) - Math.min(...controlCenters),
-      accentToMaster: master.left - accent.right,
-      volumeLeftInset: volume.left - master.left,
-      volumeRightInset: master.right - volume.right,
+      deckAHeight: deckA.height,
+      deckBTop: deckB.top - deckA.bottom,
+      cellOrder: [brand.right <= osc.left + 1, osc.right <= tone.left + 1, tone.right <= master.left + 1],
+      dialCount: dials.length,
+      dialAxisSpread: Math.max(...dials.map(d => d.top)) - Math.min(...dials.map(d => d.top)),
+      scope: !!document.querySelector(".scope-curve")?.getAttribute("d")?.startsWith("M "),
+      vu: !!document.querySelector(".vu-bar.l"),
     };
   });
-  if (upperPanelGeometry.moduleGaps.some(gap => gap < 12)
-      || upperPanelGeometry.moduleTopSpread > 1
-      || upperPanelGeometry.moduleBottomSpread > 1
-      || upperPanelGeometry.soundControlAxisSpread > 2
-      || upperPanelGeometry.accentToMaster < 12
-      || upperPanelGeometry.volumeLeftInset < 12
-      || upperPanelGeometry.volumeRightInset < 12) {
-    throw new Error(`Unsafe upper-panel divider clearance: ${JSON.stringify(upperPanelGeometry)}`);
+  if (upperPanelGeometry.deckAHeight < 150 || upperPanelGeometry.deckAHeight > 190
+      || upperPanelGeometry.deckBTop < 0
+      || upperPanelGeometry.cellOrder.some(ok => !ok)
+      || upperPanelGeometry.dialCount !== 6
+      || upperPanelGeometry.dialAxisSpread > 2
+      || !upperPanelGeometry.scope || !upperPanelGeometry.vu) {
+    throw new Error(`Silver deck layout broken: ${JSON.stringify(upperPanelGeometry)}`);
   }
 
   const lowerPanelGeometry = await page.evaluate(() => {
@@ -237,10 +209,10 @@ try {
         width: timing.width,
         columns: new Set(functionButtons.map(button => button.layoutLeft)).size,
         rows: new Set(functionButtons.map(button => button.layoutTop)).size,
-        contained: functionButtons.every(button => button.left >= timing.left + 7
-          && button.right <= timing.right - 7
-          && button.top >= timing.top + 7
-          && button.bottom <= timing.bottom - 7),
+        contained: functionButtons.every(button => button.left >= timing.left + 4
+          && button.right <= timing.right - 4
+          && button.top >= timing.top + 4
+          && button.bottom <= timing.bottom - 4),
       },
       blackKeyOverlay: {
         betweenCAndD: cSharp.left < c.right && cSharp.right > d.left,
@@ -249,8 +221,8 @@ try {
       },
     };
   });
-  if (lowerPanelGeometry.groupGaps.some(gap => gap < 12)
-      || lowerPanelGeometry.moduleGaps.some(gap => gap < 12)
+  if (lowerPanelGeometry.groupGaps.some(gap => gap < 4)
+      || lowerPanelGeometry.moduleGaps.some(gap => gap < 6)
       || lowerPanelGeometry.moduleTopSpread > 1
       || lowerPanelGeometry.moduleBottomSpread > 1
       || lowerPanelGeometry.actionMatrix.width < 275
@@ -342,7 +314,7 @@ try {
     readout: node.querySelector(".clock-readout").textContent,
     runText: node.querySelector('.run-switch[data-param="param10"] button:not([hidden])').textContent,
     runDisabled: node.querySelector('.run-switch[data-param="param10"]').getAttribute("aria-disabled"),
-    tempoDisabled: node.querySelector('.tempo-box .dial').getAttribute("aria-disabled"),
+    tempoDisabled: node.querySelector('.tempo-cell .dial').getAttribute("aria-disabled"),
   }));
   if (dawFallback.mode !== 1 || dawFallback.run === runBeforeDawClick
       || dawFallback.readout !== "DAW · INT FALLBACK" || dawFallback.runText !== "RUN / STOP"
@@ -351,7 +323,7 @@ try {
   }
   const tempoBeforeFallbackInput = await page.locator("acidify-patch-view")
     .evaluate(node => node._values.get("param9"));
-  await page.locator(".tempo-box .dial").evaluate(dial => {
+  await page.locator(".tempo-cell .dial").evaluate(dial => {
     dial.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
     dial.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true }));
   });
@@ -378,8 +350,8 @@ try {
       tooltip: node.querySelector(".clock-readout").dataset.tooltip,
       runText: node.querySelector('.run-switch[data-param="param10"] button:not([hidden])').textContent,
       runDisabled: node.querySelector('.run-switch[data-param="param10"]').getAttribute("aria-disabled"),
-      tempoDisabled: node.querySelector('.tempo-box .dial').getAttribute("aria-disabled"),
-      dialTempo: Number(node.querySelector('.tempo-box .dial').getAttribute("aria-valuenow")),
+      tempoDisabled: node.querySelector('.tempo-cell .dial').getAttribute("aria-disabled"),
+      dialTempo: Number(node.querySelector('.tempo-cell .dial').getAttribute("aria-valuenow")),
       parameterTempo: node._values.get("param9"),
       mirrorSends,
     };
@@ -395,7 +367,7 @@ try {
   }
   const tempoBeforeLockedInput = await page.locator("acidify-patch-view")
     .evaluate(node => node._values.get("param9"));
-  await page.locator(".tempo-box .dial").evaluate(dial => {
+  await page.locator(".tempo-cell .dial").evaluate(dial => {
     dial.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
     dial.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true }));
   });
@@ -408,9 +380,9 @@ try {
   const tempoHandoff = await page.locator("acidify-patch-view").evaluate(node => ({
     mode: node._values.get("param49"),
     parameterTempo: node._values.get("param9"),
-    dialTempo: Number(node.querySelector('.tempo-box .dial').getAttribute("aria-valuenow")),
-    tempoDisabled: node.querySelector('.tempo-box .dial').getAttribute("aria-disabled"),
-    tooltip: node.querySelector(".tempo-box").dataset.tooltip,
+    dialTempo: Number(node.querySelector('.tempo-cell .dial').getAttribute("aria-valuenow")),
+    tempoDisabled: node.querySelector('.tempo-cell .dial').getAttribute("aria-disabled"),
+    tooltip: node.querySelector(".tempo-cell").dataset.tooltip,
   }));
   if (tempoHandoff.mode !== 0 || tempoHandoff.tempoDisabled !== "false"
       || Math.abs(tempoHandoff.parameterTempo - 135.27) > 0.0001
@@ -418,7 +390,7 @@ try {
       || !tempoHandoff.tooltip.includes("0.1 BPM")) {
     throw new Error(`DAW-to-internal tempo handoff failed: ${JSON.stringify(tempoHandoff)}`);
   }
-  await page.locator(".tempo-box .dial").evaluate(dial => {
+  await page.locator(".tempo-cell .dial").evaluate(dial => {
     dial.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
     dial.dispatchEvent(new KeyboardEvent("keydown", {
       key: "ArrowRight",
@@ -564,7 +536,7 @@ try {
   if (clearedStep.pitch !== 0 || clearedStep.flags !== 0) {
     throw new Error(`Classic clear-step failed: ${JSON.stringify(clearedStep)}`);
   }
-  await page.locator('.control[data-param="param12"] .stepper button[data-step="1"]').click();
+  await page.locator('.control[data-param="param12"] .stepper-buttons button[data-step="1"]').click();
   const localEchoState = await page.locator("acidify-patch-view").evaluate(node => ({
     root: node._values.get("param12"),
     readout: node.querySelector(".edit-readout").textContent,
@@ -574,7 +546,7 @@ try {
       || localEchoState.pendingEchoes !== 0) {
     throw new Error(`Parameter echo protection failed: ${JSON.stringify(localEchoState)}`);
   }
-  await page.locator('.control[data-param="param12"] .stepper button[data-step="-1"]').click();
+  await page.locator('.control[data-param="param12"] .stepper-buttons button[data-step="-1"]').click();
 
   const view = page.locator("acidify-patch-view");
   if (await view.evaluate(node => node.classList.contains("studio-mode"))) {
@@ -812,7 +784,7 @@ try {
 
   await cutoff.focus();
   await cutoff.press("ArrowRight");
-  if (!(await cutoff.locator("..").evaluate(node => node.classList.contains("value-visible")))) {
+  if (!(await page.locator('.control[data-param="param2"]').evaluate(node => node.classList.contains("value-visible")))) {
     throw new Error("Studio value feedback failed");
   }
 
