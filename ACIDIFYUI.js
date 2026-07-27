@@ -1786,8 +1786,14 @@ class AcidifyPatchView extends HTMLElement {
           return `
             <button class="sequence-step" data-step="${index}" aria-label="Step ${index + 1}"
               aria-haspopup="dialog">
-              <span class="step-led"></span><span class="step-octave">+0</span>
-              <span class="step-index">${index + 1}</span><span class="step-note">--</span>
+              <span class="step-head"><span class="step-index">${String(index + 1).padStart(2, "0")}</span>
+                <span class="step-pills"><i class="step-pill pill-a">A</i><i class="step-pill pill-s">S</i></span></span>
+              <span class="step-octave" hidden>+0</span><span class="step-led" hidden></span>
+              <span class="step-sel"></span>
+              <span class="step-well"></span>
+              <span class="step-cap"><i class="cap-rocker"></i><i class="cap-nub"><i class="cap-led"></i></i><i class="cap-foot"></i></span>
+              <span class="step-playbar"></span>
+              <span class="step-note-field"><span class="step-note">--</span></span>
             </button>`;
         }).join("")}
       </div>`).join("");
@@ -2394,7 +2400,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .step-index { display: block; margin-top: 20px; font-size: 8px; font-weight: 900; }
   acidify-patch-view .step-note { display: block; margin-top: 1px; font-size: 9px; color: #5f1713; font-weight: 900; }
   acidify-patch-view .editor {
-    height: 122px; display: grid; grid-template-columns: 144px minmax(0, 1fr) 280px; gap: 13px;
+    height: 112px; display: grid; grid-template-columns: 144px minmax(0, 1fr) 280px; gap: 13px;
     border-top: 1px solid rgba(255,255,255,.62); padding-top: 8px;
     box-shadow: inset 0 1px rgba(61,61,57,.18);
   }
@@ -2559,7 +2565,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .octave-indicator::after { content: "NORMAL"; font-weight: 900; }
   acidify-patch-view .octave-indicator.high::after { content: "UP"; color: #a51d17; }
   acidify-patch-view .keyboard {
-    position: relative; min-width: 0; height: 108px; padding: 8px;
+    position: relative; min-width: 0; height: 100px; padding: 6px;
     border: 1px solid rgba(74,74,68,.72); border-radius: 5px;
     background:
       linear-gradient(135deg, rgba(255,255,255,.13), transparent 46%),
@@ -4105,6 +4111,86 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(180deg,#241512,#130b09); box-shadow: inset 0 2px 4px rgba(0,0,0,.7); }
   acidify-patch-view .scope-legend span { color: #8d9698; font: 900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .9px; }
   acidify-patch-view .scope-legend b { color: #ff6756; font: 8px/1 'Courier New',monospace; text-shadow: 0 0 5px rgba(255,57,37,.5); }
+
+  /* ---------- Deck C: Silver Step-Wippen ---------- */
+  acidify-patch-view .program-strip { border: 1px solid #6f7573; border-radius: 3px; overflow: hidden; padding: 0 12px 8px;
+    background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg,#eef0ef 0%,#dcdedd 46%,#c5c8c7 100%);
+    box-shadow: inset 0 1px 0 #fff; }
+  acidify-patch-view .step-row { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 15px; box-sizing: border-box;
+    padding: 6px 9px 5px; border-radius: 2px; border: 1px solid #6f7573; background: linear-gradient(180deg,#bcc0be,#a9adab);
+    box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .step-group { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 5px; background: none; border: 0; box-shadow: none; padding: 0; }
+  acidify-patch-view .sequence-step { position: relative; height: 74px; padding: 0; border: 0; background: transparent; cursor: pointer;
+    border-radius: 0; box-shadow: none; width: auto; display: block; }
+  acidify-patch-view .step-head { position: absolute; left: 0; right: 0; top: 0; height: 14px; display: flex; align-items: center; justify-content: space-between; padding: 0 1px; }
+  acidify-patch-view .sequence-step .step-index { position: static; font: 900 9px/1 'Courier New',monospace; color: #3d4749; background: none; border: 0; width: auto; height: auto; }
+  acidify-patch-view .sequence-step.playing .step-index { color: #b8241a; }
+  acidify-patch-view .step-pills { display: flex; align-items: center; gap: 3px; }
+  acidify-patch-view .step-pill { width: 15px; height: 11px; display: grid; place-items: center; border-radius: 2px; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; font-style: normal;
+    border: 1px solid rgba(45,50,49,.4); color: #7c8688; background: linear-gradient(180deg,#b9bfbd,#9aa19f); box-shadow: inset 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .sequence-step.accented .pill-a { color: #fff2ee; border-color: #5d1611; background: linear-gradient(180deg,#ff7361,#a3201a); box-shadow: 0 0 6px rgba(255,72,48,.5); }
+  acidify-patch-view .sequence-step.sliding .pill-s { color: #2a1a02; border-color: #5b3908; background: linear-gradient(180deg,#ffc776,#8d5410); box-shadow: 0 0 6px rgba(255,168,60,.45); }
+  acidify-patch-view .step-sel { position: absolute; left: -2px; right: -2px; top: 13px; bottom: 18px; border-radius: 3px; border: 1px solid transparent; }
+  acidify-patch-view .sequence-step.selected .step-sel { border-color: #a8352a; background: rgba(255,84,60,.08); box-shadow: 0 0 8px rgba(255,84,60,.25); }
+  acidify-patch-view .sequence-step.multi-selected .step-sel { border-color: #a8352a; }
+  acidify-patch-view .step-well { position: absolute; left: 0; right: 0; top: 15px; height: 36px; border-radius: 2px;
+    background: linear-gradient(180deg,#4e5659,#20272a); box-shadow: inset 0 2px 3px rgba(0,0,0,.65); }
+  acidify-patch-view .step-cap { position: absolute; left: 0; right: 0; top: 16px; height: 32px; border-radius: 2px; border: 1px solid #5f676a;
+    background: radial-gradient(ellipse 150% 130% at 42% 10%, #ffffff 0 6%, #eef1f2 18%, #ccd2d3 44%, #a3abad 74%, #b9c1c3 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -3px -5px 8px rgba(96,106,109,.25), 0 2px 3px rgba(0,0,0,.5); transition: transform 70ms; }
+  acidify-patch-view .sequence-step.selected .step-cap { transform: translateY(3px);
+    background: radial-gradient(ellipse 150% 130% at 42% 12%, #e8ebeb 0 6%, #cfd5d6 20%, #aab2b4 48%, #8a9295 78%, #9fa7a9 100%);
+    box-shadow: inset 0 3px 6px rgba(38,45,47,.5), 0 1px 0 rgba(255,255,255,.5); }
+  acidify-patch-view .sequence-step.playing .step-cap { box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 2px 3px rgba(0,0,0,.5), 0 0 14px rgba(255,70,45,.4); }
+  acidify-patch-view .sequence-step.rest .step-cap { border-color: #4e5658;
+    background: radial-gradient(ellipse 150% 130% at 42% 10%, #cfd4d4 0 6%, #bcc2c3 20%, #9aa2a4 48%, #798285 78%, #8d9598 100%); }
+  acidify-patch-view .cap-rocker { position: absolute; left: 1px; right: 1px; top: 1px; height: 25px; border-radius: 2px;
+    background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0) 60%); box-shadow: inset 0 1px 0 rgba(255,255,255,.95); }
+  acidify-patch-view .cap-nub { position: absolute; left: 26%; right: 26%; top: 8px; height: 11px; border-radius: 6px;
+    background: linear-gradient(180deg,#79817f,#aab1b0); box-shadow: inset 0 2px 3px rgba(30,36,35,.7), 0 1px 0 rgba(255,255,255,.9); }
+  acidify-patch-view .cap-led { position: absolute; inset: 2px; border-radius: 4px;
+    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.65); }
+  acidify-patch-view .sequence-step:not(.rest) .cap-led {
+    background: radial-gradient(ellipse at 50% 28%, #fff4ec 0 22%, #ff8a63 46%, #ff3a1c 78%, #b81c0c 100%); box-shadow: 0 0 8px rgba(255,86,52,.7); }
+  acidify-patch-view .cap-foot { position: absolute; left: 1px; right: 1px; bottom: 0; height: 6px; border-radius: 0 0 2px 2px; background: linear-gradient(180deg,#7d8587,#5d6567); }
+  acidify-patch-view .step-playbar { position: absolute; left: 4px; right: 4px; top: 53px; height: 3px; border-radius: 1px; background: rgba(20,24,23,.25); }
+  acidify-patch-view .sequence-step.playing .step-playbar { background: linear-gradient(90deg,#ff8a63,#ff3a1c); box-shadow: 0 0 7px rgba(255,86,52,.7); }
+  acidify-patch-view .step-note-field { position: absolute; left: 0; right: 0; bottom: 0; height: 16px; display: grid; place-items: center; border-radius: 2px;
+    border: 1px solid #0d0807; background: linear-gradient(180deg,#251614,#130b09); box-shadow: inset 0 2px 5px rgba(0,0,0,.75); }
+  acidify-patch-view .sequence-step .step-note { position: static; font: 900 10px/1 'Courier New',monospace; letter-spacing: .6px; color: #ff6756; text-shadow: 0 0 5px rgba(255,57,37,.5); background: none; width: auto; }
+  acidify-patch-view .sequence-step.rest .step-note { color: #69726f; text-shadow: none; }
+  acidify-patch-view .sequence-step.playing .step-note { color: #ffd9d1; }
+
+  /* ---------- Deck C: Editor, Keyboard, Funktionsmatrix ---------- */
+  acidify-patch-view .classic-editor { display: flex; gap: 8px; }
+  acidify-patch-view .edit-status { box-sizing: border-box; width: 196px; padding: 6px 8px 8px; display: flex; flex-direction: column; border-radius: 2px;
+    border: 1px solid #7c827f; background: linear-gradient(180deg,#bcc0be,#a9adab);
+    box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .edit-caption { width: 100%; height: 12px; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.4);
+    color: #26302f; text-shadow: 0 1px 0 rgba(255,255,255,.8); font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; }
+  acidify-patch-view .edit-readout { margin-top: 6px; flex: 1; min-height: 26px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
+    background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.09) 3px 4px), linear-gradient(180deg,#251614,#130b09);
+    box-shadow: inset 0 3px 6px rgba(0,0,0,.78); color: #ff513b; font: 24px/1 'Courier New',monospace; letter-spacing: 2px; white-space: nowrap;
+    text-shadow: 0 0 5px #e32418, 0 0 10px rgba(227,36,24,.4); font-size: 19px; }
+  acidify-patch-view .octave-indicator { margin-top: 7px; color: #4b5558; font: 900 8px/11px 'Courier New',monospace; letter-spacing: .4px; }
+  acidify-patch-view .keyboard { box-sizing: border-box; flex: 1; padding: 6px 8px 8px; border-radius: 2px; border: 1px solid #7c827f;
+    background: linear-gradient(180deg,#bcc0be,#a9adab); box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .time-controls { box-sizing: border-box; width: 300px; padding: 6px 8px 8px; display: grid;
+    grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(2,1fr); gap: 6px; border-radius: 2px; border: 1px solid #7c827f;
+    background: linear-gradient(180deg,#bcc0be,#a9adab); box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .function-button { position: relative; height: 100%; min-height: 36px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; border-radius: 2px; cursor: pointer; border: 1px solid #1a1e1f;
+    background: linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.42); }
+  acidify-patch-view .function-button::before { content: ""; position: absolute; left: 5px; top: 5px; width: 5px; height: 5px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.65); }
+  acidify-patch-view .function-button.active::before { background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%); box-shadow: 0 0 6px rgba(255,72,48,.85); }
+  acidify-patch-view .function-button.active { background: linear-gradient(#879194,#b7bec0 44%,#9ba4a7); }
+  acidify-patch-view .function-button strong { color: #222a2c; font: 900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .function-button.active strong { color: #a51d17; }
+  acidify-patch-view .function-button small { color: #5b6466; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .6px; }
+
 
   acidify-patch-view .mods-overlay { position: static; height: auto; }
   acidify-patch-view .mods-overlay-body {
