@@ -351,6 +351,7 @@ class AcidifyPatchView extends HTMLElement {
     this._wirePitchMenu();
     this._wireDistortion();
     this._wireMods();
+    this._renderScope();
     this._wireTooltips();
     this._renderStepStrip();
     this._renderStepEditor();
@@ -367,6 +368,9 @@ class AcidifyPatchView extends HTMLElement {
       }
       if (endpointID >= "param51" && endpointID <= "param59" && endpointID.length === 7) {
         this._renderModState();
+      }
+      if (endpointID >= "param2" && endpointID <= "param6" && endpointID.length === 6 || endpointID === "param9") {
+        this._renderScope();
       }
       if (endpointID === "param9" || endpointID === "param10" || endpointID === "param49") {
         this._renderTransportState();
@@ -399,6 +403,7 @@ class AcidifyPatchView extends HTMLElement {
       const n = typeof value === "object" ? Number(value.value ?? 0) : Number(value);
       this._meter = clamp(n, 0, 1);
       this.querySelector(".output-lamp")?.style.setProperty("--level", this._meter);
+      this.querySelector(".vu-meter")?.style.setProperty("--level", this._meter);
     };
     this.pc.addEndpointListener("meterOut", this._meterListener);
 
@@ -654,7 +659,12 @@ class AcidifyPatchView extends HTMLElement {
   }
 
   _buildControls() {
-    const sendValue = (endpointID, value) => this._sendParameter(endpointID, value);
+    const sendValue = (endpointID, value) => {
+      this._sendParameter(endpointID, value);
+      if ((endpointID >= "param2" && endpointID <= "param6" && endpointID.length === 6) || endpointID === "param9") {
+        queueMicrotask(() => this._renderScope());
+      }
+    };
     ACIDIFY_GLOBALS.forEach(config => {
       const node = this.querySelector(`.control[data-param="${config.id}"]`);
       if (!node) return;
@@ -1093,6 +1103,49 @@ class AcidifyPatchView extends HTMLElement {
     } else {
       trigger?.focus();
     }
+  }
+
+  _renderScope() {
+    const v = id => Number(this._values.get(id) ?? ACIDIFY_GLOBALS.find(c => c.id === id)?.init ?? 0);
+    const cutoff = v("param2"), reso = v("param3"), envmod = v("param4"), decay = v("param5"), accent = v("param6");
+    const W = 238, H = 104;
+    const fc = 30 * Math.pow(320, cutoff);
+    const q = 0.55 + reso * 9;
+    const points = [];
+    for (let i = 0; i <= 60; i += 1) {
+      const x = (i / 60) * W;
+      const f = 20 * Math.pow(1000, i / 60);
+      const r = f / fc;
+      const mag = 1 / Math.sqrt(Math.pow(1 - r * r, 2) + Math.pow(r / q, 2));
+      const db = clamp(20 * Math.log10(Math.max(1e-6, mag * mag)) / 2, -46, 22);
+      const y = clamp(H * 0.62 - db * 1.7, 2, H - 2);
+      points.push(`${x.toFixed(1)} ${y.toFixed(1)}`);
+    }
+    const path = `M ${points.join(" L ")}`;
+    const cutoffX = ((Math.log(clamp(fc, 20, 20000) / 20) / Math.log(1000)) * W).toFixed(1);
+    const peak = H * 0.62 - envmod * 46;
+    const len = 40 + decay * 150;
+    const env = [`M 0 ${H - 6}`, `L 8 ${peak.toFixed(1)}`];
+    for (let i = 1; i <= 16; i += 1) {
+      const x = 8 + (len * i) / 16;
+      const y = peak + (H - 6 - peak) * (1 - Math.exp(-3 * (i / 16)));
+      env.push(`L ${Math.min(W, x).toFixed(1)} ${y.toFixed(1)}`);
+    }
+    env.push(`L ${W} ${H - 6}`);
+    this.querySelector(".scope-curve")?.setAttribute("d", path);
+    this.querySelector(".scope-fill")?.setAttribute("d", `${path} L ${W} ${H} L 0 ${H} Z`);
+    this.querySelector(".scope-env")?.setAttribute("d", env.join(" "));
+    const cursor = this.querySelector(".scope-cursor");
+    if (cursor) { cursor.setAttribute("x1", cutoffX); cursor.setAttribute("x2", cutoffX); }
+    const hz = this.querySelector(".scope-hz");
+    if (hz) hz.textContent = `${Math.round(fc)} Hz`;
+    const legend = { res: Math.round(reso * 100), env: Math.round(envmod * 100), dec: Math.round(decay * 100), acc: Math.round(accent * 100) };
+    Object.entries(legend).forEach(([key, val]) => {
+      const el = this.querySelector(`[data-scope="${key}"]`);
+      if (el) el.textContent = String(val).padStart(2, "0");
+    });
+    const mirror = this.querySelector(".tempo-mirror");
+    if (mirror) mirror.textContent = Number(v("param9")).toFixed(1);
   }
 
   _renderModState() {
@@ -1704,16 +1757,26 @@ class AcidifyPatchView extends HTMLElement {
   }
 
   getHTML() {
-    const dial = id => {
+    const dial = (id, opts = {}) => {
       const c = ACIDIFY_GLOBALS.find(item => item.id === id);
+      const slot = opts.modSlot ? `
+          <div class="mod-slot" data-mod-slot="${opts.modSlot}">
+            <div class="mod-slider" data-mirrors="${opts.modSlot}" hidden>
+              <div class="mod-slider-track" role="slider" tabindex="0" aria-label="Mod amount"><i class="mod-slider-rail"></i><i class="mod-slider-thumb"></i></div>
+              <span class="mod-slider-value"></span>
+            </div>
+          </div>` : "";
       return `
-        <div class="control knob-control" data-param="${c.id}" data-endpoint-id="${c.id}" data-min="${c.min}" data-max="${c.max}" data-step="${c.step}" data-init="${c.init}" data-control="dial">
-          <div class="tick-ring"></div>
-          <div class="dial" role="slider" tabindex="0" aria-label="${c.label}" aria-valuemin="${c.min}" aria-valuemax="${c.max}">
-            <div class="dial-cap"><i class="dial-pointer"></i></div>
-          </div>
+        <div class="control knob-control silver-knob${opts.size ? ` ${opts.size}` : ""}" data-param="${c.id}" data-endpoint-id="${c.id}" data-min="${c.min}" data-max="${c.max}" data-step="${c.step}" data-init="${c.init}" data-control="dial">
           <div class="control-label">${c.label}</div>
-          <div class="value-label">--</div>
+          <div class="chrome-wrap">
+            <div class="tick-ring"></div>
+            <div class="dial" role="slider" tabindex="0" aria-label="${c.label}" aria-valuemin="${c.min}" aria-valuemax="${c.max}">
+              <div class="dial-cap"></div>
+              <div class="pointer-wrap"><i class="dial-pointer"></i></div>
+            </div>
+          </div>
+          <div class="led-box"><span class="value-label">--</span></div>${slot}
         </div>`;
     };
     const steps = Array.from({ length: 4 }, (_, group) => `
@@ -3824,6 +3887,225 @@ class AcidifyPatchView extends HTMLElement {
     background: rgba(12, 14, 15, 0.55);
   }
   acidify-patch-view .mods-scrim[hidden] { display: none; }
+
+  /* ================= SILVER SERIES (Design-Port) ================= */
+  acidify-patch-view .panel { display: flex; flex-direction: column; box-sizing: border-box; padding: 14px 20px; }
+  acidify-patch-view .top-strip.deck-a { position: static; left: auto; right: auto; top: auto; flex: 0 0 auto; border-bottom: 1px solid #6f7573; }
+  acidify-patch-view .deck-b { position: static; flex: 0 0 auto; }
+  acidify-patch-view .panel > .program-strip { position: static; left: auto; right: auto; top: auto; height: auto; flex: 1; min-height: 0; margin-top: 10px; }
+  acidify-patch-view .deck-a .branding { position: static; left: auto; top: auto; height: auto; }
+  acidify-patch-view .deck-a .tone-bank, acidify-patch-view .deck-a .volume-bank { position: static; left: auto; right: auto; top: auto; bottom: auto; width: auto; height: auto; }
+  acidify-patch-view .deck-a .volume-bank { width: 206px; }
+  acidify-patch-view .deck-a .waveform { position: static; width: auto; height: auto; left: auto; top: auto; }
+  acidify-patch-view .deck-a .master-head { position: static; width: auto; height: auto; }
+  acidify-patch-view .deck-a .master-head span { position: static; }
+  acidify-patch-view .deck-a .tone-controls { position: static; left: auto; right: auto; top: auto; bottom: auto;
+    grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: start; justify-items: center; }
+  acidify-patch-view .deck-a .osc-cell .wave-buttons { position: static; left: auto; right: auto; top: auto; }
+  acidify-patch-view .silver-knob.knob-control { width: auto; height: auto; }
+  acidify-patch-view .deck-a .tone-bank .knob-control { width: auto; }
+  acidify-patch-view .deck-a .tone-bank .dial { width: auto; height: auto; }
+  acidify-patch-view .deck-a .tone-bank .dial::before { content: none; }
+  acidify-patch-view .deck-a .tone-bank .dial-cap { inset: 9px; }
+  acidify-patch-view .deck-a .tone-bank .tick-ring { top: auto; width: auto; height: auto; }
+  acidify-patch-view .deck-a .volume-bank { position: static; right: auto; top: auto; height: auto; padding-top: 12px; flex-direction: row; }
+  acidify-patch-view .silver-knob .dial::before, acidify-patch-view .silver-knob .dial::after { content: none; }
+  acidify-patch-view .master-cell .knob-control { width: auto; height: auto; }
+
+
+  acidify-patch-view .top-strip.deck-a {
+    display: flex; grid-template-columns: none; gap: 0; padding: 0; height: 168px;
+    border: 1px solid #6f7573; border-radius: 3px; overflow: hidden;
+    background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg,#f0f2f1 0%,#dfe1e0 44%,#c7cac9 100%);
+    box-shadow: inset 0 1px 0 #fff, inset 0 -2px 3px rgba(30,34,33,.2);
+  }
+  acidify-patch-view .deck-a > * { box-sizing: border-box; border-right: 1px solid rgba(45,50,49,.5); box-shadow: 1px 0 0 rgba(255,255,255,.6); }
+  acidify-patch-view .deck-a > *:last-child { border-right: 0; box-shadow: none; }
+  acidify-patch-view .brand-cell { width: 206px; flex: 0 0 auto; padding: 15px 16px; display: flex; flex-direction: column; justify-content: space-between; background: none; border-bottom: 0; }
+  acidify-patch-view .deck-a .brand { font: 900 34px/34px Impact,'Arial Black',sans-serif; letter-spacing: .4px; color: #8d9391;
+    text-shadow: 0 -1px 0 rgba(14,18,17,.85), 0 1px 0 rgba(255,255,255,.98), 0 2px 2px rgba(255,255,255,.45); }
+  acidify-patch-view .deck-a .brand .acid { color: #8e1f16; text-shadow: 0 -1px 0 rgba(38,4,2,.95), 0 1px 0 rgba(255,255,255,.95), 0 0 9px rgba(196,32,20,.28); }
+  acidify-patch-view .brand-rule { margin-top: 8px; height: 2px; border-radius: 1px;
+    background: linear-gradient(90deg, rgba(30,35,34,.55) 0 62%, rgba(142,31,22,.75) 62% 100%);
+    box-shadow: 0 1px 0 rgba(255,255,255,.85), inset 0 1px 1px rgba(0,0,0,.5); }
+  acidify-patch-view .deck-a .model { margin-top: 8px; font: 900 8px/11px 'Arial Narrow',Arial,sans-serif; letter-spacing: .85px; color: #2b3536; text-shadow: 0 1px 0 rgba(255,255,255,.9); }
+  acidify-patch-view .deck-a .computer { margin-top: 3px; font: 900 6.5px/10px 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px; color: #798382; text-shadow: 0 1px 0 rgba(255,255,255,.75); }
+  acidify-patch-view .tips-power-row { box-sizing: border-box; height: 34px; padding: 0 8px; display: flex; align-items: center; justify-content: space-between;
+    border-radius: 2px; border: 1px solid #8b918f; background: linear-gradient(180deg,#b6bab8,#c9cdcb);
+    box-shadow: inset 0 2px 4px rgba(48,54,52,.4), inset 0 -1px 0 rgba(255,255,255,.6), 0 1px 0 rgba(255,255,255,.7); }
+  acidify-patch-view .deck-a .tooltip-toggle { position: static; display: flex; align-items: center; gap: 5px; height: 18px; padding: 0 6px; cursor: pointer;
+    border-radius: 2px; border: 1px solid #1a1e1f; width: auto; font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; color: #1d2426;
+    background: linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4); }
+  acidify-patch-view .deck-a .tooltip-toggle .tooltip-toggle-state { padding: 2px 4px; border-radius: 1px; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px;
+    color: #ffe9e4; background: linear-gradient(#ae3026,#67140f); }
+  acidify-patch-view .deck-a .tooltip-toggle[aria-pressed="false"] .tooltip-toggle-state { color: #3d4547; background: linear-gradient(#9aa3a1,#7c8583); }
+  acidify-patch-view .power-cell { display: flex; align-items: center; gap: 6px; }
+  acidify-patch-view .power-label { color: #6d7776; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
+  acidify-patch-view .power-ring { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(45,50,49,.5);
+    background: radial-gradient(circle at 34% 26%, #f2f4f4, #b9bfbd 62%, #98a09e); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -2px 3px rgba(48,54,52,.35); }
+  acidify-patch-view .power-led { width: 8px; height: 8px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff6a54, #9d1c11 68%, #5a0d06); box-shadow: inset 0 1px 1px rgba(255,255,255,.45), 0 0 8px rgba(220,42,26,.6); }
+  acidify-patch-view .brand-legal { margin-top: 7px; display: flex; align-items: baseline; justify-content: space-between; }
+  acidify-patch-view .brand-legal span { font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.2px; color: #5d6767; text-shadow: 0 1px 0 rgba(255,255,255,.8); }
+  acidify-patch-view .brand-legal .brand-version { color: #8b9494; }
+
+  acidify-patch-view .cell-title { width: 100%; height: 15px; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.45);
+    color: #26302f; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.7px; text-shadow: 0 1px 0 rgba(255,255,255,.85); }
+
+  acidify-patch-view .osc-cell { width: 172px; flex: 0 0 auto; padding: 12px 13px; display: flex; flex-direction: column; }
+  acidify-patch-view .osc-cell .waveform { flex: 1; display: flex; align-items: center; justify-content: center; }
+  acidify-patch-view .osc-cell .wave-buttons { display: flex; gap: 14px; background: none; border: 0; box-shadow: none; padding: 0; }
+  acidify-patch-view .wave-choice { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  acidify-patch-view .osc-cell .wave-buttons button { width: 62px; height: 58px; padding: 5px; border-radius: 3px; cursor: pointer;
+    border: 1px solid #1a1e1f; color: #4d5658;
+    background: linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 3px rgba(0,0,0,.34); }
+  acidify-patch-view .osc-cell .wave-buttons button.active { color: #ff5f4a;
+    background: linear-gradient(105deg, rgba(255,255,255,.13), transparent 34% 77%, rgba(0,0,0,.25)), linear-gradient(#576063,#282f31);
+    box-shadow: inset 0 2px 3px rgba(0,0,0,.4), inset 0 -1px 0 rgba(255,255,255,.22); }
+  acidify-patch-view .osc-cell .wave-buttons svg { display: block; width: 100%; height: 100%; overflow: visible; fill: none; stroke: currentColor; stroke-width: 2.4; }
+  acidify-patch-view .wave-name { color: #4d5658; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; text-shadow: 0 1px 0 rgba(255,255,255,.75); }
+  acidify-patch-view .wave-choice:has(button.active) .wave-name { color: #9b2019; }
+
+  acidify-patch-view .deck-a .tone-bank { flex: 1; padding: 14px 16px 0; background: none; border: 0; }
+  acidify-patch-view .deck-a .tone-controls { display: grid; grid-template-columns: repeat(6,1fr); gap: 0; padding: 0; }
+
+  acidify-patch-view .silver-knob { --norm: var(--default-norm, .5); width: auto; height: auto; display: flex; flex-direction: column; align-items: center; background: none; border: 0; box-shadow: none; padding: 0; }
+  acidify-patch-view .silver-knob .control-label { position: static; font: 900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.15px; color: #1c2224; text-shadow: none; }
+  acidify-patch-view .silver-knob .chrome-wrap { position: relative; margin-top: 9px; width: 68px; height: 68px; }
+  acidify-patch-view .silver-knob .tick-ring { position: absolute; inset: -5px; border-radius: 50%; transform: none; border: 0;
+    background: repeating-conic-gradient(from 218deg, #3f4645 0 1.2deg, transparent 1.2deg 11.5deg);
+    -webkit-mask: radial-gradient(circle, transparent 86%, #000 87% 97%, transparent 98%);
+    mask: radial-gradient(circle, transparent 86%, #000 87% 97%, transparent 98%);
+    clip-path: polygon(0 0,100% 0,100% 86%,50% 50%,0 86%); }
+  acidify-patch-view .silver-knob .tick-ring::after { display: none; }
+  acidify-patch-view .silver-knob .dial { position: absolute; inset: 0; width: auto; height: auto; border-radius: 50%; cursor: ns-resize; touch-action: none;
+    border: 1px solid #565e60;
+    background: linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 20%, rgba(26,32,34,.15) 56%, rgba(26,32,34,.38) 100%),
+      repeating-conic-gradient(from .5deg, #798285 0 1.7deg, #c4cbcd 1.7deg 2.5deg, #6d7679 2.5deg 4.2deg);
+    box-shadow: 0 7px 9px rgba(0,0,0,.3), 0 2px 2px rgba(0,0,0,.4), inset 0 2px 2px rgba(255,255,255,.9), inset 0 -6px 8px rgba(40,47,49,.55); }
+  acidify-patch-view .silver-knob .dial-cap { position: absolute; inset: 9px; border-radius: 50%; border: 1px solid #6d7578; transform: none;
+    background: radial-gradient(ellipse at 50% 118%, rgba(255,255,255,.5) 0 16%, rgba(255,255,255,0) 54%),
+      radial-gradient(ellipse 132% 114% at 34% 15%, #ffffff 0 5%, #f1f4f4 17%, #cdd3d4 39%, #a8b0b2 65%, #8c9598 88%, #a3abad 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -5px -7px 12px rgba(96,106,109,.26), inset 4px 5px 10px rgba(255,255,255,.3); }
+  acidify-patch-view .silver-knob .pointer-wrap { position: absolute; inset: 9px; border-radius: 50%; pointer-events: none;
+    transform: rotate(calc(-135deg + var(--norm) * 270deg)); }
+  acidify-patch-view .silver-knob .dial-pointer { position: absolute; left: 50%; top: 5px; width: 3px; height: 20px; margin-left: -1.5px; border-radius: 2px;
+    transform: none; background: linear-gradient(90deg,#141819 0,#343a3c 45%,#0f1314 100%); box-shadow: 1px 0 0 rgba(255,255,255,.55); }
+  acidify-patch-view .led-box { margin-top: 10px; width: 66px; height: 20px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
+    background: linear-gradient(180deg,#241512,#130b09); box-shadow: inset 0 2px 4px rgba(0,0,0,.72); }
+  acidify-patch-view .led-box .value-label, acidify-patch-view .led-box .stepper-value { position: static; color: #ff6756; font: 12px/1 'Courier New',monospace; letter-spacing: .5px;
+    text-shadow: 0 0 5px rgba(255,57,37,.5); width: auto; }
+  acidify-patch-view .mod-slot { position: relative; margin-top: 7px; width: 66px; height: 13px; border-radius: 7px;
+    background: linear-gradient(180deg, rgba(52,58,57,.3), rgba(210,214,212,.16));
+    box-shadow: inset 0 2px 3px rgba(40,46,45,.5), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
+
+  acidify-patch-view .deck-a .volume-bank { width: 206px; flex: 0 0 auto; padding: 12px; display: flex; gap: 10px; background: none; border: 0; }
+  acidify-patch-view .master-cell { display: flex; flex-direction: column; align-items: center; }
+  acidify-patch-view .master-cell .silver-knob .chrome-wrap { width: 72px; height: 72px; margin-top: 11px; }
+  acidify-patch-view .master-cell .silver-knob .control-label { order: 3; margin-top: 8px; font-size: 8.5px; }
+  acidify-patch-view .master-cell .silver-knob .led-box { order: 4; margin-top: 4px; width: auto; height: auto; border: 0; background: none; box-shadow: none; }
+  acidify-patch-view .master-cell .silver-knob .led-box .value-label { color: #6c1710; font: 8px/1 'Courier New',monospace; text-shadow: none; }
+  acidify-patch-view .output-cell { flex: 1; display: flex; flex-direction: column; align-items: center; padding-top: 1px; }
+  acidify-patch-view .vu-meter { position: relative; margin-top: 9px; width: 44px; height: 88px; border-radius: 3px; overflow: hidden; border: 1px solid #0b0d0c;
+    background: linear-gradient(180deg,#1a1c19,#0d0f0d); box-shadow: inset 0 3px 7px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.6); --level: 0; }
+  acidify-patch-view .vu-scale { position: absolute; bottom: 4px; top: 4px; width: 14px; border-radius: 1px;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,.055) 0 2px, transparent 2px 4px); }
+  acidify-patch-view .vu-scale.l { left: 6px; } acidify-patch-view .vu-scale.r { right: 6px; }
+  acidify-patch-view .vu-bar { position: absolute; bottom: 4px; width: 14px; height: calc(var(--level, 0) * 80px); border-radius: 1px;
+    background: linear-gradient(0deg,#3fa05a,#a8c33c 58%,#e4a52c 80%,#e1382a 100%); box-shadow: 0 0 7px rgba(255,110,60,.4); transition: height 60ms linear; }
+  acidify-patch-view .vu-bar.l { left: 6px; } acidify-patch-view .vu-bar.r { right: 6px; }
+  acidify-patch-view .trigger-row { margin-top: 8px; display: flex; gap: 5px; padding: 0; background: none; border: 0; }
+  acidify-patch-view .deck-a .distortion-trigger, acidify-patch-view .deck-a .mods-trigger { width: 47px; height: 22px; display: flex; align-items: center; justify-content: center; gap: 4px;
+    border-radius: 2px; cursor: pointer; border: 1px solid #1a1e1f; color: #1d2426; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .7px;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4); }
+
+  acidify-patch-view .deck-b { display: flex; margin-top: 10px; height: 104px; border: 1px solid #6f7573; border-radius: 3px; overflow: hidden;
+    background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg,#eef0ef 0%,#dcdedd 46%,#c5c8c7 100%);
+    box-shadow: inset 0 1px 0 #fff, inset 0 -2px 3px rgba(30,34,33,.2); }
+  acidify-patch-view .deckb-cell { box-sizing: border-box; padding: 9px 11px; display: flex; flex-direction: column; align-items: center;
+    border-right: 1px solid rgba(45,50,49,.5); box-shadow: 1px 0 0 rgba(255,255,255,.6); }
+  acidify-patch-view .deckb-cell:last-child { border-right: 0; box-shadow: none; }
+  acidify-patch-view .tempo-cell { width: 190px; flex: 0 0 auto; }
+  acidify-patch-view .tempo-row { margin-top: 6px; width: 100%; display: flex; align-items: center; gap: 11px; }
+  acidify-patch-view .silver-knob.compact .chrome-wrap { width: 56px; height: 56px; margin-top: 0; }
+  acidify-patch-view .silver-knob.compact .control-label { display: none; }
+  acidify-patch-view .silver-knob.compact .tick-ring { display: none; }
+  acidify-patch-view .silver-knob.compact .led-box { display: none; }
+  acidify-patch-view .tempo-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+  acidify-patch-view .tempo-led { margin-top: 0; width: 100%; height: 30px;
+    background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.09) 3px 4px), linear-gradient(180deg,#251614,#130b09);
+    box-shadow: inset 0 3px 6px rgba(0,0,0,.75), 0 1px 0 rgba(255,255,255,.62); }
+  acidify-patch-view .tempo-led .value-label-mirror { color: #ff6756; font: 20px/22px 'Courier New',monospace; white-space: nowrap; text-shadow: 0 0 8px rgba(255,57,37,.5); }
+  acidify-patch-view .tempo-scale { display: flex; align-items: center; justify-content: space-between; color: #4d5658; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
+  acidify-patch-view .tempo-scale i { flex: 1; margin: 0 5px; height: 1px; background: linear-gradient(90deg, rgba(45,50,49,.35), rgba(255,255,255,.5)); }
+
+  acidify-patch-view .clock-cell { width: 120px; flex: 0 0 auto; }
+  acidify-patch-view .deck-b .clock-mode { margin-top: 8px; display: flex; gap: 8px; background: none; border: 0; box-shadow: none; padding: 0; }
+  acidify-patch-view .clock-choice { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  acidify-patch-view .clock-lamp { width: 7px; height: 7px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.65); }
+  acidify-patch-view .clock-mode:not(.is-on) .clock-lamp.int, acidify-patch-view .clock-mode.is-on .clock-lamp.daw {
+    background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%); box-shadow: 0 0 6px rgba(255,72,48,.85); }
+  acidify-patch-view .deck-b .clock-mode button { width: 44px; height: 34px; border-radius: 3px; cursor: pointer; border: 1px solid #1a1e1f; color: #1d2426;
+    font: 900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1px;
+    background: linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 3px rgba(0,0,0,.34); }
+  acidify-patch-view .deck-b .clock-mode button.active { color: #f4f6f5;
+    background: linear-gradient(105deg, rgba(255,255,255,.13), transparent 34% 77%, rgba(0,0,0,.25)), linear-gradient(#576063,#282f31);
+    box-shadow: inset 0 2px 3px rgba(0,0,0,.4), inset 0 -1px 0 rgba(255,255,255,.22); }
+  acidify-patch-view .deck-b .clock-readout { margin-top: 6px; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .9px; color: #4d5658; }
+
+  acidify-patch-view .transport-cell { width: 160px; flex: 0 0 auto; }
+  acidify-patch-view .deck-b .run-lamp { position: static; margin-top: 7px; width: 9px; height: 9px; border-radius: 50%; border: 1px solid #4f1a15; }
+  acidify-patch-view .deck-b .run-switch { margin-top: 6px; background: none; border: 0; box-shadow: none; padding: 0; }
+  acidify-patch-view .deck-b .run-switch button { width: 140px; height: 36px; border-radius: 3px; cursor: pointer; border: 1px solid #5d6668; color: #1d2426;
+    font: 900 10px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.5px;
+    background: linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 3px rgba(0,0,0,.34); }
+  acidify-patch-view .deck-b .run-switch.is-on button { color: #ffd9d1; border-color: #4c130e;
+    background: linear-gradient(#ae3026,#67140f); box-shadow: inset 0 2px 3px rgba(0,0,0,.4), inset 0 -1px 0 rgba(255,255,255,.22); }
+
+  acidify-patch-view .stepper-cell { width: 292px; flex: 0 0 auto; flex-direction: row; gap: 8px; justify-content: center; }
+  acidify-patch-view .stepper-block { display: flex; flex-direction: column; align-items: center; }
+  acidify-patch-view .stepper-block .cell-title { width: 86px; height: 14px; }
+  acidify-patch-view .silver-stepper { display: flex; flex-direction: column; align-items: center; background: none; border: 0; box-shadow: none; padding: 0; }
+  acidify-patch-view .silver-stepper .led-box { margin-top: 6px; width: 86px; height: 22px;
+    background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.09) 3px 4px), linear-gradient(180deg,#251614,#130b09);
+    box-shadow: inset 0 3px 6px rgba(0,0,0,.75), 0 1px 0 rgba(255,255,255,.62); }
+  acidify-patch-view .silver-stepper .stepper-value { color: #ff6756; font: 12px/1 'Courier New',monospace; letter-spacing: 1px; text-shadow: 0 0 6px rgba(255,57,37,.55); }
+  acidify-patch-view .stepper-buttons { margin-top: 7px; display: flex; gap: 6px; }
+  acidify-patch-view .stepper-buttons button { width: 40px; height: 24px; border-radius: 3px; cursor: pointer; border: 1px solid #1a1e1f; color: #1d2426;
+    font: 900 13px/1 Arial,sans-serif;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4); }
+
+  acidify-patch-view .scope-cell { flex: 1; min-width: 0; align-items: stretch; }
+  acidify-patch-view .scope-head { display: flex; align-items: center; justify-content: space-between; }
+  acidify-patch-view .scope-head .cell-title { width: 132px; height: 14px; }
+  acidify-patch-view .scope-hz { font: 7px/1 'Courier New',monospace; color: #6c1710; }
+  acidify-patch-view .scope-row { margin-top: 7px; flex: 1; min-height: 0; display: flex; gap: 7px; }
+  acidify-patch-view .scope-screen { position: relative; flex: 1; min-width: 0; border-radius: 2px; overflow: hidden; border: 1px solid #0a0b09;
+    background: linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(#22231e,#121310);
+    background-size: 22px 100%, 100% 16px, 100% 100%;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .scope-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  acidify-patch-view .scope-env { fill: none; stroke: #c48a34; stroke-width: 1.2; opacity: .6; stroke-dasharray: 3 3; }
+  acidify-patch-view .scope-fill { fill: rgba(211,58,47,.13); stroke: none; }
+  acidify-patch-view .scope-curve { fill: none; stroke: #ff5140; stroke-width: 1.8; stroke-linejoin: round; }
+  acidify-patch-view .scope-cursor { stroke: rgba(255,236,220,.22); stroke-width: 1; stroke-dasharray: 2 3; }
+  acidify-patch-view .scope-tag { position: absolute; color: #6e6f66; font: 900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px; }
+  acidify-patch-view .scope-tag.tl { left: 6px; top: 5px; } acidify-patch-view .scope-tag.bl { left: 6px; bottom: 4px; } acidify-patch-view .scope-tag.br { right: 6px; bottom: 4px; }
+  acidify-patch-view .scope-legend { width: 66px; flex: 0 0 auto; display: grid; grid-template-rows: repeat(4,1fr); gap: 4px; }
+  acidify-patch-view .scope-legend > div { display: flex; align-items: center; justify-content: space-between; padding: 0 5px; border-radius: 2px; border: 1px solid #0a0706;
+    background: linear-gradient(180deg,#241512,#130b09); box-shadow: inset 0 2px 4px rgba(0,0,0,.7); }
+  acidify-patch-view .scope-legend span { color: #8d9698; font: 900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .9px; }
+  acidify-patch-view .scope-legend b { color: #ff6756; font: 8px/1 'Courier New',monospace; text-shadow: 0 0 5px rgba(255,57,37,.5); }
+
   acidify-patch-view .mods-overlay { position: static; height: auto; }
   acidify-patch-view .mods-overlay-body {
     display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; padding: 12px 14px;
@@ -3884,59 +4166,130 @@ class AcidifyPatchView extends HTMLElement {
 </style>
 <div class="chassis">
   <div class="panel">
-    <section class="top-strip">
-      <header class="branding">
-        <div class="brand"><span class="acid">ACID</span>IFY</div>
-        <div class="model">AC-303 PERFORMANCE BASSLINE</div>
-        <div class="computer">MONOPHONIC · 4× MODELLED CORE</div>
-      </header>
-      <div class="transport-bank">
-        <div class="bank-title">TRANSPORT</div>
-        <div class="tempo-box">
-          <div class="mini-title">TEMPO</div>
-          ${dial("param9")}
+    <section class="top-strip deck-a">
+      <header class="branding brand-cell">
+        <div>
+          <div class="brand"><span class="acid">ACID</span>IFY</div>
+          <div class="brand-rule"></div>
+          <div class="model">AC-303 BASSLINE SYNTHESIZER</div>
+          <div class="computer">MONOPHONIC · 4× MODELLED CORE</div>
         </div>
-        <div class="mode-box">
-          <div class="mini-title">PATTERN PLAY</div>
-          <div class="control clock-mode" data-param="param49" data-endpoint-id="param49"
-            data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons"
-            aria-label="Clock source">
-            <button data-value="0" type="button">INT</button>
-            <button data-value="1" type="button">DAW</button>
+        <div class="brand-foot">
+          <div class="tips-power-row">
+            <button class="tooltip-toggle" type="button" aria-pressed="true"><span>? TIPS</span><strong class="tooltip-toggle-state">ON</strong></button>
+            <span class="power-cell"><span class="power-label">POWER</span><span class="power-ring"><i class="power-led"></i></span></span>
           </div>
-          <span class="clock-readout" role="status">INT · 128 BPM</span>
-          <span class="run-lamp"></span>
-          <div class="control run-switch" data-param="param10" data-endpoint-id="param10" data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
-            <button data-value="0">RUN / STOP</button>
-            <button data-value="1" hidden>RUN</button>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">SILVER SERIES</span></div>
+        </div>
+      </header>
+      <div class="osc-cell">
+        <div class="cell-title">OSCILLATOR</div>
+        <div class="control waveform" data-param="param7" data-endpoint-id="param7" data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons">
+          <div class="wave-buttons">
+            <div class="wave-choice"><button data-value="0" aria-label="Saw"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M2 16L9 4v12l7-12v12l7-12"/></svg></button><span class="wave-name">SAW</span></div>
+            <div class="wave-choice"><button data-value="1" aria-label="Square"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M2 16V4h10v12h10V4h4"/></svg></button><span class="wave-name">SQR</span></div>
           </div>
         </div>
       </div>
       <div class="tone-bank">
-        <div class="bank-title">SYNTHESIS</div>
         <div class="tone-controls">
-          <div class="control waveform" data-param="param7" data-endpoint-id="param7" data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons">
-            <div class="wave-buttons">
-              <button data-value="0" aria-label="Saw"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M2 16L9 4v12l7-12v12l7-12"/></svg></button>
-              <button data-value="1" aria-label="Square"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M2 16V4h10v12h10V4h4"/></svg></button>
-            </div>
-            <div class="wave-title">WAVEFORM</div>
-          </div>
-          ${dial("param1")}${dial("param2")}${dial("param3")}${dial("param4")}${dial("param5")}${dial("param6")}
+          ${dial("param1")}${dial("param2", { modSlot: "param52" })}${dial("param3")}${dial("param4")}${dial("param5")}${dial("param6", { modSlot: "param59" })}
         </div>
       </div>
       <div class="volume-bank">
-        <div class="master-head">
-          <span>MASTER</span>
-          <button class="distortion-trigger" type="button" aria-expanded="false"
-            aria-controls="distortion-overlay" aria-label="Distortion disabled; open controls"
-            title="Distortion · OFF"><i class="distortion-led"></i><span>DIST</span></button>
-          <button class="mods-trigger" type="button" aria-expanded="false"
-            aria-controls="mods-overlay" aria-label="Circuit mods stock; open controls"
-            title="Circuit Mods · STOCK"><i class="mods-led"></i><span>MODS</span></button>
-          <span class="master-output"><span class="output-lamp"></span>OUT</span>
+        <div class="master-cell">
+          <div class="cell-title">MASTER</div>
+          ${dial("param8")}
         </div>
-        ${dial("param8")}
+        <div class="output-cell">
+          <div class="cell-title">OUTPUT</div>
+          <div class="vu-meter" aria-hidden="true"><i class="vu-scale l"></i><i class="vu-scale r"></i><i class="vu-bar l"></i><i class="vu-bar r"></i><span class="output-lamp" hidden></span></div>
+          <div class="master-head trigger-row">
+            <button class="distortion-trigger" type="button" aria-expanded="false"
+              aria-controls="distortion-overlay" aria-label="Distortion disabled; open controls"
+              title="Distortion · OFF"><i class="distortion-led"></i><span>DIST</span></button>
+            <button class="mods-trigger" type="button" aria-expanded="false"
+              aria-controls="mods-overlay" aria-label="Circuit mods stock; open controls"
+              title="Circuit Mods · STOCK"><i class="distortion-led mods-led"></i><span>MODS</span></button>
+            <span class="master-output" hidden><span></span>OUT</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="deck-b">
+      <div class="deckb-cell tempo-cell">
+        <div class="cell-title">TEMPO · BPM</div>
+        <div class="tempo-row">
+          ${dial("param9", { size: "compact" })}
+          <div class="tempo-side">
+            <div class="led-box tempo-led"><span class="tempo-mirror value-label-mirror">128.0</span></div>
+            <div class="tempo-scale"><span>SLOW 40</span><i></i><span>300 FAST</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="deckb-cell clock-cell">
+        <div class="cell-title">CLOCK</div>
+        <div class="control clock-mode" data-param="param49" data-endpoint-id="param49"
+          data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons"
+          aria-label="Clock source">
+          <div class="clock-choice"><span class="clock-lamp int"></span><button data-value="0" type="button">INT</button></div>
+          <div class="clock-choice"><span class="clock-lamp daw"></span><button data-value="1" type="button">DAW</button></div>
+        </div>
+        <span class="clock-readout" role="status">INT · 128 BPM</span>
+      </div>
+      <div class="deckb-cell transport-cell">
+        <div class="cell-title">TRANSPORT</div>
+        <span class="run-lamp"></span>
+        <div class="control run-switch" data-param="param10" data-endpoint-id="param10" data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+          <button data-value="0">RUN / STOP</button>
+          <button data-value="1" hidden>RUN</button>
+        </div>
+      </div>
+      <div class="deckb-cell stepper-cell">
+        <div class="stepper-block">
+          <div class="cell-title">SWING</div>
+          <div class="control silver-stepper" data-param="param50" data-endpoint-id="param50" data-min="0" data-max="100" data-step="1" data-init="0" data-control="stepper">
+            <div class="led-box"><span class="stepper-value">0%</span></div>
+            <div class="stepper-buttons"><button data-step="-1" type="button" type="button" aria-label="Swing down">−</button><button data-step="1" type="button" type="button" aria-label="Swing up">+</button></div>
+          </div>
+        </div>
+        <div class="stepper-block">
+          <div class="cell-title">LENGTH</div>
+          <div class="control silver-stepper" data-param="param11" data-endpoint-id="param11" data-min="1" data-max="16" data-step="1" data-init="16" data-control="stepper">
+            <div class="led-box"><span class="stepper-value">16</span></div>
+            <div class="stepper-buttons"><button data-step="-1" type="button" type="button" aria-label="Length down">−</button><button data-step="1" type="button" type="button" aria-label="Length up">+</button></div>
+          </div>
+        </div>
+        <div class="stepper-block">
+          <div class="cell-title">ROOT</div>
+          <div class="control silver-stepper" data-param="param12" data-endpoint-id="param12" data-min="24" data-max="60" data-step="1" data-init="36" data-control="stepper">
+            <div class="led-box"><span class="stepper-value">C2</span></div>
+            <div class="stepper-buttons"><button data-step="-1" type="button" type="button" aria-label="Root down">−</button><button data-step="1" type="button" type="button" aria-label="Root up">+</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="deckb-cell scope-cell">
+        <div class="scope-head"><div class="cell-title">FILTER RESPONSE</div><span class="scope-hz">— Hz</span></div>
+        <div class="scope-row">
+          <div class="scope-screen">
+            <svg class="scope-svg" viewBox="0 0 238 104" preserveAspectRatio="none">
+              <path class="scope-env" d=""></path>
+              <path class="scope-fill" d=""></path>
+              <path class="scope-curve" d=""></path>
+              <line class="scope-cursor" x1="0" y1="0" x2="0" y2="104"></line>
+            </svg>
+            <span class="scope-tag tl">VCF · 4-POLE</span>
+            <span class="scope-tag bl">20 Hz</span>
+            <span class="scope-tag br">20 kHz</span>
+          </div>
+          <div class="scope-legend">
+            <div><span>RES</span><b data-scope="res">--</b></div>
+            <div><span>ENV</span><b data-scope="env">--</b></div>
+            <div><span>DEC</span><b data-scope="dec">--</b></div>
+            <div><span>ACC</span><b data-scope="acc">--</b></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -4059,18 +4412,7 @@ class AcidifyPatchView extends HTMLElement {
             title="Switch editor · keyboard shortcut M">
             <i></i><span class="classic-label">CLASSIC</span><span class="studio-label">STUDIO</span>
           </button>
-          <div class="control swing-control" data-param="param50" data-endpoint-id="param50" data-min="0" data-max="100" data-step="1" data-init="0" data-control="stepper">
-            <div class="stepper"><button data-step="-1">−</button><span class="stepper-value">--</span><button data-step="1">+</button></div>
-            <div class="stepper-label">SWING</div>
-          </div>
-          <div class="control" data-param="param11" data-endpoint-id="param11" data-min="1" data-max="16" data-step="1" data-init="16" data-control="stepper">
-            <div class="stepper"><button data-step="-1">−</button><span class="stepper-value">--</span><button data-step="1">+</button></div>
-            <div class="stepper-label">LENGTH</div>
-          </div>
-          <div class="control" data-param="param12" data-endpoint-id="param12" data-min="24" data-max="60" data-step="1" data-init="36" data-control="stepper">
-            <div class="stepper"><button data-step="-1">−</button><span class="stepper-value">--</span><button data-step="1">+</button></div>
-            <div class="stepper-label">ROOT</div>
-          </div>
+
         </div>
       </div>
       <div class="step-row">${steps}</div>
