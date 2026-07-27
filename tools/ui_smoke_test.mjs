@@ -61,49 +61,40 @@ try {
   if (counts.controls !== 27 || counts.endpointControls !== 27
       || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
       || counts.stepGroups !== 4 || counts.whiteKeys !== 7 || counts.blackKeys !== 5
-      || counts.studioCells !== 64 || counts.studioCellGroups !== 16
-      || counts.studioRulerGroups !== 4 || counts.studioActions !== 15
+      || counts.studioCells !== 48 || counts.studioCellGroups !== 12
+      || counts.studioRulerGroups !== 4 || counts.studioActions !== 16
       || counts.pitchChoices !== 25
       || counts.distortionTriggers !== 1 || counts.distortionControls !== 4
       || counts.modTriggers !== 1 || counts.modControls !== 9 || counts.modRows !== 6
       || counts.distortionTypes !== 3 || counts.clockModes !== 2
       || counts.swingControls !== 1
-      || counts.basslineVisuals !== 1 || counts.basslineNodes !== 16
+      || counts.basslineVisuals !== 0 || counts.basslineNodes !== 0
       || counts.tooltipToggles !== 1 || counts.tooltipBubbles !== 1
       || counts.tooltipTargets < 100 || counts.nativeTitles !== 0
       || counts.screws !== 0) {
     throw new Error(`Unexpected UI element counts: ${JSON.stringify(counts)}`);
   }
 
-  const bassline = await page.evaluate(() => {
+  // Classic-Kopf nach dc-Template: Titel links, Utility rechts, Segment-Schalter 58x15 je Segment.
+  const header = await page.evaluate(() => {
     const rect = selector => {
       const bounds = document.querySelector(selector).getBoundingClientRect();
       return { left: bounds.left, right: bounds.right, width: bounds.width, height: bounds.height };
     };
-    const node = index => document.querySelector(`.bassline-node[data-step="${index}"]`);
+    const seg = document.querySelector(".studio-toggle .classic-label").getBoundingClientRect();
     return {
       title: rect(".program-title"),
-      visual: rect(".bassline-visual"),
       utility: rect(".utility"),
-      path: document.querySelector(".bassline-path").getAttribute("d"),
-      slidePath: document.querySelector(".bassline-slide-path").getAttribute("d"),
-      lowY: Number(node(0).getAttribute("cy")),
-      highY: Number(node(4).getAttribute("cy")),
-      accent: node(0).classList.contains("accented"),
-      slide: node(1).classList.contains("sliding"),
-      selected: node(0).classList.contains("selected"),
-      tooltip: document.querySelector(".bassline-visual").dataset.tooltip,
+      headerH: rect(".program-header").height,
+      position: document.querySelector(".step-position").textContent.trim(),
+      segW: seg.width, segH: seg.height,
     };
   });
-  if (bassline.visual.width < 170 || bassline.visual.height < 29
-      || bassline.title.right > bassline.visual.left
-      || bassline.visual.right > bassline.utility.left
-      || !bassline.path.startsWith("M ") || !bassline.path.includes(" L ")
-      || !bassline.slidePath.includes(" L ")
-      || !(bassline.lowY > bassline.highY)
-      || !bassline.accent || !bassline.slide || !bassline.selected
-      || !bassline.tooltip.includes("pitch contour")) {
-    throw new Error(`Bassline visualization failed: ${JSON.stringify(bassline)}`);
+  if (header.title.right > header.utility.left
+      || Math.round(header.headerH) !== 25
+      || !/^--\s*\/\s*16$/.test(header.position)
+      || Math.round(header.segW) !== 58 || Math.round(header.segH) !== 15) {
+    throw new Error(`Program header layout failed: ${JSON.stringify(header)}`);
   }
 
   const stepBadges = await page.evaluate(() => {
@@ -296,10 +287,11 @@ try {
   }
   const clockInitial = await page.locator("acidify-patch-view").evaluate(node => ({
     mode: node._values.get("param49"),
-    readout: node.querySelector(".clock-readout").textContent,
+    activeMode: node.querySelector(".clock-mode button.active")?.textContent.trim(),
+    tempo: node._values.get("param9"),
     runDisabled: node.querySelector('.run-switch[data-param="param10"]').getAttribute("aria-disabled"),
   }));
-  if (clockInitial.mode !== 0 || clockInitial.readout !== "INT · 128 BPM"
+  if (clockInitial.mode !== 0 || clockInitial.activeMode !== "INT" || clockInitial.tempo !== 128
       || clockInitial.runDisabled !== "false") {
     throw new Error(`Internal clock state failed: ${JSON.stringify(clockInitial)}`);
   }
@@ -311,13 +303,13 @@ try {
   const dawFallback = await page.locator("acidify-patch-view").evaluate(node => ({
     mode: node._values.get("param49"),
     run: node._values.get("param10"),
-    readout: node.querySelector(".clock-readout").textContent,
+    activeMode: node.querySelector(".clock-mode button.active")?.textContent.trim(),
     runText: node.querySelector('.run-switch[data-param="param10"] button:not([hidden])').textContent,
     runDisabled: node.querySelector('.run-switch[data-param="param10"]').getAttribute("aria-disabled"),
     tempoDisabled: node.querySelector('.tempo-cell .dial').getAttribute("aria-disabled"),
   }));
   if (dawFallback.mode !== 1 || dawFallback.run === runBeforeDawClick
-      || dawFallback.readout !== "DAW · INT FALLBACK" || dawFallback.runText !== "RUN / STOP"
+      || dawFallback.activeMode !== "DAW" || dawFallback.runText !== "RUN / STOP"
       || dawFallback.runDisabled !== "false" || dawFallback.tempoDisabled !== "false") {
     throw new Error(`DAW fallback state failed: ${JSON.stringify(dawFallback)}`);
   }
@@ -345,9 +337,8 @@ try {
     node._transportListener(1);
     node.pc.sendEventOrValue = originalSend;
     return {
-      readout: node.querySelector(".clock-readout").textContent,
       running: node.querySelector(".run-lamp").classList.contains("lit"),
-      tooltip: node.querySelector(".clock-readout").dataset.tooltip,
+      tooltip: node.querySelector(".tempo-cell").dataset.tooltip ?? "",
       runText: node.querySelector('.run-switch[data-param="param10"] button:not([hidden])').textContent,
       runDisabled: node.querySelector('.run-switch[data-param="param10"]').getAttribute("aria-disabled"),
       tempoDisabled: node.querySelector('.tempo-cell .dial').getAttribute("aria-disabled"),
@@ -356,8 +347,8 @@ try {
       mirrorSends,
     };
   });
-  if (dawLocked.readout !== "DAW · 135.27 BPM" || !dawLocked.running
-      || !dawLocked.tooltip.includes("position locked")
+  if (!dawLocked.running
+      || !dawLocked.tooltip.includes("Tempo follows the DAW")
       || dawLocked.runText !== "DAW FOLLOW"
       || dawLocked.runDisabled !== "true" || dawLocked.tempoDisabled !== "true"
       || Math.abs(dawLocked.dialTempo - 135.27) > 0.0001
@@ -455,7 +446,7 @@ try {
   await page.locator('.control[data-param="param53"] button').click();
   await page.waitForFunction(() => {
     const node = document.querySelector("acidify-patch-view");
-    return node && node.querySelector(".mods-status").textContent === "2 MODS ACTIVE";
+    return node && node.querySelector(".mods-status").textContent === "2 OF 6 ACTIVE · MODIFIED CIRCUIT";
   });
   const modState = await page.locator("acidify-patch-view").evaluate(node => ({
     od: node._values.get("param51"),
@@ -465,7 +456,7 @@ try {
     pendingEchoes: node._recentSends.length,
   }));
   if (modState.od !== 1 || modState.reso !== 1
-      || modState.status !== "2 MODS ACTIVE"
+      || modState.status !== "2 OF 6 ACTIVE · MODIFIED CIRCUIT"
       || !modState.triggerActive || modState.pendingEchoes !== 0) {
     throw new Error(`Mod controls failed: ${JSON.stringify(modState)}`);
   }
@@ -481,7 +472,7 @@ try {
   await page.locator('.control[data-param="param53"] button').click();
   await page.waitForFunction(() => {
     const node = document.querySelector("acidify-patch-view");
-    return node && node.querySelector(".mods-status").textContent === "STOCK 303";
+    return node && node.querySelector(".mods-status").textContent === "ALL STOCK · FACTORY 303 CIRCUIT";
   });
   await page.keyboard.press("Escape");
   if (await page.locator(".mods-overlay").isVisible()
@@ -565,7 +556,7 @@ try {
       [...document.querySelectorAll(".studio-actions button")].map(node => Math.round(node.offsetTop))
     );
     const context = document.querySelector(".program-context").textContent;
-    const groups = [...document.querySelectorAll(".studio-lane[data-lane=\"gate\"] .studio-cell-group")]
+    const groups = [...document.querySelectorAll(".studio-lane[data-lane=\"accent\"] .studio-cell-group")]
       .map(node => node.getBoundingClientRect())
       .map(bounds => ({ left: bounds.left, right: bounds.right }));
     return {
@@ -578,18 +569,18 @@ try {
       groupGaps: groups.slice(1).map((group, index) => group.left - groups[index].right),
     };
   });
-  if (workflow.toggle.width < 130 || workflow.toggle.height < 28
-      || workflow.tools.width < 390 || workflow.matrix.width < 620
-      || workflow.matrix.left - workflow.tools.right < 6
-      || workflow.scale.width < 100 || workflow.scale.height < 15
-      || workflow.actionRows !== 2
+  if (Math.round(workflow.toggle.width) !== 118 || Math.round(workflow.toggle.height) !== 17
+      || Math.round(workflow.tools.width) !== 296 || workflow.matrix.width < 800
+      || workflow.tools.right - workflow.matrix.left < 900
+      || workflow.scale.width < 100 || Math.round(workflow.scale.height) !== 12
+      || workflow.actionRows !== 4
       || workflow.context !== "STUDIO MATRIX"
       || workflow.groupGaps.some(gap => gap < 7)) {
     throw new Error(`Studio workflow hierarchy failed: ${JSON.stringify(workflow)}`);
   }
 
-  await page.locator('.sequence-step[data-step="3"]').click();
-  await page.locator('.sequence-step[data-step="6"]').click({ modifiers: ["Shift"] });
+  await page.locator('.studio-cell[data-kind="pitch"][data-step="3"]').click();
+  await page.locator('.studio-cell[data-kind="pitch"][data-step="6"]').click({ modifiers: ["Shift"] });
   const multiSelected = await page.locator(".sequence-step.multi-selected").count();
   if (multiSelected !== 4) throw new Error(`Studio range selection failed: ${multiSelected}`);
   const beforeStudioStripWheel = await view.evaluate(node => node._stepSnapshot());
@@ -617,10 +608,10 @@ try {
   await page.locator('.pitch-menu-choice[data-pitch-value="8"]').click();
   const directStudioPitch = await view.evaluate(node => ({
     pitches: node._stepSnapshot().slice(3, 7).map(step => step.pitch),
-    selection: node.querySelector(".studio-selection").textContent,
+    selectionSize: node._selectedIndices().length,
   }));
   if (directStudioPitch.pitches.some(pitch => pitch !== 8)
-      || !directStudioPitch.selection.includes("OCT +0")) {
+      || directStudioPitch.selectionSize !== 4) {
     throw new Error(`Studio batch note choice failed: ${JSON.stringify(directStudioPitch)}`);
   }
   await page.locator('.studio-cell[data-kind="pitch"][data-step="8"]').click({ button: "right" });
@@ -630,7 +621,7 @@ try {
   await page.locator('.pitch-menu-choice[data-pitch-value="24"]').click();
   const studioContextPitch = await view.evaluate(node => ({
     pitch: node._stepPitch(8),
-    cell: node.querySelector('.studio-cell[data-kind="pitch"][data-step="8"]').textContent,
+    cell: node.querySelector('.studio-cell[data-kind="pitch"][data-step="8"] .step-note').textContent,
     octave: node.querySelector('.sequence-step[data-step="8"] .step-octave').textContent,
   }));
   if (studioContextPitch.pitch !== 24 || studioContextPitch.cell !== "C4"
@@ -663,9 +654,9 @@ try {
     throw new Error("Studio undo failed");
   }
 
-  await page.locator('.sequence-step[data-step="0"]').click();
+  await page.locator('.studio-cell[data-kind="pitch"][data-step="0"]').click();
   await page.locator('[data-studio-action="copy"]').click();
-  await page.locator('.sequence-step[data-step="15"]').click();
+  await page.locator('.studio-cell[data-kind="pitch"][data-step="15"]').click();
   const beforePaste = await view.evaluate(node => node._stepSnapshot());
   await page.locator('[data-studio-action="paste"]').click();
   const afterPaste = await view.evaluate(node => node._stepSnapshot());
@@ -679,8 +670,8 @@ try {
     throw new Error("Studio keyboard undo failed");
   }
 
-  await page.locator('.sequence-step[data-step="3"]').click();
-  await page.locator('.sequence-step[data-step="6"]').click({ modifiers: ["Shift"] });
+  await page.locator('.studio-cell[data-kind="pitch"][data-step="3"]').click();
+  await page.locator('.studio-cell[data-kind="pitch"][data-step="6"]').click({ modifiers: ["Shift"] });
   const beforeTranspose = await view.evaluate(node => node._stepSnapshot());
   await page.locator('[data-studio-action="transpose-up"]').click();
   const afterTranspose = await view.evaluate(node => node._stepSnapshot());
@@ -697,8 +688,8 @@ try {
   await page.locator('[data-studio-action="undo"]').click();
   await page.locator('[data-studio-action="undo"]').click();
 
-  await page.locator('.sequence-step[data-step="0"]').click();
-  await page.locator('.sequence-step[data-step="3"]').click({ modifiers: ["Shift"] });
+  await page.locator('.studio-cell[data-kind="pitch"][data-step="0"]').click();
+  await page.locator('.studio-cell[data-kind="pitch"][data-step="3"]').click({ modifiers: ["Shift"] });
   const smartEditBefore = await view.evaluate(node => {
     const draft = node._stepSnapshot();
     [0, 3, 7, 12].forEach((pitch, index) => {
@@ -788,6 +779,11 @@ try {
     throw new Error("Studio value feedback failed");
   }
 
+  await page.locator(".studio-toggle").click();
+  if (await page.locator("acidify-patch-view").evaluate(node => node.classList.contains("studio-mode"))) {
+    throw new Error("Return to Classic mode failed");
+  }
+
   await page.setViewportSize({ width: 590, height: 290 });
   await page.waitForTimeout(350);
   const bounds = await page.locator("acidify-patch-view .chassis").boundingBox();
@@ -797,23 +793,13 @@ try {
   const compactBadges = await page.evaluate(() => {
     const chassis = document.querySelector(".chassis").getBoundingClientRect();
     const scale = chassis.width / 1180;
-    const accentStyle = getComputedStyle(
-      document.querySelector(".sequence-step.accented"),
-      "::before"
-    );
-    const slideStyle = getComputedStyle(
-      document.querySelector(".sequence-step.sliding"),
-      "::after"
-    );
-    return {
-      scale,
-      accentPixels: Number.parseFloat(accentStyle.width) * scale,
-      slidePixels: Number.parseFloat(slideStyle.width) * scale,
-    };
+    const accent = document.querySelector(".sequence-step.accented .pill-a").getBoundingClientRect();
+    const slide = document.querySelector(".sequence-step.sliding .pill-s").getBoundingClientRect();
+    return { scale, accentPixels: accent.width, slidePixels: slide.width };
   });
   if (!Number.isFinite(compactBadges.accentPixels)
       || !Number.isFinite(compactBadges.slidePixels)
-      || compactBadges.accentPixels < 9 || compactBadges.slidePixels < 9) {
+      || compactBadges.accentPixels < 7 || compactBadges.slidePixels < 7) {
     throw new Error(`Step-state badges became too small at 590×290: ${JSON.stringify(compactBadges)}`);
   }
   const reconnect = await page.evaluate(async () => {
@@ -847,7 +833,7 @@ try {
   console.log(JSON.stringify({
     ok: true,
     counts,
-    bassline,
+    header,
     stepBadges,
     compactBadges,
     upperPanelGeometry,

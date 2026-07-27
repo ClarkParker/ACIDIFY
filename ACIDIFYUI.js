@@ -25,14 +25,14 @@ const ACIDIFY_GLOBALS = [
   // MOD-Overlay (Layout folgt in Claude Design). Defaults = Serienstand,
   // Toggles schalten je Mod klar ein/aus, Amounts in 0,001er-Schritten.
   { id: "param51", type: "toggle",  label: "OD",           min: 0,  max: 1,   step: 1, init: 0 },
-  { id: "param52", type: "dial",    label: "OD AMT",       min: 0,  max: 1,   step: 0.001, init: 0.3,  format: v => `${(Math.pow(66.6, v)).toFixed(1)}x` },
+  { id: "param52", type: "dial",    label: "AMOUNT",       min: 0,  max: 1,   step: 0.001, init: 0.3,  format: v => `${(Math.pow(66.6, v)).toFixed(1)}x` },
   { id: "param53", type: "toggle",  label: "RESO BOOST",   min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param54", type: "toggle",  label: "CUTOFF 5K",    min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param55", type: "toggle",  label: "ENV X3",       min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param56", type: "toggle",  label: "SLIDE MOD",    min: 0,  max: 1,   step: 1, init: 0 },
-  { id: "param57", type: "dial",    label: "SLIDE TIME",   min: 0,  max: 1,   step: 0.001, init: 0,    format: v => `${Math.round(22 + 110 * v)}ms` },
+  { id: "param57", type: "dial",    label: "TIME",   min: 0,  max: 1,   step: 0.001, init: 0,    format: v => `${Math.round(22 + 110 * v)}ms` },
   { id: "param58", type: "toggle",  label: "SOFT ATK",     min: 0,  max: 1,   step: 1, init: 0 },
-  { id: "param59", type: "dial",    label: "ATK TIME",     min: 0,  max: 1,   step: 0.001, init: 0.25, format: v => `${(0.5 * Math.pow(60, v)).toFixed(1)}ms` },
+  { id: "param59", type: "dial",    label: "TIME",     min: 0,  max: 1,   step: 0.001, init: 0.25, format: v => `${(0.5 * Math.pow(60, v)).toFixed(1)}ms` },
 ];
 
 const STEP_PITCH_DEFAULTS = [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7];
@@ -1027,6 +1027,7 @@ class AcidifyPatchView extends HTMLElement {
     this._mutatePattern("Choose note", draft => {
       targets.forEach(index => {
         draft[index].pitch = pitch;
+        draft[index].flags |= 1;
       });
     });
     const root = Math.round(this._values.get("param12") ?? 36);
@@ -1161,7 +1162,23 @@ class AcidifyPatchView extends HTMLElement {
       ? `Circuit mods — ${count} of 6 active. The lamp stays lit while the circuit is modified.`
       : "Circuit mods — Devil Fish and x0x modifications. All off, so the instrument runs the stock 303 circuit.";
     const status = this.querySelector(".mods-status");
-    if (status) status.textContent = count > 0 ? `${count} MOD${count > 1 ? "S" : ""} ACTIVE` : "STOCK 303";
+    if (status) {
+      status.textContent = count > 0 ? `${count} OF 6 ACTIVE · MODIFIED CIRCUIT` : "ALL STOCK · FACTORY 303 CIRCUIT";
+      status.classList.toggle("modified", count > 0);
+    }
+    const footerState = this.querySelector(".mods-footer-state");
+    if (footerState) {
+      footerState.textContent = count > 0 ? "AMOUNTS HELD WHILE OFF" : "DEFAULTS = STOCK";
+      footerState.classList.toggle("modified", count > 0);
+    }
+    modIds.forEach(id => {
+      const cell = this.querySelector(`.mod-cell[data-mod-enable="${id}"]`);
+      if (!cell) return;
+      const on = Number(this._values.get(id) ?? 0) >= 0.5;
+      cell.classList.toggle("on", on);
+      const state = cell.querySelector(".mod-state");
+      if (state) state.textContent = on ? "ON" : "OFF";
+    });
     this.querySelector(".mods-led")?.classList.toggle("lit", count > 0);
     this._renderModMirrors();
   }
@@ -1328,6 +1345,9 @@ class AcidifyPatchView extends HTMLElement {
     const status = this.querySelector(".distortion-status");
     if (status) status.textContent = enabled ? `${name} ACTIVE` : "TRUE BYPASS";
     this.querySelector(".distortion-led")?.classList.toggle("lit", enabled);
+    this.querySelector(".distortion-power-led")?.classList.toggle("lit", enabled);
+    const powerLabel = this.querySelector(".distortion-power-label");
+    if (powerLabel) powerLabel.textContent = enabled ? "ON" : "OFF";
   }
 
   _setStudioMode(enabled) {
@@ -1478,6 +1498,12 @@ class AcidifyPatchView extends HTMLElement {
 
   _runStudioAction(action) {
     const selected = this._selectedIndices();
+    if (action === "scale") {
+      this._generationScaleIndex = (this._generationScaleIndex + 1) % GENERATION_SCALES.length;
+      this._updateStudioToolbar();
+      this._showStudioToast(`SCALE · ${this._generationScale().label}`);
+      return;
+    }
     if (action === "undo") {
       const entry = this._history.pop();
       if (entry) {
@@ -1669,11 +1695,13 @@ class AcidifyPatchView extends HTMLElement {
   }
 
   _renderStepStrip() {
+    const patternLength = Math.max(1, Math.round(this._values.get("param11") ?? 16));
     this.querySelectorAll(".sequence-step").forEach((node, index) => {
       const flags = this._stepFlags(index);
       node.classList.toggle("selected", index === this._selectedStep);
       node.classList.toggle("multi-selected", this._studioMode && this._selectedSteps.has(index));
       node.classList.toggle("playing", index === this._playingStep);
+      node.classList.toggle("beyond", index >= patternLength);
       node.classList.toggle("rest", (flags & 1) === 0);
       node.classList.toggle("accented", (flags & 2) !== 0);
       node.classList.toggle("sliding", (flags & 4) !== 0);
@@ -1769,7 +1797,7 @@ class AcidifyPatchView extends HTMLElement {
       button.setAttribute("aria-pressed", `${active}`);
     });
     const octave = this.querySelector(".octave-indicator");
-    if (octave) octave.textContent = `${this._octaveLabel(pitch)} · +${pitch} SEMITONES FROM ROOT`;
+    if (octave) octave.textContent = `${this._octaveLabel(pitch)} · ${pitch} SEMITONES FROM ROOT`;
   }
 
   _renderStudio() {
@@ -1786,9 +1814,14 @@ class AcidifyPatchView extends HTMLElement {
       cell.setAttribute("aria-pressed", `${active}`);
       if (kind === "pitch") {
         const root = Math.round(this._values.get("param12") ?? 36);
+        const patternLength = Math.max(1, Math.round(this._values.get("param11") ?? 16));
         const pitch = this._stepPitch(index);
+        const gate = (flags & 1) !== 0;
         const absoluteNote = noteName(root + pitch).replace("#", "♯");
-        cell.textContent = absoluteNote;
+        cell.classList.toggle("rest", !gate);
+        cell.classList.toggle("beyond", index >= patternLength);
+        const note = cell.querySelector(".step-note");
+        if (note) note.textContent = gate ? absoluteNote : "REST";
         cell.setAttribute("aria-label", `Step ${index + 1} note ${absoluteNote}, ${this._octaveLabel(pitch)}; wheel changes semitone, right-click or double-click chooses a note`);
         cell.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${this._octaveLabel(pitch)}. Wheel changes one semitone; right-click or double-click opens direct note selection.`;
       } else {
@@ -1798,7 +1831,39 @@ class AcidifyPatchView extends HTMLElement {
         cell.dataset.tooltip = `${label} is ${state} for step ${index + 1}. Click or drag across the lane to change it.`;
       }
     });
+    this._renderStudioContour();
     this._updateStudioToolbar();
+  }
+
+  _renderStudioContour() {
+    const svgs = [...this.querySelectorAll(".studio-contour-svg")];
+    if (svgs.length !== 4) return;
+    const GC = 40;
+    const yFor = pitch => 66 - 8 - (Math.min(24, Math.max(0, pitch)) / 24) * (66 - 16);
+    svgs.forEach((svg, group) => {
+      const notes = [];
+      const slides = [];
+      let prev = null;
+      for (let i = 0; i < 4; i += 1) {
+        const index = group * 4 + i;
+        const flags = this._stepFlags(index);
+        if ((flags & 1) === 0) { prev = null; continue; }
+        const y = yFor(this._stepPitch(index));
+        const x0 = i * GC + 3;
+        const x1 = (i + 1) * GC - 3;
+        if (prev && prev.slide) slides.push(`M ${prev.x.toFixed(2)} ${prev.y.toFixed(2)} L ${x0.toFixed(2)} ${y.toFixed(2)}`);
+        notes.push(`M ${x0.toFixed(2)} ${y.toFixed(2)} L ${x1.toFixed(2)} ${y.toFixed(2)}`);
+        prev = { x: x1, y, slide: (flags & 4) !== 0 };
+      }
+      svg.querySelector(".contour-path").setAttribute("d", notes.join(" "));
+      svg.querySelector(".contour-slide").setAttribute("d", slides.join(" "));
+      const playhead = svg.querySelector(".contour-playhead");
+      const inGroup = this._playingStep >= group * 4 && this._playingStep < group * 4 + 4;
+      const x = inGroup ? ((this._playingStep - group * 4) + 0.5) * GC : 0;
+      playhead.setAttribute("x1", `${x}`);
+      playhead.setAttribute("x2", `${x}`);
+      playhead.style.opacity = inGroup ? "1" : "0";
+    });
   }
 
   _showMidiNote(note, active) {
@@ -1872,8 +1937,6 @@ class AcidifyPatchView extends HTMLElement {
         <span>${name.replace("#", "♯")}</span>
       </button>`).join("");
     const studioLanes = [
-      { kind: "pitch", label: "NOTE" },
-      { kind: "gate", label: "GATE" },
       { kind: "accent", label: "ACCENT" },
       { kind: "slide", label: "SLIDE" },
     ].map(lane => `
@@ -1890,6 +1953,26 @@ class AcidifyPatchView extends HTMLElement {
               }).join("")}
             </div>`).join("")}
         </div>
+      </div>`).join("");
+    const studioContour = Array.from({ length: 4 }, () => `
+      <svg class="studio-contour-svg" viewBox="0 0 160 66" preserveAspectRatio="none" aria-hidden="true">
+        <path class="contour-slide"></path><path class="contour-path"></path>
+        <line class="contour-playhead" x1="0" y1="0" x2="0" y2="66"></line>
+      </svg>`).join("");
+    const studioPitchGate = Array.from({ length: 4 }, (_, group) => `
+      <div class="studio-cell-group" role="group" aria-label="Pitch and gate steps ${group * 4 + 1} to ${group * 4 + 4}">
+        ${Array.from({ length: 4 }, (_, position) => {
+          const index = group * 4 + position;
+          return `<button class="studio-cell studio-step" data-kind="pitch" data-step="${index}" aria-haspopup="dialog"
+              aria-label="Step ${index + 1} note" aria-pressed="false">
+            <span class="step-lamp"></span>
+            <span class="step-sel"></span>
+            <span class="step-well"></span>
+            <span class="step-cap"><i class="cap-rocker"></i><i class="cap-nub"><i class="cap-led"></i></i><i class="cap-foot"></i></span>
+            <span class="step-playbar"></span>
+            <span class="step-note-field"><span class="step-note">--</span></span>
+          </button>`;
+        }).join("")}
       </div>`).join("");
     const studioRuler = Array.from({ length: 4 }, (_, group) => `
       <div class="studio-cell-group studio-ruler-group" aria-hidden="true">
@@ -3817,12 +3900,12 @@ class AcidifyPatchView extends HTMLElement {
   }
   acidify-patch-view .distortion-led, acidify-patch-view .mods-led {
     display: block; width: 5px; height: 5px; border-radius: 50%;
-    background: #3d1612; border: 1px solid #2b0a07;
-    box-shadow: inset 0 1px 1px rgba(255,255,255,.16);
+    background: #48140f; border: 0;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.18);
   }
   acidify-patch-view .distortion-led.lit {
-    background: #ff4f3c;
-    box-shadow: 0 0 4px #ff3826, inset 0 0 1px #fff;
+    background: #ff503d;
+    box-shadow: 0 0 6px rgba(255,50,32,.9), inset 0 0 1px #fff;
   }
   acidify-patch-view .distortion-scrim[hidden] { display: none; }
   acidify-patch-view .distortion-scrim {
@@ -4016,7 +4099,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .panel > .program-strip { position: static; left: auto; right: auto; top: auto; height: auto; flex: 1; min-height: 0; margin-top: 0; }
   acidify-patch-view .deck-a .branding { position: static; left: auto; top: auto; height: auto; }
   acidify-patch-view .deck-a .tone-bank, acidify-patch-view .deck-a .volume-bank { position: static; left: auto; right: auto; top: auto; bottom: auto; width: auto; height: auto; }
-  acidify-patch-view .deck-a .volume-bank { width: 206px; }
+  acidify-patch-view .deck-a .volume-bank { width: auto; }
   acidify-patch-view .deck-a .waveform { position: static; width: auto; height: auto; left: auto; top: auto; }
   acidify-patch-view .deck-a .master-head { position: static; width: auto; height: auto; }
   acidify-patch-view .deck-a .master-head span { position: static; }
@@ -4035,7 +4118,7 @@ class AcidifyPatchView extends HTMLElement {
 
 
   acidify-patch-view .top-strip.deck-a {
-    display: flex; grid-template-columns: none; gap: 0; padding: 0; height: 168px;
+    display: flex; grid-template-columns: none; gap: 0; padding: 0; height: 170px;
     border: 1px solid #6f7573; border-radius: 3px; overflow: hidden;
     background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),
       linear-gradient(180deg,#f0f2f1 0%,#dfe1e0 44%,#c7cac9 100%);
@@ -4045,58 +4128,62 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .deck-a > *:last-child { border-right: 0; box-shadow: none; }
   acidify-patch-view .brand-cell { width: 206px; flex: 0 0 auto; padding: 15px 16px; display: flex; flex-direction: column; justify-content: space-between; background: none; border-bottom: 0; }
   acidify-patch-view .deck-a .brand { font: 900 34px/34px Impact,'Arial Black',sans-serif; letter-spacing: .4px; color: #8d9391;
-    text-shadow: 0 -1px 0 rgba(14,18,17,.85), 0 1px 0 rgba(255,255,255,.98), 0 2px 2px rgba(255,255,255,.45); }
-  acidify-patch-view .deck-a .brand .acid { color: #8e1f16; text-shadow: 0 -1px 0 rgba(38,4,2,.95), 0 1px 0 rgba(255,255,255,.95), 0 0 9px rgba(196,32,20,.28); }
+    text-shadow: 0 -1px 0 rgba(14,18,17,.85), 0 1px 0 rgba(255,255,255,.98), 0 2px 2px rgba(255,255,255,.45), 0 -2px 3px rgba(14,18,17,.35); }
+  acidify-patch-view .deck-a .brand .acid { color: #8e1f16; text-shadow: 0 -1px 0 rgba(38,4,2,.95), 0 1px 0 rgba(255,255,255,.95), 0 -2px 4px rgba(96,14,8,.55), 0 0 9px rgba(196,32,20,.28); }
   acidify-patch-view .brand-rule { margin-top: 8px; height: 2px; border-radius: 1px;
     background: linear-gradient(90deg, rgba(30,35,34,.55) 0 62%, rgba(142,31,22,.75) 62% 100%);
     box-shadow: 0 1px 0 rgba(255,255,255,.85), inset 0 1px 1px rgba(0,0,0,.5); }
-  acidify-patch-view .deck-a .model { margin-top: 8px; font: 900 8px/11px 'Arial Narrow',Arial,sans-serif; letter-spacing: .85px; color: #2b3536; text-shadow: 0 1px 0 rgba(255,255,255,.9); }
-  acidify-patch-view .deck-a .computer { margin-top: 3px; font: 900 6.5px/10px 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px; color: #798382; text-shadow: 0 1px 0 rgba(255,255,255,.75); }
+  acidify-patch-view .deck-a .model { margin-top: 8px; font: 900 8px/11px 'Arial Narrow',Arial,sans-serif; letter-spacing: .85px; color: #2b3536; white-space: nowrap; text-shadow: 0 -.5px 0 rgba(20,24,23,.5), 0 1px 0 rgba(255,255,255,.9); }
+  acidify-patch-view .deck-a .computer { margin-top: 3px; font: 900 6.5px/10px 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px; color: #798382; white-space: nowrap; text-shadow: 0 1px 0 rgba(255,255,255,.75); }
   acidify-patch-view .tips-power-row { box-sizing: border-box; height: 34px; padding: 0 8px; display: flex; align-items: center; justify-content: space-between;
     border-radius: 2px; border: 1px solid #8b918f; background: linear-gradient(180deg,#b6bab8,#c9cdcb);
     box-shadow: inset 0 2px 4px rgba(48,54,52,.4), inset 0 -1px 0 rgba(255,255,255,.6), 0 1px 0 rgba(255,255,255,.7); }
   acidify-patch-view .deck-a .tooltip-toggle { position: static; display: flex; align-items: center; gap: 5px; height: 18px; padding: 0 6px; cursor: pointer;
     border-radius: 2px; border: 1px solid #1a1e1f; width: auto; font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; color: #1d2426;
-    background: linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4); }
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
+  acidify-patch-view .deck-a .tooltip-toggle[aria-pressed="true"] {
+    background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
+    box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5); }
   acidify-patch-view .deck-a .tooltip-toggle .tooltip-toggle-state { padding: 2px 4px; border-radius: 1px; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px;
-    color: #ffe9e4; background: linear-gradient(#ae3026,#67140f); }
-  acidify-patch-view .deck-a .tooltip-toggle[aria-pressed="false"] .tooltip-toggle-state { color: #3d4547; background: linear-gradient(#9aa3a1,#7c8583); }
+    color: #fff2ed; background: linear-gradient(#b92e24,#74150f); }
+  acidify-patch-view .deck-a .tooltip-toggle[aria-pressed="false"] .tooltip-toggle-state { color: #a9aaa4; background: linear-gradient(#4b4c47,#292a27); }
   acidify-patch-view .power-cell { display: flex; align-items: center; gap: 6px; }
   acidify-patch-view .power-label { color: #6d7776; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
   acidify-patch-view .power-ring { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(45,50,49,.5);
-    background: radial-gradient(circle at 34% 26%, #f2f4f4, #b9bfbd 62%, #98a09e); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -2px 3px rgba(48,54,52,.35); }
+    background: radial-gradient(circle at 34% 26%, #f2f4f4, #b9bfbd 62%, #98a09e); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -2px 3px rgba(48,54,52,.35), 0 1px 0 rgba(255,255,255,.65); }
   acidify-patch-view .power-led { width: 8px; height: 8px; border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, #ff6a54, #9d1c11 68%, #5a0d06); box-shadow: inset 0 1px 1px rgba(255,255,255,.45), 0 0 8px rgba(220,42,26,.6); }
-  acidify-patch-view .brand-legal { margin-top: 7px; display: flex; align-items: baseline; justify-content: space-between; }
-  acidify-patch-view .brand-legal span { font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.2px; color: #5d6767; text-shadow: 0 1px 0 rgba(255,255,255,.8); }
-  acidify-patch-view .brand-legal .brand-version { color: #8b9494; }
+  acidify-patch-view .brand-legal { margin-top: 7px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  acidify-patch-view .brand-legal span { font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.2px; color: #5d6767; white-space: nowrap; text-shadow: 0 1px 0 rgba(255,255,255,.8); }
+  acidify-patch-view .brand-legal .brand-version { color: #8b9494; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
 
   acidify-patch-view .cell-title { width: 100%; height: 15px; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.45);
     color: #26302f; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.7px; text-shadow: 0 1px 0 rgba(255,255,255,.85); }
 
   acidify-patch-view .osc-cell { width: 172px; flex: 0 0 auto; padding: 12px 13px; display: flex; flex-direction: column; }
-  acidify-patch-view .osc-cell .waveform { flex: 1; display: flex; align-items: center; justify-content: center; }
+  acidify-patch-view .osc-cell .waveform { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
   acidify-patch-view .osc-cell .wave-buttons { display: flex; gap: 14px; background: none; border: 0; box-shadow: none; padding: 0; }
   acidify-patch-view .wave-choice { display: flex; flex-direction: column; align-items: center; gap: 5px; }
   acidify-patch-view .osc-cell .wave-buttons button { width: 62px; height: 58px; padding: 5px; border-radius: 3px; cursor: pointer;
     border: 1px solid #1a1e1f; color: #4d5658;
-    background: linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 3px rgba(0,0,0,.34); }
-  acidify-patch-view .osc-cell .wave-buttons button.active { color: #ff5f4a;
-    background: linear-gradient(105deg, rgba(255,255,255,.13), transparent 34% 77%, rgba(0,0,0,.25)), linear-gradient(#576063,#282f31);
-    box-shadow: inset 0 2px 3px rgba(0,0,0,.4), inset 0 -1px 0 rgba(255,255,255,.22); }
-  acidify-patch-view .osc-cell .wave-buttons svg { display: block; width: 100%; height: 100%; overflow: visible; fill: none; stroke: currentColor; stroke-width: 2.4; }
-  acidify-patch-view .wave-name { color: #4d5658; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; text-shadow: 0 1px 0 rgba(255,255,255,.75); }
-  acidify-patch-view .wave-choice:has(button.active) .wave-name { color: #9b2019; }
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
+  acidify-patch-view .osc-cell .wave-buttons button.active { color: #ff5545;
+    background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
+    box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5); }
+  acidify-patch-view .osc-cell .wave-buttons svg { display: block; width: 100%; height: 100%; overflow: visible; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: butt; filter: none; }
+  acidify-patch-view .wave-name { color: #67716f; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; text-shadow: 0 1px 0 rgba(255,255,255,.75); }
+  acidify-patch-view .wave-choice:has(button.active) .wave-name { color: #8e1f16; }
 
-  acidify-patch-view .deck-a .tone-bank { flex: 1; padding: 14px 16px 0; background: none; border: 0; }
+  acidify-patch-view .deck-a .tone-bank { flex: 1; padding: 14px 16px 0; background: none; border: 0; box-shadow: none; }
   acidify-patch-view .deck-a .tone-controls { display: grid; grid-template-columns: repeat(6,1fr); gap: 0; padding: 0; }
 
   acidify-patch-view .silver-knob { --norm: var(--default-norm, .5); width: auto; height: auto; display: flex; flex-direction: column; align-items: center; background: none; border: 0; box-shadow: none; padding: 0; }
-  acidify-patch-view .silver-knob .control-label { position: static; font: 900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.15px; color: #1c2224; text-shadow: none; }
+  acidify-patch-view .silver-knob .control-label { position: static; margin: 0; font: 900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.15px; color: #1c2224; text-shadow: none; }
+  acidify-patch-view .silver-knob:has(.mod-slider:not([hidden])) .control-label { color: #9b2019; }
   acidify-patch-view .silver-knob .chrome-wrap { position: relative; margin-top: 9px; width: 68px; height: 68px; }
-  acidify-patch-view .silver-knob .tick-ring { position: absolute; inset: -5px; border-radius: 50%; transform: none; border: 0;
+  acidify-patch-view .silver-knob .tick-ring { position: absolute; inset: -5px; border-radius: 50%; transform: none; border: 0; filter: none;
     background: repeating-conic-gradient(from 218deg, #3f4645 0 1.2deg, transparent 1.2deg 11.5deg);
     -webkit-mask: radial-gradient(circle, transparent 86%, #000 87% 97%, transparent 98%);
     mask: radial-gradient(circle, transparent 86%, #000 87% 97%, transparent 98%);
@@ -4110,15 +4197,16 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .silver-knob .dial-cap { position: absolute; inset: 9px; border-radius: 50%; border: 1px solid #6d7578; transform: none;
     background: radial-gradient(ellipse at 50% 118%, rgba(255,255,255,.5) 0 16%, rgba(255,255,255,0) 54%),
       radial-gradient(ellipse 132% 114% at 34% 15%, #ffffff 0 5%, #f1f4f4 17%, #cdd3d4 39%, #a8b0b2 65%, #8c9598 88%, #a3abad 100%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -5px -7px 12px rgba(96,106,109,.26), inset 4px 5px 10px rgba(255,255,255,.3); }
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.5), inset -5px -7px 12px rgba(96,106,109,.26), inset 4px 5px 10px rgba(255,255,255,.3); }
   acidify-patch-view .silver-knob .pointer-wrap { position: absolute; inset: 9px; border-radius: 50%; pointer-events: none; z-index: 5;
     transform: rotate(calc(-135deg + var(--norm) * 270deg)); }
-  acidify-patch-view .silver-knob .dial-pointer { position: absolute; left: 50%; top: 4px; width: 4px; height: 23px; margin-left: -2px; border-radius: 2px;
+  acidify-patch-view .silver-knob .dial-pointer { position: absolute; left: 50%; top: 5px; width: 3px; height: 20px; margin-left: -1.5px; border-radius: 2px;
     transform: none; background: linear-gradient(90deg,#141819 0,#343a3c 45%,#0f1314 100%); box-shadow: 1px 0 0 rgba(255,255,255,.55); }
-  acidify-patch-view .led-box { margin-top: 10px; width: 66px; height: 20px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
+  acidify-patch-view .led-box { margin-top: 10px; width: 68px; height: 22px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
     background: linear-gradient(180deg,#241512,#130b09); box-shadow: inset 0 2px 4px rgba(0,0,0,.72); }
   acidify-patch-view .led-box .value-label, acidify-patch-view .led-box .stepper-value { position: static; color: #ff6756; font: 12px/1 'Courier New',monospace; letter-spacing: .5px;
-    text-shadow: 0 0 5px rgba(255,57,37,.5); width: auto; }
+    text-shadow: 0 0 5px rgba(255,57,37,.5); width: auto; margin: 0; min-width: 0; opacity: 1;
+    height: auto; display: inline; background: none; border: 0; box-shadow: none; }
   acidify-patch-view .mod-slider { position: absolute; inset: 0; }
   acidify-patch-view .mod-slider-track { position: absolute; inset: 0; cursor: ew-resize; touch-action: none; }
   acidify-patch-view .mod-slider-rail { position: absolute; left: 4px; right: 4px; top: 6px; height: 2px; border-radius: 1px;
@@ -4126,20 +4214,27 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .mod-slider-thumb { position: absolute; top: 1px; left: 4px; width: 9px; height: 11px; margin-left: -4.5px; border-radius: 2px;
     border: 1px solid #4a5153; background: linear-gradient(180deg,#f4f6f6 0 30%,#c9cfd0 55%,#98a1a3 100%);
     box-shadow: 0 1px 2px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.9); }
-  acidify-patch-view .mod-slider-value { position: absolute; left: 50%; top: 14px; margin-left: -24px; width: 48px; height: 13px; z-index: 6;
+  acidify-patch-view .mod-slider-value { position: absolute; left: 50%; top: 14px; margin-left: -24px; width: 50px; height: 15px; z-index: 6;
     display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706; background: linear-gradient(180deg,#241512,#130b09);
     box-shadow: 0 3px 6px rgba(0,0,0,.45); color: #ff6756; font: 10px/1 'Courier New',monospace; }
   acidify-patch-view .mod-slot { position: relative; margin-top: 7px; width: 66px; height: 13px; border-radius: 7px;
     background: linear-gradient(180deg, rgba(52,58,57,.3), rgba(210,214,212,.16));
     box-shadow: inset 0 2px 3px rgba(40,46,45,.5), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
 
-  acidify-patch-view .deck-a .volume-bank { width: 206px; flex: 0 0 auto; padding: 12px; display: flex; gap: 10px; background: none; border: 0; }
+  acidify-patch-view .deck-a .volume-bank { width: auto; flex: 0 0 auto; padding: 12px; display: flex; gap: 10px; align-items: stretch; background: none; border: 0; }
+  acidify-patch-view .master-cell .cell-title { width: 96px; }
+  acidify-patch-view .output-cell .cell-title { width: 99px; }
+  acidify-patch-view .master-cell .tick-ring { display: none; }
+  acidify-patch-view .master-cell .silver-knob .dial { box-shadow: 0 7px 9px rgba(0,0,0,.3), inset 0 2px 2px rgba(255,255,255,.9), inset 0 -6px 8px rgba(40,47,49,.55); }
+  acidify-patch-view .master-cell .silver-knob .dial-cap { box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -5px -7px 12px rgba(96,106,109,.26); }
+  acidify-patch-view .master-cell .silver-knob .dial-cap, acidify-patch-view .master-cell .silver-knob .pointer-wrap { inset: 8px; }
+  acidify-patch-view .master-cell .silver-knob .dial-pointer { width: 3px; height: 21px; top: 5px; margin-left: -1.5px; }
   acidify-patch-view .master-cell { display: flex; flex-direction: column; align-items: center; }
   acidify-patch-view .master-cell .silver-knob .chrome-wrap { width: 72px; height: 72px; margin-top: 11px; }
-  acidify-patch-view .master-cell .silver-knob .control-label { order: 3; margin-top: 8px; font-size: 8.5px; }
+  acidify-patch-view .master-cell .silver-knob .control-label { order: 3; margin-top: 8px; font-size: 8.5px; letter-spacing: 1.1px; }
   acidify-patch-view .master-cell .silver-knob .led-box { order: 4; margin-top: 4px; width: auto; height: auto; border: 0; background: none; box-shadow: none; }
-  acidify-patch-view .master-cell .silver-knob .led-box .value-label { color: #6c1710; font: 8px/1 'Courier New',monospace; text-shadow: none; }
-  acidify-patch-view .output-cell { flex: 1; display: flex; flex-direction: column; align-items: center; padding-top: 1px; }
+  acidify-patch-view .master-cell .silver-knob .led-box .value-label { color: #6c1710; font: 8px/1 'Courier New',monospace; letter-spacing: normal; text-shadow: none; }
+  acidify-patch-view .output-cell { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; padding-top: 1px; }
   acidify-patch-view .vu-meter { position: relative; margin-top: 9px; width: 44px; height: 88px; border-radius: 3px; overflow: hidden; border: 1px solid #0b0d0c;
     background: linear-gradient(180deg,#1a1c19,#0d0f0d); box-shadow: inset 0 3px 7px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.6); --level: 0; }
   acidify-patch-view .vu-scale { position: absolute; bottom: 4px; top: 4px; width: 14px; border-radius: 1px;
@@ -4154,19 +4249,24 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4); }
 
-  acidify-patch-view .deck-b { display: flex; margin-top: 0; height: 104px; border: 1px solid #6f7573; border-radius: 3px; overflow: hidden;
+  acidify-patch-view .deck-b { display: flex; margin-top: 0; height: 106px; border: 1px solid #6f7573; border-radius: 3px; overflow: hidden;
     background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),
       linear-gradient(180deg,#eef0ef 0%,#dcdedd 46%,#c5c8c7 100%);
     box-shadow: inset 0 1px 0 #fff, inset 0 -2px 3px rgba(30,34,33,.2); }
   acidify-patch-view .deckb-cell { box-sizing: border-box; padding: 9px 11px; display: flex; flex-direction: column; align-items: center;
     border-right: 1px solid rgba(45,50,49,.5); box-shadow: 1px 0 0 rgba(255,255,255,.6); }
   acidify-patch-view .deckb-cell:last-child { border-right: 0; box-shadow: none; }
-  acidify-patch-view .tempo-cell { width: 190px; flex: 0 0 auto; }
-  acidify-patch-view .tempo-row { margin-top: 6px; width: 100%; display: flex; align-items: center; gap: 11px; }
+  acidify-patch-view .tempo-cell { width: 191px; flex: 0 0 auto; }
+  acidify-patch-view .tempo-row { margin-top: 9px; width: 100%; display: flex; align-items: center; gap: 11px; }
   acidify-patch-view .silver-knob.compact .chrome-wrap { width: 56px; height: 56px; margin-top: 0; }
   acidify-patch-view .silver-knob.compact .control-label { display: none; }
   acidify-patch-view .silver-knob.compact .tick-ring { display: none; }
   acidify-patch-view .silver-knob.compact .led-box { display: none; }
+  acidify-patch-view .silver-knob.compact .dial { box-shadow: 0 5px 7px rgba(0,0,0,.3), inset 0 2px 2px rgba(255,255,255,.85), inset 0 -5px 6px rgba(40,47,49,.5); }
+  acidify-patch-view .silver-knob.compact .dial-cap { background: radial-gradient(ellipse at 50% 118%, rgba(255,255,255,.45) 0 16%, rgba(255,255,255,0) 54%), radial-gradient(ellipse 132% 114% at 34% 15%, #ffffff 0 5%, #f1f4f4 17%, #cdd3d4 39%, #a8b0b2 65%, #8c9598 88%, #a3abad 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), inset -4px -5px 9px rgba(96,106,109,.26); }
+  acidify-patch-view .silver-knob.compact .dial-cap, acidify-patch-view .silver-knob.compact .pointer-wrap { inset: 8px; }
+  acidify-patch-view .silver-knob.compact .dial-pointer { top: 5px; width: 3px; height: 12px; margin-left: -1.5px; box-shadow: none; }
   acidify-patch-view .tempo-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
   acidify-patch-view .tempo-led { margin-top: 0; width: 100%; height: 30px;
     background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.09) 3px 4px), linear-gradient(180deg,#251614,#130b09);
@@ -4175,37 +4275,40 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .tempo-scale { display: flex; align-items: center; justify-content: space-between; color: #4d5658; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
   acidify-patch-view .tempo-scale i { flex: 1; margin: 0 5px; height: 1px; background: linear-gradient(90deg, rgba(45,50,49,.35), rgba(255,255,255,.5)); }
 
-  acidify-patch-view .clock-cell { width: 120px; flex: 0 0 auto; }
+  acidify-patch-view .clock-cell { width: 143px; flex: 0 0 auto; }
+  acidify-patch-view .clock-cell .cell-title { width: 100px; }
   acidify-patch-view .deck-b .clock-mode { margin-top: 8px; display: flex; gap: 8px; background: none; border: 0; box-shadow: none; padding: 0; width: auto; height: auto; }
   acidify-patch-view .clock-choice { display: flex; flex-direction: column; align-items: center; gap: 6px; }
   acidify-patch-view .clock-lamp { width: 7px; height: 7px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.65); }
+    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.7); }
   acidify-patch-view .clock-mode:not(.is-on) .clock-lamp.int, acidify-patch-view .clock-mode.is-on .clock-lamp.daw {
-    background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%); box-shadow: 0 0 6px rgba(255,72,48,.85); }
+    background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%); box-shadow: 0 0 7px rgba(255,72,48,.9), inset 0 0 2px rgba(255,255,255,.6); }
   acidify-patch-view .deck-b .clock-mode button { width: 44px; height: 34px; border-radius: 3px; cursor: pointer; border: 1px solid #1a1e1f; color: #1d2426;
     font: 900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1px;
-    background: linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 3px rgba(0,0,0,.34); }
-  acidify-patch-view .deck-b .clock-mode button.active { color: #f4f6f5;
-    background: linear-gradient(105deg, rgba(255,255,255,.13), transparent 34% 77%, rgba(0,0,0,.25)), linear-gradient(#576063,#282f31);
-    box-shadow: inset 0 2px 3px rgba(0,0,0,.4), inset 0 -1px 0 rgba(255,255,255,.22); }
-  acidify-patch-view .deck-b .clock-readout { margin-top: 6px; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .9px; color: #4d5658; }
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
+  acidify-patch-view .deck-b .clock-mode button.active { color: #1d2426;
+    background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
+    box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5); }
 
-  acidify-patch-view .transport-cell { width: 160px; flex: 0 0 auto; }
-  acidify-patch-view .deck-b .run-lamp { position: static; margin-top: 7px; width: 9px; height: 9px; border-radius: 50%; border: 1px solid #4f1a15; }
-  acidify-patch-view .deck-b .run-switch { margin-top: 6px; background: none; border: 0; box-shadow: none; padding: 0; }
-  acidify-patch-view .deck-b .run-switch button { width: 140px; height: 36px; border-radius: 3px; cursor: pointer; border: 1px solid #5d6668; color: #1d2426;
+  acidify-patch-view .transport-cell { width: 183px; flex: 0 0 auto; }
+  acidify-patch-view .transport-cell .cell-title { width: 140px; }
+  acidify-patch-view .deck-b .run-lamp { position: static; margin-top: 7px; width: 11px; height: 11px; border-radius: 50%; border: 1px solid #4f1a15;
+    box-shadow: 0 1px 0 rgba(255,255,255,.62), inset 0 -2px 3px #170403; }
+  acidify-patch-view .deck-b .run-lamp.lit { box-shadow: 0 0 6px rgba(255,51,31,.85), 0 0 13px rgba(255,42,25,.5), inset 0 0 2px #fff; }
+  acidify-patch-view .deck-b .run-switch { margin-top: 6px; background: none; border: 0; box-shadow: none; padding: 0; width: auto; height: auto; perspective: none; border-radius: 0; }
+  acidify-patch-view .deck-b .run-switch button { width: 140px; height: 36px; border-radius: 3px; cursor: pointer; border: 1px solid #1a1e1f; color: #1d2426; text-shadow: none;
     font: 900 10px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.5px;
-    background: linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 3px rgba(0,0,0,.34); }
-  acidify-patch-view .deck-b .run-switch.is-on button { color: #ffd9d1; border-color: #4c130e;
-    background: linear-gradient(#ae3026,#67140f); box-shadow: inset 0 2px 3px rgba(0,0,0,.4), inset 0 -1px 0 rgba(255,255,255,.22); }
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
+  acidify-patch-view .deck-b .run-switch.is-on button { transform: none; color: #8c1a12; border-color: #8c2c23;
+    background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5), 0 0 14px rgba(181,41,33,.3); }
 
-  acidify-patch-view .stepper-cell { width: 292px; flex: 0 0 auto; flex-direction: row; gap: 8px; justify-content: center; }
+  acidify-patch-view .stepper-cell { width: 315px; flex: 0 0 auto; flex-direction: row; gap: 8px; justify-content: center; align-items: stretch; }
   acidify-patch-view .stepper-block { display: flex; flex-direction: column; align-items: center; }
-  acidify-patch-view .stepper-block .cell-title { width: 86px; height: 14px; }
+  acidify-patch-view .stepper-block .cell-title { width: 86px; height: 15px; }
   acidify-patch-view .silver-stepper { display: flex; flex-direction: column; align-items: center; background: none; border: 0; box-shadow: none; padding: 0; }
-  acidify-patch-view .silver-stepper .led-box { margin-top: 6px; width: 86px; height: 22px;
+  acidify-patch-view .silver-stepper .led-box { margin-top: 6px; width: 88px; height: 24px;
     background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.09) 3px 4px), linear-gradient(180deg,#251614,#130b09);
     box-shadow: inset 0 3px 6px rgba(0,0,0,.75), 0 1px 0 rgba(255,255,255,.62); }
   acidify-patch-view .silver-stepper .stepper-value { color: #ff6756; font: 12px/1 'Courier New',monospace; letter-spacing: 1px; text-shadow: 0 0 6px rgba(255,57,37,.55); }
@@ -4237,7 +4340,22 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .scope-legend span { color: #8d9698; font: 900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .9px; }
   acidify-patch-view .scope-legend b { color: #ff6756; font: 8px/1 'Courier New',monospace; text-shadow: 0 0 5px rgba(255,57,37,.5); }
 
-  acidify-patch-view .program-title { display: flex; flex-wrap: nowrap; align-items: baseline; gap: 10px; white-space: nowrap; }
+  acidify-patch-view .program-header { height: 25px; flex: 0 0 auto; padding: 0 12px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(45,50,49,.45); box-shadow: 0 1px 0 rgba(255,255,255,.6); font-size: inherit; font-weight: normal; letter-spacing: normal; }
+  acidify-patch-view .program-title { display: flex; flex-wrap: nowrap; align-items: baseline; gap: 10px; white-space: nowrap; flex: 0 0 auto; }
+  acidify-patch-view .program-title b { color: #a51d17; font: 900 11px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 2.2px; white-space: nowrap; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
+  acidify-patch-view .program-title > span:not(.program-legend) { color: #26302f; font: 900 11px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 2.2px; white-space: nowrap; text-shadow: 0 1px 0 rgba(255,255,255,.8); }
+  acidify-patch-view .program-context { color: #5d6768; font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.5px; white-space: nowrap; }
+  acidify-patch-view .utility { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+  acidify-patch-view .studio-toggle { display: flex; width: auto; height: auto; padding: 0; border: 1px solid #3d4446; border-radius: 2px; overflow: hidden;
+    background: #2b302f; box-shadow: none; cursor: pointer; }
+  acidify-patch-view .studio-toggle i { display: none; }
+  acidify-patch-view .studio-toggle span { position: static; z-index: auto; width: 58px; height: 15px; display: grid; place-items: center;
+    font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.2px; text-shadow: none; }
+  acidify-patch-view .studio-toggle .classic-label { background: linear-gradient(180deg,#eef1f1,#c3cacb); color: #15191a; }
+  acidify-patch-view .studio-toggle .studio-label { background: #2b302f; color: #9aa3a5; }
+  acidify-patch-view .studio-toggle[aria-pressed="true"] .classic-label { background: #2b302f; color: #9aa3a5; }
+  acidify-patch-view .studio-toggle[aria-pressed="true"] .studio-label { background: linear-gradient(180deg,#c9382c,#7d1610); color: #fff1ee; }
   acidify-patch-view .program-legend { display: inline-flex; align-items: center; gap: 5px; margin-left: 12px; padding-left: 12px; border-left: 1px solid rgba(58,66,64,.28); }
   acidify-patch-view .program-legend i { width: 14px; height: 10px; display: grid; place-items: center; border-radius: 2px; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; font-style: normal; }
   acidify-patch-view .program-legend .legend-a { color: #fff2ee; border: 1px solid #5d1611; background: linear-gradient(180deg,#ff7361,#a3201a); box-shadow: 0 0 6px rgba(255,72,48,.5); }
@@ -4251,54 +4369,73 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: inset 0 2px 4px rgba(0,0,0,.7); }
 
   /* ---------- Deck C: Silver Step-Wippen ---------- */
-  acidify-patch-view .program-strip { border: 1px solid #6f7573; border-radius: 3px; overflow: hidden; padding: 0 12px 8px;
+  acidify-patch-view .program-strip { border: 1px solid #6f7573; border-radius: 3px; overflow: hidden; padding: 0 8px 8px;
+    display: flex; flex-direction: column;
     background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),
       linear-gradient(180deg,#eef0ef 0%,#dcdedd 46%,#c5c8c7 100%);
     box-shadow: inset 0 1px 0 #fff; }
   acidify-patch-view .step-row { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 15px; box-sizing: border-box;
-    padding: 5px 9px 4px; border-radius: 2px; border: 1px solid #6f7573; background: linear-gradient(180deg,#bcc0be,#a9adab);
+    height: 108px; flex: 0 0 auto; align-items: start; margin-top: 8px;
+    padding: 8px 9px; border-radius: 2px; border: 1px solid #6f7573; background: linear-gradient(180deg,#bcc0be,#a9adab);
     box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
   acidify-patch-view .step-group { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 5px; background: none; border: 0; box-shadow: none; padding: 0; }
-  acidify-patch-view .sequence-step { position: relative; height: 74px; padding: 0; border: 0; background: transparent; cursor: pointer;
-    border-radius: 0; box-shadow: none; width: auto; display: block; }
+  acidify-patch-view .sequence-step { position: relative; height: 90px; padding: 0; border: 0; background: transparent; cursor: pointer;
+    border-radius: 0; box-shadow: none; width: auto; display: block; opacity: 1; }
+  acidify-patch-view .sequence-step.accented::before, acidify-patch-view .sequence-step.sliding::after { content: none; }
   acidify-patch-view .step-head { position: absolute; left: 0; right: 0; top: 0; height: 14px; display: flex; align-items: center; justify-content: space-between; padding: 0 1px; }
-  acidify-patch-view .sequence-step .step-index { position: static; font: 900 9px/1 'Courier New',monospace; color: #3d4749; background: none; border: 0; width: auto; height: auto; }
+  acidify-patch-view .sequence-step .step-index { position: static; margin: 0; font: 700 9px/10px 'Courier New',monospace; color: #5c6668; background: none; border: 0; width: auto; height: auto; }
+  acidify-patch-view .step-group .sequence-step:first-child .step-index { font: 900 10px/11px 'Courier New',monospace; color: #232c2e; }
+  acidify-patch-view .sequence-step.beyond .step-index { color: #7b8482; }
   acidify-patch-view .sequence-step.playing .step-index { color: #b8241a; }
   acidify-patch-view .step-pills { display: flex; align-items: center; gap: 3px; }
   acidify-patch-view .step-pill { width: 15px; height: 11px; display: grid; place-items: center; border-radius: 2px; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; font-style: normal;
-    border: 1px solid rgba(45,50,49,.4); color: #7c8688; background: linear-gradient(180deg,#b9bfbd,#9aa19f); box-shadow: inset 0 1px 0 rgba(255,255,255,.6); }
-  acidify-patch-view .sequence-step.accented .pill-a { color: #fff2ee; border-color: #5d1611; background: linear-gradient(180deg,#ff7361,#a3201a); box-shadow: 0 0 6px rgba(255,72,48,.5); }
-  acidify-patch-view .sequence-step.sliding .pill-s { color: #2a1a02; border-color: #5b3908; background: linear-gradient(180deg,#ffc776,#8d5410); box-shadow: 0 0 6px rgba(255,168,60,.45); }
-  acidify-patch-view .step-sel { position: absolute; left: -2px; right: -2px; top: 13px; bottom: 18px; border-radius: 3px; border: 1px solid transparent; }
-  acidify-patch-view .sequence-step.selected .step-sel { border-color: #a8352a; background: rgba(255,84,60,.08); box-shadow: 0 0 8px rgba(255,84,60,.25); }
-  acidify-patch-view .sequence-step.multi-selected .step-sel { border-color: #a8352a; }
-  acidify-patch-view .step-well { position: absolute; left: 0; right: 0; top: 15px; height: 36px; border-radius: 2px;
+    border: 1px solid #4f5759; color: #b6bebf; background: linear-gradient(180deg,#868e90,#6a7274); box-shadow: inset 0 1px 2px rgba(0,0,0,.42); }
+  acidify-patch-view .sequence-step.accented .pill-a { color: #fff2ee; border-color: #5d1611; background: linear-gradient(180deg,#ff7361,#a3201a); box-shadow: 0 0 7px rgba(255,72,48,.65), inset 0 1px 0 rgba(255,255,255,.4); }
+  acidify-patch-view .sequence-step.sliding .pill-s { color: #2a1a02; border-color: #5b3908; background: linear-gradient(180deg,#ffc776,#8d5410); box-shadow: 0 0 7px rgba(255,168,60,.6), inset 0 1px 0 rgba(255,255,255,.45); }
+  acidify-patch-view .step-sel { position: absolute; left: -2px; right: -2px; top: 14px; bottom: 24px; border-radius: 3px; border: 1px solid transparent; }
+  acidify-patch-view .sequence-step.selected .step-sel { border-color: #e9eeee; background: transparent;
+    box-shadow: inset 0 0 0 1px rgba(46,54,52,.6), 0 0 0 1px rgba(255,255,255,.55), 0 1px 4px rgba(30,36,34,.3); }
+  acidify-patch-view .sequence-step.multi-selected .step-sel { border-color: #e9eeee; }
+  acidify-patch-view .step-well { position: absolute; left: 0; right: 0; top: 16px; height: 46px; border-radius: 2px;
     background: linear-gradient(180deg,#4e5659,#20272a); box-shadow: inset 0 2px 3px rgba(0,0,0,.65); }
-  acidify-patch-view .step-cap { position: absolute; left: 0; right: 0; top: 16px; height: 32px; border-radius: 2px; border: 1px solid #5f676a;
-    background: radial-gradient(ellipse 150% 130% at 42% 10%, #ffffff 0 6%, #eef1f2 18%, #ccd2d3 44%, #a3abad 74%, #b9c1c3 100%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -3px -5px 8px rgba(96,106,109,.25), 0 2px 3px rgba(0,0,0,.5); transition: transform 70ms; }
-  acidify-patch-view .sequence-step.selected .step-cap { transform: translateY(3px);
-    background: radial-gradient(ellipse 150% 130% at 42% 12%, #e8ebeb 0 6%, #cfd5d6 20%, #aab2b4 48%, #8a9295 78%, #9fa7a9 100%);
+  acidify-patch-view .step-cap { position: absolute; left: 0; right: 0; top: 16px; height: 42px; border-radius: 2px; border: 1px solid #5f676a;
+    background: linear-gradient(180deg,#8e9698,#6f7779);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -3px -5px 8px rgba(96,106,109,.25), inset 3px 4px 7px rgba(255,255,255,.3), 0 2px 3px rgba(0,0,0,.5); }
+  acidify-patch-view .sequence-step.selected .step-cap { top: 18px;
     box-shadow: inset 0 3px 6px rgba(38,45,47,.5), 0 1px 0 rgba(255,255,255,.5); }
-  acidify-patch-view .sequence-step.playing .step-cap { box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 2px 3px rgba(0,0,0,.5), 0 0 14px rgba(255,70,45,.4); }
-  acidify-patch-view .sequence-step.rest .step-cap { border-color: #4e5658;
-    background: radial-gradient(ellipse 150% 130% at 42% 10%, #cfd4d4 0 6%, #bcc2c3 20%, #9aa2a4 48%, #798285 78%, #8d9598 100%); }
-  acidify-patch-view .cap-rocker { position: absolute; left: 1px; right: 1px; top: 1px; height: 25px; border-radius: 2px;
-    background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0) 60%); box-shadow: inset 0 1px 0 rgba(255,255,255,.95); }
-  acidify-patch-view .cap-nub { position: absolute; left: 26%; right: 26%; top: 8px; height: 11px; border-radius: 6px;
+  acidify-patch-view .sequence-step.playing .step-cap { box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -3px -5px 8px rgba(96,106,109,.22), 0 2px 3px rgba(0,0,0,.5), 0 0 14px rgba(255,70,45,.4); }
+  acidify-patch-view .sequence-step.beyond .step-cap { border-color: #4e5658; }
+  acidify-patch-view .cap-rocker { position: absolute; left: 1px; right: 1px; top: 1px; height: 34px; border-radius: 2px;
+    background: linear-gradient(96deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95); }
+  acidify-patch-view .step-group .sequence-step:nth-child(2) .cap-rocker { background: linear-gradient(100deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); }
+  acidify-patch-view .step-group .sequence-step:nth-child(3) .cap-rocker { background: linear-gradient(104deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); }
+  acidify-patch-view .step-group .sequence-step:nth-child(4) .cap-rocker { background: linear-gradient(108deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); }
+  acidify-patch-view .step-group .sequence-step.selected .cap-rocker { background: linear-gradient(96deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); }
+  acidify-patch-view .step-group .sequence-step.selected:nth-child(2) .cap-rocker { background: linear-gradient(100deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); }
+  acidify-patch-view .step-group .sequence-step.selected:nth-child(3) .cap-rocker { background: linear-gradient(104deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); }
+  acidify-patch-view .step-group .sequence-step.selected:nth-child(4) .cap-rocker { background: linear-gradient(108deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); }
+  acidify-patch-view .cap-nub { position: absolute; left: 26%; right: 26%; top: 11px; height: 12px; border-radius: 6px;
     background: linear-gradient(180deg,#79817f,#aab1b0); box-shadow: inset 0 2px 3px rgba(30,36,35,.7), 0 1px 0 rgba(255,255,255,.9); }
   acidify-patch-view .cap-led { position: absolute; inset: 2px; border-radius: 4px;
-    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.65); }
-  acidify-patch-view .sequence-step:not(.rest) .cap-led {
-    background: radial-gradient(ellipse at 50% 28%, #fff4ec 0 22%, #ff8a63 46%, #ff3a1c 78%, #b81c0c 100%); box-shadow: 0 0 8px rgba(255,86,52,.7); }
+    background: radial-gradient(ellipse at 50% 30%, #7a3228 0 18%, #52201a 58%, #2e1310 100%); box-shadow: inset 0 1px 2px rgba(0,0,0,.62); }
+  acidify-patch-view .sequence-step.rest { opacity: 1; }
+  acidify-patch-view .sequence-step.rest .cap-led { background: linear-gradient(180deg,#3b3f3e,#565c5b); box-shadow: inset 0 1px 2px rgba(0,0,0,.6); }
+  acidify-patch-view .sequence-step.selected:not(.rest) .cap-led {
+    background: radial-gradient(ellipse at 50% 28%, #ffb59f 0 20%, #e8492c 58%, #7d1a0d 100%); box-shadow: 0 0 7px rgba(255,80,45,.55), inset 0 1px 0 rgba(255,255,255,.4); }
+  acidify-patch-view .sequence-step.playing .cap-led {
+    background: radial-gradient(ellipse at 50% 28%, #fff4ec 0 22%, #ff8a63 46%, #ff3a1c 78%, #b81c0c 100%);
+    box-shadow: 0 0 12px rgba(255,86,52,.95), 0 0 22px rgba(255,86,52,.5), inset 0 1px 0 rgba(255,255,255,.75); }
   acidify-patch-view .cap-foot { position: absolute; left: 1px; right: 1px; bottom: 0; height: 6px; border-radius: 0 0 2px 2px; background: linear-gradient(180deg,#7d8587,#5d6567); }
-  acidify-patch-view .step-playbar { position: absolute; left: 4px; right: 4px; top: 53px; height: 3px; border-radius: 1px; background: rgba(20,24,23,.25); }
-  acidify-patch-view .sequence-step.playing .step-playbar { background: linear-gradient(90deg,#ff8a63,#ff3a1c); box-shadow: 0 0 7px rgba(255,86,52,.7); }
-  acidify-patch-view .step-note-field { position: absolute; left: 0; right: 0; bottom: 0; height: 16px; display: grid; place-items: center; border-radius: 2px;
-    border: 1px solid #0d0807; background: linear-gradient(180deg,#251614,#130b09); box-shadow: inset 0 2px 5px rgba(0,0,0,.75); }
-  acidify-patch-view .sequence-step .step-note { position: static; font: 900 10px/1 'Courier New',monospace; letter-spacing: .6px; color: #ff6756; text-shadow: 0 0 5px rgba(255,57,37,.5); background: none; width: auto; }
-  acidify-patch-view .sequence-step.rest .step-note { color: #69726f; text-shadow: none; }
-  acidify-patch-view .sequence-step.playing .step-note { color: #ffd9d1; }
+  acidify-patch-view .step-playbar { position: absolute; left: 4px; right: 4px; top: 63px; height: 3px; border-radius: 1px;
+    background: rgba(70,78,76,.22); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
+  acidify-patch-view .sequence-step.playing .step-playbar { background: linear-gradient(90deg, rgba(255,74,51,0), #ff4a33 25% 75%, rgba(255,74,51,0)); box-shadow: 0 0 8px rgba(255,74,51,.75); }
+  acidify-patch-view .step-note-field { position: absolute; left: 0; right: 0; bottom: 0; height: 22px; display: grid; place-items: center; border-radius: 2px;
+    border: 1px solid #0d0807; background: linear-gradient(180deg,#2b1a17,#150c0a); box-shadow: inset 0 2px 4px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .sequence-step.playing .step-note-field { background: linear-gradient(180deg,#3d1713,#1d0d0b); }
+  acidify-patch-view .sequence-step .step-note { position: static; font: 900 14px/15px 'Courier New',monospace; letter-spacing: .6px; color: #ff6756; text-shadow: 0 0 6px rgba(255,57,37,.5); background: none; width: auto; }
+  acidify-patch-view .sequence-step.rest .step-note { color: #8d4c42; text-shadow: none; }
+  acidify-patch-view .sequence-step.playing .step-note { color: #ff9a88; text-shadow: 0 0 9px rgba(255,80,55,.85); }
 
   /* ---------- Deck C: Editor, Keyboard, Funktionsmatrix ---------- */
   acidify-patch-view .keyboard { display: flex; flex-direction: column; }
@@ -4307,18 +4444,26 @@ class AcidifyPatchView extends HTMLElement {
     color: #26302f; text-shadow: 0 1px 0 rgba(255,255,255,.8); font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; }
   acidify-patch-view .keyboard-hint { flex: 1; text-align: right; color: #4f5a5b; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; }
   acidify-patch-view .keyboard-keys { flex: 1; min-height: 0; height: auto; margin-top: 5px; }
-  acidify-patch-view .pitch-key span { position: absolute; left: 0; right: 0; bottom: 3px; text-align: center; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; }
+  acidify-patch-view .pitch-key { border-radius: 0 0 2px 2px; border: 1px solid #5f6a6c; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; color: #2a3234;
+    background: linear-gradient(180deg,#f4f6f6 0%,#dfe3e4 56%,#b7bfc1 86%,#95a0a2 100%);
+    box-shadow: 0 3px 2px rgba(0,0,0,.45), inset 0 1px 0 #fff; }
+  acidify-patch-view .pitch-key.black-key { height: 62%; border-color: #050607; color: #c9d0d1;
+    background: linear-gradient(180deg,#3b423f,#0a0c0b);
+    box-shadow: 0 3px 3px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.12); }
+  acidify-patch-view .pitch-key.active, acidify-patch-view .pitch-key.midi { transform: none; color: #2a3234;
+    box-shadow: 0 3px 2px rgba(0,0,0,.45), inset 0 1px 0 #fff; }
+  acidify-patch-view .pitch-key.black-key.active { color: #c9d0d1; background: linear-gradient(180deg,#5a3a34,#20100d);
+    box-shadow: 0 3px 3px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.12); }
+  acidify-patch-view .pitch-key span { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; }
   acidify-patch-view .pitch-key::after { content: ""; position: absolute; left: 50%; top: 4px; margin-left: -4.5px; width: 9px; height: 9px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.2) 0 12%, #4a4a44 55%, #262622 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.6); }
+    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.7); }
   acidify-patch-view .pitch-key.black-key::after { top: 5px; width: 8px; height: 8px; }
   acidify-patch-view .pitch-key.active::after {
     background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%); box-shadow: 0 0 7px rgba(255,72,48,.8); }
-  acidify-patch-view .pitch-key.active { background:
-    linear-gradient(100deg, rgba(119,117,107,.2), transparent 15% 77%, rgba(75,74,69,.22)),
-    linear-gradient(180deg, #f5d9d3 0%, #ecc4bc 55%, #d3a49b 84%, #b98a81 100%); }
+  acidify-patch-view .pitch-key.active { background: linear-gradient(180deg,#f6dad3,#c9a29a 70%,#a67c74); }
 
-  acidify-patch-view .classic-editor { display: flex; gap: 8px; }
-  acidify-patch-view .edit-status { box-sizing: border-box; width: 196px; padding: 6px 8px 8px; display: flex; flex-direction: column; border-radius: 2px;
+  acidify-patch-view .editor.classic-editor { display: flex; gap: 8px; flex: 1; min-height: 0; height: auto; margin-top: 8px; border-top: 0; padding-top: 0; box-shadow: none; }
+  acidify-patch-view .edit-status { box-sizing: border-box; width: 196px; height: auto; min-width: 0; justify-content: flex-start; padding: 6px 8px 8px; display: flex; flex-direction: column; border-radius: 2px;
     border: 1px solid #7c827f; background: linear-gradient(180deg,#bcc0be,#a9adab);
     box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
   acidify-patch-view .edit-caption { width: 100%; height: 12px; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.4);
@@ -4326,47 +4471,257 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .edit-readout { margin-top: 5px; flex: 1; min-height: 22px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
     background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.09) 3px 4px), linear-gradient(180deg,#251614,#130b09);
     box-shadow: inset 0 3px 6px rgba(0,0,0,.78); color: #ff513b; font: 24px/1 'Courier New',monospace; letter-spacing: 2px; white-space: nowrap;
-    text-shadow: 0 0 5px #e32418, 0 0 10px rgba(227,36,24,.4); font-size: 19px; }
+    text-shadow: 0 0 5px #e32418, 0 0 10px rgba(227,36,24,.4); }
   acidify-patch-view .octave-indicator { margin-top: 7px; color: #4b5558; font: 900 8px/11px 'Courier New',monospace; letter-spacing: .4px; }
-  acidify-patch-view .keyboard { box-sizing: border-box; flex: 1; padding: 6px 8px 8px; border-radius: 2px; border: 1px solid #7c827f;
+  acidify-patch-view .keyboard { box-sizing: border-box; flex: 1; height: auto; padding: 6px 8px 8px; border-radius: 2px; border: 1px solid #7c827f;
     background: linear-gradient(180deg,#bcc0be,#a9adab); box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
-  acidify-patch-view .time-controls { box-sizing: border-box; width: 300px; padding: 6px 8px 8px; display: grid;
+  acidify-patch-view .time-controls { box-sizing: border-box; width: 300px; height: auto; padding: 6px 8px 8px; display: grid;
     grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(2,1fr); gap: 6px; border-radius: 2px; border: 1px solid #7c827f;
     background: linear-gradient(180deg,#bcc0be,#a9adab); box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
-  acidify-patch-view .function-button { position: relative; height: auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 2px; border-radius: 2px; cursor: pointer; border: 1px solid #1a1e1f;
-    background: linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.42); }
+  acidify-patch-view .function-button { position: relative; height: auto; min-height: 36px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; border-radius: 2px; cursor: pointer; border: 1px solid #1a1e1f; color: #1d2426;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
+  acidify-patch-view .function-button.active { border-color: #1a1e1f;
+    background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
+    box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5); }
   acidify-patch-view .function-button::before { content: ""; position: absolute; left: 5px; top: 5px; width: 5px; height: 5px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.65); }
-  acidify-patch-view .function-button.active::before { background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%); box-shadow: 0 0 6px rgba(255,72,48,.85); }
-  acidify-patch-view .function-button.active { background: linear-gradient(#879194,#b7bec0 44%,#9ba4a7); }
-  acidify-patch-view .function-button strong { color: #222a2c; font: 900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
-  acidify-patch-view .function-button.active strong { color: #a51d17; }
+    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.7); }
+  acidify-patch-view .function-button.active::before { background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%); box-shadow: 0 0 7px rgba(255,72,48,.9), inset 0 0 2px rgba(255,255,255,.6); }
+  acidify-patch-view .function-button strong { color: #1d2426; font: 900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .function-button.active strong { color: #8c1a12; }
   acidify-patch-view .function-button small { color: #5b6466; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .6px; }
+  acidify-patch-view .function-button.active small { color: #5b6466; }
 
 
-  acidify-patch-view .mods-overlay { position: static; height: auto; }
-  acidify-patch-view .mods-overlay-body {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; padding: 12px 14px;
-  }
-  acidify-patch-view .mod-row {
-    display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px;
-    padding: 6px 8px; border: 1px solid rgba(20, 24, 25, 0.5); border-radius: 4px;
-    background: rgba(255, 255, 255, 0.04);
-  }
-  acidify-patch-view .mod-info b { display: block; font: 800 10px/1.2 "Arial Narrow", Arial, sans-serif; letter-spacing: 1.2px; }
-  acidify-patch-view .mod-info small { display: block; font: 600 8px/1.3 "Arial Narrow", Arial, sans-serif; opacity: 0.65; letter-spacing: 0.6px; }
-  acidify-patch-view .mod-fixed { text-align: center; min-width: 52px; }
-  acidify-patch-view .mod-fixed span { display: block; font: 700 7px/1.2 "Arial Narrow", Arial, sans-serif; opacity: 0.6; letter-spacing: 1px; }
-  acidify-patch-view .mod-fixed b { display: block; font: 800 10px/1.3 "Arial Narrow", Arial, sans-serif; }
-  acidify-patch-view .mods-overlay .knob-control { width: 66px; height: 92px; }
-  acidify-patch-view .mods-overlay .dial { width: 48px; height: 48px; }
-  acidify-patch-view .distortion-overlay footer, acidify-patch-view .mods-overlay footer {
-    height: 25px; padding: 4px 12px 0; border-top: 1px solid rgba(69,69,64,.35);
-    color: #505a5d; font-size: 5px; font-weight: 900; letter-spacing: 1.1px;
-    text-align: right;
-  }
+  /* ---------- Distortion-Overlay (Template-Layout) ---------- */
+  acidify-patch-view .distortion-scrim { position: absolute; z-index: 90; inset: 0; border-radius: 7px; background: rgba(28,32,31,.34); }
+  acidify-patch-view .distortion-overlay { position: absolute; right: 8px; top: 8px; width: 588px; height: 180px; box-sizing: border-box;
+    border-radius: 3px; overflow: hidden; border: 1px solid #6f7573; color: #15191a; transform: none; animation: none;
+    background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg,#f0f2f1 0%,#dfe1e0 44%,#c7cac9 100%);
+    background-blend-mode: normal; background-size: auto;
+    box-shadow: 0 22px 40px rgba(0,0,0,.5), inset 0 1px 0 #fff; }
+  acidify-patch-view .distortion-overlay-head { height: 26px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(45,50,49,.45); box-shadow: 0 1px 0 rgba(255,255,255,.6); background: none; }
+  acidify-patch-view .distortion-overlay-head > div { display: flex; align-items: baseline; gap: 10px; }
+  acidify-patch-view .distortion-overlay-head strong { color: #a51d17; font: 900 11px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 2.2px; white-space: nowrap; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
+  acidify-patch-view .distortion-status { color: #5d6768; font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.4px; white-space: nowrap; background: none; border: 0; padding: 0; }
+  acidify-patch-view .distortion-close { width: 26px; height: 18px; display: grid; place-items: center; cursor: pointer; border-radius: 2px; border: 1px solid #1a1e1f;
+    color: #1d2426; font: 900 13px/1 Arial,sans-serif;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4); }
+  acidify-patch-view .distortion-overlay-body { height: 130px; box-sizing: border-box; padding: 9px 12px; display: grid;
+    grid-template-columns: 104px 226px 1fr 1fr; gap: 12px; }
+  acidify-patch-view .distortion-power-cell { display: flex; flex-direction: column; align-items: center; padding: 0;
+    border-right: 1px solid rgba(45,50,49,.4); box-shadow: 1px 0 0 rgba(255,255,255,.6); background: none; border-radius: 0; border-top: 0; border-left: 0; border-bottom: 0; }
+  acidify-patch-view .distortion-cell-label { width: 88px; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.45);
+    color: #26302f; font: 900 8px/14px 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.7px; text-shadow: 0 1px 0 rgba(255,255,255,.85); height: auto; background: none; margin: 0; padding: 0; }
+  acidify-patch-view .distortion-power-led { margin-top: 10px; width: 11px; height: 11px; border-radius: 50%; border: 1px solid #4f1a15;
+    background: #48140f; box-shadow: 0 1px 0 rgba(255,255,255,.62), inset 0 -2px 3px #170403; }
+  acidify-patch-view .distortion-power-led.lit { background: #ff503d; box-shadow: 0 0 6px rgba(255,50,32,.9), inset 0 0 1px #fff; }
+  acidify-patch-view .distortion-power { margin-top: 9px; background: none; border: 0; box-shadow: none; padding: 0; width: auto; height: auto; }
+  acidify-patch-view .distortion-power button { width: 80px; height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    cursor: pointer; border-radius: 2px; border: 1px solid #1a1e1f; transform: none; text-shadow: none;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
+  acidify-patch-view .distortion-power.is-on button { border-color: #8c2c23;
+    background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
+    box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 0 12px rgba(181,41,33,.3); }
+  acidify-patch-view .distortion-power-label { color: #1d2426; font: 900 10px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.4px; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .distortion-power.is-on .distortion-power-label { color: #8c1a12; }
+  acidify-patch-view .distortion-power button small { color: #5b6466; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .7px; }
+  acidify-patch-view .distortion-type-cell { display: flex; flex-direction: column; align-items: center; padding: 0;
+    border-right: 1px solid rgba(45,50,49,.4); box-shadow: 1px 0 0 rgba(255,255,255,.6); background: none; border-radius: 0; border-top: 0; border-left: 0; border-bottom: 0; }
+  acidify-patch-view .distortion-type-cell .distortion-cell-label { width: 150px; }
+  acidify-patch-view .distortion-types { margin-top: 10px; display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; width: 206px;
+    background: none; border: 0; box-shadow: none; padding: 0; height: auto; }
+  acidify-patch-view .distortion-types button { position: relative; height: 80px; width: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    cursor: pointer; border-radius: 2px; border: 1px solid #1a1e1f; color: #1d2426; transform: none; text-shadow: none; font: 900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
+  acidify-patch-view .distortion-types button::before { content: ""; position: absolute; left: 50%; top: 6px; margin-left: -3px; width: 6px; height: 6px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.7); }
+  acidify-patch-view .distortion-types button.active { border-color: #8c2c23; color: #8c1a12;
+    background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
+    box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 0 12px rgba(181,41,33,.3); }
+  acidify-patch-view .distortion-types button.active::before {
+    background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%); box-shadow: 0 0 7px rgba(255,72,48,.9), inset 0 0 2px rgba(255,255,255,.6); }
+  acidify-patch-view .distortion-types button strong { margin-top: 8px; font: inherit; color: inherit; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .distortion-types button small { color: #5b6466; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .7px; }
+  acidify-patch-view .distortion-types button.active small { color: #5b6466; }
+  acidify-patch-view .distortion-knob-cell { display: flex; flex-direction: column; align-items: center; padding: 0; background: none; border: 0; box-shadow: none; }
+  acidify-patch-view .distortion-knob-cell .silver-knob .control-label { width: 74px; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.45);
+    color: #26302f; font: 900 8px/14px 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.7px; text-shadow: 0 1px 0 rgba(255,255,255,.85); }
+  acidify-patch-view .distortion-knob-cell .silver-knob .chrome-wrap { width: 58px; height: 58px; margin-top: 9px; }
+  acidify-patch-view .distortion-knob-cell .silver-knob .tick-ring { display: none; }
+  acidify-patch-view .distortion-knob-cell .silver-knob .dial-cap, acidify-patch-view .distortion-knob-cell .silver-knob .pointer-wrap { inset: 8px; }
+  acidify-patch-view .distortion-knob-cell .silver-knob .dial-pointer { top: 5px; width: 3px; height: 14px; margin-left: -1.5px; }
+  acidify-patch-view .distortion-knob-cell .led-box { margin-top: 8px; width: 58px; height: 19px; }
+  acidify-patch-view .distortion-knob-cell .led-box .value-label { font: 11px/1 'Courier New',monospace; }
+  acidify-patch-view .distortion-overlay footer { height: 22px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; justify-content: flex-end;
+    border-top: 1px solid rgba(45,50,49,.35); color: #5d6768; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.2px; background: none; }
+
+  /* ---------- Mods-Overlay: 3x2-Zellenraster (Template-Layout) ---------- */
+  acidify-patch-view .mods-scrim { position: absolute; z-index: 92; inset: 0; border-radius: 7px; background: rgba(28,32,31,.4); }
+  acidify-patch-view .mods-overlay { position: absolute; right: 8px; top: 8px; width: 788px; height: 300px; box-sizing: border-box;
+    border-radius: 3px; overflow: hidden; border: 1px solid #6f7573; color: #15191a; transform: none; animation: none;
+    background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg,#f0f2f1 0%,#dfe1e0 44%,#c7cac9 100%);
+    background-blend-mode: normal; background-size: auto;
+    box-shadow: 0 22px 40px rgba(0,0,0,.5), inset 0 1px 0 #fff; }
+  acidify-patch-view .mods-overlay-head { height: 26px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(45,50,49,.45); box-shadow: 0 1px 0 rgba(255,255,255,.7); background: none; }
+  acidify-patch-view .mods-overlay-head > div { display: flex; align-items: baseline; gap: 10px; }
+  acidify-patch-view .mods-overlay-head strong { color: #a51d17; font: 900 11px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 2.2px; white-space: nowrap; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
+  acidify-patch-view .mods-status { color: #5d6768; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.4px; white-space: nowrap; background: none; border: 0; padding: 0; }
+  acidify-patch-view .mods-status.modified { color: #8e1f16; }
+  acidify-patch-view .mods-close { width: 26px; height: 18px; display: grid; place-items: center; cursor: pointer; border-radius: 2px; border: 1px solid #1a1e1f;
+    color: #1d2426; font: 900 9px/1 'Arial Narrow',Arial,sans-serif;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4); }
+  acidify-patch-view .mods-overlay-body { height: 252px; box-sizing: border-box; padding: 12px; display: grid;
+    grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(2,1fr); gap: 8px; }
+  acidify-patch-view .mod-row.mod-cell { box-sizing: border-box; padding: 7px 8px; display: flex; flex-direction: column; border-radius: 2px;
+    grid-template-columns: none; align-items: stretch; gap: 0;
+    border: 1px solid rgba(45,50,49,.42);
+    background: linear-gradient(180deg, rgba(228,231,229,.42), rgba(190,196,193,.4));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.8), inset 0 -2px 6px rgba(70,78,76,.16), 0 1px 0 rgba(255,255,255,.5); }
+  acidify-patch-view .mod-row.mod-cell.on { border-color: #7d5750;
+    background: linear-gradient(180deg, rgba(232,214,210,.5), rgba(198,182,178,.42));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.85), inset 0 -2px 6px rgba(120,58,48,.24), 0 1px 0 rgba(255,255,255,.5); }
+  acidify-patch-view .mod-cell-head { height: 14px; display: flex; align-items: center; justify-content: space-between; }
+  acidify-patch-view .mod-cell-head strong { color: #26302f; font: 900 9.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.6px; white-space: nowrap; text-shadow: 0 1px 0 rgba(255,255,255,.85); }
+  acidify-patch-view .mod-cell.on .mod-cell-head strong { color: #8e1f16; }
+  acidify-patch-view .mod-cell-led { width: 9px; height: 9px; border-radius: 50%; border: 1px solid #4f1a15;
+    background: linear-gradient(180deg,#6c6360,#3e3836); box-shadow: inset 0 1px 1px rgba(255,255,255,.3); }
+  acidify-patch-view .mod-cell.on .mod-cell-led {
+    background: radial-gradient(circle at 38% 32%, #ffd9d1 0 14%, #ff5335 34%, #b81b0d 74%, #6d0f06 100%);
+    box-shadow: 0 0 7px rgba(255,64,38,.85), inset 0 1px 1px rgba(255,255,255,.55); }
+  acidify-patch-view .mod-cell-controls { margin-top: 5px; flex: 1; min-height: 0; display: flex; align-items: center; gap: 9px; }
+  acidify-patch-view .mod-cell .mod-switch { flex: 0 0 auto; background: none; border: 0; box-shadow: none; padding: 0; width: auto; height: auto; margin: 0; }
+  acidify-patch-view .mod-cell .mod-switch button { width: 66px; height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    cursor: pointer; border-radius: 2px; border: 1px solid #5d6668; transform: none; text-shadow: none;
+    background: linear-gradient(105deg, rgba(255,255,255,.34), transparent 22% 78%, rgba(52,60,58,.16)), linear-gradient(180deg,#d6dad7 0%,#bbc1bd 55%,#9da5a1 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 3px rgba(0,0,0,.34); }
+  acidify-patch-view .mod-cell .mod-switch.is-on button { border-color: #4c130e;
+    background: linear-gradient(#ae3026,#67140f);
+    box-shadow: inset 0 2px 3px rgba(0,0,0,.4), inset 0 -1px 0 rgba(255,255,255,.22); }
+  acidify-patch-view .mod-cell .mod-state { color: #2b3536; font: 900 12px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.5px; text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+  acidify-patch-view .mod-cell .mod-switch.is-on .mod-state { color: #fff1ec; }
+  acidify-patch-view .mod-cell .mod-switch button small { color: #5b6466; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px; }
+  acidify-patch-view .mod-cell .mod-switch.is-on button small { color: #e8b7ae; }
+  acidify-patch-view .mod-knob { flex: 1; min-width: 0; }
+  acidify-patch-view .mod-knob .silver-knob { display: grid; grid-template-columns: 46px minmax(0,1fr); grid-template-rows: auto auto; column-gap: 8px; row-gap: 5px;
+    align-items: center; justify-items: center; width: 100%; }
+  acidify-patch-view .mod-knob .silver-knob .chrome-wrap { grid-row: 1 / span 2; grid-column: 1; width: 46px; height: 46px; margin: 0; }
+  acidify-patch-view .mod-knob .silver-knob .control-label { grid-column: 2; grid-row: 1; align-self: end; margin: 0; white-space: nowrap;
+    color: #26302f; font: 900 8.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; text-shadow: 0 1px 0 rgba(255,255,255,.85); }
+  acidify-patch-view .mod-knob .silver-knob .led-box { grid-column: 2; grid-row: 2; align-self: start; width: 100%; height: 22px; margin: 0; }
+  acidify-patch-view .mod-knob .silver-knob .led-box .value-label { font: 12px/1 'Courier New',monospace; color: #7d3a31; text-shadow: 0 0 5px rgba(255,57,37,.45); }
+  acidify-patch-view .mod-cell.on .mod-knob .led-box .value-label { color: #ff6756; }
+  acidify-patch-view .mod-knob .silver-knob .tick-ring { display: block; position: absolute; inset: -4px; border-radius: 50%; filter: none; border: 0;
+    background: repeating-conic-gradient(from 218deg, #3f4645 0 1.2deg, transparent 1.2deg 11.5deg);
+    -webkit-mask: radial-gradient(circle, transparent 0 68%, #000 68% 100%); mask: radial-gradient(circle, transparent 0 68%, #000 68% 100%); }
+  acidify-patch-view .mod-knob .silver-knob .dial-cap, acidify-patch-view .mod-knob .silver-knob .pointer-wrap { inset: 7px; }
+  acidify-patch-view .mod-knob .silver-knob .dial-pointer { top: 3px; width: 3px; height: 11px; margin-left: -1.5px; }
+  acidify-patch-view .mod-fixed { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  acidify-patch-view .mod-fixed-label { white-space: nowrap; color: #26302f; font: 900 8.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; text-shadow: 0 1px 0 rgba(255,255,255,.85); }
+  acidify-patch-view .mod-fixed-box { width: 100%; height: 32px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
+    background: linear-gradient(180deg,#241512,#130b09); box-shadow: inset 0 2px 4px rgba(0,0,0,.72); }
+  acidify-patch-view .mod-fixed-box span { white-space: nowrap; color: #7d3a31; font: 16px/1 'Courier New',monospace; text-shadow: 0 0 5px rgba(255,57,37,.45); }
+  acidify-patch-view .mod-cell.on .mod-fixed-box span { color: #ff6756; }
+  acidify-patch-view .mod-cell-desc { margin-top: 5px; height: 12px; color: #5d6768; font: 900 8px/12px 'Arial Narrow',Arial,sans-serif; letter-spacing: .75px; white-space: nowrap; overflow: hidden; }
+  acidify-patch-view .mods-overlay footer { height: 22px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid rgba(45,50,49,.35); box-shadow: 0 -1px 0 rgba(255,255,255,.6);
+    color: #5d6768; font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; background: none; }
+  acidify-patch-view .mods-footer-state.modified { color: #8e1f16; }
+
+  /* ---------- Studio-Matrix (Template-Layout) ---------- */
+  acidify-patch-view.studio-mode .step-row { display: none; }
+  acidify-patch-view.studio-mode .editor.classic-editor { display: none; }
+  acidify-patch-view.studio-mode .studio-editor { display: flex; gap: 8px; flex: 1; min-height: 0; height: auto; margin-top: 8px;
+    grid-template-columns: none; border-top: 0; padding-top: 0; box-shadow: none; background: none; border: 0; overflow: visible; align-items: stretch; }
+  acidify-patch-view .studio-matrix { flex: 1; min-width: 0; box-sizing: border-box; padding: 6px 8px 8px; border-radius: 2px;
+    border: 1px solid #0a0b09; background: linear-gradient(#1c1e1a,#0f100e); box-shadow: inset 0 3px 9px rgba(0,0,0,.72); display: flex; flex-direction: column; overflow: visible; height: auto; }
+  acidify-patch-view .studio-ruler { display: grid; grid-template-columns: 52px 1fr; gap: 8px; align-items: center; height: 11px; margin: 0; padding: 0; border: 0; background: none; }
+  acidify-patch-view .studio-ruler .studio-lane-cells { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 12px; }
+  acidify-patch-view .studio-ruler-group { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 3px; background: none; border: 0; padding: 0; }
+  acidify-patch-view .studio-ruler-group span { text-align: center; font: 900 8px/1 'Courier New',monospace; color: #8e9791; background: none; border: 0; }
+  acidify-patch-view .studio-ruler-group span:first-child { color: #cfd6d0; }
+  acidify-patch-view .studio-ruler-group span.playing { color: #ff8a76; }
+  acidify-patch-view .studio-lane { display: grid; grid-template-columns: 52px 1fr; gap: 8px; align-items: center; margin-top: 5px; padding: 0; border: 0; background: none; height: auto; }
+  acidify-patch-view .studio-lane[data-lane="slide"] { margin-top: 4px; }
+  acidify-patch-view .studio-lane-label { text-align: right; color: #c9cfca; font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; width: auto; background: none; }
+  acidify-patch-view .studio-lane .studio-lane-cells { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 12px; }
+  acidify-patch-view .studio-cell-group { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 3px; background: none; border: 0; box-shadow: none; padding: 0; }
+  acidify-patch-view .studio-cell:not(.studio-step) { height: 15px; width: auto; border-radius: 2px; cursor: pointer; font-size: 0; color: transparent;
+    background: linear-gradient(180deg,#3a403c,#262b28); border: 1px solid #171b19; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+  acidify-patch-view .studio-cell:not(.studio-step).playing { border-color: #7d5a52; }
+  acidify-patch-view .studio-cell[data-kind="accent"].active { background: linear-gradient(180deg,#ff6a58,#a4211a); border-color: #ff8878;
+    box-shadow: 0 0 7px rgba(255,72,48,.4), inset 0 1px 0 rgba(255,255,255,.35); }
+  acidify-patch-view .studio-cell[data-kind="slide"].active { background: linear-gradient(180deg,#ffc46f,#8a5312); border-color: #ffd191;
+    box-shadow: 0 0 7px rgba(255,168,60,.32), inset 0 1px 0 rgba(255,255,255,.3); }
+  acidify-patch-view .studio-contour { margin-top: 6px; }
+  acidify-patch-view .studio-contour-groups { height: 66px; border-top: 1px solid rgba(255,255,255,.05); border-bottom: 1px solid rgba(255,255,255,.05); }
+  acidify-patch-view .studio-contour-svg { width: 100%; height: 100%; display: block; }
+  acidify-patch-view .contour-slide { fill: none; stroke: #d8862c; stroke-width: 2; opacity: .85; }
+  acidify-patch-view .contour-path { fill: none; stroke: #ff4a33; stroke-width: 2.4; stroke-linecap: round; }
+  acidify-patch-view .contour-playhead { stroke: rgba(255,120,95,.6); stroke-width: 2; opacity: 0; }
+  acidify-patch-view .studio-pitchgate { margin-top: 6px; align-items: start; }
+  acidify-patch-view .studio-pitchgate .studio-lane-label { padding-top: 24px; }
+  acidify-patch-view .studio-lane .studio-cell.studio-step { position: relative; height: 76px; width: auto; padding: 0; border: 0; background: transparent; cursor: pointer;
+    border-radius: 0; box-shadow: none; display: block; font-size: 0; opacity: 1; }
+  acidify-patch-view .studio-step .step-lamp { position: absolute; left: 50%; top: 0; margin-left: -3px; width: 6px; height: 6px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.7); }
+  acidify-patch-view .studio-step.playing .step-lamp {
+    background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%); box-shadow: 0 0 7px rgba(255,72,48,.9), inset 0 0 2px rgba(255,255,255,.6); }
+  acidify-patch-view .studio-step .step-sel { top: 7px; bottom: 18px; }
+  acidify-patch-view .studio-step.selected .step-sel { border-color: #e9eeee;
+    box-shadow: inset 0 0 0 1px rgba(46,54,52,.6), 0 0 0 1px rgba(255,255,255,.55), 0 1px 4px rgba(30,36,34,.3); }
+  acidify-patch-view .studio-step .step-well { top: 9px; height: 45px; }
+  acidify-patch-view .studio-step .step-cap { top: 9px; height: 41px; }
+  acidify-patch-view .studio-step.selected .step-cap { top: 11px; }
+  acidify-patch-view .studio-step .cap-rocker { height: 33px; }
+  acidify-patch-view .studio-step .cap-nub { top: 11px; height: 11px; }
+  acidify-patch-view .studio-step .step-playbar { left: 3px; right: 3px; top: 55px; }
+  acidify-patch-view .studio-step .step-note-field { height: 16px; border: 1px solid rgba(255,255,255,.06);
+    background: linear-gradient(180deg,#1e211d,#0e100d); box-shadow: inset 0 1px 2px rgba(0,0,0,.6); }
+  acidify-patch-view .studio-step .step-note { font: 900 11px/1 'Courier New',monospace; letter-spacing: .4px; }
+  acidify-patch-view .studio-tools { width: 296px; flex: 0 0 auto; box-sizing: border-box; padding: 6px 8px 8px; border-radius: 2px;
+    border: 1px solid #0a0b09; background: linear-gradient(#1c1e1a,#0f100e); box-shadow: inset 0 3px 9px rgba(0,0,0,.72); display: flex; flex-direction: column; position: relative; height: auto; overflow: visible; }
+  acidify-patch-view .studio-tool-head { position: relative; display: flex; gap: 6px; align-items: center; height: 12px; padding: 0; border: 0; background: none; }
+  acidify-patch-view .studio-badge { width: 88px; height: 12px; display: grid; place-items: center; border-radius: 2px; background: #8f1d16; color: #ffe3de;
+    font: 900 6px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; }
+  acidify-patch-view .studio-scale { flex: 1; height: 12px; display: flex; align-items: center; justify-content: space-between; padding: 0 6px; cursor: pointer;
+    border-radius: 2px; border: 0; background: #2b302f; color: #9aa3a5; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1px; transform: none; }
+  acidify-patch-view .studio-scale strong { color: #ff9a89; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px; }
+  acidify-patch-view .studio-scale:active { transform: none; }
+  acidify-patch-view .studio-groups { margin-top: 7px; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+  acidify-patch-view .studio-group { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 3px; }
+  acidify-patch-view .studio-group-label { display: flex; align-items: center; gap: 6px; color: #93a0a2; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.4px; white-space: nowrap; }
+  acidify-patch-view .studio-group-label i { flex: 1; height: 1px; background: rgba(255,255,255,.11); }
+  acidify-patch-view .studio-actions { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4,1fr); grid-template-rows: none; gap: 5px; padding: 0; margin: 0; }
+  acidify-patch-view .studio-actions button { height: 100%; min-height: 0; width: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    cursor: pointer; border-radius: 2px; border: 1px solid #1a1e1f; color: #1d2426;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.42);
+    font: 11px/11px 'Arial Narrow',Arial,sans-serif; text-shadow: none; transform: none; }
+  acidify-patch-view .studio-actions button small { color: #3f4a4c; font: 900 6.5px/7px 'Arial Narrow',Arial,sans-serif; letter-spacing: .5px; }
+  acidify-patch-view .studio-actions button[disabled] { opacity: 1; cursor: default; }
+  acidify-patch-view.studio-mode .studio-matrix { height: auto; min-height: 0; }
+  acidify-patch-view .studio-matrix .studio-lane, acidify-patch-view .studio-matrix .studio-ruler { height: auto; min-height: 0; }
+  acidify-patch-view .studio-matrix .studio-ruler { height: 11px; }
+  acidify-patch-view .studio-matrix .studio-contour-groups { height: 66px; }
+  acidify-patch-view .studio-matrix .studio-lane .studio-cell.studio-step { height: 76px; }
+  acidify-patch-view.studio-mode .studio-tools { height: auto; min-height: 0; }
+  acidify-patch-view .studio-hint { margin-top: 6px; text-align: right; color: #8d9698; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .9px;
+    position: static; background: none; border: 0; padding: 0; }
+  acidify-patch-view .studio-toast { position: absolute; z-index: 10; left: 8px; bottom: 24px; padding: 4px 7px; border-radius: 3px;
+    color: #ff8070; background: rgba(20,18,16,.94); font: 7px 'Courier New',monospace; letter-spacing: .7px;
+    opacity: 0; transform: translateY(3px); pointer-events: none; transition: 120ms ease; }
+  acidify-patch-view .studio-toast.visible { opacity: 1; transform: translateY(0); }
+
   @media (max-width: 700px), (max-height: 360px) {
     acidify-patch-view .model { font-size: 10px; letter-spacing: 1.35px; }
     acidify-patch-view .computer { font-size: 8px; letter-spacing: 1.45px; }
@@ -4444,14 +4799,13 @@ class AcidifyPatchView extends HTMLElement {
         <div class="output-cell">
           <div class="cell-title">OUTPUT</div>
           <div class="vu-meter" aria-hidden="true"><i class="vu-scale l"></i><i class="vu-scale r"></i><i class="vu-bar l"></i><i class="vu-bar r"></i><span class="output-lamp" hidden></span></div>
-          <div class="master-head trigger-row">
+          <div class="trigger-row">
             <button class="distortion-trigger" type="button" aria-expanded="false"
               aria-controls="distortion-overlay" aria-label="Distortion disabled; open controls"
               title="Distortion · OFF"><i class="distortion-led"></i><span>DIST</span></button>
             <button class="mods-trigger" type="button" aria-expanded="false"
               aria-controls="mods-overlay" aria-label="Circuit mods stock; open controls"
               title="Circuit Mods · STOCK"><i class="distortion-led mods-led"></i><span>MOD</span></button>
-            <span class="master-output" hidden><span></span>OUT</span>
           </div>
         </div>
       </div>
@@ -4476,7 +4830,6 @@ class AcidifyPatchView extends HTMLElement {
           <div class="clock-choice"><span class="clock-lamp int"></span><button data-value="0" type="button">INT</button></div>
           <div class="clock-choice"><span class="clock-lamp daw"></span><button data-value="1" type="button">DAW</button></div>
         </div>
-        <span class="clock-readout" role="status">INT · 128 BPM</span>
       </div>
       <div class="deckb-cell transport-cell">
         <div class="cell-title">TRANSPORT</div>
@@ -4491,21 +4844,21 @@ class AcidifyPatchView extends HTMLElement {
           <div class="cell-title">SWING</div>
           <div class="control silver-stepper" data-param="param50" data-endpoint-id="param50" data-min="0" data-max="100" data-step="1" data-init="0" data-control="stepper">
             <div class="led-box"><span class="stepper-value">0%</span></div>
-            <div class="stepper-buttons"><button data-step="-1" type="button" type="button" aria-label="Swing down">−</button><button data-step="1" type="button" type="button" aria-label="Swing up">+</button></div>
+            <div class="stepper-buttons"><button data-step="-1" type="button" aria-label="Swing down">−</button><button data-step="1" type="button" aria-label="Swing up">+</button></div>
           </div>
         </div>
         <div class="stepper-block">
           <div class="cell-title">LENGTH</div>
           <div class="control silver-stepper" data-param="param11" data-endpoint-id="param11" data-min="1" data-max="16" data-step="1" data-init="16" data-control="stepper">
             <div class="led-box"><span class="stepper-value">16</span></div>
-            <div class="stepper-buttons"><button data-step="-1" type="button" type="button" aria-label="Length down">−</button><button data-step="1" type="button" type="button" aria-label="Length up">+</button></div>
+            <div class="stepper-buttons"><button data-step="-1" type="button" aria-label="Length down">−</button><button data-step="1" type="button" aria-label="Length up">+</button></div>
           </div>
         </div>
         <div class="stepper-block">
           <div class="cell-title">ROOT</div>
           <div class="control silver-stepper" data-param="param12" data-endpoint-id="param12" data-min="24" data-max="60" data-step="1" data-init="36" data-control="stepper">
             <div class="led-box"><span class="stepper-value">C2</span></div>
-            <div class="stepper-buttons"><button data-step="-1" type="button" type="button" aria-label="Root down">−</button><button data-step="1" type="button" type="button" aria-label="Root up">+</button></div>
+            <div class="stepper-buttons"><button data-step="-1" type="button" aria-label="Root down">−</button><button data-step="1" type="button" aria-label="Root up">+</button></div>
           </div>
         </div>
       </div>
@@ -4546,11 +4899,11 @@ class AcidifyPatchView extends HTMLElement {
         <div class="distortion-overlay-body">
           <div class="distortion-power-cell">
             <span class="distortion-cell-label">POWER</span>
+            <span class="distortion-power-led"></span>
             <div class="control run-switch distortion-power" data-param="param45" data-endpoint-id="param45"
               data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
-              <button data-value="1" type="button"><i></i><span>ON</span></button>
+              <button data-value="1" type="button"><strong class="distortion-power-label">ON</strong><small>CLEAN BYPASS</small></button>
             </div>
-            <small>CLEAN BYPASS</small>
           </div>
           <div class="distortion-type-cell">
             <span class="distortion-cell-label">CHARACTER</span>
@@ -4579,56 +4932,74 @@ class AcidifyPatchView extends HTMLElement {
           <button class="mods-close" type="button" aria-label="Close circuit mods">×</button>
         </header>
         <div class="mods-overlay-body">
-          <div class="mod-row">
-            <div class="mod-info"><b>OVERDRIVE</b><small>FILTER OVERDRIVE · R62 220k → 3k3</small></div>
-            <div class="control run-switch mod-switch" data-param="param51" data-endpoint-id="param51"
-              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
-              <button data-value="1" type="button"><i></i><span>ON</span></button>
+          <div class="mod-row mod-cell" data-mod-enable="param51">
+            <div class="mod-cell-head"><strong>OVERDRIVE</strong><span class="mod-cell-led"></span></div>
+            <div class="mod-cell-controls">
+              <div class="control run-switch mod-switch" data-param="param51" data-endpoint-id="param51"
+                data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+                <button data-value="1" type="button"><strong class="mod-state">OFF</strong><small>ENABLE</small></button>
+              </div>
+              <div class="mod-knob">${dial("param52")}</div>
             </div>
-            <div class="mod-knob">${dial("param52")}</div>
+            <span class="mod-cell-desc">FILTER OVERDRIVE · R62 220k → 3k3</span>
           </div>
-          <div class="mod-row">
-            <div class="mod-info"><b>RESO BOOST</b><small>x0x R97 10k → 8k2</small></div>
-            <div class="control run-switch mod-switch" data-param="param53" data-endpoint-id="param53"
-              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
-              <button data-value="1" type="button"><i></i><span>ON</span></button>
+          <div class="mod-row mod-cell" data-mod-enable="param53">
+            <div class="mod-cell-head"><strong>RESO BOOST</strong><span class="mod-cell-led"></span></div>
+            <div class="mod-cell-controls">
+              <div class="control run-switch mod-switch" data-param="param53" data-endpoint-id="param53"
+                data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+                <button data-value="1" type="button"><strong class="mod-state">OFF</strong><small>ENABLE</small></button>
+              </div>
+              <div class="mod-fixed"><span class="mod-fixed-label">FEEDBACK</span><span class="mod-fixed-box"><span>x1.22</span></span></div>
             </div>
-            <div class="mod-fixed"><span>FEEDBACK</span><b>x1.22</b></div>
+            <span class="mod-cell-desc">x0x R97 10k → 8k2 · k x1.22</span>
           </div>
-          <div class="mod-row">
-            <div class="mod-info"><b>CUTOFF RANGE</b><small>TOP END 2.5 kHz → 5 kHz</small></div>
-            <div class="control run-switch mod-switch" data-param="param54" data-endpoint-id="param54"
-              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
-              <button data-value="1" type="button"><i></i><span>ON</span></button>
+          <div class="mod-row mod-cell" data-mod-enable="param54">
+            <div class="mod-cell-head"><strong>CUTOFF RANGE</strong><span class="mod-cell-led"></span></div>
+            <div class="mod-cell-controls">
+              <div class="control run-switch mod-switch" data-param="param54" data-endpoint-id="param54"
+                data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+                <button data-value="1" type="button"><strong class="mod-state">OFF</strong><small>ENABLE</small></button>
+              </div>
+              <div class="mod-fixed"><span class="mod-fixed-label">MAXIMUM</span><span class="mod-fixed-box"><span>5 kHz</span></span></div>
             </div>
-            <div class="mod-fixed"><span>MAXIMUM</span><b>5 kHz</b></div>
+            <span class="mod-cell-desc">TOP END 2.5 kHz → 5 kHz</span>
           </div>
-          <div class="mod-row">
-            <div class="mod-info"><b>ENV MOD</b><small>SWEEP RANGE TRIPLED · DF</small></div>
-            <div class="control run-switch mod-switch" data-param="param55" data-endpoint-id="param55"
-              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
-              <button data-value="1" type="button"><i></i><span>ON</span></button>
+          <div class="mod-row mod-cell" data-mod-enable="param55">
+            <div class="mod-cell-head"><strong>ENV MOD</strong><span class="mod-cell-led"></span></div>
+            <div class="mod-cell-controls">
+              <div class="control run-switch mod-switch" data-param="param55" data-endpoint-id="param55"
+                data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+                <button data-value="1" type="button"><strong class="mod-state">OFF</strong><small>ENABLE</small></button>
+              </div>
+              <div class="mod-fixed"><span class="mod-fixed-label">RANGE</span><span class="mod-fixed-box"><span>x3</span></span></div>
             </div>
-            <div class="mod-fixed"><span>RANGE</span><b>x3</b></div>
+            <span class="mod-cell-desc">SWEEP RANGE TRIPLED · DF</span>
           </div>
-          <div class="mod-row">
-            <div class="mod-info"><b>SLIDE TIME</b><small>SLIDE POT IN SERIES · 22–132 ms</small></div>
-            <div class="control run-switch mod-switch" data-param="param56" data-endpoint-id="param56"
-              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
-              <button data-value="1" type="button"><i></i><span>ON</span></button>
+          <div class="mod-row mod-cell" data-mod-enable="param56">
+            <div class="mod-cell-head"><strong>SLIDE TIME</strong><span class="mod-cell-led"></span></div>
+            <div class="mod-cell-controls">
+              <div class="control run-switch mod-switch" data-param="param56" data-endpoint-id="param56"
+                data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+                <button data-value="1" type="button"><strong class="mod-state">OFF</strong><small>ENABLE</small></button>
+              </div>
+              <div class="mod-knob">${dial("param57")}</div>
             </div>
-            <div class="mod-knob">${dial("param57")}</div>
+            <span class="mod-cell-desc">SLIDE POT IN SERIES · 22–132 ms</span>
           </div>
-          <div class="mod-row">
-            <div class="mod-info"><b>SOFT ATTACK</b><small>VCA SOFT ATTACK · ENV + ACCENT</small></div>
-            <div class="control run-switch mod-switch" data-param="param58" data-endpoint-id="param58"
-              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
-              <button data-value="1" type="button"><i></i><span>ON</span></button>
+          <div class="mod-row mod-cell" data-mod-enable="param58">
+            <div class="mod-cell-head"><strong>SOFT ATTACK</strong><span class="mod-cell-led"></span></div>
+            <div class="mod-cell-controls">
+              <div class="control run-switch mod-switch" data-param="param58" data-endpoint-id="param58"
+                data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+                <button data-value="1" type="button"><strong class="mod-state">OFF</strong><small>ENABLE</small></button>
+              </div>
+              <div class="mod-knob">${dial("param59")}</div>
             </div>
-            <div class="mod-knob">${dial("param59")}</div>
+            <span class="mod-cell-desc">VCA SOFT ATTACK · ENV + ACCENT</span>
           </div>
         </div>
-        <footer>DEVIL FISH &amp; x0x MODS · ALL OFF = STOCK 303 CIRCUIT</footer>
+        <footer><span>PARAM 51–59 · DEVIL FISH / X0X</span><span class="mods-footer-state">DEFAULTS = STOCK</span></footer>
       </section>
     </div>
 
@@ -4638,15 +5009,6 @@ class AcidifyPatchView extends HTMLElement {
           <b>16 STEP</b><span>PATTERN PROGRAMMER</span>
           <small class="program-context">CLASSIC PROGRAMMING</small>
           <span class="program-legend" aria-hidden="true"><i class="legend-a">A</i><em>ACCENT</em><i class="legend-s">S</i><em>SLIDE</em><i class="legend-play"></i><em>PLAYING</em></span>
-        </div>
-        <div class="bassline-visual" role="img" aria-label="Live 16-step bassline pitch contour"
-          data-tooltip="Live pitch contour for all 16 steps. Red nodes are accented, amber links are slides, dim nodes are rests, and the bright ring follows playback.">
-          <span>PITCH MAP</span>
-          <svg viewBox="0 0 240 30" aria-hidden="true" focusable="false">
-            <path class="bassline-path"></path>
-            <path class="bassline-slide-path"></path>
-            ${basslineNodes}
-          </svg>
         </div>
         <div class="utility">
           <span class="selection-caption">STEP 01 · C2 · OCT +0</span>
@@ -4676,38 +5038,58 @@ class AcidifyPatchView extends HTMLElement {
         </div>
       </div>
       <div class="studio-editor" aria-hidden="true">
+        <div class="studio-matrix" aria-label="Studio step editor">
+          <div class="studio-ruler"><span class="studio-lane-label"></span><div class="studio-lane-cells">${studioRuler}</div></div>
+          ${studioLanes}
+          <div class="studio-lane studio-contour" data-lane="contour">
+            <span class="studio-lane-label">BASS LINE</span>
+            <div class="studio-lane-cells studio-contour-groups">${studioContour}</div>
+          </div>
+          <div class="studio-lane studio-pitchgate" data-lane="pitchgate">
+            <span class="studio-lane-label">PITCH<br>GATE</span>
+            <div class="studio-lane-cells">${studioPitchGate}</div>
+          </div>
+        </div>
         <div class="studio-tools">
           <div class="studio-tool-head">
-            <strong class="studio-selection">STEP 01</strong>
+            <span class="studio-badge">STUDIO</span>
             <button class="studio-scale" type="button" aria-label="Generation scale Minor Pentatonic; click for next scale"
-              data-tooltip="Generate and Mutate currently use the root-relative Minor Pentatonic scale. Click to choose the next scale.">
-              <span>SCALE</span><strong>MIN PENTA</strong>
+              data-tooltip="Choose the scale that Generate, Mutate and note edits snap to.">
+              <span>SCALE</span><strong>MIN PENTA</strong><span aria-hidden="true">▾</span>
             </button>
           </div>
-          <div class="studio-actions">
-            <button data-studio-action="undo" title="Undo (Ctrl/Cmd+Z)">↶<small>UNDO</small></button>
-            <button data-studio-action="redo" title="Redo (Ctrl/Cmd+Shift+Z)">↷<small>REDO</small></button>
-            <button data-studio-action="copy" title="Copy selected steps">⧉<small>COPY</small></button>
-            <button data-studio-action="paste" title="Paste steps">▣<small>PASTE</small></button>
-            <button data-studio-action="rotate-left" title="Rotate selection left">◀<small>ROTATE</small></button>
-            <button data-studio-action="rotate-right" title="Rotate selection right">▶<small>ROTATE</small></button>
-            <button data-studio-action="reverse" title="Reverse the selected step order">⇄<small>REVERSE</small></button>
-            <button data-studio-action="pitch-mirror" title="Mirror pitches inside their current range">◇<small>MIRROR</small></button>
-            <button data-studio-action="transpose-down" title="Transpose octave down">−12<small>OCT</small></button>
-            <button data-studio-action="transpose-up" title="Transpose octave up">+12<small>OCT</small></button>
-            <button data-studio-action="select-all" title="Select all steps">16<small>ALL</small></button>
-            <button data-studio-action="generate" title="Generate a new scale-aware phrase">✣<small>GENERATE</small></button>
-            <button data-studio-action="mutate" title="Mutate the phrase gently within the selected scale">≈<small>MUTATE</small></button>
-            <button data-studio-action="rest" title="Toggle gate/rest for selection">—<small>REST</small></button>
-            <button data-studio-action="choose-note" aria-haspopup="dialog"
-              title="Choose an exact note for the selected steps">♪<small>NOTE</small></button>
+          <div class="studio-groups">
+            <div class="studio-group"><span class="studio-group-label">EDIT<i></i></span>
+              <div class="studio-actions">
+                <button data-studio-action="undo" data-tooltip="Undo the last pattern edit.">↶<small>UNDO</small></button>
+                <button data-studio-action="redo" data-tooltip="Redo the last undone edit.">↷<small>REDO</small></button>
+                <button data-studio-action="copy" data-tooltip="Copy the current pattern.">⧉<small>COPY</small></button>
+                <button data-studio-action="paste" data-tooltip="Paste the copied pattern.">▣<small>PASTE</small></button>
+              </div></div>
+            <div class="studio-group"><span class="studio-group-label">ARRANGE<i></i></span>
+              <div class="studio-actions">
+                <button data-studio-action="rotate-left" data-tooltip="Rotate the whole pattern one step to the left.">◀<small>ROTATE</small></button>
+                <button data-studio-action="rotate-right" data-tooltip="Rotate the whole pattern one step to the right.">▶<small>ROTATE</small></button>
+                <button data-studio-action="reverse" data-tooltip="Play the pattern backwards — reverses the step order.">⇄<small>REVERSE</small></button>
+                <button data-studio-action="pitch-mirror" data-tooltip="Mirror every pitch inside its range.">◇<small>MIRROR</small></button>
+              </div></div>
+            <div class="studio-group"><span class="studio-group-label">SELECTED STEP<i></i></span>
+              <div class="studio-actions">
+                <button data-studio-action="transpose-down" data-tooltip="Selected step one octave down.">−12<small>OCT</small></button>
+                <button data-studio-action="transpose-up" data-tooltip="Selected step one octave up.">+12<small>OCT</small></button>
+                <button data-studio-action="rest" data-tooltip="Toggle gate and rest for the selected step.">—<small>REST</small></button>
+                <button data-studio-action="choose-note" aria-haspopup="dialog" data-tooltip="Choose an exact note for the selected steps.">♪<small>NOTE</small></button>
+              </div></div>
+            <div class="studio-group"><span class="studio-group-label">GENERATE<i></i></span>
+              <div class="studio-actions">
+                <button data-studio-action="generate" data-tooltip="Generate a new phrase inside the selected scale.">✣<small>PHRASE</small></button>
+                <button data-studio-action="mutate" data-tooltip="Nudge the current phrase without losing its character.">≈<small>MUTATE</small></button>
+                <button data-studio-action="scale" data-tooltip="Next scale for Generate and Mutate.">◧<small>SCALE</small></button>
+                <button data-studio-action="select-all" data-tooltip="Select all 16 steps.">16<small>ALL</small></button>
+              </div></div>
           </div>
           <span class="studio-toast" role="status"></span>
-        </div>
-        <div class="studio-matrix" aria-label="Studio step editor">
-          <div class="studio-ruler"><span></span><div class="studio-lane-cells">${studioRuler}</div></div>
-          ${studioLanes}
-          <span class="studio-hint">RIGHT/DOUBLE CLICK NOTE · WHEEL ±1 · SHIFT SELECT · M VIEW</span>
+          <div class="studio-hint">RECHTSKLICK AUF STEP · TONHÖHE · SHIFT FÜR FEINWERTE</div>
         </div>
       </div>
     </section>

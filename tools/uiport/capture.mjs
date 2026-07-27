@@ -25,8 +25,9 @@ let browser = await launch();
 async function shoot(page, sel, file) {
   const el = page.locator(sel).locator("visible=true").first();
   await el.waitFor({ state: "visible" });
-  // Maus neutral parken, damit kein Hover-Tooltip im Bild hängt
+  // Maus neutral parken und Fokus lösen, damit kein Hover-/Fokus-Tooltip im Bild hängt
   await page.mouse.move(2, 578);
+  await page.evaluate(() => document.activeElement && document.activeElement.blur && document.activeElement.blur());
   await page.waitForTimeout(300);
   const box = await el.boundingBox();
   await page.screenshot({ path: path.join(OUT, file),
@@ -100,7 +101,7 @@ browser = await launch();
   await page.click(".distortion-trigger:not(.mods-trigger)");
   await page.waitForTimeout(250);
   await shoot(page, "acidify-patch-view .chassis", "act_dist.png");
-  await page.keyboard.press("Escape");
+  await page.click(".distortion-close");
   await page.waitForTimeout(200);
 
   // mods overlay
