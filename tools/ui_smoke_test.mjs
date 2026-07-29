@@ -570,7 +570,7 @@ try {
     };
   });
   if (Math.round(workflow.toggle.width) !== 118 || Math.round(workflow.toggle.height) !== 17
-      || Math.round(workflow.tools.width) !== 296 || workflow.matrix.width < 800
+      || Math.round(workflow.tools.width) !== 314 || workflow.matrix.width < 800
       || workflow.tools.right - workflow.matrix.left < 900
       || workflow.scale.width < 100 || Math.round(workflow.scale.height) !== 12
       || workflow.actionRows !== 4

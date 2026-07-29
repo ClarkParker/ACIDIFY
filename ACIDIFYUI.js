@@ -4176,12 +4176,14 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .wave-name { color: #67716f; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; text-shadow: 0 1px 0 rgba(255,255,255,.75); }
   acidify-patch-view .wave-choice:has(button.active) .wave-name { color: #8e1f16; }
 
-  acidify-patch-view .deck-a .tone-bank { flex: 1; padding: 14px 16px 0; background: none; border: 0; box-shadow: none; }
-  acidify-patch-view .deck-a .tone-controls { display: grid; grid-template-columns: repeat(6,1fr); gap: 0; padding: 0; }
+  acidify-patch-view .deck-a .tone-bank { flex: 1; padding: 14px 15px 0 16px; background: none; border: 0; box-shadow: none; }
+  acidify-patch-view .deck-a .tone-controls { display: grid; grid-template-columns: repeat(6,1fr); gap: 0; padding: 0; justify-items: stretch; align-items: start; }
 
   acidify-patch-view .silver-knob { --norm: var(--default-norm, .5); width: auto; height: auto; display: flex; flex-direction: column; align-items: center; background: none; border: 0; box-shadow: none; padding: 0; }
   acidify-patch-view .silver-knob .control-label { position: static; margin: 0; font: 900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.15px; color: #1c2224; text-shadow: none; }
   acidify-patch-view .silver-knob:has(.mod-slider:not([hidden])) .control-label { color: #9b2019; }
+  acidify-patch-view .deck-a .tone-bank .silver-knob .control-label { width: 100%; text-align: center; }
+  acidify-patch-view .deck-a .tone-bank .silver-knob .chrome-wrap, acidify-patch-view .deck-a .tone-bank .silver-knob .led-box { margin-right: 1px; }
   acidify-patch-view .silver-knob .chrome-wrap { position: relative; margin-top: 9px; width: 68px; height: 68px; }
   acidify-patch-view .silver-knob .tick-ring { position: absolute; inset: -5px; border-radius: 50%; transform: none; border: 0; filter: none;
     background: repeating-conic-gradient(from 218deg, #3f4645 0 1.2deg, transparent 1.2deg 11.5deg);
@@ -4221,9 +4223,10 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(180deg, rgba(52,58,57,.3), rgba(210,214,212,.16));
     box-shadow: inset 0 2px 3px rgba(40,46,45,.5), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
 
-  acidify-patch-view .deck-a .volume-bank { width: auto; flex: 0 0 auto; padding: 12px; display: flex; gap: 10px; align-items: stretch; background: none; border: 0; }
-  acidify-patch-view .master-cell .cell-title { width: 96px; }
-  acidify-patch-view .output-cell .cell-title { width: 99px; }
+  acidify-patch-view .deck-a .volume-bank { width: auto; flex: 0 0 auto; padding: 12px 13px; display: flex; gap: 10px; align-items: stretch; background: none; border: 0; }
+  acidify-patch-view .master-cell .cell-title { width: 96px; height: 16px; }
+  acidify-patch-view .output-cell .cell-title { width: 99px; height: 16px; }
+  acidify-patch-view .osc-cell .cell-title { height: 16px; }
   acidify-patch-view .master-cell .tick-ring { display: none; }
   acidify-patch-view .master-cell .silver-knob .dial { box-shadow: 0 7px 9px rgba(0,0,0,.3), inset 0 2px 2px rgba(255,255,255,.9), inset 0 -6px 8px rgba(40,47,49,.55); }
   acidify-patch-view .master-cell .silver-knob .dial-cap { box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -5px -7px 12px rgba(96,106,109,.26); }
@@ -4235,7 +4238,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .master-cell .silver-knob .led-box { order: 4; margin-top: 4px; width: auto; height: auto; border: 0; background: none; box-shadow: none; }
   acidify-patch-view .master-cell .silver-knob .led-box .value-label { color: #6c1710; font: 8px/1 'Courier New',monospace; letter-spacing: normal; text-shadow: none; }
   acidify-patch-view .output-cell { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; padding-top: 1px; }
-  acidify-patch-view .vu-meter { position: relative; margin-top: 9px; width: 44px; height: 88px; border-radius: 3px; overflow: hidden; border: 1px solid #0b0d0c;
+  acidify-patch-view .vu-meter { position: relative; margin-top: 9px; width: 46px; height: 88px; border-radius: 3px; overflow: hidden; border: 1px solid #0b0d0c;
     background: linear-gradient(180deg,#1a1c19,#0d0f0d); box-shadow: inset 0 3px 7px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.6); --level: 0; }
   acidify-patch-view .vu-scale { position: absolute; bottom: 4px; top: 4px; width: 14px; border-radius: 1px;
     background: repeating-linear-gradient(0deg, rgba(255,255,255,.055) 0 2px, transparent 2px 4px); }
@@ -4244,7 +4247,7 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(0deg,#3fa05a,#a8c33c 58%,#e4a52c 80%,#e1382a 100%); box-shadow: 0 0 7px rgba(255,110,60,.4); transition: height 60ms linear; }
   acidify-patch-view .vu-bar.l { left: 6px; } acidify-patch-view .vu-bar.r { right: 6px; }
   acidify-patch-view .trigger-row { margin-top: 8px; display: flex; gap: 5px; padding: 0; background: none; border: 0; }
-  acidify-patch-view .deck-a .distortion-trigger, acidify-patch-view .deck-a .mods-trigger { width: 47px; height: 22px; display: flex; align-items: center; justify-content: center; gap: 4px;
+  acidify-patch-view .deck-a .distortion-trigger, acidify-patch-view .deck-a .mods-trigger { width: 47px; height: 22px; transform: none; display: flex; align-items: center; justify-content: center; gap: 4px;
     border-radius: 2px; cursor: pointer; border: 1px solid #1a1e1f; color: #1d2426; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .7px;
     background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4); }
@@ -4320,7 +4323,7 @@ class AcidifyPatchView extends HTMLElement {
 
   acidify-patch-view .scope-cell { flex: 1; min-width: 0; align-items: stretch; }
   acidify-patch-view .scope-head { display: flex; align-items: center; justify-content: space-between; }
-  acidify-patch-view .scope-head .cell-title { width: 132px; height: 14px; }
+  acidify-patch-view .scope-head .cell-title { width: 132px; height: 15px; }
   acidify-patch-view .scope-hz { font: 7px/1 'Courier New',monospace; color: #6c1710; }
   acidify-patch-view .scope-row { margin-top: 7px; flex: 1; min-height: 0; display: flex; gap: 7px; }
   acidify-patch-view .scope-screen { position: relative; flex: 1; min-width: 0; border-radius: 2px; overflow: hidden; border: 1px solid #0a0b09;
@@ -4340,7 +4343,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .scope-legend span { color: #8d9698; font: 900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .9px; }
   acidify-patch-view .scope-legend b { color: #ff6756; font: 8px/1 'Courier New',monospace; text-shadow: 0 0 5px rgba(255,57,37,.5); }
 
-  acidify-patch-view .program-header { height: 25px; flex: 0 0 auto; padding: 0 12px; display: flex; align-items: center; justify-content: space-between;
+  acidify-patch-view .program-header { height: 25px; flex: 0 0 auto; margin: 0 -8px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between;
     border-bottom: 1px solid rgba(45,50,49,.45); box-shadow: 0 1px 0 rgba(255,255,255,.6); font-size: inherit; font-weight: normal; letter-spacing: normal; }
   acidify-patch-view .program-title { display: flex; flex-wrap: nowrap; align-items: baseline; gap: 10px; white-space: nowrap; flex: 0 0 auto; }
   acidify-patch-view .program-title b { color: #a51d17; font: 900 11px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 2.2px; white-space: nowrap; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
@@ -4356,15 +4359,16 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .studio-toggle .studio-label { background: #2b302f; color: #9aa3a5; }
   acidify-patch-view .studio-toggle[aria-pressed="true"] .classic-label { background: #2b302f; color: #9aa3a5; }
   acidify-patch-view .studio-toggle[aria-pressed="true"] .studio-label { background: linear-gradient(180deg,#c9382c,#7d1610); color: #fff1ee; }
-  acidify-patch-view .program-legend { display: inline-flex; align-items: center; gap: 5px; margin-left: 12px; padding-left: 12px; border-left: 1px solid rgba(58,66,64,.28); }
-  acidify-patch-view .program-legend i { width: 14px; height: 10px; display: grid; place-items: center; border-radius: 2px; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; font-style: normal; }
+  acidify-patch-view .program-legend { display: inline-flex; align-items: center; gap: 5px; margin-left: 0; padding-left: 12px; border-left: 1px solid rgba(58,66,64,.28); }
+  acidify-patch-view .program-legend i { width: 16px; height: 12px; display: grid; place-items: center; border-radius: 2px; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; font-style: normal; }
   acidify-patch-view .program-legend .legend-a { color: #fff2ee; border: 1px solid #5d1611; background: linear-gradient(180deg,#ff7361,#a3201a); box-shadow: 0 0 6px rgba(255,72,48,.5); }
   acidify-patch-view .program-legend .legend-s { color: #2a1a02; border: 1px solid #5b3908; background: linear-gradient(180deg,#ffc776,#8d5410); box-shadow: 0 0 6px rgba(255,168,60,.45); }
   acidify-patch-view .program-legend .legend-play { width: 12px; height: 8px; border-radius: 4px; border: 0;
     background: radial-gradient(ellipse at 50% 28%, #fff4ec 0 22%, #ff8a63 46%, #ff3a1c 78%, #b81c0c 100%); box-shadow: 0 0 8px rgba(255,86,52,.7); }
   acidify-patch-view .program-legend em { font: 900 7px/1 'Arial Narrow',Arial,sans-serif; font-style: normal; letter-spacing: 1.2px; color: #3d4749; }
+  acidify-patch-view .program-legend em:not(:last-child) { margin-right: 6px; }
   acidify-patch-view .selection-caption { color: #4f5a5b; font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; white-space: nowrap; }
-  acidify-patch-view .step-position { min-width: 56px; text-align: center; padding: 2px 6px; border-radius: 2px; border: 1px solid #0a0706;
+  acidify-patch-view .step-position { min-width: 70px; height: 15px; text-align: center; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; border-radius: 2px; border: 1px solid #0a0706;
     background: linear-gradient(180deg,#241512,#130b09); color: #ff6756; font: 9px/1 'Courier New',monospace; letter-spacing: 1px;
     box-shadow: inset 0 2px 4px rgba(0,0,0,.7); }
 
@@ -4381,6 +4385,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .step-group { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 5px; background: none; border: 0; box-shadow: none; padding: 0; }
   acidify-patch-view .sequence-step { position: relative; height: 90px; padding: 0; border: 0; background: transparent; cursor: pointer;
     border-radius: 0; box-shadow: none; width: auto; display: block; opacity: 1; }
+  acidify-patch-view .sequence-step:active, acidify-patch-view .sequence-step.selected { transform: none; background: transparent; box-shadow: none; }
   acidify-patch-view .sequence-step.accented::before, acidify-patch-view .sequence-step.sliding::after { content: none; }
   acidify-patch-view .step-head { position: absolute; left: 0; right: 0; top: 0; height: 14px; display: flex; align-items: center; justify-content: space-between; padding: 0 1px; }
   acidify-patch-view .sequence-step .step-index { position: static; margin: 0; font: 700 9px/10px 'Courier New',monospace; color: #5c6668; background: none; border: 0; width: auto; height: auto; }
@@ -4388,7 +4393,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .sequence-step.beyond .step-index { color: #7b8482; }
   acidify-patch-view .sequence-step.playing .step-index { color: #b8241a; }
   acidify-patch-view .step-pills { display: flex; align-items: center; gap: 3px; }
-  acidify-patch-view .step-pill { width: 15px; height: 11px; display: grid; place-items: center; border-radius: 2px; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; font-style: normal;
+  acidify-patch-view .step-pill { width: 17px; height: 13px; display: grid; place-items: center; border-radius: 2px; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; font-style: normal;
     border: 1px solid #4f5759; color: #b6bebf; background: linear-gradient(180deg,#868e90,#6a7274); box-shadow: inset 0 1px 2px rgba(0,0,0,.42); }
   acidify-patch-view .sequence-step.accented .pill-a { color: #fff2ee; border-color: #5d1611; background: linear-gradient(180deg,#ff7361,#a3201a); box-shadow: 0 0 7px rgba(255,72,48,.65), inset 0 1px 0 rgba(255,255,255,.4); }
   acidify-patch-view .sequence-step.sliding .pill-s { color: #2a1a02; border-color: #5b3908; background: linear-gradient(180deg,#ffc776,#8d5410); box-shadow: 0 0 7px rgba(255,168,60,.6), inset 0 1px 0 rgba(255,255,255,.45); }
@@ -4398,7 +4403,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .sequence-step.multi-selected .step-sel { border-color: #e9eeee; }
   acidify-patch-view .step-well { position: absolute; left: 0; right: 0; top: 16px; height: 46px; border-radius: 2px;
     background: linear-gradient(180deg,#4e5659,#20272a); box-shadow: inset 0 2px 3px rgba(0,0,0,.65); }
-  acidify-patch-view .step-cap { position: absolute; left: 0; right: 0; top: 16px; height: 42px; border-radius: 2px; border: 1px solid #5f676a;
+  acidify-patch-view .step-cap { position: absolute; left: 0; right: 0; top: 16px; height: 44px; border-radius: 2px; border: 1px solid #5f676a;
     background: linear-gradient(180deg,#8e9698,#6f7779);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -3px -5px 8px rgba(96,106,109,.25), inset 3px 4px 7px rgba(255,255,255,.3), 0 2px 3px rgba(0,0,0,.5); }
   acidify-patch-view .sequence-step.selected .step-cap { top: 18px;
@@ -4430,7 +4435,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .step-playbar { position: absolute; left: 4px; right: 4px; top: 63px; height: 3px; border-radius: 1px;
     background: rgba(70,78,76,.22); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
   acidify-patch-view .sequence-step.playing .step-playbar { background: linear-gradient(90deg, rgba(255,74,51,0), #ff4a33 25% 75%, rgba(255,74,51,0)); box-shadow: 0 0 8px rgba(255,74,51,.75); }
-  acidify-patch-view .step-note-field { position: absolute; left: 0; right: 0; bottom: 0; height: 22px; display: grid; place-items: center; border-radius: 2px;
+  acidify-patch-view .step-note-field { position: absolute; left: 0; right: 0; bottom: 0; height: 24px; display: grid; place-items: center; border-radius: 2px;
     border: 1px solid #0d0807; background: linear-gradient(180deg,#2b1a17,#150c0a); box-shadow: inset 0 2px 4px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.6); }
   acidify-patch-view .sequence-step.playing .step-note-field { background: linear-gradient(180deg,#3d1713,#1d0d0b); }
   acidify-patch-view .sequence-step .step-note { position: static; font: 900 14px/15px 'Courier New',monospace; letter-spacing: .6px; color: #ff6756; text-shadow: 0 0 6px rgba(255,57,37,.5); background: none; width: auto; }
@@ -4439,11 +4444,11 @@ class AcidifyPatchView extends HTMLElement {
 
   /* ---------- Deck C: Editor, Keyboard, Funktionsmatrix ---------- */
   acidify-patch-view .keyboard { display: flex; flex-direction: column; }
-  acidify-patch-view .keyboard-head { display: flex; gap: 6px; align-items: center; height: 12px; flex: 0 0 auto; }
-  acidify-patch-view .keyboard-title { width: 88px; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.4);
+  acidify-patch-view .keyboard-head { display: flex; gap: 6px; align-items: center; height: 13px; flex: 0 0 auto; }
+  acidify-patch-view .keyboard-title { width: 88px; height: 13px; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.4);
     color: #26302f; text-shadow: 0 1px 0 rgba(255,255,255,.8); font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; }
   acidify-patch-view .keyboard-hint { flex: 1; text-align: right; color: #4f5a5b; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; }
-  acidify-patch-view .keyboard-keys { flex: 1; min-height: 0; height: auto; margin-top: 5px; }
+  acidify-patch-view .keyboard-keys { flex: 1; min-height: 0; height: auto; margin-top: 6px; }
   acidify-patch-view .pitch-key { border-radius: 0 0 2px 2px; border: 1px solid #5f6a6c; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; color: #2a3234;
     background: linear-gradient(180deg,#f4f6f6 0%,#dfe3e4 56%,#b7bfc1 86%,#95a0a2 100%);
     box-shadow: 0 3px 2px rgba(0,0,0,.45), inset 0 1px 0 #fff; }
@@ -4457,7 +4462,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .pitch-key span { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; }
   acidify-patch-view .pitch-key::after { content: ""; position: absolute; left: 50%; top: 4px; margin-left: -4.5px; width: 9px; height: 9px; border-radius: 50%;
     background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.7); }
-  acidify-patch-view .pitch-key.black-key::after { top: 5px; width: 8px; height: 8px; }
+  acidify-patch-view .pitch-key.black-key::after { top: 4px; width: 9px; height: 9px; }
   acidify-patch-view .pitch-key.active::after {
     background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%); box-shadow: 0 0 7px rgba(255,72,48,.8); }
   acidify-patch-view .pitch-key.active { background: linear-gradient(180deg,#f6dad3,#c9a29a 70%,#a67c74); }
@@ -4466,9 +4471,9 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .edit-status { box-sizing: border-box; width: 196px; height: auto; min-width: 0; justify-content: flex-start; padding: 6px 8px 8px; display: flex; flex-direction: column; border-radius: 2px;
     border: 1px solid #7c827f; background: linear-gradient(180deg,#bcc0be,#a9adab);
     box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
-  acidify-patch-view .edit-caption { width: 100%; height: 12px; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.4);
+  acidify-patch-view .edit-caption { width: 100%; height: 13px; flex: 0 0 auto; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.4);
     color: #26302f; text-shadow: 0 1px 0 rgba(255,255,255,.8); font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; }
-  acidify-patch-view .edit-readout { margin-top: 5px; flex: 1; min-height: 22px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
+  acidify-patch-view .edit-readout { margin-top: 8px; flex: 1; min-height: 22px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
     background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.09) 3px 4px), linear-gradient(180deg,#251614,#130b09);
     box-shadow: inset 0 3px 6px rgba(0,0,0,.78); color: #ff513b; font: 24px/1 'Courier New',monospace; letter-spacing: 2px; white-space: nowrap;
     text-shadow: 0 0 5px #e32418, 0 0 10px rgba(227,36,24,.4); }
@@ -4482,7 +4487,7 @@ class AcidifyPatchView extends HTMLElement {
     gap: 2px; border-radius: 2px; cursor: pointer; border: 1px solid #1a1e1f; color: #1d2426;
     background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
-  acidify-patch-view .function-button.active { border-color: #1a1e1f;
+  acidify-patch-view .function-button:active, acidify-patch-view .function-button.active { transform: none; border-color: #1a1e1f;
     background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
     box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5); }
   acidify-patch-view .function-button::before { content: ""; position: absolute; left: 5px; top: 5px; width: 5px; height: 5px; border-radius: 50%;
@@ -4490,7 +4495,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .function-button.active::before { background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%); box-shadow: 0 0 7px rgba(255,72,48,.9), inset 0 0 2px rgba(255,255,255,.6); }
   acidify-patch-view .function-button strong { color: #1d2426; font: 900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
   acidify-patch-view .function-button.active strong { color: #8c1a12; }
-  acidify-patch-view .function-button small { color: #5b6466; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .6px; }
+  acidify-patch-view .function-button small { margin-top: 0; color: #5b6466; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .6px; }
   acidify-patch-view .function-button.active small { color: #5b6466; }
 
 
@@ -4517,20 +4522,20 @@ class AcidifyPatchView extends HTMLElement {
     border-right: 1px solid rgba(45,50,49,.4); box-shadow: 1px 0 0 rgba(255,255,255,.6); background: none; border-radius: 0; border-top: 0; border-left: 0; border-bottom: 0; }
   acidify-patch-view .distortion-cell-label { width: 88px; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.45);
     color: #26302f; font: 900 8px/14px 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.7px; text-shadow: 0 1px 0 rgba(255,255,255,.85); height: auto; background: none; margin: 0; padding: 0; }
-  acidify-patch-view .distortion-power-led { margin-top: 10px; width: 11px; height: 11px; border-radius: 50%; border: 1px solid #4f1a15;
+  acidify-patch-view .distortion-power-led { margin-top: 10px; width: 13px; height: 13px; border-radius: 50%; border: 1px solid #4f1a15;
     background: #48140f; box-shadow: 0 1px 0 rgba(255,255,255,.62), inset 0 -2px 3px #170403; }
   acidify-patch-view .distortion-power-led.lit { background: #ff503d; box-shadow: 0 0 6px rgba(255,50,32,.9), inset 0 0 1px #fff; }
-  acidify-patch-view .distortion-power { margin-top: 9px; background: none; border: 0; box-shadow: none; padding: 0; width: auto; height: auto; }
-  acidify-patch-view .distortion-power button { width: 80px; height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  acidify-patch-view .distortion-power.run-switch { margin: 9px 0 0; background: none; border: 0; box-shadow: none; padding: 0; width: 80px; height: 58px; position: static; display: block; transform: none; perspective: none; }
+  acidify-patch-view .distortion-power.run-switch button, acidify-patch-view .distortion-power.run-switch.is-on button { width: 80px; height: 58px; margin: 0; position: static; left: auto; top: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
     cursor: pointer; border-radius: 2px; border: 1px solid #1a1e1f; transform: none; text-shadow: none;
     background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
-  acidify-patch-view .distortion-power.is-on button { border-color: #8c2c23;
+  acidify-patch-view .distortion-power.run-switch.is-on button { border-color: #8c2c23;
     background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
     box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 0 12px rgba(181,41,33,.3); }
   acidify-patch-view .distortion-power-label { color: #1d2426; font: 900 10px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.4px; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
   acidify-patch-view .distortion-power.is-on .distortion-power-label { color: #8c1a12; }
-  acidify-patch-view .distortion-power button small { color: #5b6466; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .7px; }
+  acidify-patch-view .distortion-power button small { margin: 0; color: #5b6466; font: 900 6.5px/7px 'Arial Narrow',Arial,sans-serif; letter-spacing: .7px; }
   acidify-patch-view .distortion-type-cell { display: flex; flex-direction: column; align-items: center; padding: 0;
     border-right: 1px solid rgba(45,50,49,.4); box-shadow: 1px 0 0 rgba(255,255,255,.6); background: none; border-radius: 0; border-top: 0; border-left: 0; border-bottom: 0; }
   acidify-patch-view .distortion-type-cell .distortion-cell-label { width: 150px; }
@@ -4542,7 +4547,7 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
   acidify-patch-view .distortion-types button::before { content: ""; position: absolute; left: 50%; top: 6px; margin-left: -3px; width: 6px; height: 6px; border-radius: 50%;
     background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.7); }
-  acidify-patch-view .distortion-types button.active { border-color: #8c2c23; color: #8c1a12;
+  acidify-patch-view .distortion-types button.active { transform: none; border-color: #8c2c23; color: #8c1a12;
     background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
     box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 0 12px rgba(181,41,33,.3); }
   acidify-patch-view .distortion-types button.active::before {
@@ -4551,13 +4556,16 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .distortion-types button small { color: #5b6466; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .7px; }
   acidify-patch-view .distortion-types button.active small { color: #5b6466; }
   acidify-patch-view .distortion-knob-cell { display: flex; flex-direction: column; align-items: center; padding: 0; background: none; border: 0; box-shadow: none; }
+  acidify-patch-view .distortion-knob-cell .silver-knob { margin-top: 0; padding-top: 0; }
+  acidify-patch-view .distortion-type-cell + .distortion-knob-cell .silver-knob { margin-left: 6px; }
+  acidify-patch-view .distortion-knob-cell + .distortion-knob-cell .silver-knob { margin-right: 6px; }
   acidify-patch-view .distortion-knob-cell .silver-knob .control-label { width: 74px; display: grid; place-items: center; border-bottom: 1px solid rgba(45,50,49,.45);
     color: #26302f; font: 900 8px/14px 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.7px; text-shadow: 0 1px 0 rgba(255,255,255,.85); }
-  acidify-patch-view .distortion-knob-cell .silver-knob .chrome-wrap { width: 58px; height: 58px; margin-top: 9px; }
+  acidify-patch-view .distortion-knob-cell .silver-knob .chrome-wrap { width: 60px; height: 60px; margin-top: 9px; }
   acidify-patch-view .distortion-knob-cell .silver-knob .tick-ring { display: none; }
-  acidify-patch-view .distortion-knob-cell .silver-knob .dial-cap, acidify-patch-view .distortion-knob-cell .silver-knob .pointer-wrap { inset: 8px; }
+  acidify-patch-view .distortion-knob-cell .silver-knob .dial-cap, acidify-patch-view .distortion-knob-cell .silver-knob .pointer-wrap { inset: 9px; }
   acidify-patch-view .distortion-knob-cell .silver-knob .dial-pointer { top: 5px; width: 3px; height: 14px; margin-left: -1.5px; }
-  acidify-patch-view .distortion-knob-cell .led-box { margin-top: 8px; width: 58px; height: 19px; }
+  acidify-patch-view .distortion-knob-cell .led-box { margin-top: 8px; width: 60px; height: 21px; }
   acidify-patch-view .distortion-knob-cell .led-box .value-label { font: 11px/1 'Courier New',monospace; }
   acidify-patch-view .distortion-overlay footer { height: 22px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; justify-content: flex-end;
     border-top: 1px solid rgba(45,50,49,.35); color: #5d6768; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.2px; background: none; }
@@ -4593,7 +4601,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .mod-cell-head { height: 14px; display: flex; align-items: center; justify-content: space-between; }
   acidify-patch-view .mod-cell-head strong { color: #26302f; font: 900 9.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.6px; white-space: nowrap; text-shadow: 0 1px 0 rgba(255,255,255,.85); }
   acidify-patch-view .mod-cell.on .mod-cell-head strong { color: #8e1f16; }
-  acidify-patch-view .mod-cell-led { width: 9px; height: 9px; border-radius: 50%; border: 1px solid #4f1a15;
+  acidify-patch-view .mod-cell-led { width: 11px; height: 11px; border-radius: 50%; border: 1px solid #4f1a15;
     background: linear-gradient(180deg,#6c6360,#3e3836); box-shadow: inset 0 1px 1px rgba(255,255,255,.3); }
   acidify-patch-view .mod-cell.on .mod-cell-led {
     background: radial-gradient(circle at 38% 32%, #ffd9d1 0 14%, #ff5335 34%, #b81b0d 74%, #6d0f06 100%);
@@ -4617,17 +4625,17 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .mod-knob .silver-knob .chrome-wrap { grid-row: 1 / span 2; grid-column: 1; width: 46px; height: 46px; margin: 0; }
   acidify-patch-view .mod-knob .silver-knob .control-label { grid-column: 2; grid-row: 1; align-self: end; margin: 0; white-space: nowrap;
     color: #26302f; font: 900 8.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; text-shadow: 0 1px 0 rgba(255,255,255,.85); }
-  acidify-patch-view .mod-knob .silver-knob .led-box { grid-column: 2; grid-row: 2; align-self: start; width: 100%; height: 22px; margin: 0; }
+  acidify-patch-view .mod-knob .silver-knob .led-box { grid-column: 2; grid-row: 2; align-self: start; width: calc(100% + 2px); height: 24px; margin: 0; }
   acidify-patch-view .mod-knob .silver-knob .led-box .value-label { font: 12px/1 'Courier New',monospace; color: #7d3a31; text-shadow: 0 0 5px rgba(255,57,37,.45); }
   acidify-patch-view .mod-cell.on .mod-knob .led-box .value-label { color: #ff6756; }
-  acidify-patch-view .mod-knob .silver-knob .tick-ring { display: block; position: absolute; inset: -4px; border-radius: 50%; filter: none; border: 0;
+  acidify-patch-view .mod-knob .silver-knob .tick-ring { display: block; position: absolute; inset: -4px; width: 54px; height: 54px; border-radius: 50%; filter: none; border: 0;
     background: repeating-conic-gradient(from 218deg, #3f4645 0 1.2deg, transparent 1.2deg 11.5deg);
     -webkit-mask: radial-gradient(circle, transparent 0 68%, #000 68% 100%); mask: radial-gradient(circle, transparent 0 68%, #000 68% 100%); }
   acidify-patch-view .mod-knob .silver-knob .dial-cap, acidify-patch-view .mod-knob .silver-knob .pointer-wrap { inset: 7px; }
   acidify-patch-view .mod-knob .silver-knob .dial-pointer { top: 3px; width: 3px; height: 11px; margin-left: -1.5px; }
-  acidify-patch-view .mod-fixed { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  acidify-patch-view .mod-fixed { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
   acidify-patch-view .mod-fixed-label { white-space: nowrap; color: #26302f; font: 900 8.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; text-shadow: 0 1px 0 rgba(255,255,255,.85); }
-  acidify-patch-view .mod-fixed-box { width: 100%; height: 32px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
+  acidify-patch-view .mod-fixed-box { width: calc(100% + 2px); height: 34px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
     background: linear-gradient(180deg,#241512,#130b09); box-shadow: inset 0 2px 4px rgba(0,0,0,.72); }
   acidify-patch-view .mod-fixed-box span { white-space: nowrap; color: #7d3a31; font: 16px/1 'Courier New',monospace; text-shadow: 0 0 5px rgba(255,57,37,.45); }
   acidify-patch-view .mod-cell.on .mod-fixed-box span { color: #ff6756; }
@@ -4655,12 +4663,12 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .studio-lane-label { text-align: right; color: #c9cfca; font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; width: auto; background: none; }
   acidify-patch-view .studio-lane .studio-lane-cells { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 12px; }
   acidify-patch-view .studio-cell-group { display: grid; grid-template-columns: repeat(4,1fr); column-gap: 3px; background: none; border: 0; box-shadow: none; padding: 0; }
-  acidify-patch-view .studio-cell:not(.studio-step) { height: 17px; width: auto; border-radius: 2px; cursor: pointer; font-size: 0; color: transparent;
+  acidify-patch-view .studio-cell:not(.studio-step) { height: 15px; width: auto; border-radius: 2px; cursor: pointer; font-size: 0; color: transparent;
     background: linear-gradient(180deg,#3a403c,#262b28); border: 1px solid #171b19; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
   acidify-patch-view .studio-cell:not(.studio-step).playing { border-color: #7d5a52; }
-  acidify-patch-view .studio-cell[data-kind="accent"].active { background: linear-gradient(180deg,#ff6a58,#a4211a); border-color: #ff8878;
+  acidify-patch-view .studio-cell[data-kind="accent"].active, acidify-patch-view .studio-lane[data-lane="accent"] .studio-cell.active { background: linear-gradient(180deg,#ff6a58,#a4211a); border-color: #ff8878;
     box-shadow: 0 0 7px rgba(255,72,48,.4), inset 0 1px 0 rgba(255,255,255,.35); }
-  acidify-patch-view .studio-cell[data-kind="slide"].active { background: linear-gradient(180deg,#ffc46f,#8a5312); border-color: #ffd191;
+  acidify-patch-view .studio-cell[data-kind="slide"].active, acidify-patch-view .studio-lane[data-lane="slide"] .studio-cell.active { background: linear-gradient(180deg,#ffc46f,#8a5312); border-color: #ffd191;
     box-shadow: 0 0 7px rgba(255,168,60,.32), inset 0 1px 0 rgba(255,255,255,.3); }
   acidify-patch-view .studio-contour { margin-top: 6px; }
   acidify-patch-view .studio-contour-groups { height: 68px; border-top: 1px solid rgba(255,255,255,.05); border-bottom: 1px solid rgba(255,255,255,.05); }
@@ -4680,38 +4688,44 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .studio-step.selected .step-sel { border-color: #e9eeee;
     box-shadow: inset 0 0 0 1px rgba(46,54,52,.6), 0 0 0 1px rgba(255,255,255,.55), 0 1px 4px rgba(30,36,34,.3); }
   acidify-patch-view .studio-step .step-well { top: 9px; height: 45px; }
-  acidify-patch-view .studio-step .step-cap { top: 9px; height: 41px; }
+  acidify-patch-view .studio-step .step-cap { top: 9px; height: 43px; }
   acidify-patch-view .studio-step.selected .step-cap { top: 11px; }
   acidify-patch-view .studio-step .cap-rocker { height: 33px; }
   acidify-patch-view .studio-step .cap-nub { top: 11px; height: 11px; }
   acidify-patch-view .studio-step .step-playbar { left: 3px; right: 3px; top: 55px; }
   acidify-patch-view .studio-step .step-note-field { height: 18px; border: 1px solid rgba(255,255,255,.06);
     background: linear-gradient(180deg,#1e211d,#0e100d); box-shadow: inset 0 1px 2px rgba(0,0,0,.6); }
-  acidify-patch-view .studio-step .step-note { font: 900 11px/1 'Courier New',monospace; letter-spacing: .4px; }
-  acidify-patch-view .studio-tools { width: 296px; flex: 0 0 auto; box-sizing: border-box; padding: 6px 8px 8px; border-radius: 2px;
+  acidify-patch-view .studio-step .step-note { font: 900 11px/1 'Courier New',monospace; letter-spacing: .4px; color: #ff6756; text-shadow: 0 0 6px rgba(255,57,37,.5); }
+  acidify-patch-view .studio-cell-group .studio-step.selected .cap-rocker { background: linear-gradient(96deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); }
+  acidify-patch-view .studio-cell-group .studio-step.selected:nth-child(2) .cap-rocker { background: linear-gradient(100deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); }
+  acidify-patch-view .studio-cell-group .studio-step.selected:nth-child(3) .cap-rocker { background: linear-gradient(104deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); }
+  acidify-patch-view .studio-cell-group .studio-step.selected:nth-child(4) .cap-rocker { background: linear-gradient(108deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); }
+  acidify-patch-view .studio-cell-group .studio-step.selected .step-cap { box-shadow: inset 0 3px 6px rgba(38,45,47,.5), 0 1px 0 rgba(255,255,255,.5); }
+  acidify-patch-view .studio-tools { width: 314px; flex: 0 0 auto; box-sizing: border-box; padding: 6px 8px 8px; border-radius: 2px;
     border: 1px solid #0a0b09; background: linear-gradient(#1c1e1a,#0f100e); box-shadow: inset 0 3px 9px rgba(0,0,0,.72); display: flex; flex-direction: column; position: relative; height: auto; overflow: visible; }
   acidify-patch-view .studio-tool-head { position: relative; display: flex; gap: 6px; align-items: center; height: 12px; padding: 0; border: 0; background: none; }
   acidify-patch-view .studio-badge { width: 88px; height: 12px; display: grid; place-items: center; border-radius: 2px; background: #8f1d16; color: #ffe3de;
     font: 900 6px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; }
-  acidify-patch-view .studio-scale { flex: 1; height: 12px; display: flex; align-items: center; justify-content: space-between; padding: 0 6px; cursor: pointer;
-    border-radius: 2px; border: 0; background: #2b302f; color: #9aa3a5; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1px; transform: none; }
-  acidify-patch-view .studio-scale strong { color: #ff9a89; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px; }
+  acidify-patch-view .studio-scale { flex: 1; height: 12px; display: flex; align-items: center; justify-content: flex-start; gap: 0; padding: 0 6px; cursor: pointer; box-shadow: none;
+    border-radius: 2px; border: 0; background: #2b302f; color: #9aa3a5; font: 900 6px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1px; transform: none; }
+  acidify-patch-view .studio-scale strong { margin-left: auto; margin-right: 2px; color: #ff9a89; font: 900 6px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px; }
   acidify-patch-view .studio-scale:active { transform: none; }
   acidify-patch-view .studio-groups { margin-top: 7px; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
   acidify-patch-view .studio-group { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 3px; }
   acidify-patch-view .studio-group-label { display: flex; align-items: center; gap: 6px; color: #93a0a2; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.4px; white-space: nowrap; }
   acidify-patch-view .studio-group-label i { flex: 1; height: 1px; background: rgba(255,255,255,.11); }
-  acidify-patch-view .studio-actions { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4,1fr); grid-template-rows: none; gap: 5px; padding: 0; margin: 0; }
+  acidify-patch-view .studio-actions { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4,1fr); grid-template-rows: none; grid-auto-rows: 1fr; gap: 5px; padding: 0; margin: 0; }
   acidify-patch-view .studio-actions button { height: 100%; min-height: 0; width: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
     cursor: pointer; border-radius: 2px; border: 1px solid #1a1e1f; color: #1d2426;
     background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.42);
     font: 11px/11px 'Arial Narrow',Arial,sans-serif; text-shadow: none; transform: none; }
-  acidify-patch-view .studio-actions button small { color: #3f4a4c; font: 900 6.5px/7px 'Arial Narrow',Arial,sans-serif; letter-spacing: .5px; }
+  acidify-patch-view .studio-actions button small { margin-top: 0; color: #3f4a4c; font: 900 6.5px/7px 'Arial Narrow',Arial,sans-serif; letter-spacing: .5px; }
+  acidify-patch-view .studio-actions button b { display: block; height: 11px; font: 11px/11px 'Arial Narrow',Arial,sans-serif; font-weight: normal; }
   acidify-patch-view .studio-actions button[disabled] { opacity: 1; cursor: default; }
   acidify-patch-view.studio-mode .studio-matrix { height: auto; min-height: 0; }
   acidify-patch-view .studio-matrix .studio-lane, acidify-patch-view .studio-matrix .studio-ruler { height: auto; min-height: 0; }
-  acidify-patch-view .studio-matrix .studio-ruler { height: 11px; }
+  acidify-patch-view .studio-matrix .studio-ruler { height: 11px; margin-top: 2px; }
   acidify-patch-view .studio-matrix .studio-contour-groups { height: 68px; }
   acidify-patch-view .studio-matrix .studio-lane .studio-cell.studio-step { height: 76px; }
   acidify-patch-view.studio-mode .studio-tools { height: auto; min-height: 0; }
@@ -4774,7 +4788,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="tooltip-toggle" type="button" aria-pressed="true" data-tooltip="Turn the English control tooltips on or off."><span>? TIPS</span><strong class="tooltip-toggle-state">ON</strong></button>
             <span class="power-cell"><span class="power-label">POWER</span><span class="power-ring"><i class="power-led"></i></span></span>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.1.0</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.1.1</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -4909,9 +4923,9 @@ class AcidifyPatchView extends HTMLElement {
             <span class="distortion-cell-label">CHARACTER</span>
             <div class="control distortion-types" data-param="param46" data-endpoint-id="param46"
               data-min="0" data-max="2" data-step="1" data-init="0" data-control="buttons">
-              <button data-value="0" type="button">PURE<small>SUBTLE</small></button>
-              <button data-value="1" type="button">MACKIE<small>1202</small></button>
-              <button data-value="2" type="button">PHONO<small>RIAA</small></button>
+              <button data-value="0" type="button"><strong>PURE</strong><small>SUBTLE</small></button>
+              <button data-value="1" type="button"><strong>MACKIE</strong><small>1202</small></button>
+              <button data-value="2" type="button"><strong>PHONO</strong><small>RIAA</small></button>
             </div>
           </div>
           <div class="distortion-knob-cell">${dial("param47")}</div>
@@ -5061,31 +5075,31 @@ class AcidifyPatchView extends HTMLElement {
           <div class="studio-groups">
             <div class="studio-group"><span class="studio-group-label">EDIT<i></i></span>
               <div class="studio-actions">
-                <button data-studio-action="undo" data-tooltip="Undo the last pattern edit.">↶<small>UNDO</small></button>
-                <button data-studio-action="redo" data-tooltip="Redo the last undone edit.">↷<small>REDO</small></button>
-                <button data-studio-action="copy" data-tooltip="Copy the current pattern.">⧉<small>COPY</small></button>
-                <button data-studio-action="paste" data-tooltip="Paste the copied pattern.">▣<small>PASTE</small></button>
+                <button data-studio-action="undo" data-tooltip="Undo the last pattern edit."><b>↶</b><small>UNDO</small></button>
+                <button data-studio-action="redo" data-tooltip="Redo the last undone edit."><b>↷</b><small>REDO</small></button>
+                <button data-studio-action="copy" data-tooltip="Copy the current pattern."><b>⧉</b><small>COPY</small></button>
+                <button data-studio-action="paste" data-tooltip="Paste the copied pattern."><b>▣</b><small>PASTE</small></button>
               </div></div>
             <div class="studio-group"><span class="studio-group-label">ARRANGE<i></i></span>
               <div class="studio-actions">
-                <button data-studio-action="rotate-left" data-tooltip="Rotate the whole pattern one step to the left.">◀<small>ROTATE</small></button>
-                <button data-studio-action="rotate-right" data-tooltip="Rotate the whole pattern one step to the right.">▶<small>ROTATE</small></button>
-                <button data-studio-action="reverse" data-tooltip="Play the pattern backwards — reverses the step order.">⇄<small>REVERSE</small></button>
-                <button data-studio-action="pitch-mirror" data-tooltip="Mirror every pitch inside its range.">◇<small>MIRROR</small></button>
+                <button data-studio-action="rotate-left" data-tooltip="Rotate the whole pattern one step to the left."><b>◀</b><small>ROTATE</small></button>
+                <button data-studio-action="rotate-right" data-tooltip="Rotate the whole pattern one step to the right."><b>▶</b><small>ROTATE</small></button>
+                <button data-studio-action="reverse" data-tooltip="Play the pattern backwards — reverses the step order."><b>⇄</b><small>REVERSE</small></button>
+                <button data-studio-action="pitch-mirror" data-tooltip="Mirror every pitch inside its range."><b>◇</b><small>MIRROR</small></button>
               </div></div>
             <div class="studio-group"><span class="studio-group-label">SELECTED STEP<i></i></span>
               <div class="studio-actions">
-                <button data-studio-action="transpose-down" data-tooltip="Selected step one octave down.">−12<small>OCT</small></button>
-                <button data-studio-action="transpose-up" data-tooltip="Selected step one octave up.">+12<small>OCT</small></button>
-                <button data-studio-action="rest" data-tooltip="Toggle gate and rest for the selected step.">—<small>REST</small></button>
-                <button data-studio-action="choose-note" aria-haspopup="dialog" data-tooltip="Choose an exact note for the selected steps.">♪<small>NOTE</small></button>
+                <button data-studio-action="transpose-down" data-tooltip="Selected step one octave down."><b>−12</b><small>OCT</small></button>
+                <button data-studio-action="transpose-up" data-tooltip="Selected step one octave up."><b>+12</b><small>OCT</small></button>
+                <button data-studio-action="rest" data-tooltip="Toggle gate and rest for the selected step."><b>—</b><small>REST</small></button>
+                <button data-studio-action="choose-note" aria-haspopup="dialog" data-tooltip="Choose an exact note for the selected steps."><b>♪</b><small>NOTE</small></button>
               </div></div>
             <div class="studio-group"><span class="studio-group-label">GENERATE<i></i></span>
               <div class="studio-actions">
-                <button data-studio-action="generate" data-tooltip="Generate a new phrase inside the selected scale.">✣<small>PHRASE</small></button>
-                <button data-studio-action="mutate" data-tooltip="Nudge the current phrase without losing its character.">≈<small>MUTATE</small></button>
-                <button data-studio-action="scale" data-tooltip="Next scale for Generate and Mutate.">◧<small>SCALE</small></button>
-                <button data-studio-action="select-all" data-tooltip="Select all 16 steps.">16<small>ALL</small></button>
+                <button data-studio-action="generate" data-tooltip="Generate a new phrase inside the selected scale."><b>✣</b><small>PHRASE</small></button>
+                <button data-studio-action="mutate" data-tooltip="Nudge the current phrase without losing its character."><b>≈</b><small>MUTATE</small></button>
+                <button data-studio-action="scale" data-tooltip="Next scale for Generate and Mutate."><b>◧</b><small>SCALE</small></button>
+                <button data-studio-action="select-all" data-tooltip="Select all 16 steps."><b>16</b><small>ALL</small></button>
               </div></div>
           </div>
           <span class="studio-toast" role="status"></span>

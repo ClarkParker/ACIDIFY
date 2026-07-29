@@ -6,6 +6,43 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-07-29
+
+### Fixed
+
+- **Mechanischer 1:1-Abgleich, Runde 2 — DOM-vermessen statt Pixel-geschätzt**
+  (`tools/uiport/` + Playwright-DOM-Dumps beider Seiten; schlechteste Zone
+  vorher/nachher: Classic 13 %→1,6 %, Studio 33 %→1,6 %, Distortion 11 %→1,8 %,
+  Mods 11 %→0,5 %; Rest ist Subpixel-AA, Best-Shift-Korrelation 0/0):
+  - **Programmer-Kopf**: Header randlos über die volle Panelbreite
+    (`margin: 0 -8px`), Legend-Pills 16×12 mit 6-px-Gruppenabstand,
+    Positionsdisplay 70×15, Step-Pills 17×13.
+  - **Steps**: Kappe 44 hoch, Notenfeld 24 hoch bündig unter der Playbar,
+    Legacy-`translateY` auf `.selected` neutralisiert.
+  - **Editor**: Readout-Abstand 8, Captions 13 hoch, Klaviatur 78/48 mit
+    9×9-LED auf schwarzen Tasten, Funktionsmatrix ohne Legacy-`margin-top`
+    und ohne Active-Versatz.
+  - **Deck A**: Klangregler-Raster exakt 6×87 (Legacy-`justify-items: center`
+    überschrieben, Labels volle Spaltenbreite), Volume-Bank-Padding 13,
+    Zellentitel 16, VU-Meter 46 breit, DIST/MOD-Trigger ohne Versatz;
+    Scope-Titel 15 (Kurve sitzt 1 px tiefer, wie im Template).
+  - **Studio**: Werkzeugpanel 314/Matrix 824 (Template-Split), Lane-Zellen
+    42×15, Ruler-Abstand, Pitch-Kappen 43, Aktionstasten füllen die
+    31-px-Reihe (Icons als Elemente mit fester 11-px-Zeile), Scale-Button
+    linksbündig mit rechtsgestelltem Wert ohne Rahmen, Noten in
+    LED-Rot mit Glow, gedrückte Optik für selektierte Wippen,
+    Accent/Slide-Aktivfarben gegen die Legacy-Gradienten durchgesetzt.
+  - **Distortion-Overlay**: POWER-Schalter 80×58 flach (3D-Rocker-Legacy
+    ausgeschaltet), Power-LED 13, Character-Titel als `strong` mit
+    Template-Abstand, kein Active-Versatz, DRIVE/MIX-Dials 60 mit
+    60×21-LED-Box an Template-Position.
+  - **Mods-Overlay**: Zellen-LED 11, Tick-Ring 54, Wertdisplays 24/34 hoch
+    in Template-Breite, FEEDBACK-Spaltenabstand 5.
+- `tools/uiport/`-Harness über `ACIDIFY_UIPORT_SP`/`ACIDIFY_ROOT`/
+  `ACIDIFY_CHROMIUM_PATH` parametrisiert (war auf das Scratchpad der
+  Vorsession festgenagelt).
+- `ui_smoke_test`: Studio-Werkzeugbreite auf die Template-Maße (314) angepasst.
+
 ## [2.1.0] - 2026-07-27
 
 ### Changed

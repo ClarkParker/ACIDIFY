@@ -3,7 +3,8 @@
 import os
 from PIL import Image
 
-SP = "/tmp/claude-0/-home-user/0aabc4bd-199f-5b28-a7c3-419feec50919/scratchpad"
+SP = os.environ.get("ACIDIFY_UIPORT_SP",
+                    "/tmp/claude-0/-home-user/0aabc4bd-199f-5b28-a7c3-419feec50919/scratchpad")
 OUT = os.path.join(SP, "areas")
 os.makedirs(OUT, exist_ok=True)
 

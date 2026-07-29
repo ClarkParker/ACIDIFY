@@ -4,14 +4,16 @@ import { pathToFileURL } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
 
-const SP = "/tmp/claude-0/-home-user/0aabc4bd-199f-5b28-a7c3-419feec50919/scratchpad";
-const ROOT = "/home/user/ACIDIFY";
+const SP = process.env.ACIDIFY_UIPORT_SP
+  || "/tmp/claude-0/-home-user/0aabc4bd-199f-5b28-a7c3-419feec50919/scratchpad";
+const ROOT = process.env.ACIDIFY_ROOT || "/home/user/ACIDIFY";
 const OUT = path.join(SP, "shots");
 fs.mkdirSync(OUT, { recursive: true });
 
 const require = createRequire(path.join(SP, "node_modules/"));
 const { chromium } = require("playwright");
-const exe = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+const exe = process.env.ACIDIFY_CHROMIUM_PATH
+  || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 
 const launch = () => chromium.launch({
   headless: true,

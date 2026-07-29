@@ -1,3 +1,19 @@
+# Validierung 2.1.1
+
+## 2.1.1
+
+Mechanischer Soll/Ist-Abgleich gegen das dc-Template (`tools/uiport/`,
+4 Zustände auf 1180×580, 16-Zonen-Diff, Schwelle >24 RGB): schlechteste Zone
+Classic 1,6 %, Studio 1,6 %, Distortion 1,8 %, Mods 0,5 % (vorher 13/33/11/11).
+Verbleibende Deltas sind Subpixel-AA: Best-Shift-Korrelation aller heißen
+Regionen 0/0 px, Label-Tintenzentroide ≤0,5 px bei gleicher Tintenmenge,
+plus die beabsichtigte Versionszeile im Brand. `ui_smoke_test` dreifach grün,
+DSP-Smoke bit-identisch 0,34552 @48k (alle 6 Raten grün), dsp_matrix/
+articulation/transport ok, Messstand 11/11, partcheck 28/28,
+`ui_lint --strict`/`cmajor_lint`/`check_sync`/`manifest_check --strict` sauber.
+
+---
+
 # Validierung 2.1.0
 
 ## 2.1.0
