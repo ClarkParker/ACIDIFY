@@ -1,3 +1,21 @@
+# Validierung 2.2.0
+
+## 2.2.0
+
+Distortion-Matrix nach der Pegel-Kalibrierung: clean/disabled/zero-drive/
+zero-mix bit-transparent (ΔRMS = 0), PURE Wirkanteil 0,000585 (vorher
+0,000028), MACKIE Drive 0,75 → 1: Peak 0,626 → 0,652 (steigt statt fällt),
+PHONO Peak exakt 0,34552 (Soft-Clip-Decke), kein Fall über 1,05.
+Env-×3-Nachweis: Schwerpunkt Env = 0 mit/ohne Mod 112/112 Hz identisch,
+Env = 0,68: 115 → 126 Hz. Studio-Playhead headless verifiziert (LED-Glow,
+Ruler-Highlight, Screenshot). Spiegel-Slider param57 unter TUNING erscheint
+bei aktivem Mod, 22 ms → Wheel 24 ms. Smoke bit-identisch 0,34552 @48k
+(alle 6 Raten), articulation/transport ok, Messstand 11/11, partcheck 28/28,
+Lints strict sauber, `ui_smoke_test` 4/4 grün, Template-Abgleich unverändert
+(max. Zone 1,8 %).
+
+---
+
 # Validierung 2.1.1
 
 ## 2.1.1

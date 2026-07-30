@@ -26,6 +26,16 @@ die Controls bauen sich automatisch, sobald DOM-Knoten mit
 `data-param="param51"`… existieren (`_buildControls` überspringt Einträge ohne
 Knoten).
 
+Alle drei Amount-Parameter haben zusätzlich einen Spiegel-Slider auf der
+Haupt-GUI (sichtbar nur bei aktivem Mod): `param57` unter TUNING (Slide =
+Pitch-Glide), `param52` unter CUTOFF (Filter-Overdrive), `param59` unter
+ACCENT (Soft Attack wirkt auf Hüllkurve und Accent).
+
+Env Mod ×3 greift seit 2.2.0 nur noch in den Env-Pfad ein (VR5-Netz); die
+Spanne des Cutoff-Potis bleibt bei 3 Oktaven — der DF-Mod ändert dort kein
+Bauteil. Nachweis: Spektral-Schwerpunkt bei Env = 0 mit/ohne Mod identisch
+(112/112 Hz), bei Env = 0,68 hebt der Mod den Sweep (115 → 126 Hz).
+
 Hinweis Preflight: 59 Parameter lösen die dokumentierte Warnung aus („Amorph
 documents 50 as the supported limit. More is field-tested to work (a shipped
 plugin runs 80+)"). Bewusst akzeptiert.

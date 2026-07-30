@@ -253,6 +253,16 @@ processor AcidifyCore
     float64 ampY2 = 0.0;
 
     float64 purePrevious = 0.0;
+
+    // Pedal-Referenzpegel der Distortion-Stufe: die Airwindows-Modelle sind
+    // auf Vollaussteuerung (+-1) kalibriert, die Stimme liefert nominal den
+    // dokumentierten Serien-Peak 0,34552. 1 / 0,34552 hebt das Signal fuer
+    // die Zerrmodelle auf Referenzpegel und teilt es danach wieder herunter.
+    const float64 pedalGain = 1.0 / 0.34552;
+    // Fester Ausgangs-Pad des Mackie-Modells auf seine Clip-Decke
+    // (1 - 0.1768 aus dem x^5-Soft-Limiter) — ersetzt den drive-gekoppelten
+    // Pad, der den Ausgang mit steigendem Drive leiser machte.
+    const float64 mackityOutPad = 1.0 / (1.0 - 0.1768);
     float64 mackHP1 = 0.0;
     float64 mackHP2 = 0.0;
     float64 mackIirAmountA = 0.0;
@@ -482,11 +492,14 @@ processor AcidifyCore
 
     float processPurestDrive (float signal, float drive)
     {
+        // PurestDrive auf Pedal-Referenzpegel; die Mischung bleibt algebraisch
+        // im Stimmen-Massstab, damit apply = 0 bit-exakt transparent ist.
         let x = float64 (signal);
-        let shaped = sin (x);
+        let xp = x * pedalGain;
+        let shaped = sin (xp);
         let apply = min (1.0, 0.5 * abs (purePrevious + shaped) * float64 (drive));
-        let driven = x * (1.0 - apply) + shaped * apply;
-        purePrevious = sin (x);
+        let driven = x * (1.0 - apply) + (shaped / pedalGain) * apply;
+        purePrevious = sin (xp);
         return float (driven);
     }
 
@@ -494,7 +507,7 @@ processor AcidifyCore
     {
         let macroGain = 1.0 + 9.0 * float64 (drive);
         let inputTrim = macroGain * macroGain;
-        var x = float64 (signal);
+        var x = float64 (signal) * pedalGain;
 
         mackHP1 = mackHP1 * (1.0 - mackIirAmountA) + x * mackIirAmountA;
         x -= mackHP1;
@@ -520,21 +533,27 @@ processor AcidifyCore
         mackHP2 = mackHP2 * (1.0 - mackIirAmountB) + x * mackIirAmountB;
         x -= mackHP2;
 
-        // One macro control replaces Mackity's separate trim and pad controls.
-        return float (x / macroGain);
+        // Drive steuert wie im Original nur den Input-Trim; der Pad ist fest
+        // auf die Clip-Decke gelegt, damit die Decke am Stimmen-Peak bleibt.
+        return float (x * mackityOutPad / pedalGain);
     }
 
     float processPhono (float signal, float drive)
     {
+        // Auf Referenzpegel in die Ueberladung; die RIAA-Kurve ist bei 1 kHz
+        // auf Einheitsverstaerkung normiert, also springt der Pegel beim
+        // Aktivieren nicht mehr (vorher pauschal x0,18 = -15 dB). Der
+        // Soft-Clip haelt die Bass-Anhebung (+19,9 dB bei 20 Hz) an der
+        // Stimmen-Decke fest.
         let preGain = pow (10.0, 2.0 * float64 (drive));
-        let overloaded = tanh (float64 (signal) * preGain);
+        let overloaded = tanh (float64 (signal) * pedalGain * preGain);
         let colored = riaaB0 * overloaded + riaaB1 * riaaX1 + riaaB2 * riaaX2
                     - riaaA1 * riaaY1 - riaaA2 * riaaY2;
         riaaX2 = riaaX1;
         riaaX1 = overloaded;
         riaaY2 = riaaY1;
         riaaY1 = colored;
-        return softClip (float (colored * 0.18));
+        return float (float64 (softClip (float (colored))) / pedalGain);
     }
 
     float processDistortion (float signal)
@@ -658,13 +677,17 @@ processor AcidifyCore
         // Minimum von 313,8 Hz liegt 0,4 % daneben und stuetzt den Wert.
         // MOD-Eingriffe: DF-Cutoff bis 5 kHz ("an octave above"), DF-Env-Mod
         // verdreifacht. Beide Toggles aus, ergibt exakt den Serienstand.
+        // Env x3 greift NUR in den Env-Pfad (VR5-Netz) ein — die Spanne des
+        // Cutoff-Potis (VR3-Netz) bleibt bei 3 Oktaven; dort aendert der
+        // DF-Mod kein Bauteil.
         let highCutoff = modCutoffExt ? 5000.0f : 2500.0f;
+        let cutoffOctaves = 3.0f;
         let octaves = 3.0f * (modEnvX3 ? 3.0f : 1.0f);
 
         let c = clamp (cutoffControl, 0.0f, 1.0f);
         let e = clamp (envModControl, 0.0f, 1.0f);
 
-        baseCutoffTarget = highCutoff * float (pow (2.0, float64 (octaves * (c - 1.0f))));
+        baseCutoffTarget = highCutoff * float (pow (2.0, float64 (cutoffOctaves * (c - 1.0f))));
 
         // Env Mod null heisst KEINE Modulation. Open303 lieferte hier 0,864
         // statt 0 und brauchte deshalb envOffset als Gegengewicht — eine

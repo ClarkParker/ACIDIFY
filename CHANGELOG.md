@@ -6,6 +6,46 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-07-29
+
+### Fixed
+
+- **Env Mod ×3 verzerrte die Cutoff-Spanne** (`updateFilterMapping`): der
+  Mod verneunfachte auch die Spanne des Cutoff-Potis (3 → 9 Oktaven), wodurch
+  das Filter bei mittlerem Cutoff von 884 Hz auf 110 Hz kollabierte — dafür
+  gibt es kein Bauteil, der DF-Mod ändert nur das VR5-Netz des Env-Pfads.
+  Jetzt entkoppelt. Nachweis: Spektral-Schwerpunkt bei Env = 0 mit/ohne Mod
+  identisch (112/112 Hz); bei Env = 0,68 hebt der Mod den Sweep (115 → 126 Hz).
+- **Studio-Modus: Playhead war unsichtbar.** Die Leucht-Regeln für
+  Kappen-LED, Playbar, Notendisplay und Kappen-Glow galten nur für
+  `.sequence-step` — Studio-Steps (`.studio-step`) blieben dunkel, und die
+  Ruler-Nummern bekamen die `playing`-Klasse nie. Beides ergänzt; der
+  laufende Step leuchtet jetzt wie im Classic-Modus.
+
+### Changed
+
+- **Distortion-Stufe auf Pedal-Referenzpegel kalibriert** (Verhalten der drei
+  Modi, Struktur unverändert Airwindows-treu):
+  - Alle drei Modelle arbeiten jetzt auf Vollaussteuerung
+    (`pedalGain = 1 / 0,34552`, der dokumentierte Serien-Peak) statt auf dem
+    rohen Stimmenpegel.
+  - **PURE** war am Stimmenpegel praktisch wirkungslos (Wirkanteil −91 dB,
+    sin() im linearen Bereich); jetzt hörbar (Wirkanteil ×21), bei Drive 0
+    weiterhin bit-exakt transparent.
+  - **MACKIE** wurde mit steigendem Drive leiser (drive-gekoppelter
+    Ausgangs-Pad ÷macroGain drückte die Clip-Decke von −14 auf −22 dBFS).
+    Der Pad liegt jetzt wie im Original fest — auf der Clip-Decke
+    (1 − 0,1768) des x⁵-Limiters; mehr Drive = mehr Pegel und Sättigung.
+  - **PHONO** sprang beim Aktivieren um −15 dB (pauschaler Faktor 0,18).
+    Die RIAA-Kurve ist bei 1 kHz auf Einheitsverstärkung normiert; der
+    Soft-Clip hält die Bass-Anhebung an der Stimmen-Decke (Peak exakt
+    0,34552 im Matrix-Test).
+  - Alle Bypass-Pfade bleiben sample-transparent, Smoke-Peak bit-identisch.
+- **Slide Time Amount (`param57`) hat jetzt einen Spiegel-Slider auf der
+  Haupt-GUI** unter TUNING (Slide = Pitch-Glide), sichtbar bei aktivem Mod —
+  wie die bestehenden Spiegel unter CUTOFF (`param52`) und ACCENT
+  (`param59`). Damit sind alle drei Mod-Amounts ohne Overlay erreichbar.
+
 ## [2.1.1] - 2026-07-29
 
 ### Fixed

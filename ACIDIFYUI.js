@@ -1184,7 +1184,7 @@ class AcidifyPatchView extends HTMLElement {
   }
 
   _renderModMirrors() {
-    const pairs = [["param52", "param51"], ["param59", "param58"]];
+    const pairs = [["param52", "param51"], ["param57", "param56"], ["param59", "param58"]];
     pairs.forEach(([amountId, enableId]) => {
       const mirror = this.querySelector(`.mod-slider[data-mirrors="${amountId}"]`);
       if (!mirror) return;
@@ -1801,6 +1801,9 @@ class AcidifyPatchView extends HTMLElement {
   }
 
   _renderStudio() {
+    this.querySelectorAll(".studio-ruler-group span").forEach((span, index) => {
+      span.classList.toggle("playing", index === this._playingStep);
+    });
     this.querySelectorAll(".studio-cell").forEach(cell => {
       const index = Number(cell.dataset.step);
       const kind = cell.dataset.kind;
@@ -4684,6 +4687,13 @@ class AcidifyPatchView extends HTMLElement {
     background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.7); }
   acidify-patch-view .studio-step.playing .step-lamp {
     background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%); box-shadow: 0 0 7px rgba(255,72,48,.9), inset 0 0 2px rgba(255,255,255,.6); }
+  acidify-patch-view .studio-step.playing .cap-led {
+    background: radial-gradient(ellipse at 50% 28%, #fff4ec 0 22%, #ff8a63 46%, #ff3a1c 78%, #b81c0c 100%);
+    box-shadow: 0 0 12px rgba(255,86,52,.95), 0 0 22px rgba(255,86,52,.5), inset 0 1px 0 rgba(255,255,255,.75); }
+  acidify-patch-view .studio-step.playing .step-cap { box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -3px -5px 8px rgba(96,106,109,.22), 0 2px 3px rgba(0,0,0,.5), 0 0 14px rgba(255,70,45,.4); }
+  acidify-patch-view .studio-step.playing .step-playbar { background: linear-gradient(90deg, rgba(255,74,51,0), #ff4a33 25% 75%, rgba(255,74,51,0)); box-shadow: 0 0 8px rgba(255,74,51,.75); }
+  acidify-patch-view .studio-step.playing .step-note { color: #ff9a88; text-shadow: 0 0 9px rgba(255,80,55,.85); }
+  acidify-patch-view .studio-step.playing .step-note-field { background: linear-gradient(180deg,#3d1713,#1d0d0b); }
   acidify-patch-view .studio-step .step-sel { top: 7px; bottom: 18px; }
   acidify-patch-view .studio-step.selected .step-sel { border-color: #e9eeee;
     box-shadow: inset 0 0 0 1px rgba(46,54,52,.6), 0 0 0 1px rgba(255,255,255,.55), 0 1px 4px rgba(30,36,34,.3); }
@@ -4788,7 +4798,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="tooltip-toggle" type="button" aria-pressed="true" data-tooltip="Turn the English control tooltips on or off."><span>? TIPS</span><strong class="tooltip-toggle-state">ON</strong></button>
             <span class="power-cell"><span class="power-label">POWER</span><span class="power-ring"><i class="power-led"></i></span></span>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.1.1</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.2.0</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -4802,7 +4812,7 @@ class AcidifyPatchView extends HTMLElement {
       </div>
       <div class="tone-bank">
         <div class="tone-controls">
-          ${dial("param1", { plainSlot: true })}${dial("param2", { modSlot: "param52" })}${dial("param3", { plainSlot: true })}${dial("param4", { plainSlot: true })}${dial("param5", { plainSlot: true })}${dial("param6", { modSlot: "param59" })}
+          ${dial("param1", { modSlot: "param57" })}${dial("param2", { modSlot: "param52" })}${dial("param3", { plainSlot: true })}${dial("param4", { plainSlot: true })}${dial("param5", { plainSlot: true })}${dial("param6", { modSlot: "param59" })}
         </div>
       </div>
       <div class="volume-bank">
