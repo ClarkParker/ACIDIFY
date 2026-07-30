@@ -296,12 +296,12 @@ try {
     return {
       classed: node.classList.contains("theme-dark"),
       pressed: node.querySelector(".theme-toggle").getAttribute("aria-pressed"),
-      state: node.querySelector(".theme-toggle-state").textContent,
       chassis: getComputedStyle(node.querySelector(".chassis")).backgroundImage.includes("rgb(74, 78, 79)"),
+      darkControls: getComputedStyle(node.querySelector('[data-classic-action="clear-step"]')).backgroundImage.includes("rgb(90, 95, 97)"),
       stored: (() => { try { return window.localStorage.getItem("acidify.theme.dark"); } catch { return null; } })(),
     };
   });
-  if (!darkOn.classed || darkOn.pressed !== "true" || darkOn.state !== "ON" || !darkOn.chassis
+  if (!darkOn.classed || darkOn.pressed !== "true" || !darkOn.chassis || !darkOn.darkControls
       || (darkOn.stored !== null && darkOn.stored !== "true")) {
     throw new Error(`Dark mode did not engage: ${JSON.stringify(darkOn)}`);
   }
@@ -309,11 +309,41 @@ try {
     node.querySelector(".theme-toggle").click();
     return {
       classed: node.classList.contains("theme-dark"),
-      state: node.querySelector(".theme-toggle-state").textContent,
+      pressed: node.querySelector(".theme-toggle").getAttribute("aria-pressed"),
     };
   });
-  if (darkOff.classed || darkOff.state !== "OFF") {
+  if (darkOff.classed || darkOff.pressed !== "false") {
     throw new Error(`Dark mode did not release: ${JSON.stringify(darkOff)}`);
+  }
+
+  const brandRow = await patchView.evaluate(node => {
+    const rect = sel => node.querySelector(sel).getBoundingClientRect();
+    const row = rect(".tips-power-row");
+    const cell = rect(".brand-cell");
+    const parts = [".tooltip-toggle", ".theme-toggle", ".power-cell"].map(sel => {
+      const b = rect(sel);
+      return { sel, inRow: b.left >= row.left - 0.5 && b.right <= row.right + 0.5
+        && b.top >= row.top - 2.5 && b.bottom <= row.bottom + 2.5, right: b.right };
+    });
+    return { parts, rowRight: row.right, cellRight: cell.right };
+  });
+  if (brandRow.parts.some(part => !part.inRow) || brandRow.rowRight > brandRow.cellRight) {
+    throw new Error(`Brand row overflows its cell: ${JSON.stringify(brandRow)}`);
+  }
+  const powerBefore = await patchView.evaluate(node => Number(node._values.get("param60") ?? 1));
+  await page.locator(".power-cell").click();
+  const powerToggled = await patchView.evaluate(node => ({
+    value: Number(node._values.get("param60")),
+    led: node.querySelector(".power-led").classList.contains("lit"),
+    pressed: node.querySelector(".power-cell").getAttribute("aria-pressed"),
+  }));
+  if (powerToggled.value !== (powerBefore >= 0.5 ? 0 : 1) || powerToggled.led !== (powerToggled.value >= 0.5)
+      || powerToggled.pressed !== `${powerToggled.value >= 0.5}`) {
+    throw new Error(`Power button click failed: ${powerBefore} -> ${JSON.stringify(powerToggled)}`);
+  }
+  await page.locator(".power-cell").click();
+  if ((await patchView.evaluate(node => Number(node._values.get("param60")))) !== powerBefore) {
+    throw new Error("Power button did not toggle back");
   }
 
   const swing = page.locator('.control[data-param="param50"]');

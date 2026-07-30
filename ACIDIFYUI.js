@@ -721,8 +721,6 @@ class AcidifyPatchView extends HTMLElement {
     const toggle = this.querySelector(".theme-toggle");
     toggle?.setAttribute("aria-pressed", `${this._darkMode}`);
     toggle?.setAttribute("aria-label", `Dark panel ${this._darkMode ? "on" : "off"}; click to switch the metal finish`);
-    const state = toggle?.querySelector(".theme-toggle-state");
-    if (state) state.textContent = this._darkMode ? "ON" : "OFF";
     if (persist) {
       try {
         window.localStorage.setItem(THEME_STORAGE_KEY, `${this._darkMode}`);
@@ -4712,9 +4710,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .deck-a .theme-toggle[aria-pressed="true"] {
     background: linear-gradient(102deg,#3c4041 0 18%,#33373a 34%,#26292b 52%,#33373a 68%,#2b2f31 86%,#1e2123 100%);
     box-shadow: inset 0 2px 5px rgba(0,0,0,.6), 0 1px 1px rgba(0,0,0,.5); color: #c8cdcb; }
-  acidify-patch-view .deck-a .theme-toggle .theme-toggle-state { padding: 2px 4px; border-radius: 1px; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px;
-    color: #a9aaa4; background: linear-gradient(#4b4c47,#292a27); }
-  acidify-patch-view .deck-a .theme-toggle[aria-pressed="true"] .theme-toggle-state { color: #fff2ed; background: linear-gradient(#b92e24,#74150f); }
+  acidify-patch-view .deck-a .theme-toggle[aria-pressed="true"] span { color: #ff8a76; text-shadow: 0 0 5px rgba(255,60,40,.4); }
   acidify-patch-view .power-cell { display: flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; cursor: pointer; }
   acidify-patch-view .power-label { color: #6d7776; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
   acidify-patch-view .power-cell.bypassed .power-label { color: #8e1f16; }
@@ -5525,6 +5521,121 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view.theme-dark .master-cell .silver-knob .led-box .value-label,
   acidify-patch-view.theme-dark.studio-mode .master-cell .silver-knob .value-label {
     color: #ff6756; text-shadow: 0 0 5px rgba(255,57,37,.45); }
+
+  /* Dark Mode: Silber-Taster werden Gunmetal, Chrom-Knoepfe und Tasten bleiben. */
+  acidify-patch-view.theme-dark .osc-cell .wave-buttons button,
+  acidify-patch-view.theme-dark .deck-b .clock-mode button,
+  acidify-patch-view.theme-dark .deck-b .run-switch button,
+  acidify-patch-view.theme-dark .stepper-buttons button,
+  acidify-patch-view.theme-dark .function-button,
+  acidify-patch-view.theme-dark .studio-actions button,
+  acidify-patch-view.theme-dark .arp-direction button,
+  acidify-patch-view.theme-dark .arp-hold button,
+  acidify-patch-view.theme-dark .arp-capture,
+  acidify-patch-view.theme-dark .deck-a .distortion-trigger,
+  acidify-patch-view.theme-dark .deck-a .mods-trigger {
+    border-color: #101314; color: #d0d4d3;
+    background: linear-gradient(102deg,#5a5f61 0 18%,#4c5153 34%,#3d4245 52%,#4e5355 68%,#454a4c 86%,#33383a 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -2px 3px rgba(0,0,0,.45), 0 3px 3px rgba(0,0,0,.55); }
+  acidify-patch-view.theme-dark .osc-cell .wave-buttons button.active,
+  acidify-patch-view.theme-dark .deck-b .clock-mode button.active,
+  acidify-patch-view.theme-dark .deck-b .run-switch.is-on button,
+  acidify-patch-view.theme-dark .function-button:active,
+  acidify-patch-view.theme-dark .function-button.active,
+  acidify-patch-view.theme-dark .studio-actions button:active,
+  acidify-patch-view.theme-dark .arp-direction button.active,
+  acidify-patch-view.theme-dark .arp-hold.is-on button,
+  acidify-patch-view.theme-dark .arp-capture:active,
+  acidify-patch-view.theme-dark .deck-a .distortion-trigger.active,
+  acidify-patch-view.theme-dark .deck-a .mods-trigger.active {
+    border-color: #101314;
+    background: linear-gradient(102deg,#393d3f 0 18%,#313538 34%,#26292b 52%,#33373a 68%,#2b2f31 86%,#1e2123 100%);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.65), 0 1px 1px rgba(0,0,0,.5); }
+  acidify-patch-view.theme-dark .osc-cell .wave-buttons button { color: #9aa19f; }
+  acidify-patch-view.theme-dark .osc-cell .wave-buttons button.active { color: #ff5545; }
+  acidify-patch-view.theme-dark .function-button strong,
+  acidify-patch-view.theme-dark .studio-actions button strong,
+  acidify-patch-view.theme-dark .arp-direction button strong,
+  acidify-patch-view.theme-dark .arp-hold-label,
+  acidify-patch-view.theme-dark .arp-capture strong,
+  acidify-patch-view.theme-dark .deck-b .clock-mode button,
+  acidify-patch-view.theme-dark .deck-b .run-switch button { color: #d0d4d3; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+  acidify-patch-view.theme-dark .function-button small,
+  acidify-patch-view.theme-dark .studio-actions button small,
+  acidify-patch-view.theme-dark .arp-direction button small,
+  acidify-patch-view.theme-dark .arp-hold button small,
+  acidify-patch-view.theme-dark .arp-capture small { color: #9aa19f; }
+  acidify-patch-view.theme-dark .function-button.active strong,
+  acidify-patch-view.theme-dark .arp-direction button.active strong,
+  acidify-patch-view.theme-dark .arp-hold.is-on .arp-hold-label { color: #ff5545; }
+  acidify-patch-view.theme-dark .step-cap { border-color: #22272a;
+    background: linear-gradient(180deg,#565e60,#3b4244);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.3), inset -3px -5px 8px rgba(0,0,0,.3), inset 3px 4px 7px rgba(255,255,255,.08), 0 2px 3px rgba(0,0,0,.6); }
+  acidify-patch-view.theme-dark .step-well { background: linear-gradient(180deg,#2a3033,#121517); }
+  acidify-patch-view.theme-dark .sequence-step .step-index { color: #8f9896; }
+  acidify-patch-view.theme-dark .step-group .sequence-step:first-child .step-index { color: #c9cecd; }
+  acidify-patch-view.theme-dark .sequence-step.beyond .step-index { color: #5c6462; }
+  acidify-patch-view.theme-dark .sequence-step.playing .step-index { color: #ff5545; }
+  acidify-patch-view.theme-dark .sequence-step.selected .step-sel { border-color: #b9bfc0;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.2), 0 1px 4px rgba(0,0,0,.4); }
+
+  /* Dark Mode: Step-Rocker in Gunmetal (Winkel-Varianten wie im Silber). */
+  acidify-patch-view.theme-dark .cap-rocker { background: linear-gradient(96deg,#5f6466 0 18%,#4f5456 34%,#404547 52%,#515658 68%,#474c4e 86%,#363b3d 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.28); }
+  acidify-patch-view.theme-dark .step-group .sequence-step:nth-child(2) .cap-rocker { background: linear-gradient(100deg,#5f6466 0 18%,#4f5456 34%,#404547 52%,#515658 68%,#474c4e 86%,#363b3d 100%); }
+  acidify-patch-view.theme-dark .step-group .sequence-step:nth-child(3) .cap-rocker { background: linear-gradient(104deg,#5f6466 0 18%,#4f5456 34%,#404547 52%,#515658 68%,#474c4e 86%,#363b3d 100%); }
+  acidify-patch-view.theme-dark .step-group .sequence-step:nth-child(4) .cap-rocker { background: linear-gradient(108deg,#5f6466 0 18%,#4f5456 34%,#404547 52%,#515658 68%,#474c4e 86%,#363b3d 100%); }
+  acidify-patch-view.theme-dark .step-group .sequence-step.selected .cap-rocker { background: linear-gradient(96deg,#3f4345 0 18%,#383c3e 34%,#2c3032 52%,#383c3f 68%,#303436 86%,#232628 100%); }
+  acidify-patch-view.theme-dark .step-group .sequence-step.selected:nth-child(2) .cap-rocker { background: linear-gradient(100deg,#3f4345 0 18%,#383c3e 34%,#2c3032 52%,#383c3f 68%,#303436 86%,#232628 100%); }
+  acidify-patch-view.theme-dark .step-group .sequence-step.selected:nth-child(3) .cap-rocker { background: linear-gradient(104deg,#3f4345 0 18%,#383c3e 34%,#2c3032 52%,#383c3f 68%,#303436 86%,#232628 100%); }
+  acidify-patch-view.theme-dark .step-group .sequence-step.selected:nth-child(4) .cap-rocker { background: linear-gradient(108deg,#3f4345 0 18%,#383c3e 34%,#2c3032 52%,#383c3f 68%,#303436 86%,#232628 100%); }
+  acidify-patch-view.theme-dark .studio-toggle span { background: #1d2120; color: #8f9896; }
+  acidify-patch-view.theme-dark .studio-toggle { border-color: #101314; background: #1d2120; }
+  acidify-patch-view.theme-dark .studio-toggle[data-view="classic"] .classic-label { background: linear-gradient(180deg,#9ca3a4,#767e80); color: #101415; }
+
+  /* Dark Mode: Overlays (Distortion + Mods) folgen dem Anthrazit. */
+  acidify-patch-view.theme-dark .distortion-overlay,
+  acidify-patch-view.theme-dark .mods-overlay { border-color: #171a1b; color: #c3c8ca;
+    background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.03) 0 1px, rgba(0,0,0,.06) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg,#42464a 0%,#373b3e 46%,#2a2e30 100%);
+    box-shadow: 0 22px 40px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.1); }
+  acidify-patch-view.theme-dark .distortion-overlay-head,
+  acidify-patch-view.theme-dark .mods-overlay-head { border-bottom-color: rgba(0,0,0,.6); box-shadow: 0 1px 0 rgba(255,255,255,.07); }
+  acidify-patch-view.theme-dark .distortion-overlay-head strong,
+  acidify-patch-view.theme-dark .mods-overlay-head strong { color: #ff5545; text-shadow: 0 1px 0 rgba(0,0,0,.7); }
+  acidify-patch-view.theme-dark .distortion-overlay-head span,
+  acidify-patch-view.theme-dark .mods-overlay-head span,
+  acidify-patch-view.theme-dark .distortion-status,
+  acidify-patch-view.theme-dark .mods-status { color: #969ea0; }
+  acidify-patch-view.theme-dark .distortion-overlay footer,
+  acidify-patch-view.theme-dark .mods-overlay footer { border-top-color: rgba(255,255,255,.1); color: #969ea0; }
+  acidify-patch-view.theme-dark .distortion-close,
+  acidify-patch-view.theme-dark .mods-close,
+  acidify-patch-view.theme-dark .distortion-types button,
+  acidify-patch-view.theme-dark .distortion-power.run-switch button,
+  acidify-patch-view.theme-dark .mod-switch button { border-color: #101314; color: #c3c8ca;
+    background: linear-gradient(102deg,#5a5f61 0 18%,#4c5153 34%,#3d4245 52%,#4e5355 68%,#454a4c 86%,#33383a 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -2px 3px rgba(0,0,0,.45), 0 3px 3px rgba(0,0,0,.55); }
+  acidify-patch-view.theme-dark .distortion-types button.active,
+  acidify-patch-view.theme-dark .distortion-power.run-switch.is-on button,
+  acidify-patch-view.theme-dark .mod-switch.is-on button { border-color: #8c2c23; color: #ff5545;
+    background: linear-gradient(102deg,#393d3f 0 18%,#313538 34%,#26292b 52%,#33373a 68%,#2b2f31 86%,#1e2123 100%);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.65), 0 0 12px rgba(181,41,33,.25); }
+  acidify-patch-view.theme-dark .distortion-types button strong { text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+  acidify-patch-view.theme-dark .distortion-types button small,
+  acidify-patch-view.theme-dark .distortion-types button.active small { color: #9aa19f; }
+  acidify-patch-view.theme-dark .mod-row.mod-cell { border-color: rgba(0,0,0,.55);
+    background: linear-gradient(180deg, rgba(51,55,58,.75), rgba(38,41,43,.75)); }
+  acidify-patch-view.theme-dark .mod-cell-head strong { color: #c3c8ca; text-shadow: 0 1px 0 rgba(0,0,0,.7); }
+  acidify-patch-view.theme-dark .mod-cell.on .mod-cell-head strong { color: #ff5545; }
+  acidify-patch-view.theme-dark .mod-cell .mod-state { color: #c3c8ca; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+  acidify-patch-view.theme-dark .mod-fixed-label { color: #b0b6b8; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+  acidify-patch-view.theme-dark .mod-cell-desc { color: #969ea0; }
+  acidify-patch-view.theme-dark .distortion-overlay .control-label,
+  acidify-patch-view.theme-dark .mods-overlay .control-label { color: #c3c8ca; }
+  acidify-patch-view.theme-dark .distortion-power-label { color: #c3c8ca; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+  acidify-patch-view.theme-dark .distortion-power.is-on .distortion-power-label { color: #ff5545; }
+  acidify-patch-view.theme-dark .distortion-power button small,
+  acidify-patch-view.theme-dark .mod-switch button small { color: #9aa19f; }
 </style>
 <div class="chassis">
   <div class="panel">
@@ -5539,11 +5650,11 @@ class AcidifyPatchView extends HTMLElement {
         <div class="brand-foot">
           <div class="tips-power-row">
             <button class="tooltip-toggle" type="button" aria-pressed="true" data-tooltip="Turn the English control tooltips on or off."><span>? TIPS</span><strong class="tooltip-toggle-state">ON</strong></button>
-            <button class="theme-toggle" type="button" aria-pressed="false" data-tooltip="Switch the panel between silver and dark anthracite metal."><span>DARK</span><strong class="theme-toggle-state">OFF</strong></button>
+            <button class="theme-toggle" type="button" aria-pressed="false" data-tooltip="Switch the panel between silver and dark anthracite metal."><span>DARK</span></button>
             <button class="power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><span class="power-label">POWER</span><span class="power-ring"><i class="power-led lit"></i></span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.7.0</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.7.1</span></div>
         </div>
       </header>
       <div class="osc-cell">

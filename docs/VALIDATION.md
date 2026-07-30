@@ -1,3 +1,25 @@
+# Validierung 2.7.1
+
+## 2.7.1
+
+POWER-Regression headless belegt: vor dem Fix ragte die POWER-Zelle
+bis x = 223,6 über die Brand-Zellgrenze (215) und den Zeilenrand
+(198) hinaus; nach dem Entfernen des DARK-Chips liegen TIPS, DARK und
+POWER vollständig in der Zeile und die Zeile in der Zelle
+(`ui_smoke_test`-Containment-Assertion). POWER schaltet per echtem
+Playwright-Klick beidseitig (param60 1→0→1, LED und aria-pressed
+folgen). Dark Mode zweite Stufe: Gunmetal-Overrides für Step-Rocker
+(alle 8 Winkel-/Selected-Varianten), Waveform, INT/DAW, RUN/STOP,
+Stepper-Tasten, Aktions-Matrix, Studio-Aktionen, Arp-Panel-Tasten,
+DIST/MOD, CLASSIC/STUDIO/ARP-Schalter und beide Overlays; belegt per
+Screenshot-Durchsicht (Classic, Arp, Studio, Distortion-Stage,
+Circuit-Mods) und computed-Style-Assertion (Chassis rgb(74,78,79),
+Aktionstaste rgb(90,95,97)). `ui_smoke_test` 3/3, `ui_lint --strict`
+sauber, Sync 64/64, Serien-Smoke unverändert 0,69105 @48k (kein
+DSP-Eingriff).
+
+---
+
 # Validierung 2.7.0
 
 ## 2.7.0

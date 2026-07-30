@@ -6,6 +6,34 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-07-30
+
+### Fixed
+
+- **POWER-Taste**: Die in 2.7.0 ergänzte DARK-Taste hatte die
+  TIPS/DARK/POWER-Zeile überfüllt — die POWER-Zelle ragte 8,6 px über
+  die Zellen-Trennlinie hinaus (gemessen: rechte Kante 223,6 bei
+  Zellgrenze 215), der sichtbar überstehende Teil des Rings lag
+  außerhalb der klickbaren Zelle. DARK hat seinen ON/OFF-Chip
+  abgegeben (der Zustand zeigt sich an der gedrückten Taste selbst),
+  die Zeile passt wieder vollständig in die Zelle. `ui_smoke_test`
+  prüft jetzt Containment der drei Tasten UND schaltet POWER per
+  echtem Playwright-Klick beidseitig durch (param60, LED,
+  aria-pressed) — der bisherige Test klickte nur programmatisch und
+  maß kein Layout.
+- Preview-Mock initialisiert param60–64 (POWER startete dort
+  undefiniert).
+
+### Changed
+
+- **Dark Mode: Steuerelemente jetzt ebenfalls dunkel** (Gunmetal statt
+  Silber): Step-Rocker inkl. aller Winkel-Varianten, Waveform-Tasten,
+  INT/DAW, RUN/STOP, alle −/+-Stepper, Aktions-Matrix, Studio-Aktionen,
+  Arp-Figuren/HOLD/CAPTURE, DIST/MOD-Taster, CLASSIC/STUDIO/ARP-
+  Schalter sowie beide Overlays (Distortion-Stage und Circuit-Mods
+  komplett, inkl. Zellen, Buttons und Beschriftungen). Chrom-Knöpfe,
+  Klaviatur und LED-Displays bleiben bewusst als Kontrast.
+
 ## [2.7.0] - 2026-07-30
 
 ### Added
