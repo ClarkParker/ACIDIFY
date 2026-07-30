@@ -54,7 +54,99 @@ const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", 
 const DISTORTION_NAMES = ["PURE", "MACKIE", "PHONO"];
 // ARP-PHRASES-BEGIN
 // GENERIERT von tools/gen_phrases.py — nicht von Hand editieren.
-const ARP_PHRASES = [{ name: "OCT 8TH", length: 16 }, { name: "OCT PUMP", length: 16 }, { name: "OCT UP2", length: 16 }, { name: "OCT OFF", length: 16 }, { name: "OCT ROLL", length: 16 }, { name: "OCT SYNC", length: 16 }, { name: "OCT DOWN", length: 16 }, { name: "OCT SKIP", length: 16 }, { name: "OCT 3UP", length: 16 }, { name: "OCT HANG", length: 16 }, { name: "OCT LIFT", length: 16 }, { name: "OCT GAP", length: 16 }, { name: "ACID UP", length: 16 }, { name: "ACID DIP", length: 16 }, { name: "ACID 5TH", length: 16 }, { name: "ACID M3", length: 16 }, { name: "ACID B7", length: 16 }, { name: "ACID SNK", length: 16 }, { name: "ACID RUN", length: 16 }, { name: "ACID PIT", length: 16 }, { name: "ACID SUS", length: 16 }, { name: "ACID JMP", length: 16 }, { name: "ACID LOW", length: 16 }, { name: "ACID TRI", length: 16 }, { name: "SNC ONE", length: 16 }, { name: "SNC TWO", length: 16 }, { name: "SNC HALF", length: 16 }, { name: "SNC PUSH", length: 16 }, { name: "SNC HOLE", length: 16 }, { name: "SNC CLAV", length: 16 }, { name: "SNC 3+3", length: 16 }, { name: "SNC DUB", length: 16 }, { name: "SNC LATE", length: 16 }, { name: "SNC BUMP", length: 16 }, { name: "SNC EDGE", length: 16 }, { name: "SNC REST", length: 16 }, { name: "SLD UP", length: 16 }, { name: "SLD DOWN", length: 16 }, { name: "SLD OCT", length: 16 }, { name: "SLD CHRM", length: 16 }, { name: "SLD WAVE", length: 16 }, { name: "SLD CRPP", length: 16 }, { name: "SLD FALL", length: 16 }, { name: "SLD PAIR", length: 16 }, { name: "SLD HOOK", length: 16 }, { name: "SLD LONG", length: 16 }, { name: "ACC 4FLR", length: 16 }, { name: "ACC OFF", length: 16 }, { name: "ACC 3ER", length: 16 }, { name: "ACC PAIR", length: 16 }, { name: "ACC EDGE", length: 16 }, { name: "ACC GALP", length: 16 }, { name: "ACC SNAP", length: 16 }, { name: "ACC WALL", length: 16 }, { name: "ACC HART", length: 16 }, { name: "ACC ROLL", length: 16 }, { name: "ZIG STEP", length: 16 }, { name: "ZIG WIDE", length: 16 }, { name: "ZIG BACK", length: 16 }, { name: "ZIG DROP", length: 16 }, { name: "ZIG CLMB", length: 16 }, { name: "ZIG POGO", length: 16 }, { name: "ZIG TRIO", length: 16 }, { name: "ZIG DIVE", length: 16 }, { name: "ZIG SAW", length: 16 }, { name: "ZIG HOPS", length: 16 }, { name: "ZIG FLIP", length: 16 }, { name: "ZIG TIDE", length: 16 }, { name: "RVE M3", length: 16 }, { name: "RVE 4TH", length: 16 }, { name: "RVE HOOV", length: 16 }, { name: "RVE PEND", length: 16 }, { name: "RVE STAB", length: 16 }, { name: "RVE LIFT", length: 16 }, { name: "RVE DARK", length: 16 }, { name: "RVE SIRN", length: 16 }, { name: "RVE PUSH", length: 16 }, { name: "RVE ANTH", length: 16 }, { name: "ELC FUNK", length: 16 }, { name: "ELC BRKN", length: 16 }, { name: "ELC ROBO", length: 16 }, { name: "ELC WONK", length: 16 }, { name: "ELC SNAP", length: 16 }, { name: "ELC HALF", length: 16 }, { name: "ELC TAPE", length: 16 }, { name: "ELC GLDE", length: 16 }, { name: "ELC DRAG", length: 16 }, { name: "ELC NERV", length: 16 }, { name: "ELC LOPE", length: 16 }, { name: "ELC ENDE", length: 16 }];
+// data je Step: (pitch+12) | gate<<6 | accent<<7 | slide<<8.
+const ARP_PHRASES = [
+  { name: "OCT 8TH", length: 16, data: [204, 88, 76, 88, 204, 88, 76, 88, 204, 88, 76, 88, 204, 88, 76, 88] },
+  { name: "OCT PUMP", length: 16, data: [204, 76, 88, 76, 204, 76, 88, 76, 204, 76, 88, 76, 204, 76, 88, 76] },
+  { name: "OCT UP2", length: 16, data: [204, 88, 100, 88, 76, 88, 100, 88, 204, 88, 100, 88, 76, 88, 100, 88] },
+  { name: "OCT OFF", length: 16, data: [204, 12, 88, 12, 204, 12, 88, 12, 204, 12, 88, 12, 204, 12, 88, 88] },
+  { name: "OCT ROLL", length: 16, data: [204, 76, 76, 88, 204, 76, 76, 88, 204, 76, 76, 88, 204, 88, 76, 88] },
+  { name: "OCT SYNC", length: 16, data: [204, 12, 88, 76, 12, 88, 204, 12, 88, 76, 12, 88, 204, 12, 76, 88] },
+  { name: "OCT DOWN", length: 16, data: [216, 76, 88, 76, 216, 76, 88, 76, 216, 76, 88, 76, 216, 76, 88, 76] },
+  { name: "OCT SKIP", length: 16, data: [204, 88, 12, 88, 204, 88, 12, 88, 204, 88, 12, 88, 204, 88, 88, 88] },
+  { name: "OCT 3UP", length: 16, data: [204, 76, 88, 76, 76, 88, 204, 76, 88, 76, 76, 88, 204, 88, 76, 88] },
+  { name: "OCT HANG", length: 16, data: [204, 88, 88, 76, 76, 88, 88, 76, 204, 88, 88, 76, 76, 88, 344, 76] },
+  { name: "OCT LIFT", length: 16, data: [204, 76, 76, 76, 88, 88, 88, 88, 204, 76, 76, 76, 88, 88, 100, 88] },
+  { name: "OCT GAP", length: 16, data: [204, 12, 12, 88, 12, 12, 204, 12, 12, 88, 12, 12, 204, 12, 88, 100] },
+  { name: "ACID UP", length: 16, data: [204, 79, 83, 86, 88, 86, 83, 79, 204, 79, 83, 86, 88, 91, 88, 86] },
+  { name: "ACID DIP", length: 16, data: [204, 76, 86, 76, 76, 83, 76, 79, 204, 76, 86, 76, 76, 83, 335, 76] },
+  { name: "ACID 5TH", length: 16, data: [204, 83, 76, 83, 204, 83, 76, 83, 204, 83, 76, 83, 204, 83, 88, 83] },
+  { name: "ACID M3", length: 16, data: [204, 79, 76, 79, 204, 79, 76, 79, 204, 79, 76, 79, 204, 79, 91, 79] },
+  { name: "ACID B7", length: 16, data: [204, 86, 76, 86, 204, 86, 76, 86, 204, 86, 76, 86, 204, 86, 98, 86] },
+  { name: "ACID SNK", length: 16, data: [204, 12, 79, 12, 83, 12, 86, 12, 216, 12, 86, 12, 83, 12, 335, 76] },
+  { name: "ACID RUN", length: 16, data: [76, 79, 81, 83, 86, 88, 91, 95, 228, 95, 91, 88, 86, 83, 337, 79] },
+  { name: "ACID PIT", length: 16, data: [216, 86, 83, 79, 76, 79, 83, 86, 216, 86, 83, 79, 332, 76, 79, 83] },
+  { name: "ACID SUS", length: 16, data: [204, 76, 79, 79, 81, 81, 83, 83, 214, 86, 83, 83, 81, 81, 335, 79] },
+  { name: "ACID JMP", length: 16, data: [204, 88, 79, 91, 83, 95, 86, 98, 216, 76, 91, 79, 95, 83, 354, 86] },
+  { name: "ACID LOW", length: 16, data: [204, 76, 76, 79, 76, 76, 76, 83, 204, 76, 76, 79, 76, 83, 335, 76] },
+  { name: "ACID TRI", length: 16, data: [204, 79, 83, 76, 79, 83, 204, 79, 83, 76, 79, 83, 204, 79, 83, 88] },
+  { name: "SNC ONE", length: 16, data: [204, 12, 12, 76, 12, 12, 76, 12, 204, 12, 12, 76, 12, 76, 12, 12] },
+  { name: "SNC TWO", length: 16, data: [12, 204, 12, 76, 12, 204, 12, 76, 12, 204, 12, 76, 12, 204, 76, 12] },
+  { name: "SNC HALF", length: 16, data: [204, 12, 76, 12, 12, 76, 12, 76, 12, 12, 204, 12, 76, 12, 12, 76] },
+  { name: "SNC PUSH", length: 16, data: [204, 76, 12, 76, 76, 12, 76, 76, 12, 204, 76, 12, 76, 76, 12, 76] },
+  { name: "SNC HOLE", length: 16, data: [204, 76, 76, 12, 76, 76, 76, 12, 204, 76, 76, 12, 76, 12, 76, 12] },
+  { name: "SNC CLAV", length: 16, data: [204, 12, 76, 76, 12, 76, 12, 76, 204, 12, 76, 76, 12, 76, 76, 12] },
+  { name: "SNC 3+3", length: 16, data: [204, 76, 76, 12, 12, 12, 204, 76, 76, 12, 12, 12, 204, 76, 76, 76] },
+  { name: "SNC DUB", length: 16, data: [204, 12, 12, 76, 76, 12, 12, 76, 204, 12, 12, 76, 76, 12, 76, 76] },
+  { name: "SNC LATE", length: 16, data: [12, 12, 204, 76, 12, 12, 204, 76, 12, 12, 204, 76, 12, 12, 204, 76] },
+  { name: "SNC BUMP", length: 16, data: [204, 76, 12, 12, 204, 76, 12, 12, 204, 76, 12, 12, 204, 76, 76, 76] },
+  { name: "SNC EDGE", length: 16, data: [204, 12, 76, 12, 76, 12, 204, 12, 76, 12, 76, 12, 204, 76, 12, 76] },
+  { name: "SNC REST", length: 16, data: [204, 76, 76, 76, 12, 12, 12, 12, 204, 76, 76, 76, 12, 12, 204, 76] },
+  { name: "SLD UP", length: 16, data: [460, 79, 335, 83, 339, 88, 88, 88, 460, 79, 335, 83, 339, 88, 344, 76] },
+  { name: "SLD DOWN", length: 16, data: [472, 86, 342, 83, 339, 79, 79, 76, 472, 86, 342, 83, 339, 79, 335, 76] },
+  { name: "SLD OCT", length: 16, data: [460, 88, 76, 76, 332, 88, 76, 76, 460, 88, 76, 76, 332, 88, 344, 76] },
+  { name: "SLD CHRM", length: 16, data: [204, 76, 333, 76, 76, 76, 335, 76, 204, 76, 338, 83, 76, 76, 333, 76] },
+  { name: "SLD WAVE", length: 16, data: [460, 83, 339, 76, 332, 83, 339, 76, 460, 86, 342, 76, 332, 86, 342, 76] },
+  { name: "SLD CRPP", length: 16, data: [204, 332, 79, 76, 332, 81, 76, 76, 460, 83, 76, 76, 332, 88, 332, 76] },
+  { name: "SLD FALL", length: 16, data: [484, 88, 88, 88, 344, 76, 76, 76, 484, 88, 88, 88, 344, 76, 76, 76] },
+  { name: "SLD PAIR", length: 16, data: [204, 332, 79, 79, 211, 339, 86, 86, 216, 344, 86, 86, 211, 339, 79, 79] },
+  { name: "SLD HOOK", length: 16, data: [204, 335, 76, 76, 339, 76, 76, 342, 204, 76, 344, 76, 76, 342, 339, 79] },
+  { name: "SLD LONG", length: 16, data: [460, 335, 337, 339, 342, 344, 347, 95, 95, 91, 88, 86, 83, 81, 335, 76] },
+  { name: "ACC 4FLR", length: 16, data: [204, 76, 76, 76, 204, 76, 76, 76, 204, 76, 76, 76, 204, 76, 76, 76] },
+  { name: "ACC OFF", length: 16, data: [76, 204, 76, 76, 76, 204, 76, 76, 76, 204, 76, 76, 76, 204, 76, 76] },
+  { name: "ACC 3ER", length: 16, data: [204, 76, 76, 204, 76, 76, 204, 76, 76, 204, 76, 76, 204, 76, 76, 204] },
+  { name: "ACC PAIR", length: 16, data: [204, 204, 76, 76, 76, 76, 204, 204, 76, 76, 76, 76, 204, 204, 76, 76] },
+  { name: "ACC EDGE", length: 16, data: [204, 76, 76, 76, 76, 76, 76, 204, 76, 76, 76, 76, 76, 76, 204, 204] },
+  { name: "ACC GALP", length: 16, data: [204, 76, 76, 204, 76, 76, 204, 76, 76, 76, 204, 76, 76, 204, 76, 76] },
+  { name: "ACC SNAP", length: 16, data: [76, 76, 204, 76, 76, 76, 204, 76, 76, 76, 204, 76, 76, 204, 76, 76] },
+  { name: "ACC WALL", length: 16, data: [204, 204, 204, 76, 76, 76, 76, 76, 204, 204, 204, 76, 76, 76, 76, 76] },
+  { name: "ACC HART", length: 16, data: [204, 76, 204, 76, 204, 76, 204, 76, 204, 76, 204, 76, 204, 76, 204, 76] },
+  { name: "ACC ROLL", length: 16, data: [76, 76, 76, 76, 204, 204, 76, 76, 76, 76, 76, 76, 204, 204, 204, 204] },
+  { name: "ZIG STEP", length: 16, data: [204, 83, 79, 86, 83, 88, 86, 91, 216, 91, 86, 88, 83, 86, 335, 83] },
+  { name: "ZIG WIDE", length: 16, data: [204, 88, 79, 91, 83, 95, 79, 91, 204, 88, 79, 91, 83, 95, 342, 98] },
+  { name: "ZIG BACK", length: 16, data: [204, 81, 79, 83, 81, 86, 83, 88, 214, 83, 88, 81, 83, 79, 337, 76] },
+  { name: "ZIG DROP", length: 16, data: [216, 76, 86, 76, 83, 76, 81, 76, 216, 76, 86, 76, 83, 76, 335, 76] },
+  { name: "ZIG CLMB", length: 16, data: [204, 79, 76, 81, 76, 83, 76, 86, 204, 88, 76, 91, 76, 95, 332, 100] },
+  { name: "ZIG POGO", length: 16, data: [204, 100, 76, 95, 76, 91, 76, 88, 204, 100, 76, 95, 76, 91, 332, 88] },
+  { name: "ZIG TRIO", length: 16, data: [204, 83, 88, 79, 86, 91, 81, 88, 223, 83, 88, 79, 86, 91, 337, 88] },
+  { name: "ZIG DIVE", length: 16, data: [228, 95, 91, 88, 86, 83, 81, 79, 204, 79, 81, 83, 86, 88, 347, 95] },
+  { name: "ZIG SAW", length: 16, data: [204, 81, 86, 91, 79, 83, 88, 95, 204, 81, 86, 91, 79, 83, 344, 100] },
+  { name: "ZIG HOPS", length: 16, data: [204, 86, 76, 88, 76, 86, 76, 83, 204, 86, 76, 88, 76, 91, 332, 88] },
+  { name: "ZIG FLIP", length: 16, data: [204, 88, 83, 95, 79, 91, 86, 98, 204, 88, 83, 95, 79, 91, 342, 100] },
+  { name: "ZIG TIDE", length: 16, data: [76, 79, 83, 79, 88, 83, 79, 83, 219, 88, 83, 88, 79, 83, 344, 76] },
+  { name: "RVE M3", length: 16, data: [204, 76, 79, 79, 204, 76, 79, 79, 204, 76, 79, 79, 204, 79, 76, 79] },
+  { name: "RVE 4TH", length: 16, data: [204, 76, 81, 81, 204, 76, 81, 81, 204, 76, 81, 81, 204, 81, 76, 81] },
+  { name: "RVE HOOV", length: 16, data: [204, 76, 76, 79, 81, 81, 81, 79, 204, 76, 76, 79, 81, 335, 76, 76] },
+  { name: "RVE PEND", length: 16, data: [204, 81, 76, 79, 204, 81, 76, 79, 204, 81, 76, 79, 204, 83, 81, 79] },
+  { name: "RVE STAB", length: 16, data: [204, 12, 76, 12, 207, 12, 79, 12, 209, 12, 81, 12, 207, 12, 76, 12] },
+  { name: "RVE LIFT", length: 16, data: [204, 76, 79, 81, 211, 83, 81, 79, 204, 76, 79, 81, 211, 86, 339, 81] },
+  { name: "RVE DARK", length: 16, data: [204, 76, 76, 76, 79, 79, 79, 79, 209, 81, 81, 81, 79, 79, 79, 79] },
+  { name: "RVE SIRN", length: 16, data: [460, 81, 337, 76, 332, 81, 337, 76, 460, 81, 337, 76, 332, 81, 337, 76] },
+  { name: "RVE PUSH", length: 16, data: [207, 79, 76, 76, 81, 81, 76, 76, 207, 79, 76, 76, 83, 339, 81, 79] },
+  { name: "RVE ANTH", length: 16, data: [204, 79, 81, 79, 76, 79, 81, 83, 204, 79, 81, 79, 86, 83, 337, 79] },
+  { name: "ELC FUNK", length: 16, data: [204, 12, 76, 88, 12, 76, 12, 88, 204, 12, 76, 88, 12, 88, 76, 12] },
+  { name: "ELC BRKN", length: 16, data: [204, 76, 12, 88, 76, 12, 88, 12, 204, 76, 12, 88, 76, 88, 12, 88] },
+  { name: "ELC ROBO", length: 16, data: [204, 88, 12, 76, 88, 12, 76, 88, 204, 88, 12, 76, 88, 12, 88, 12] },
+  { name: "ELC WONK", length: 16, data: [204, 12, 88, 12, 12, 76, 88, 12, 204, 12, 88, 12, 76, 12, 88, 88] },
+  { name: "ELC SNAP", length: 16, data: [204, 76, 88, 12, 76, 88, 12, 76, 216, 12, 76, 88, 76, 12, 88, 76] },
+  { name: "ELC HALF", length: 16, data: [204, 12, 12, 12, 88, 12, 12, 12, 204, 12, 12, 88, 12, 12, 88, 12] },
+  { name: "ELC TAPE", length: 16, data: [204, 88, 76, 12, 76, 88, 76, 12, 204, 88, 76, 12, 76, 344, 76, 12] },
+  { name: "ELC GLDE", length: 16, data: [204, 12, 332, 88, 12, 76, 332, 88, 204, 12, 332, 88, 12, 344, 76, 12] },
+  { name: "ELC DRAG", length: 16, data: [12, 204, 76, 12, 88, 76, 12, 76, 12, 204, 76, 12, 88, 76, 88, 12] },
+  { name: "ELC NERV", length: 16, data: [204, 88, 88, 76, 12, 88, 76, 12, 204, 88, 88, 76, 12, 88, 12, 88] },
+  { name: "ELC LOPE", length: 16, data: [204, 12, 76, 76, 88, 12, 76, 76, 204, 12, 76, 76, 88, 12, 88, 88] },
+  { name: "ELC ENDE", length: 16, data: [204, 76, 88, 76, 76, 88, 76, 76, 216, 76, 76, 88, 76, 88, 216, 100] },
+];
 // ARP-PHRASES-END
 
 const GENERATION_SCALES = [
@@ -382,6 +474,7 @@ class AcidifyPatchView extends HTMLElement {
     this._wireModMirrors();
     this._wirePower();
     this._wirePhraseMenu();
+    this.querySelector(".arp-capture")?.addEventListener("click", () => this._captureArpToPattern());
     this._wireDistMinis();
     this._renderScope();
     this._wireTooltips();
@@ -1631,6 +1724,49 @@ class AcidifyPatchView extends HTMLElement {
     }
     this._renderArpState();
     this._renderStepStrip();
+  }
+
+  _captureArpToPattern() {
+    const mode = Math.round(clamp(Number(this._values.get("param61") ?? 0), 0, 16));
+    const phrase = Math.round(clamp(Number(this._values.get("param64") ?? 0), 0, 90));
+    if (mode === 16 && phrase > 0) {
+      // Bank-Phrase exakt uebernehmen: 8er-Phrasen auf 16 Steps kacheln,
+      // negative Offsets oktavweise auf die Root normalisieren.
+      const bank = ARP_PHRASES[phrase - 1];
+      const rels = bank.data.filter(p => (p >> 6) & 1).map(p => (p & 63) - 12);
+      const offset = Math.ceil(Math.max(0, -Math.min(0, ...rels)) / 12) * 12;
+      this._mutatePattern(`Capture ${bank.name}`, draft => {
+        for (let index = 0; index < 16; index += 1) {
+          const packed = bank.data[index % bank.length];
+          const gate = (packed >> 6) & 1;
+          draft[index].flags = gate | (((packed >> 7) & 1) << 1) | (((packed >> 8) & 1) << 2);
+          draft[index].pitch = gate ? clamp((packed & 63) - 12 + offset, 0, 24) : 0;
+        }
+      });
+      this._showStudioToast(`${bank.name} → PATTERN`);
+      return;
+    }
+    // Figur einfrieren: die zuletzt an jedem Step gespielte Note wird zum
+    // Pattern-Pitch, Steps ohne gespielte Note werden zum Rest.
+    if (!this._arpLiveNotes.some(note => note >= 0)) {
+      this._showStudioToast("CAPTURE: NOCH NICHTS GESPIELT");
+      return;
+    }
+    const root = Math.round(this._values.get("param12") ?? 36);
+    const rels = this._arpLiveNotes.filter(note => note >= 0).map(note => note - root);
+    const offset = Math.ceil(Math.max(0, -Math.min(0, ...rels)) / 12) * 12;
+    this._mutatePattern("Capture arp", draft => {
+      for (let index = 0; index < 16; index += 1) {
+        const note = this._arpLiveNotes[index];
+        if (note >= 0) {
+          draft[index].pitch = clamp(note - root + offset, 0, 24);
+          draft[index].flags |= 1;
+        } else {
+          draft[index].flags &= ~1;
+        }
+      }
+    });
+    this._showStudioToast("ARP → PATTERN");
   }
 
   _renderArpHeld() {
@@ -4893,6 +5029,14 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: inset 0 3px 6px rgba(0,0,0,.78); color: #ff513b; font: 24px/1 'Courier New',monospace; letter-spacing: 2px; white-space: nowrap;
     text-shadow: 0 0 5px #e32418, 0 0 10px rgba(227,36,24,.4); }
   acidify-patch-view .arp-status .octave-indicator { white-space: nowrap; overflow: hidden; }
+  acidify-patch-view .arp-capture { margin-top: 5px; height: 26px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    border-radius: 2px; cursor: pointer; border: 1px solid #1a1e1f; transform: none; text-shadow: none; width: 100%; padding: 0;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 2px 2px rgba(0,0,0,.4); }
+  acidify-patch-view .arp-capture strong { margin: 0; color: #1d2426; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1px; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .arp-capture small { margin: 0; color: #5b6466; font: 900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .5px; }
+  acidify-patch-view .arp-capture:active { background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
+    box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5); }
   acidify-patch-view .arp-direction-cell { box-sizing: border-box; flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 6px 8px 8px; border-radius: 2px;
     border: 1px solid #7c827f; background: linear-gradient(180deg,#bcc0be,#a9adab);
     box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
@@ -5261,7 +5405,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><span class="power-label">POWER</span><span class="power-ring"><i class="power-led lit"></i></span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.5.1</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.6.0</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -5538,6 +5682,10 @@ class AcidifyPatchView extends HTMLElement {
         <div class="edit-status arp-status">
           <span class="edit-caption">ARPEGGIATOR</span>
           <strong class="arp-readout">OFF</strong>
+          <button class="arp-capture" type="button"
+            data-tooltip="Writes what the arp is playing into the 16-step pattern: a bank phrase is copied exactly (tiled to 16 steps, normalized to the root); a figure freezes the last note played on each step. Undo works as usual.">
+            <strong>→ PATTERN</strong><small>CAPTURE</small>
+          </button>
           <span class="octave-indicator arp-hint">PATTERN GIBT GATE · ACCENT · SLIDE</span>
         </div>
         <div class="arp-direction-cell">

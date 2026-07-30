@@ -118,6 +118,14 @@ leerem Pool oder Transport-Stopp). Die UI speist daraus die Live-Noten
 in den Step-Zellen der Arp-Ansicht; Presets und der Parametervertrag
 bleiben unberührt (Events sind keine dynamischen Parameter).
 
+Der Capture-Button „→ PATTERN" (2.6.0, Arp-Ansicht) ist reine UI-Logik
+über den bestehenden Step-Parametern: Bank-Phrasen werden exakt nach
+`param13..44` kopiert (8er-Phrasen auf 16 Steps gekachelt, negative
+Offsets oktavweise auf die Root normalisiert), Figuren frieren den
+`arpNoteOut`-Live-Puffer ein (ungespielte Steps werden zum Rest). Jede
+Übernahme ist ein normaler Undo-Eintrag; es entsteht kein neuer
+Parameter.
+
 `param50` wurde in 0.7.0 append-only ergänzt. 0 % lässt jedes
 16tel-Zweierpaar gerade; 100 % verschiebt das zweite 16tel auf die letzte
 Achteltriolenposition und ergibt ein 2:1-Verhältnis. Die Paarlänge bleibt

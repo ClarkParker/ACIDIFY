@@ -182,12 +182,15 @@ def cmajor_block(phrases):
 
 
 def js_block(phrases):
-    entries = ", ".join(
-        f'{{ name: {json.dumps(p["name"])}, length: {p["length"]} }}' for p in phrases
+    entries = ",\n  ".join(
+        f'{{ name: {json.dumps(p["name"])}, length: {p["length"]}, '
+        f'data: [{", ".join(str(packed(s)) for s in p["steps"])}] }}'
+        for p in phrases
     )
     return (
         "// GENERIERT von tools/gen_phrases.py — nicht von Hand editieren.\n"
-        f"const ARP_PHRASES = [{entries}];\n"
+        "// data je Step: (pitch+12) | gate<<6 | accent<<7 | slide<<8.\n"
+        f"const ARP_PHRASES = [\n  {entries},\n];\n"
     )
 
 

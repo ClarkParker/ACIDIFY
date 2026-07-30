@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
+import fs from "node:fs";
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -654,10 +655,59 @@ try {
       || phrasePicked.display !== "ACID UP" || !phrasePicked.stripDimmed) {
     throw new Error(`Phrase selection failed: ${JSON.stringify(phrasePicked)}`);
   }
+  const beforeCapture = await page.locator("acidify-patch-view").evaluate(node => node._stepSnapshot());
+  await page.locator(".arp-capture").click();
+  const acidUp = JSON.parse(fs.readFileSync(path.join(root, "tools", "data", "arp_phrases.json"), "utf8"))[12];
+  const capturedPhrase = await page.locator("acidify-patch-view").evaluate(node => ({
+    snapshot: node._stepSnapshot(),
+    toast: node.querySelector(".studio-toast").textContent,
+  }));
+  for (let index = 0; index < 16; index += 1) {
+    const step = acidUp.steps[index % acidUp.length];
+    const expectedFlags = step.gate | (step.accent << 1) | (step.slide << 2);
+    const expectedPitch = step.gate ? step.pitch : 0;
+    const got = capturedPhrase.snapshot[index];
+    if (got.flags !== expectedFlags || got.pitch !== expectedPitch) {
+      throw new Error(`Phrase capture mismatch at step ${index + 1}: ${JSON.stringify(got)} vs ${JSON.stringify(step)}`);
+    }
+  }
+  if (!capturedPhrase.toast.includes("ACID UP")) {
+    throw new Error(`Phrase capture toast failed: ${capturedPhrase.toast}`);
+  }
+  await page.locator("acidify-patch-view").evaluate(node => node._runStudioAction("undo"));
+  const undonePhrase = await page.locator("acidify-patch-view").evaluate(node => node._stepSnapshot());
+  if (JSON.stringify(undonePhrase) !== JSON.stringify(beforeCapture)) {
+    throw new Error("Phrase capture undo did not restore the pattern");
+  }
   await page.locator('.arp-phrase .stepper-buttons [data-step="-1"]').click();
   const phraseStepped = await page.locator("acidify-patch-view").evaluate(node => Number(node._values.get("param64")));
   if (phraseStepped !== 12) throw new Error(`Phrase stepper failed: ${phraseStepped}`);
   await page.locator('.arp-direction [data-value="4"]').click();
+  await page.waitForTimeout(600);
+  const liveCapture = await page.locator("acidify-patch-view").evaluate(node => {
+    const liveNotes = [...node._arpLiveNotes];
+    node.querySelector(".arp-capture").click();
+    return { liveNotes, root: Math.round(node._values.get("param12")), snapshot: node._stepSnapshot() };
+  });
+  if (!liveCapture.liveNotes.some(note => note >= 0)) {
+    throw new Error("Live capture test has no live notes to freeze");
+  }
+  for (let index = 0; index < 16; index += 1) {
+    const note = liveCapture.liveNotes[index];
+    const got = liveCapture.snapshot[index];
+    if (note >= 0) {
+      if (got.pitch !== note - liveCapture.root || (got.flags & 1) !== 1) {
+        throw new Error(`Live capture mismatch at step ${index + 1}: note ${note}, got ${JSON.stringify(got)}`);
+      }
+    } else if ((got.flags & 1) !== 0) {
+      throw new Error(`Live capture left a gate on unplayed step ${index + 1}`);
+    }
+  }
+  await page.locator("acidify-patch-view").evaluate(node => node._runStudioAction("undo"));
+  const undoneLive = await page.locator("acidify-patch-view").evaluate(node => node._stepSnapshot());
+  if (JSON.stringify(undoneLive) !== JSON.stringify(beforeCapture)) {
+    throw new Error("Live capture undo did not restore the pattern");
+  }
   await page.locator(".studio-toggle .classic-label").click();
   const arpOff = await page.locator("acidify-patch-view").evaluate(node => ({
     view: node.querySelector(".studio-toggle").dataset.view,

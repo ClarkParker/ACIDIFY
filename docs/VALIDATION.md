@@ -1,3 +1,23 @@
+# Validierung 2.6.0
+
+## 2.6.0
+
+Capture „→ PATTERN" headless belegt (`ui_smoke_test` 3/3): Phrase 13
+„ACID UP" wird Step für Step gegen `tools/data/arp_phrases.json`
+verifiziert (16 Steps, Accent-Bits auf Step 1/9, Pitches 0…15 exakt),
+Live-Capture friert den `arpNoteOut`-Puffer ein (Pitch = Note − Root
+für jeden gespielten Step, Gate gesetzt; ungespielte Steps als Rest),
+beide Undo-Pfade stellen das Vorher-Pattern bitgenau wieder her
+(JSON-Vergleich der Snapshots). Button liegt vollständig in der
+Status-Zelle (26…204 / 512…537 in 17…213 / 457…563).
+`gen_phrases.py --check` prüft jetzt DSP-Tabelle, UI-Bank inklusive
+`data`-Steps und JSON gegen die Quelle (90 Phrasen / 1440 Steps
+synchron). DSP unverändert (nur UI + Tools angefasst): Serien-Smoke
+bit-identisch 0,34552 @48k, dsp_arp/matrix/articulation/transport
+grün, Messstand alle Prüfsteine, partcheck 28/28, Lints strict sauber.
+
+---
+
 # Validierung 2.5.1
 
 ## 2.5.1

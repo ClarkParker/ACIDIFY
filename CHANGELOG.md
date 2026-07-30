@@ -6,6 +6,32 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-07-30
+
+### Added
+
+- **Capture-Button „→ PATTERN"** im Arp-Panel (unter dem
+  ARPEGGIATOR-Readout): übernimmt das, was der Arp gerade spielt, ins
+  16-Step-Pattern — danach in Classic/Studio normal editierbar.
+  - **Bank-Phrase** (PHRASE-Figur, Slot 01–90): exakte Kopie von Pitch,
+    Gate, Accent und Slide; 8er-Phrasen werden auf 16 Steps gekachelt.
+    Negative Phrasen-Offsets werden oktavweise auf die Pattern-Root
+    normalisiert (das Pattern kennt nur 0…+24 über der Root).
+  - **Figur/eigenes Pattern**: friert den Live-Noten-Puffer aus 2.5.1
+    ein — die zuletzt an jedem Step gespielte Note wird zum Pitch,
+    Gate/Accent/Slide bleiben das eigene Pattern, Steps ohne gespielte
+    Note werden zum Rest. Ohne gespielte Runde meldet ein Toast
+    „CAPTURE: NOCH NICHTS GESPIELT" statt etwas zu überschreiben.
+  - Jede Übernahme ist ein normaler Undo-Eintrag (Capture-Label im
+    Toast/Undo), Redo funktioniert ebenso.
+- `tools/gen_phrases.py` emittiert die gepackten Phrasen-Steps jetzt
+  auch in den UI-Block (`data` je Phrase, gleiche Kodierung wie die
+  DSP-Tabelle); `--check` deckt damit alle drei Ziele inhaltlich ab.
+- `ui_smoke_test`: Phrase-Capture wird Step für Step gegen
+  `tools/data/arp_phrases.json` verifiziert (inkl. Kachelung und
+  Accent-Bits), Live-Capture gegen den tatsächlichen Live-Puffer,
+  beide Undo-Pfade stellen das Vorher-Pattern bitgenau wieder her.
+
 ## [2.5.1] - 2026-07-30
 
 ### Added
