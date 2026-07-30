@@ -104,11 +104,12 @@ processor AcidifyCore
     input event float param59 [[ name: "Mod Soft Attack Amount", min: 0.0, max: 1.0, init: 0.25, step: 0.001 ]];
     input event float param60 [[ name: "Power",              min: 0.0, max: 1.0, init: 1.0, step: 1.0,
                                  text: "Bypass|On" ]];
-    input event float param61 [[ name: "Arp Mode",           min: 0.0, max: 4.0, init: 0.0, step: 1.0,
-                                 text: "Off|Up|Down|Up-Down|Random" ]];
+    input event float param61 [[ name: "Arp Mode",           min: 0.0, max: 16.0, init: 0.0, step: 1.0,
+                                 text: "Off|Up|Down|Up-Down|Random|Up-Down+|Down-Up|Down-Up+|Played|Double|Converge|Diverge|Pinky|Thumb|Rnd-Once|Walk|Phrase" ]];
     input event float param62 [[ name: "Arp Octaves",        min: 1.0, max: 4.0, init: 1.0, step: 1.0 ]];
     input event float param63 [[ name: "Arp Hold",           min: 0.0, max: 1.0, init: 0.0, step: 1.0,
                                  text: "Off|On" ]];
+    input event float param64 [[ name: "Arp Phrase",         min: 0.0, max: 90.0, init: 0.0, step: 1.0 ]];
 
     float tuning = 0.0f;
     float cutoffControl = 0.45f;
@@ -129,6 +130,15 @@ processor AcidifyCore
     int arpLastRandom = -1;
     // Lehmer-MINSTD, fester Seed: Random-Modus ist reproduzierbar testbar.
     int64 arpRngState = 20260730L;
+    int arpPhrase = 0;
+    int arpWalkPos = 0;
+    int arpPhraseStep = 0;
+    int arpPhraseNoteIdx = 0;
+    int arpPoolGeneration = 0;
+    int arpShuffleGeneration = -1;
+    int arpShuffleSize = 0;
+    int[512] arpShuffle;
+    int lastEffectiveFlags = 0;
     bool distortionEnabled = false;
     int distortionType = 0;
     float distortionDrive = 0.35f;
@@ -867,7 +877,105 @@ processor AcidifyCore
     void clearHeldNotes()
     {
         heldNoteCount = 0;
+        arpPoolGeneration += 1;
     }
+
+    // ARP-PHRASES-BEGIN
+    // GENERIERT von tools/gen_phrases.py — nicht von Hand editieren.
+    // Pro Step: (pitch+12) | gate<<6 | accent<<7 | slide<<8.
+    const int[1440] arpPhraseData = (
+        204, 88, 76, 88, 204, 88, 76, 88, 204, 88, 76, 88, 204, 88, 76, 88,
+        204, 76, 88, 76, 204, 76, 88, 76, 204, 76, 88, 76, 204, 76, 88, 76,
+        204, 88, 100, 88, 76, 88, 100, 88, 204, 88, 100, 88, 76, 88, 100, 88,
+        204, 12, 88, 12, 204, 12, 88, 12, 204, 12, 88, 12, 204, 12, 88, 88,
+        204, 76, 76, 88, 204, 76, 76, 88, 204, 76, 76, 88, 204, 88, 76, 88,
+        204, 12, 88, 76, 12, 88, 204, 12, 88, 76, 12, 88, 204, 12, 76, 88,
+        216, 76, 88, 76, 216, 76, 88, 76, 216, 76, 88, 76, 216, 76, 88, 76,
+        204, 88, 12, 88, 204, 88, 12, 88, 204, 88, 12, 88, 204, 88, 88, 88,
+        204, 76, 88, 76, 76, 88, 204, 76, 88, 76, 76, 88, 204, 88, 76, 88,
+        204, 88, 88, 76, 76, 88, 88, 76, 204, 88, 88, 76, 76, 88, 344, 76,
+        204, 76, 76, 76, 88, 88, 88, 88, 204, 76, 76, 76, 88, 88, 100, 88,
+        204, 12, 12, 88, 12, 12, 204, 12, 12, 88, 12, 12, 204, 12, 88, 100,
+        204, 79, 83, 86, 88, 86, 83, 79, 204, 79, 83, 86, 88, 91, 88, 86,
+        204, 76, 86, 76, 76, 83, 76, 79, 204, 76, 86, 76, 76, 83, 335, 76,
+        204, 83, 76, 83, 204, 83, 76, 83, 204, 83, 76, 83, 204, 83, 88, 83,
+        204, 79, 76, 79, 204, 79, 76, 79, 204, 79, 76, 79, 204, 79, 91, 79,
+        204, 86, 76, 86, 204, 86, 76, 86, 204, 86, 76, 86, 204, 86, 98, 86,
+        204, 12, 79, 12, 83, 12, 86, 12, 216, 12, 86, 12, 83, 12, 335, 76,
+        76, 79, 81, 83, 86, 88, 91, 95, 228, 95, 91, 88, 86, 83, 337, 79,
+        216, 86, 83, 79, 76, 79, 83, 86, 216, 86, 83, 79, 332, 76, 79, 83,
+        204, 76, 79, 79, 81, 81, 83, 83, 214, 86, 83, 83, 81, 81, 335, 79,
+        204, 88, 79, 91, 83, 95, 86, 98, 216, 76, 91, 79, 95, 83, 354, 86,
+        204, 76, 76, 79, 76, 76, 76, 83, 204, 76, 76, 79, 76, 83, 335, 76,
+        204, 79, 83, 76, 79, 83, 204, 79, 83, 76, 79, 83, 204, 79, 83, 88,
+        204, 12, 12, 76, 12, 12, 76, 12, 204, 12, 12, 76, 12, 76, 12, 12,
+        12, 204, 12, 76, 12, 204, 12, 76, 12, 204, 12, 76, 12, 204, 76, 12,
+        204, 12, 76, 12, 12, 76, 12, 76, 12, 12, 204, 12, 76, 12, 12, 76,
+        204, 76, 12, 76, 76, 12, 76, 76, 12, 204, 76, 12, 76, 76, 12, 76,
+        204, 76, 76, 12, 76, 76, 76, 12, 204, 76, 76, 12, 76, 12, 76, 12,
+        204, 12, 76, 76, 12, 76, 12, 76, 204, 12, 76, 76, 12, 76, 76, 12,
+        204, 76, 76, 12, 12, 12, 204, 76, 76, 12, 12, 12, 204, 76, 76, 76,
+        204, 12, 12, 76, 76, 12, 12, 76, 204, 12, 12, 76, 76, 12, 76, 76,
+        12, 12, 204, 76, 12, 12, 204, 76, 12, 12, 204, 76, 12, 12, 204, 76,
+        204, 76, 12, 12, 204, 76, 12, 12, 204, 76, 12, 12, 204, 76, 76, 76,
+        204, 12, 76, 12, 76, 12, 204, 12, 76, 12, 76, 12, 204, 76, 12, 76,
+        204, 76, 76, 76, 12, 12, 12, 12, 204, 76, 76, 76, 12, 12, 204, 76,
+        460, 79, 335, 83, 339, 88, 88, 88, 460, 79, 335, 83, 339, 88, 344, 76,
+        472, 86, 342, 83, 339, 79, 79, 76, 472, 86, 342, 83, 339, 79, 335, 76,
+        460, 88, 76, 76, 332, 88, 76, 76, 460, 88, 76, 76, 332, 88, 344, 76,
+        204, 76, 333, 76, 76, 76, 335, 76, 204, 76, 338, 83, 76, 76, 333, 76,
+        460, 83, 339, 76, 332, 83, 339, 76, 460, 86, 342, 76, 332, 86, 342, 76,
+        204, 332, 79, 76, 332, 81, 76, 76, 460, 83, 76, 76, 332, 88, 332, 76,
+        484, 88, 88, 88, 344, 76, 76, 76, 484, 88, 88, 88, 344, 76, 76, 76,
+        204, 332, 79, 79, 211, 339, 86, 86, 216, 344, 86, 86, 211, 339, 79, 79,
+        204, 335, 76, 76, 339, 76, 76, 342, 204, 76, 344, 76, 76, 342, 339, 79,
+        460, 335, 337, 339, 342, 344, 347, 95, 95, 91, 88, 86, 83, 81, 335, 76,
+        204, 76, 76, 76, 204, 76, 76, 76, 204, 76, 76, 76, 204, 76, 76, 76,
+        76, 204, 76, 76, 76, 204, 76, 76, 76, 204, 76, 76, 76, 204, 76, 76,
+        204, 76, 76, 204, 76, 76, 204, 76, 76, 204, 76, 76, 204, 76, 76, 204,
+        204, 204, 76, 76, 76, 76, 204, 204, 76, 76, 76, 76, 204, 204, 76, 76,
+        204, 76, 76, 76, 76, 76, 76, 204, 76, 76, 76, 76, 76, 76, 204, 204,
+        204, 76, 76, 204, 76, 76, 204, 76, 76, 76, 204, 76, 76, 204, 76, 76,
+        76, 76, 204, 76, 76, 76, 204, 76, 76, 76, 204, 76, 76, 204, 76, 76,
+        204, 204, 204, 76, 76, 76, 76, 76, 204, 204, 204, 76, 76, 76, 76, 76,
+        204, 76, 204, 76, 204, 76, 204, 76, 204, 76, 204, 76, 204, 76, 204, 76,
+        76, 76, 76, 76, 204, 204, 76, 76, 76, 76, 76, 76, 204, 204, 204, 204,
+        204, 83, 79, 86, 83, 88, 86, 91, 216, 91, 86, 88, 83, 86, 335, 83,
+        204, 88, 79, 91, 83, 95, 79, 91, 204, 88, 79, 91, 83, 95, 342, 98,
+        204, 81, 79, 83, 81, 86, 83, 88, 214, 83, 88, 81, 83, 79, 337, 76,
+        216, 76, 86, 76, 83, 76, 81, 76, 216, 76, 86, 76, 83, 76, 335, 76,
+        204, 79, 76, 81, 76, 83, 76, 86, 204, 88, 76, 91, 76, 95, 332, 100,
+        204, 100, 76, 95, 76, 91, 76, 88, 204, 100, 76, 95, 76, 91, 332, 88,
+        204, 83, 88, 79, 86, 91, 81, 88, 223, 83, 88, 79, 86, 91, 337, 88,
+        228, 95, 91, 88, 86, 83, 81, 79, 204, 79, 81, 83, 86, 88, 347, 95,
+        204, 81, 86, 91, 79, 83, 88, 95, 204, 81, 86, 91, 79, 83, 344, 100,
+        204, 86, 76, 88, 76, 86, 76, 83, 204, 86, 76, 88, 76, 91, 332, 88,
+        204, 88, 83, 95, 79, 91, 86, 98, 204, 88, 83, 95, 79, 91, 342, 100,
+        76, 79, 83, 79, 88, 83, 79, 83, 219, 88, 83, 88, 79, 83, 344, 76,
+        204, 76, 79, 79, 204, 76, 79, 79, 204, 76, 79, 79, 204, 79, 76, 79,
+        204, 76, 81, 81, 204, 76, 81, 81, 204, 76, 81, 81, 204, 81, 76, 81,
+        204, 76, 76, 79, 81, 81, 81, 79, 204, 76, 76, 79, 81, 335, 76, 76,
+        204, 81, 76, 79, 204, 81, 76, 79, 204, 81, 76, 79, 204, 83, 81, 79,
+        204, 12, 76, 12, 207, 12, 79, 12, 209, 12, 81, 12, 207, 12, 76, 12,
+        204, 76, 79, 81, 211, 83, 81, 79, 204, 76, 79, 81, 211, 86, 339, 81,
+        204, 76, 76, 76, 79, 79, 79, 79, 209, 81, 81, 81, 79, 79, 79, 79,
+        460, 81, 337, 76, 332, 81, 337, 76, 460, 81, 337, 76, 332, 81, 337, 76,
+        207, 79, 76, 76, 81, 81, 76, 76, 207, 79, 76, 76, 83, 339, 81, 79,
+        204, 79, 81, 79, 76, 79, 81, 83, 204, 79, 81, 79, 86, 83, 337, 79,
+        204, 12, 76, 88, 12, 76, 12, 88, 204, 12, 76, 88, 12, 88, 76, 12,
+        204, 76, 12, 88, 76, 12, 88, 12, 204, 76, 12, 88, 76, 88, 12, 88,
+        204, 88, 12, 76, 88, 12, 76, 88, 204, 88, 12, 76, 88, 12, 88, 12,
+        204, 12, 88, 12, 12, 76, 88, 12, 204, 12, 88, 12, 76, 12, 88, 88,
+        204, 76, 88, 12, 76, 88, 12, 76, 216, 12, 76, 88, 76, 12, 88, 76,
+        204, 12, 12, 12, 88, 12, 12, 12, 204, 12, 12, 88, 12, 12, 88, 12,
+        204, 88, 76, 12, 76, 88, 76, 12, 204, 88, 76, 12, 76, 344, 76, 12,
+        204, 12, 332, 88, 12, 76, 332, 88, 204, 12, 332, 88, 12, 344, 76, 12,
+        12, 204, 76, 12, 88, 76, 12, 76, 12, 204, 76, 12, 88, 76, 88, 12,
+        204, 88, 88, 76, 12, 88, 76, 12, 204, 88, 88, 76, 12, 88, 12, 88,
+        204, 12, 76, 76, 88, 12, 76, 76, 204, 12, 76, 76, 88, 12, 88, 88,
+        204, 76, 88, 76, 76, 88, 76, 76, 216, 76, 76, 88, 76, 88, 216, 100);
+    const int[90] arpPhraseLengths = (16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16);
+    // ARP-PHRASES-END
 
     // ---------- Arpeggiator ----------
     // Pool = gehaltene Noten (dedupliziert, holdNote), sortiert gelesen und
@@ -906,40 +1014,149 @@ processor AcidifyCore
         return clamp (sortedHeldNote (k) + 12 * octave, 0, 127);
     }
 
+    int arpRandomBelow (int size)
+    {
+        arpRngState = arpRngState * 48271L % 2147483647L;
+        return int (arpRngState % int64 (max (size, 1)));
+    }
+
+    int arpConverge (int pos, int size)
+    {
+        // aussen nach innen: tiefste, hoechste, zweittiefste, zweithoechste ...
+        return (pos & 1) == 0 ? pos / 2 : size - 1 - pos / 2;
+    }
+
+    void arpRefreshShuffle (int size)
+    {
+        if (arpShuffleGeneration == arpPoolGeneration && arpShuffleSize == size)
+            return;
+        for (int i = 0; i < size; i += 1)
+            arpShuffle.at (i) = i;
+        for (int i = size - 1; i > 0; i -= 1)
+        {
+            let j = arpRandomBelow (i + 1);
+            let keep = arpShuffle.at (i);
+            arpShuffle.at (i) = arpShuffle.at (j);
+            arpShuffle.at (j) = keep;
+        }
+        arpShuffleGeneration = arpPoolGeneration;
+        arpShuffleSize = size;
+    }
+
+    // Figuren 1..15 liefern einen Pool-Index (sortiert aufsteigend, Oktaven
+    // angehaengt); "Played" (8) greift stattdessen in Anschlagsreihenfolge.
     int nextArpIndex()
     {
         let size = arpPoolSize();
         if (size <= 0)
             return -1;
 
-        if (arpMode == 4)
+        if (arpMode == 4)  // Random
         {
-            arpRngState = arpRngState * 48271L % 2147483647L;
-            var pick = int (arpRngState % int64 (size));
+            var pick = arpRandomBelow (size);
             if (size > 1 && pick == arpLastRandom)
                 pick = (pick + 1) % size;
             arpLastRandom = pick;
             return pick;
         }
 
-        if (arpMode == 2)
+        if (arpMode == 14)  // Rnd-Once: eine Ziehung, dann Loop
         {
+            arpRefreshShuffle (size);
             let idx = arpPointer % size;
             arpPointer += 1;
-            return size - 1 - idx;
+            return arpShuffle.at (idx);
         }
 
-        if (arpMode == 3)
+        if (arpMode == 15)  // Walk: Zufallsschritt, an den Raendern gespiegelt
+        {
+            let stepUp = (arpRandomBelow (2) == 1);
+            if (stepUp && arpWalkPos < size - 1)
+                arpWalkPos += 1;
+            else if (! stepUp && arpWalkPos > 0)
+                arpWalkPos -= 1;
+            else if (size > 1)
+                arpWalkPos += stepUp ? -1 : 1;
+            arpWalkPos = clamp (arpWalkPos, 0, size - 1);
+            return arpWalkPos;
+        }
+
+        var pos = 0;
+        if (arpMode == 9)  // Double: jede Note zweimal, aufwaerts
+        {
+            pos = (arpPointer / 2) % size;
+            arpPointer += 1;
+            return pos;
+        }
+
+        if (arpMode == 3 || arpMode == 6)  // exklusive Pendel
         {
             let cycle = size > 1 ? 2 * size - 2 : 1;
-            let pos = arpPointer % cycle;
+            pos = arpPointer % cycle;
             arpPointer += 1;
-            return pos < size ? pos : cycle - pos;
+            let upPos = pos < size ? pos : cycle - pos;
+            return arpMode == 3 ? upPos : size - 1 - upPos;
         }
 
-        let idx = arpPointer % size;
+        if (arpMode == 5 || arpMode == 7)  // inklusive Pendel (Endpunkte doppelt)
+        {
+            let cycle = size > 1 ? 2 * size : 1;
+            pos = arpPointer % cycle;
+            arpPointer += 1;
+            let upPos = pos < size ? pos : 2 * size - 1 - pos;
+            return arpMode == 5 ? upPos : size - 1 - upPos;
+        }
+
+        if (arpMode == 10 || arpMode == 11)  // Converge / Diverge
+        {
+            pos = arpPointer % size;
+            arpPointer += 1;
+            return arpMode == 10 ? arpConverge (pos, size)
+                                 : arpConverge (size - 1 - pos, size);
+        }
+
+        if (arpMode == 12 || arpMode == 13)  // Pinky / Thumb
+        {
+            pos = arpPointer;
+            arpPointer += 1;
+            if (size == 1)
+                return 0;
+            if (arpMode == 12)
+                return (pos & 1) == 1 ? size - 1 : (pos / 2) % (size - 1);
+            return (pos & 1) == 0 ? 0 : 1 + (pos / 2) % (size - 1);
+        }
+
+        pos = arpPointer % size;
         arpPointer += 1;
-        return idx;
+        if (arpMode == 2)
+            return size - 1 - pos;
+        return pos;  // Up und Fallback
+    }
+
+    int arpPlayedNoteAt (int index)
+    {
+        let count = max (heldNoteCount, 1);
+        let octave = index / count;
+        return clamp (heldNotes.at (index % count) + 12 * octave, 0, 127);
+    }
+
+    int arpPhraseLength()
+    {
+        if (arpPhrase <= 0)
+            return clamp (patternLength, 1, 16);
+        return clamp (arpPhraseLengths.at (arpPhrase - 1), 1, 16);
+    }
+
+    int arpPhrasePacked (int step)
+    {
+        return arpPhraseData.at ((arpPhrase - 1) * 16 + clamp (step, 0, 15));
+    }
+
+    int arpPhraseBaseNote()
+    {
+        if (heldNoteCount <= 0)
+            return -1;
+        return sortedHeldNote (arpPhraseNoteIdx % heldNoteCount);
     }
 
     void arpNoteOn (int note, int velocity)
@@ -1002,6 +1219,7 @@ processor AcidifyCore
             heldNotes.at (heldNoteCount) = note;
             heldVelocities.at (heldNoteCount) = velocity;
             heldNoteCount += 1;
+            arpPoolGeneration += 1;
         }
     }
 
@@ -1021,6 +1239,7 @@ processor AcidifyCore
             heldVelocities.at (i) = heldVelocities.at (i + 1);
         }
         heldNoteCount -= 1;
+        arpPoolGeneration += 1;
         return true;
     }
 
@@ -1142,7 +1361,18 @@ processor AcidifyCore
 
     void resetSequencer()
     {
-        clearHeldNotes();
+        // Im Arp-Modus ueberlebt der Noten-Pool den Transport-Stopp (Latch);
+        // die Figuren-Zaehler starten reproduzierbar neu.
+        if (arpMode <= 0)
+            clearHeldNotes();
+        arpPointer = 0;
+        arpWalkPos = 0;
+        arpPhraseStep = 0;
+        arpPhraseNoteIdx = 0;
+        arpLastRandom = -1;
+        arpRngState = 20260730L;
+        arpShuffleGeneration = -1;
+        lastEffectiveFlags = 0;
         sequenceStep = -1;
         sequenceCountdown = 0;
         gateCountdown = 0;
@@ -1177,10 +1407,23 @@ processor AcidifyCore
     void startSequenceStepAt (int nextStep, float sampleRate, float bpm)
     {
         let length = clamp (patternLength, 1, 16);
-        let previousFlags = sequenceStep >= 0 ? getFlags (sequenceStep) : 0;
+        let previousStep = sequenceStep;
+        let previousFlags = previousStep >= 0 ? lastEffectiveFlags : 0;
         sequenceStep = clamp (nextStep, 0, length - 1);
 
-        let flags = getFlags (sequenceStep);
+        // Im Phrase-Modus (16, Bank > 0) ersetzt die Phrase die Pattern-Maske;
+        // alle anderen Figuren behalten Gate/Accent/Slide aus dem Pattern.
+        var flags = getFlags (sequenceStep);
+        var phraseRel = 0;
+        if (arpMode == 16 && arpPhrase > 0)
+        {
+            let packedStep = arpPhrasePacked (arpPhraseStep);
+            flags = ((packedStep >> 6) & 1)
+                  | (((packedStep >> 7) & 1) << 1)
+                  | (((packedStep >> 8) & 1) << 2);
+            phraseRel = (packedStep & 63) - 12;
+        }
+
         let hasGate = (flags & 1) != 0;
         let hasAccent = (flags & 2) != 0;
         let previousSlide = (previousFlags & 4) != 0;
@@ -1191,7 +1434,20 @@ processor AcidifyCore
         if (hasGate)
         {
             var note = -1;
-            if (arpMode > 0)
+            if (arpMode == 16)
+            {
+                let base = arpPhraseBaseNote();
+                if (base >= 0)
+                    note = clamp (base + (arpPhrase > 0 ? phraseRel
+                                                        : getPitch (sequenceStep)), 0, 127);
+            }
+            else if (arpMode == 8)
+            {
+                let index = nextArpIndex();
+                if (index >= 0)
+                    note = arpPlayedNoteAt (index);
+            }
+            else if (arpMode > 0)
             {
                 let index = nextArpIndex();
                 if (index >= 0)
@@ -1220,6 +1476,32 @@ processor AcidifyCore
             releaseNote();
         }
 
+        // Phrase-Zaehler laufen ueber alle Steps (auch Rests); beim Umbruch
+        // wandert die Transposition zur naechsten gehaltenen Note.
+        if (arpMode == 16)
+        {
+            // Bank-Phrasen starten erst mit der ersten gehaltenen Note
+            // (RPS-Verhalten); Phrase 0 = eigenes Pattern bleibt an den
+            // Transport gebunden und wechselt die Transposition am Umbruch.
+            if (arpPhrase > 0)
+            {
+                if (heldNoteCount > 0)
+                {
+                    arpPhraseStep += 1;
+                    if (arpPhraseStep >= arpPhraseLength())
+                    {
+                        arpPhraseStep = 0;
+                        arpPhraseNoteIdx += 1;
+                    }
+                }
+            }
+            else if (sequenceStep == 0 && previousStep > 0)
+            {
+                arpPhraseNoteIdx += 1;
+            }
+        }
+
+        lastEffectiveFlags = flags;
         sequenceCountdown = stepSamples;
         gateCountdown = (flags & 4) != 0 ? stepSamples + 1 : max (1, stepSamples / 2);
         currentStep <- float (sequenceStep);
@@ -1793,7 +2075,8 @@ processor AcidifyCore
     event param58 (float v) { modSoftAtkEnabled = v >= 0.5f; updateModDerived(); }
     event param59 (float v) { modSoftAtkAmount = clamp (v, 0.0f, 1.0f); updateModDerived(); }
     event param60 (float v) { powerOn = v >= 0.5f; }
-    event param61 (float v) { arpMode = clamp (int (v + 0.5f), 0, 4); }
+    event param61 (float v) { arpMode = clamp (int (v + 0.5f), 0, 16); }
+    event param64 (float v) { arpPhrase = clamp (int (v + 0.5f), 0, 90); }
     event param62 (float v) { arpOctaves = clamp (int (v + 0.5f), 1, 4); }
     event param63 (float v)
     {
@@ -2214,11 +2497,12 @@ graph Acidify [[ main ]]
     input event float param59 [[ name: "Mod Soft Attack Amount", min: 0.0, max: 1.0, init: 0.25, step: 0.001 ]];
     input event float param60 [[ name: "Power",              min: 0.0, max: 1.0, init: 1.0, step: 1.0,
                                  text: "Bypass|On" ]];
-    input event float param61 [[ name: "Arp Mode",           min: 0.0, max: 4.0, init: 0.0, step: 1.0,
-                                 text: "Off|Up|Down|Up-Down|Random" ]];
+    input event float param61 [[ name: "Arp Mode",           min: 0.0, max: 16.0, init: 0.0, step: 1.0,
+                                 text: "Off|Up|Down|Up-Down|Random|Up-Down+|Down-Up|Down-Up+|Played|Double|Converge|Diverge|Pinky|Thumb|Rnd-Once|Walk|Phrase" ]];
     input event float param62 [[ name: "Arp Octaves",        min: 1.0, max: 4.0, init: 1.0, step: 1.0 ]];
     input event float param63 [[ name: "Arp Hold",           min: 0.0, max: 1.0, init: 0.0, step: 1.0,
                                  text: "Off|On" ]];
+    input event float param64 [[ name: "Arp Phrase",         min: 0.0, max: 90.0, init: 0.0, step: 1.0 ]];
 
     node core = AcidifyCore * 4;
 
@@ -2276,5 +2560,6 @@ graph Acidify [[ main ]]
         param60 -> core.param60;
         param61 -> core.param61; param62 -> core.param62;
         param63 -> core.param63;
+        param64 -> core.param64;
     }
 }

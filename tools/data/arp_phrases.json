@@ -1,0 +1,9182 @@
+[
+ {
+  "name": "OCT 8TH",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "OCT PUMP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "OCT UP2",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "OCT OFF",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "OCT ROLL",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "OCT SYNC",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "OCT DOWN",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "OCT SKIP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "OCT 3UP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "OCT HANG",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "OCT LIFT",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "OCT GAP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACID UP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACID DIP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACID 5TH",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACID M3",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACID B7",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 22,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACID SNK",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACID RUN",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACID PIT",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACID SUS",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACID JMP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 22,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 22,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACID LOW",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACID TRI",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SNC ONE",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SNC TWO",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SNC HALF",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SNC PUSH",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SNC HOLE",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SNC CLAV",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SNC 3+3",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SNC DUB",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SNC LATE",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SNC BUMP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SNC EDGE",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SNC REST",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SLD UP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SLD DOWN",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SLD OCT",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SLD CHRM",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 1,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 6,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 1,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SLD WAVE",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SLD CRPP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SLD FALL",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SLD PAIR",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SLD HOOK",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "SLD LONG",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACC 4FLR",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACC OFF",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACC 3ER",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACC PAIR",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACC EDGE",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACC GALP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACC SNAP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACC WALL",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACC HART",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ACC ROLL",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ZIG STEP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ZIG WIDE",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 22,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ZIG BACK",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ZIG DROP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ZIG CLMB",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ZIG POGO",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ZIG TRIO",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ZIG DIVE",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ZIG SAW",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ZIG HOPS",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ZIG FLIP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 22,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 19,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ZIG TIDE",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 15,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "RVE M3",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "RVE 4TH",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "RVE HOOV",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "RVE PEND",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "RVE STAB",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "RVE LIFT",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "RVE DARK",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "RVE SIRN",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 1
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "RVE PUSH",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "RVE ANTH",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 10,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 7,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 5,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 3,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ELC FUNK",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ELC BRKN",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ELC ROBO",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ELC WONK",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ELC SNAP",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ELC HALF",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ELC TAPE",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ELC GLDE",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 1
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ELC DRAG",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ELC NERV",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ELC LOPE",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 0,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ },
+ {
+  "name": "ELC ENDE",
+  "length": 16,
+  "steps": [
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 0,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   },
+   {
+    "pitch": 12,
+    "gate": 1,
+    "accent": 1,
+    "slide": 0
+   },
+   {
+    "pitch": 24,
+    "gate": 1,
+    "accent": 0,
+    "slide": 0
+   }
+  ]
+ }
+]

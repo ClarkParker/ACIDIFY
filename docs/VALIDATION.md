@@ -1,3 +1,29 @@
+# Validierung 2.5.0
+
+## 2.5.0
+
+`dsp_arp_test` (48 kHz, Akkord 36/40/43 per SMF, Autokorrelation pro
+Step) mit exakten Sequenz-Nachweisen: Up-Down+ [36 40 43 43 40 36],
+Down-Up [43 40 36 40], Down-Up+, Played (Reihenfolge E-C-G belegt),
+Double, Converge [36 43 40], Diverge [40 43 36], Pinky [36 43 40 43 36 43],
+Thumb [36 40 36 43 36 40], Rnd-Once (echte Permutation, geloopt,
+Doppel-Render bit-identisch), Walk (poolgetreu, nur Nachbarschritte),
+Phrase 00 = eigenes Pattern transponiert, Phrasen 01/13 stimmen Step
+für Step mit `tools/data/arp_phrases.json` überein, Basisnoten-Zyklus
+bei zwei gehaltenen Tasten (36 → 43 am Phrasenumbruch), Arp aus:
+Render mit/ohne MIDI bit-identisch. `gen_phrases.py --check`: 90
+Phrasen / 1440 Steps in DSP, UI und JSON synchron. Serien-Smoke
+bit-identisch 0,34552 @48k, matrix/articulation/transport grün,
+Messstand: alle Prüfsteine bestanden, partcheck 28/28, Lints strict
+sauber (param-count-Hinweis 64 dokumentiert). `ui_smoke_test` 3/3
+grün: 31 Controls, 16 Figuren im DIRECTION-Raster, Phrasen-Menü mit
+91 Einträgen, Auswahl „ACID UP" (param64 = 13) inkl. gedimmtem
+Step-Strip, Stepper-Rückschritt auf 12, Rücksprung CLASSIC setzt
+param61 = 0. Stepper-Displays lösen keine Wertänderung mehr aus
+(Fix der `data-step`-Kollision am Control-Container).
+
+---
+
 # Validierung 2.4.0
 
 ## 2.4.0

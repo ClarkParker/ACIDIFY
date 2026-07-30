@@ -34,7 +34,8 @@ const ACIDIFY_GLOBALS = [
   { id: "param58", type: "toggle",  label: "SOFT ATK",     min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param59", type: "dial",    label: "TIME",     min: 0,  max: 1,   step: 0.001, init: 0.25, format: v => `${(0.5 * Math.pow(60, v)).toFixed(1)}ms` },
   { id: "param60", type: "toggle",  label: "POWER",    min: 0,  max: 1,   step: 1, init: 1 },
-  { id: "param61", type: "toggle",  label: "ARP MODE", min: 0,  max: 4,   step: 1, init: 0 },
+  { id: "param61", type: "toggle",  label: "ARP MODE", min: 0,  max: 16,  step: 1, init: 0 },
+  { id: "param64", type: "stepper", label: "PHRASE",   min: 0,  max: 90,  step: 1, init: 0, format: v => { const i = Math.round(v); return i <= 0 ? "PATTERN" : ARP_PHRASES[i - 1].name; } },
   { id: "param62", type: "stepper", label: "OCTAVES",  min: 1,  max: 4,   step: 1, init: 1, format: v => `${Math.round(v)}` },
   { id: "param63", type: "toggle",  label: "HOLD",     min: 0,  max: 1,   step: 1, init: 0 },
 ];
@@ -51,6 +52,11 @@ const STEP_FLAG_IDS = [
 ];
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const DISTORTION_NAMES = ["PURE", "MACKIE", "PHONO"];
+// ARP-PHRASES-BEGIN
+// GENERIERT von tools/gen_phrases.py — nicht von Hand editieren.
+const ARP_PHRASES = [{ name: "OCT 8TH", length: 16 }, { name: "OCT PUMP", length: 16 }, { name: "OCT UP2", length: 16 }, { name: "OCT OFF", length: 16 }, { name: "OCT ROLL", length: 16 }, { name: "OCT SYNC", length: 16 }, { name: "OCT DOWN", length: 16 }, { name: "OCT SKIP", length: 16 }, { name: "OCT 3UP", length: 16 }, { name: "OCT HANG", length: 16 }, { name: "OCT LIFT", length: 16 }, { name: "OCT GAP", length: 16 }, { name: "ACID UP", length: 16 }, { name: "ACID DIP", length: 16 }, { name: "ACID 5TH", length: 16 }, { name: "ACID M3", length: 16 }, { name: "ACID B7", length: 16 }, { name: "ACID SNK", length: 16 }, { name: "ACID RUN", length: 16 }, { name: "ACID PIT", length: 16 }, { name: "ACID SUS", length: 16 }, { name: "ACID JMP", length: 16 }, { name: "ACID LOW", length: 16 }, { name: "ACID TRI", length: 16 }, { name: "SNC ONE", length: 16 }, { name: "SNC TWO", length: 16 }, { name: "SNC HALF", length: 16 }, { name: "SNC PUSH", length: 16 }, { name: "SNC HOLE", length: 16 }, { name: "SNC CLAV", length: 16 }, { name: "SNC 3+3", length: 16 }, { name: "SNC DUB", length: 16 }, { name: "SNC LATE", length: 16 }, { name: "SNC BUMP", length: 16 }, { name: "SNC EDGE", length: 16 }, { name: "SNC REST", length: 16 }, { name: "SLD UP", length: 16 }, { name: "SLD DOWN", length: 16 }, { name: "SLD OCT", length: 16 }, { name: "SLD CHRM", length: 16 }, { name: "SLD WAVE", length: 16 }, { name: "SLD CRPP", length: 16 }, { name: "SLD FALL", length: 16 }, { name: "SLD PAIR", length: 16 }, { name: "SLD HOOK", length: 16 }, { name: "SLD LONG", length: 16 }, { name: "ACC 4FLR", length: 16 }, { name: "ACC OFF", length: 16 }, { name: "ACC 3ER", length: 16 }, { name: "ACC PAIR", length: 16 }, { name: "ACC EDGE", length: 16 }, { name: "ACC GALP", length: 16 }, { name: "ACC SNAP", length: 16 }, { name: "ACC WALL", length: 16 }, { name: "ACC HART", length: 16 }, { name: "ACC ROLL", length: 16 }, { name: "ZIG STEP", length: 16 }, { name: "ZIG WIDE", length: 16 }, { name: "ZIG BACK", length: 16 }, { name: "ZIG DROP", length: 16 }, { name: "ZIG CLMB", length: 16 }, { name: "ZIG POGO", length: 16 }, { name: "ZIG TRIO", length: 16 }, { name: "ZIG DIVE", length: 16 }, { name: "ZIG SAW", length: 16 }, { name: "ZIG HOPS", length: 16 }, { name: "ZIG FLIP", length: 16 }, { name: "ZIG TIDE", length: 16 }, { name: "RVE M3", length: 16 }, { name: "RVE 4TH", length: 16 }, { name: "RVE HOOV", length: 16 }, { name: "RVE PEND", length: 16 }, { name: "RVE STAB", length: 16 }, { name: "RVE LIFT", length: 16 }, { name: "RVE DARK", length: 16 }, { name: "RVE SIRN", length: 16 }, { name: "RVE PUSH", length: 16 }, { name: "RVE ANTH", length: 16 }, { name: "ELC FUNK", length: 16 }, { name: "ELC BRKN", length: 16 }, { name: "ELC ROBO", length: 16 }, { name: "ELC WONK", length: 16 }, { name: "ELC SNAP", length: 16 }, { name: "ELC HALF", length: 16 }, { name: "ELC TAPE", length: 16 }, { name: "ELC GLDE", length: 16 }, { name: "ELC DRAG", length: 16 }, { name: "ELC NERV", length: 16 }, { name: "ELC LOPE", length: 16 }, { name: "ELC ENDE", length: 16 }];
+// ARP-PHRASES-END
+
 const GENERATION_SCALES = [
   { id: "minor-pentatonic", label: "MIN PENTA", sub: "1 ♭3 4 5 ♭7", degrees: [0, 3, 5, 7, 10] },
   { id: "major-pentatonic", label: "MAJ PENTA", sub: "1 2 3 5 6", degrees: [0, 2, 4, 7, 9] },
@@ -273,7 +279,7 @@ class StepperControl {
     this.valueLabel = node.querySelector(".stepper-value");
     this.value = config.init;
     this.onClick = e => {
-      const direction = Number(e.target.closest("[data-step]")?.dataset.step || 0);
+      const direction = Number(e.target.closest("button[data-step]")?.dataset.step || 0);
       if (direction) this.setValue(this.value + direction * config.step, true);
     };
     node.addEventListener("click", this.onClick);
@@ -313,6 +319,7 @@ class AcidifyPatchView extends HTMLElement {
     this._scaleMenuOpen = false;
     this._arpView = false;
     this._lastArpMode = 0;
+    this._phraseMenuOpen = false;
     this._paintState = null;
     this._paramListener = null;
     this._stepListener = null;
@@ -366,6 +373,7 @@ class AcidifyPatchView extends HTMLElement {
     this._wireMods();
     this._wireModMirrors();
     this._wirePower();
+    this._wirePhraseMenu();
     this._wireDistMinis();
     this._renderScope();
     this._wireTooltips();
@@ -398,7 +406,7 @@ class AcidifyPatchView extends HTMLElement {
         }
         this._renderArpState();
       }
-      if (endpointID === "param62" || endpointID === "param63") {
+      if (endpointID === "param62" || endpointID === "param63" || endpointID === "param64") {
         this._renderArpState();
       }
       if (endpointID >= "param2" && endpointID <= "param6" && endpointID.length === 6 || endpointID === "param9") {
@@ -672,7 +680,8 @@ class AcidifyPatchView extends HTMLElement {
     if (endpointID === "param9" || endpointID === "param10" || endpointID === "param49") {
       this._renderTransportState();
     }
-    if (endpointID === "param61" || endpointID === "param62" || endpointID === "param63") {
+    if (endpointID === "param61" || endpointID === "param62" || endpointID === "param63"
+        || endpointID === "param64") {
       queueMicrotask(() => this._renderArpState());
     }
     this._recentSends = this._recentSends.filter(entry => now - entry.time < 1500);
@@ -972,6 +981,11 @@ class AcidifyPatchView extends HTMLElement {
       if (this._scaleMenuOpen && event.key === "Escape") {
         event.preventDefault();
         this._setScaleMenuOpen(false);
+        return;
+      }
+      if (this._phraseMenuOpen && event.key === "Escape") {
+        event.preventDefault();
+        this._setPhraseMenuOpen(false);
         return;
       }
       if (!command && key === "m") {
@@ -1345,6 +1359,17 @@ class AcidifyPatchView extends HTMLElement {
     });
   }
 
+  _wirePhraseMenu() {
+    const display = this.querySelector(".arp-phrase-display");
+    display?.addEventListener("click", () => this._setPhraseMenuOpen(!this._phraseMenuOpen));
+    display?.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        this._setPhraseMenuOpen(!this._phraseMenuOpen);
+      }
+    });
+  }
+
   _wirePower() {
     this.querySelector(".power-cell")?.addEventListener("click", () => {
       const on = Number(this._values.get("param60") ?? 1) >= 0.5;
@@ -1565,10 +1590,14 @@ class AcidifyPatchView extends HTMLElement {
   }
 
   _renderArpState() {
-    const names = ["OFF", "UP", "DOWN", "UP-DN", "RND"];
-    const mode = Math.round(clamp(Number(this._values.get("param61") ?? 0), 0, 4));
+    const names = ["OFF", "UP", "DOWN", "UP-DN", "RND", "UP-DN+", "DN-UP", "DN-UP+",
+      "PLAYED", "DOUBLE", "CONV", "DIV", "PINKY", "THUMB", "RND-1", "WALK", "PHRASE"];
+    const mode = Math.round(clamp(Number(this._values.get("param61") ?? 0), 0, 16));
+    const phrase = Math.round(clamp(Number(this._values.get("param64") ?? 0), 0, 90));
     const readout = this.querySelector(".arp-readout");
-    if (readout) readout.textContent = names[mode];
+    if (readout) readout.textContent = mode === 16
+      ? (phrase <= 0 ? "PATTERN" : ARP_PHRASES[phrase - 1].name)
+      : names[mode];
     this.querySelectorAll(".arp-direction [data-value]").forEach(button => {
       button.classList.toggle("active", Number(button.dataset.value) === mode && mode > 0);
     });
@@ -1576,6 +1605,47 @@ class AcidifyPatchView extends HTMLElement {
     const holdLabel = this.querySelector(".arp-hold-label");
     if (holdLabel) holdLabel.textContent = hold ? "ON" : "OFF";
     this.querySelector(".arp-hold")?.classList.toggle("is-on", hold);
+    this.querySelector(".arp-phrase-row")?.classList.toggle("phrase-idle", mode !== 16);
+    this.classList.toggle("phrase-active", this._arpView && mode === 16 && phrase > 0);
+    if (this._phraseMenuOpen) this._refreshPhraseMenu();
+  }
+
+  _setPhraseMenuOpen(open) {
+    this._phraseMenuOpen = Boolean(open);
+    const menu = this.querySelector(".phrase-menu");
+    const display = this.querySelector(".arp-phrase-display");
+    if (menu) {
+      menu.hidden = !this._phraseMenuOpen;
+      if (this._phraseMenuOpen) this._refreshPhraseMenu();
+    }
+    display?.setAttribute("aria-expanded", `${this._phraseMenuOpen}`);
+  }
+
+  _refreshPhraseMenu() {
+    const menu = this.querySelector(".phrase-menu");
+    if (!menu) return;
+    if (!menu.childElementCount) {
+      const entries = ['<button type="button" role="menuitemradio" data-phrase="0"><span>00 PATTERN</span><small>OWN</small></button>']
+        .concat(ARP_PHRASES.map((phrase, index) =>
+          `<button type="button" role="menuitemradio" data-phrase="${index + 1}"><span>${String(index + 1).padStart(2, "0")} ${phrase.name}</span><small>${phrase.length}</small></button>`));
+      menu.innerHTML = entries.join("");
+      menu.querySelectorAll("[data-phrase]").forEach(option => {
+        option.addEventListener("click", () => {
+          const value = Number(option.dataset.phrase);
+          const owner = this._controls.get("param64");
+          if (owner) owner.setValue(value, true);
+          else this._sendParameter("param64", value);
+          this._setPhraseMenuOpen(false);
+          queueMicrotask(() => this._renderArpState());
+        });
+      });
+    }
+    const current = Math.round(clamp(Number(this._values.get("param64") ?? 0), 0, 90));
+    menu.querySelectorAll("[data-phrase]").forEach(option => {
+      const active = Number(option.dataset.phrase) === current;
+      option.classList.toggle("active", active);
+      option.setAttribute("aria-checked", `${active}`);
+    });
   }
 
   _setStudioMode(enabled) {
@@ -4756,31 +4826,48 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .arp-direction-cell { box-sizing: border-box; flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 6px 8px 8px; border-radius: 2px;
     border: 1px solid #7c827f; background: linear-gradient(180deg,#bcc0be,#a9adab);
     box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
-  acidify-patch-view .arp-direction { flex: 1; min-height: 0; margin-top: 8px; display: grid; grid-template-columns: repeat(4,1fr); gap: 6px;
+  acidify-patch-view .arp-direction { flex: 1; min-height: 0; margin-top: 8px; display: grid; grid-template-columns: repeat(8,1fr); grid-auto-rows: 1fr; gap: 4px;
     padding: 0; background: none; border: 0; box-shadow: none; width: auto; height: auto; }
-  acidify-patch-view .arp-direction button { position: relative; height: auto; min-height: 36px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  acidify-patch-view .arp-direction button { position: relative; height: auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 2px; border-radius: 2px; cursor: pointer; border: 1px solid #1a1e1f; color: #1d2426; transform: none; text-shadow: none;
     background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
-  acidify-patch-view .arp-direction button::before { content: ""; position: absolute; left: 5px; top: 5px; width: 5px; height: 5px; border-radius: 50%;
+  acidify-patch-view .arp-direction button::before { content: ""; position: absolute; left: 3px; top: 3px; width: 4px; height: 4px; border-radius: 50%;
     background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.7); }
   acidify-patch-view .arp-direction button.active { transform: none; border-color: #1a1e1f;
     background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
     box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5); }
   acidify-patch-view .arp-direction button.active::before { background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%);
     box-shadow: 0 0 7px rgba(255,72,48,.9), inset 0 0 2px rgba(255,255,255,.6); }
-  acidify-patch-view .arp-direction button strong { margin: 0; color: #1d2426; font: 900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .arp-direction button strong { margin: 0; color: #1d2426; font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .7px; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
   acidify-patch-view .arp-direction button.active strong { color: #8c1a12; }
-  acidify-patch-view .arp-direction button small { margin: 0; color: #5b6466; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .6px; }
-  acidify-patch-view .arp-tools-cell { box-sizing: border-box; width: 300px; flex: 0 0 auto; display: flex; gap: 8px; padding: 6px 8px 8px; border-radius: 2px;
+  acidify-patch-view .arp-direction button small { margin: 0; color: #5b6466; font: 900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .4px; }
+  acidify-patch-view .arp-tools-cell { box-sizing: border-box; width: 300px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 4px; padding: 6px 8px 8px; border-radius: 2px;
     border: 1px solid #7c827f; background: linear-gradient(180deg,#bcc0be,#a9adab);
     box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .arp-tools-row { display: flex; gap: 8px; flex: 0 0 auto; }
   acidify-patch-view .arp-tool-block { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; }
   acidify-patch-view .arp-tool-block .edit-caption { flex: 0 0 auto; }
-  acidify-patch-view .arp-tool-block .silver-stepper { margin-top: 14px; width: auto; height: auto; padding: 0; background: none; border: 0; box-shadow: none;
-    display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  acidify-patch-view .arp-hold { margin-top: 14px; width: auto; height: auto; padding: 0; background: none; border: 0; box-shadow: none; perspective: none; transform: none; }
-  acidify-patch-view .arp-hold button, acidify-patch-view .arp-hold.is-on button { width: 92px; height: 52px; margin: 0; position: static; display: flex; flex-direction: column;
+  acidify-patch-view .arp-tool-block .silver-stepper { margin-top: 4px; width: auto; height: auto; padding: 0; background: none; border: 0; box-shadow: none;
+    display: flex; flex-direction: row; align-items: center; gap: 6px; }
+  acidify-patch-view .arp-phrase-row { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; }
+  acidify-patch-view .arp-phrase-row.phrase-idle { opacity: .45; }
+  acidify-patch-view .arp-phrase { margin-top: 4px; width: 100%; height: auto; padding: 0; background: none; border: 0; box-shadow: none;
+    display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 6px; }
+  acidify-patch-view .arp-phrase .led-box { width: 150px; height: 24px; cursor: pointer; }
+  acidify-patch-view .phrase-menu { position: absolute; z-index: 72; left: 0; right: 0; bottom: 30px; max-height: 170px; overflow: auto; padding: 3px;
+    border-radius: 3px; border: 1px solid #0a0b09; background: linear-gradient(#252824,#15170f);
+    box-shadow: 0 12px 22px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.08); }
+  acidify-patch-view .phrase-menu button { width: 100%; height: 15px; padding: 0 6px; display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; border: 0; border-radius: 2px; background: transparent; color: #c2c8c4; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px;
+    transform: none; box-shadow: none; text-shadow: none; }
+  acidify-patch-view .phrase-menu button:hover { background: #3a3f39; }
+  acidify-patch-view .phrase-menu button.active { background: #8f1d16; color: #ffe3de; }
+  acidify-patch-view .phrase-menu button small { color: #7d8681; font: 900 5.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .5px; }
+  acidify-patch-view .phrase-menu button.active small { color: #f0b0a6; }
+  acidify-patch-view.phrase-active .step-row { opacity: .45; }
+  acidify-patch-view .arp-hold { margin-top: 4px; width: auto; height: auto; padding: 0; background: none; border: 0; box-shadow: none; perspective: none; transform: none; }
+  acidify-patch-view .arp-hold button, acidify-patch-view .arp-hold.is-on button { width: 92px; height: 32px; margin: 0; position: static; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 3px; cursor: pointer; border-radius: 2px; border: 1px solid #1a1e1f; transform: none; text-shadow: none;
     background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
@@ -5099,7 +5186,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><span class="power-label">POWER</span><span class="power-ring"><i class="power-led lit"></i></span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.4.0</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.5.0</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -5381,31 +5468,55 @@ class AcidifyPatchView extends HTMLElement {
         <div class="arp-direction-cell">
           <span class="edit-caption">DIRECTION</span>
           <div class="control arp-direction" data-param="param61" data-endpoint-id="param61"
-            data-min="0" data-max="4" data-step="1" data-init="0" data-control="buttons"
-            data-tooltip="Arpeggio direction over the held notes.">
+            data-min="0" data-max="16" data-step="1" data-init="0" data-control="buttons"
+            data-tooltip="Arpeggio figure over the held notes; PHRASE plays the phrase bank transposed by the keys.">
             <button data-value="1" type="button"><strong>UP</strong><small>ASCEND</small></button>
             <button data-value="2" type="button"><strong>DOWN</strong><small>DESCEND</small></button>
-            <button data-value="3" type="button"><strong>UP-DN</strong><small>PING-PONG</small></button>
-            <button data-value="4" type="button"><strong>RND</strong><small>RANDOM</small></button>
+            <button data-value="3" type="button"><strong>UP-DN</strong><small>EXCL</small></button>
+            <button data-value="5" type="button"><strong>UP-DN+</strong><small>INCL</small></button>
+            <button data-value="6" type="button"><strong>DN-UP</strong><small>EXCL</small></button>
+            <button data-value="7" type="button"><strong>DN-UP+</strong><small>INCL</small></button>
+            <button data-value="8" type="button"><strong>PLAYED</strong><small>ORDER</small></button>
+            <button data-value="9" type="button"><strong>DOUBLE</strong><small>TWICE</small></button>
+            <button data-value="10" type="button"><strong>CONV</strong><small>OUT-IN</small></button>
+            <button data-value="11" type="button"><strong>DIV</strong><small>IN-OUT</small></button>
+            <button data-value="12" type="button"><strong>PINKY</strong><small>TOP PED</small></button>
+            <button data-value="13" type="button"><strong>THUMB</strong><small>BASS PED</small></button>
+            <button data-value="4" type="button"><strong>RND</strong><small>FREE</small></button>
+            <button data-value="14" type="button"><strong>RND-1</strong><small>LOOPED</small></button>
+            <button data-value="15" type="button"><strong>WALK</strong><small>DRUNK</small></button>
+            <button data-value="16" type="button"><strong>PHRASE</strong><small>BANK</small></button>
           </div>
         </div>
         <div class="arp-tools-cell">
-          <div class="arp-tool-block">
-            <span class="edit-caption">OCTAVES</span>
-            <div class="control silver-stepper" data-param="param62" data-endpoint-id="param62"
-              data-min="1" data-max="4" data-step="1" data-init="1" data-control="stepper"
-              data-tooltip="How many octaves the arpeggio spans above the held notes.">
-              <div class="led-box"><span class="stepper-value">1</span></div>
-              <div class="stepper-buttons"><button data-step="-1" type="button" aria-label="Octaves down">−</button><button data-step="1" type="button" aria-label="Octaves up">+</button></div>
+          <div class="arp-tools-row">
+            <div class="arp-tool-block">
+              <span class="edit-caption">OCTAVES</span>
+              <div class="control silver-stepper" data-param="param62" data-endpoint-id="param62"
+                data-min="1" data-max="4" data-step="1" data-init="1" data-control="stepper"
+                data-tooltip="How many octaves the arpeggio spans above the held notes.">
+                <div class="led-box"><span class="stepper-value">1</span></div>
+                <div class="stepper-buttons"><button data-step="-1" type="button" aria-label="Octaves down">−</button><button data-step="1" type="button" aria-label="Octaves up">+</button></div>
+              </div>
+            </div>
+            <div class="arp-tool-block">
+              <span class="edit-caption">HOLD</span>
+              <div class="control run-switch arp-hold" data-param="param63" data-endpoint-id="param63"
+                data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle"
+                data-tooltip="Latch: keeps the chord arpeggiating after the keys are released.">
+                <button data-value="1" type="button"><strong class="arp-hold-label">OFF</strong><small>LATCH</small></button>
+              </div>
             </div>
           </div>
-          <div class="arp-tool-block">
-            <span class="edit-caption">HOLD</span>
-            <div class="control run-switch arp-hold" data-param="param63" data-endpoint-id="param63"
-              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle"
-              data-tooltip="Latch: keeps the chord arpeggiating after the keys are released.">
-              <button data-value="1" type="button"><strong class="arp-hold-label">OFF</strong><small>LATCH</small></button>
+          <div class="arp-phrase-row">
+            <span class="edit-caption">PHRASE</span>
+            <div class="control silver-stepper arp-phrase" data-param="param64" data-endpoint-id="param64"
+              data-min="0" data-max="90" data-step="1" data-init="0" data-control="stepper"
+              data-tooltip="Phrase bank for the PHRASE figure: 00 plays your own pattern, 01-90 play the curated bank, transposed by the held keys.">
+              <div class="led-box arp-phrase-display" role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false"><span class="stepper-value">PATTERN</span></div>
+              <div class="stepper-buttons"><button data-step="-1" type="button" aria-label="Previous phrase">−</button><button data-step="1" type="button" aria-label="Next phrase">+</button></div>
             </div>
+            <div class="phrase-menu" role="menu" hidden></div>
           </div>
         </div>
       </div>

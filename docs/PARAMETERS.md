@@ -27,9 +27,10 @@ Parameter werden ausschließlich angehängt.
 | `param50` | Swing | 0…100 % | 0 |
 | `param51..59` | Circuit Mods | siehe `docs/MODS.md` | Serienstand |
 | `param60` | Power | 0 Bypass / 1 On | 1 |
-| `param61` | Arp Mode | 0 Off / 1 Up / 2 Down / 3 Up-Down / 4 Random | 0 |
+| `param61` | Arp Mode | 0 Off / 1…15 Figuren / 16 Phrase (siehe unten) | 0 |
 | `param62` | Arp Octaves | 1…4 | 1 |
 | `param63` | Arp Hold | 0/1 | 0 |
+| `param64` | Arp Phrase | 0 Pattern / 1…90 Phrasen-Bank | 0 |
 
 Flag-Bits:
 
@@ -75,6 +76,41 @@ oberhalb. `Arp Hold` hält den Akkord nach dem Loslassen (Latch; neue Noten
 nach vollständigem Loslassen beginnen einen neuen Akkord). Bei `Arp Mode = 0`
 ist eingehendes MIDI am laufenden Sequencer wirkungslos — bit-identisch
 belegt in `tools/dsp_arp_test.mjs`.
+
+In 2.5.0 wurde `param61` append-kompatibel von 4 auf 16 erweitert (die
+Werte 0–4 behalten ihre Bedeutung, ältere Presets bleiben gültig) und
+`param64` append-only ergänzt. Die 16 Figuren:
+
+| Wert | Figur | Verhalten |
+|---:|---|---|
+| 1 | Up | aufwärts |
+| 2 | Down | abwärts |
+| 3 | Up-Down | Pendel, Endpunkte einfach (exklusiv) |
+| 4 | Random | Lehmer-LCG, keine Direkt-Wiederholung bei Pool > 1 |
+| 5 | Up-Down+ | Pendel, Endpunkte doppelt (inklusiv) |
+| 6 | Down-Up | Gegenpendel, exklusiv |
+| 7 | Down-Up+ | Gegenpendel, inklusiv |
+| 8 | Played | in Anschlagsreihenfolge |
+| 9 | Double | aufwärts, jede Note zweimal |
+| 10 | Converge | außen nach innen (tief, hoch, zweittief, …) |
+| 11 | Diverge | innen nach außen |
+| 12 | Pinky | höchste Note als Pedal gegen aufsteigende Reihe |
+| 13 | Thumb | tiefste Note als Pedal gegen aufsteigende Reihe |
+| 14 | Rnd-Once | einmal gemischte Permutation, dann geloopt (Fisher-Yates) |
+| 15 | Walk | Zufallsspaziergang ±1 mit Reflexion an den Rändern |
+| 16 | Phrase | Phrasen-Modus, gesteuert über `param64` |
+
+Im Phrase-Modus (`param61 = 16`) transponieren die gehaltenen Tasten eine
+Phrase: `param64 = 0` spielt das eigene 16-Step-Pattern (Pitch, Gate,
+Accent, Slide der Steps relativ zur Root), `param64 = 1…90` spielt die
+kuratierte Bank aus `tools/gen_phrases.py` (8 Kategorien: Octave, Acid,
+Synco, Slide, Accent, Zigzag, Rave, Electro; Phrasenlängen 8/16 Steps,
+Tonumfang −12…+24 Halbtöne, Gate/Accent/Slide pro Step kodiert). Bei
+mehreren gehaltenen Tasten wandert die Basisnote nach jedem
+Phrasendurchlauf zur nächsten Poolnote. Die Bank liegt als generierte
+Tabelle in DSP und UI (Marker `ARP-PHRASES-BEGIN/END`);
+`python3 tools/gen_phrases.py --check` prüft die Synchronität, die
+Referenzdaten stehen in `tools/data/arp_phrases.json`.
 
 `param50` wurde in 0.7.0 append-only ergänzt. 0 % lässt jedes
 16tel-Zweierpaar gerade; 100 % verschiebt das zweite 16tel auf die letzte

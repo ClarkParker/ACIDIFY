@@ -58,7 +58,7 @@ try {
     nativeTitles: document.querySelectorAll("[title]").length,
     screws: document.querySelectorAll(".screw").length,
   }));
-  if (counts.controls !== 30 || counts.endpointControls !== 30
+  if (counts.controls !== 31 || counts.endpointControls !== 31
       || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
       || counts.stepGroups !== 4 || counts.whiteKeys !== 7 || counts.blackKeys !== 5
       || counts.studioCells !== 48 || counts.studioCellGroups !== 12
@@ -92,7 +92,7 @@ try {
   });
   if (header.title.right > header.utility.left
       || Math.round(header.headerH) !== 25
-      || !/^--\s*\/\s*16$/.test(header.position)
+      || !/^(--|\d{2})\s*\/\s*16$/.test(header.position)
       || Math.round(header.segW) !== 44 || Math.round(header.segH) !== 15) {
     throw new Error(`Program header layout failed: ${JSON.stringify(header)}`);
   }
@@ -614,6 +614,34 @@ try {
       || arpTuned.readout !== "RND" || arpTuned.holdLabel !== "ON" || !arpTuned.randomActive) {
     throw new Error(`Arp controls failed: ${JSON.stringify(arpTuned)}`);
   }
+  const figureCount = await page.locator(".arp-direction [data-value]").count();
+  if (figureCount !== 16) throw new Error(`Expected 16 arp figures, got ${figureCount}`);
+  await page.locator('.arp-direction [data-value="16"]').click();
+  await page.locator(".arp-phrase-display").click();
+  const phraseMenu = await page.locator("acidify-patch-view").evaluate(node => ({
+    hidden: node.querySelector(".phrase-menu").hidden,
+    options: node.querySelectorAll(".phrase-menu [data-phrase]").length,
+    readout: node.querySelector(".arp-readout").textContent,
+  }));
+  if (phraseMenu.hidden || phraseMenu.options !== 91 || phraseMenu.readout !== "PATTERN") {
+    throw new Error(`Phrase menu failed: ${JSON.stringify(phraseMenu)}`);
+  }
+  await page.locator('.phrase-menu [data-phrase="13"]').click();
+  const phrasePicked = await page.locator("acidify-patch-view").evaluate(node => ({
+    value: Number(node._values.get("param64")),
+    hidden: node.querySelector(".phrase-menu").hidden,
+    readout: node.querySelector(".arp-readout").textContent,
+    display: node.querySelector(".arp-phrase .stepper-value").textContent,
+    stripDimmed: node.classList.contains("phrase-active"),
+  }));
+  if (phrasePicked.value !== 13 || !phrasePicked.hidden || phrasePicked.readout !== "ACID UP"
+      || phrasePicked.display !== "ACID UP" || !phrasePicked.stripDimmed) {
+    throw new Error(`Phrase selection failed: ${JSON.stringify(phrasePicked)}`);
+  }
+  await page.locator('.arp-phrase .stepper-buttons [data-step="-1"]').click();
+  const phraseStepped = await page.locator("acidify-patch-view").evaluate(node => Number(node._values.get("param64")));
+  if (phraseStepped !== 12) throw new Error(`Phrase stepper failed: ${phraseStepped}`);
+  await page.locator('.arp-direction [data-value="4"]').click();
   await page.locator(".studio-toggle .classic-label").click();
   const arpOff = await page.locator("acidify-patch-view").evaluate(node => ({
     view: node.querySelector(".studio-toggle").dataset.view,
@@ -940,7 +968,7 @@ try {
       mounted: node._mounted,
     };
   });
-  if (reconnect.sends !== 1 || reconnect.controls !== 30 || reconnect.endpointControls !== 30
+  if (reconnect.sends !== 1 || reconnect.controls !== 31 || reconnect.endpointControls !== 31
       || reconnect.pendingEchoes !== 0 || !reconnect.mounted) {
     throw new Error(`Reconnect lifecycle failed: ${JSON.stringify(reconnect)}`);
   }

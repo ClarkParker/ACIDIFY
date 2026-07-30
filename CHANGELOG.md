@@ -6,6 +6,42 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-07-30
+
+### Added
+
+- **Arp-Ausbau: 16 Figuren statt 4** (`param61` append-kompatibel 0…16
+  erweitert, Werte 0–4 unverändert): zusätzlich Up-Down+ und Down-Up(+)
+  (inklusive/exklusive Pendel), Played (Anschlagsreihenfolge), Double,
+  Converge/Diverge, Pinky/Thumb (Pedaltöne), Rnd-Once (Fisher-Yates-
+  Permutation, geloopt), Walk (Zufallsspaziergang mit Reflexion) und
+  Phrase. Das DIRECTION-Feld der Arp-Ansicht ist jetzt ein 8×2-Raster
+  mit allen 16 Figuren.
+- **PHRASE-Modus mit 90er-Bank** (`param64` append-only, 0…90): nach dem
+  Vorbild von JP-8000-RPS und Cubase-Arpache spielen die gehaltenen
+  Tasten eine transponierte Phrase. `00 PATTERN` nutzt das eigene
+  16-Step-Pattern (Pitch, Gate, Accent, Slide), `01…90` die kuratierte
+  Bank in 8 Kategorien (Octave, Acid, Synco, Slide, Accent, Zigzag,
+  Rave, Electro; −12…+24 Halbtöne, Gate/Accent/Slide pro Step). Mehrere
+  gehaltene Tasten zyklen die Basisnote pro Phrasendurchlauf. Die Bank
+  wird aus einer Quelle generiert (`tools/gen_phrases.py`, Marker in DSP
+  und UI, `--check` als Sync-Nachweis, Referenz `tools/data/arp_phrases.json`).
+- **Arp-Ansicht**: PHRASE-Zeile mit LED-Display, −/+-Stepper und
+  91-Einträge-Auswahlmenü (Klick aufs Display); bei aktiver Bank-Phrase
+  dimmt der Step-Strip als Hinweis, dass Gate/Accent/Slide aus der
+  Phrase kommen.
+- `tools/dsp_arp_test.mjs` erweitert: exakte Sequenz-Nachweise für alle
+  neuen Figuren (Autokorrelation pro Step), Rnd-Once-Permutations- und
+  Determinismus-Beleg, Walk-Nachbarschaftsbeleg, Phrasen-Abgleich gegen
+  `arp_phrases.json` und Basisnoten-Zyklus bei mehreren Tasten.
+
+### Fixed
+
+- **Stepper-Klickfläche**: Ein Klick auf das LED-Display eines Steppers
+  (statt auf −/+) erhöhte den Wert, weil der Handler das `data-step`-
+  Konfigurationsattribut des Control-Containers als Schrittrichtung las.
+  Der Handler akzeptiert jetzt nur noch echte Stepper-Tasten.
+
 ## [2.4.0] - 2026-07-30
 
 ### Added

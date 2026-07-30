@@ -90,7 +90,7 @@ function detectMidiNote(samples) {
   return Math.round(69 + 12 * Math.log2(freq / 440));
 }
 
-async function render(name, { mode, octaves = 1, hold = 0, midiEvents }) {
+async function render(name, { mode, octaves = 1, hold = 0, phrase = 0, midiEvents }) {
   let source = source0;
   source = withInit(source, "param9", 120);
   source = withInit(source, "param10", 1);
@@ -98,6 +98,7 @@ async function render(name, { mode, octaves = 1, hold = 0, midiEvents }) {
   source = withInit(source, "param61", mode);
   source = withInit(source, "param62", octaves);
   source = withInit(source, "param63", hold);
+  source = withInit(source, "param64", phrase);
   for (let step = 0; step < 16; step += 1) {
     source = withInit(source, `param${29 + step}`, 1); // nur Gate, kein Accent/Slide
   }
@@ -197,6 +198,110 @@ const results = {};
   if (rmsFree > 0.0005) throw new Error(`arp without hold kept playing: tail rms ${rmsFree}`);
   results.hold = { heldTailRms: +rmsHeld.toFixed(5), freeTailRms: +rmsFree.toFixed(6) };
 }
+// 8) Neue Figuren (2.5.0) — jede mit exakter Erwartung
+{
+  const wav = readWavMono(await render("updninc", { mode: 5, midiEvents: holdAll }));
+  assertEqual(stepPitches(wav, 8).pitches, [36, 40, 43, 43, 40, 36, 36, 40], "arp up-down inclusive");
+}
+{
+  const wav = readWavMono(await render("dnup", { mode: 6, midiEvents: holdAll }));
+  assertEqual(stepPitches(wav, 6).pitches, [43, 40, 36, 40, 43, 40], "arp down-up exclusive");
+}
+{
+  const wav = readWavMono(await render("dnupinc", { mode: 7, midiEvents: holdAll }));
+  assertEqual(stepPitches(wav, 8).pitches, [43, 40, 36, 36, 40, 43, 43, 40], "arp down-up inclusive");
+}
+{
+  // Played: Anschlagsreihenfolge E2, C2, G2
+  const played = [
+    { tick: 0, on: true, note: 40 },
+    { tick: 2, on: true, note: 36 },
+    { tick: 4, on: true, note: 43 },
+  ];
+  const wav = readWavMono(await render("played", { mode: 8, midiEvents: played }));
+  assertEqual(stepPitches(wav, 6).pitches, [40, 36, 43, 40, 36, 43], "arp played order");
+}
+{
+  const wav = readWavMono(await render("double", { mode: 9, midiEvents: holdAll }));
+  assertEqual(stepPitches(wav, 8).pitches, [36, 36, 40, 40, 43, 43, 36, 36], "arp double");
+}
+{
+  const wav = readWavMono(await render("conv", { mode: 10, midiEvents: holdAll }));
+  assertEqual(stepPitches(wav, 6).pitches, [36, 43, 40, 36, 43, 40], "arp converge");
+}
+{
+  const wav = readWavMono(await render("div", { mode: 11, midiEvents: holdAll }));
+  assertEqual(stepPitches(wav, 6).pitches, [40, 43, 36, 40, 43, 36], "arp diverge");
+}
+{
+  const wav = readWavMono(await render("pinky", { mode: 12, midiEvents: holdAll }));
+  assertEqual(stepPitches(wav, 6).pitches, [36, 43, 40, 43, 36, 43], "arp pinky");
+}
+{
+  const wav = readWavMono(await render("thumb", { mode: 13, midiEvents: holdAll }));
+  assertEqual(stepPitches(wav, 6).pitches, [36, 40, 36, 43, 36, 40], "arp thumb pedal");
+}
+{
+  // Rnd-Once: erste Runde ist Permutation des Pools, zweite Runde identisch
+  const first = await render("rndonce1", { mode: 14, midiEvents: holdAll });
+  const second = await render("rndonce2", { mode: 14, midiEvents: holdAll });
+  if (!first.equals(second)) throw new Error("arp rnd-once is not deterministic");
+  const { pitches } = stepPitches(readWavMono(first), 6);
+  const round1 = [...pitches.slice(0, 3)].sort((a, b) => a - b);
+  assertEqual(round1, CHORD, "arp rnd-once permutation");
+  assertEqual(pitches.slice(3, 6), pitches.slice(0, 3), "arp rnd-once loops");
+}
+{
+  // Walk: poolgetreu und nur Nachbarschritte im sortierten Pool
+  const wav = readWavMono(await render("walk", { mode: 15, midiEvents: holdAll }));
+  const { pitches } = stepPitches(wav, 12);
+  for (const pitch of pitches) {
+    if (!CHORD.includes(pitch)) throw new Error(`arp walk left the pool: ${JSON.stringify(pitches)}`);
+  }
+  for (let i = 1; i < pitches.length; i += 1) {
+    const step = Math.abs(CHORD.indexOf(pitches[i]) - CHORD.indexOf(pitches[i - 1]));
+    if (step > 1) throw new Error(`arp walk jumped: ${JSON.stringify(pitches)}`);
+  }
+  results.walk = pitches.slice(0, 8);
+}
+// 9) Phrase-Modus
+{
+  // Phrase 0 = eigenes Pattern, transponiert von der gehaltenen Taste (E2 = 40)
+  const single = [{ tick: 0, on: true, note: 40 }];
+  const wav = readWavMono(await render("phr0", { mode: 16, phrase: 0, midiEvents: single }));
+  // Phrase 0 bleibt transportgebunden; der Harness liefert die Tick-0-Note
+  // erst an der Latenzgrenze, hoerbar ist deshalb ab Pattern-Step 1:
+  // rel Root 0 7 0 12 10 7 3, Step 8 wieder 0.
+  assertEqual(stepPitches(wav, 8).pitches, [40, 47, 40, 52, 50, 47, 43, 40], "phrase 0 own pattern transposed");
+}
+{
+  // Phrase aus der Bank gegen die JSON-Quelle (OCT 8TH = Bank 1)
+  const table = JSON.parse(await readFile(path.join(root, "tools", "data", "arp_phrases.json"), "utf8"));
+  const bank1 = table[0];
+  const expected = bank1.steps.slice(0, 8).map(step => (step.gate ? 40 + step.pitch : -1));
+  const single = [{ tick: 0, on: true, note: 40 }];
+  const wav = readWavMono(await render("phr1", { mode: 16, phrase: 1, midiEvents: single }));
+  assertEqual(stepPitches(wav, 8).pitches, expected, `phrase 1 (${bank1.name}) vs JSON`);
+  results.phraseBank1 = { name: bank1.name, pitches: expected.slice(0, 4) };
+}
+{
+  // Melodische Bank-Phrase gegen JSON (ACID UP = Bank 13)
+  const table = JSON.parse(await readFile(path.join(root, "tools", "data", "arp_phrases.json"), "utf8"));
+  const bank = table[12];
+  const expected = bank.steps.slice(0, 8).map(step => (step.gate ? 40 + step.pitch : -1));
+  const single = [{ tick: 0, on: true, note: 40 }];
+  const wav = readWavMono(await render("phr13", { mode: 16, phrase: 13, midiEvents: single }));
+  assertEqual(stepPitches(wav, 8).pitches, expected, `phrase 13 (${bank.name}) vs JSON`);
+}
+{
+  // Mehrere gehaltene Noten: Transposition wandert pro Phrasen-Zyklus
+  const two = [{ tick: 0, on: true, note: 36 }, { tick: 0, on: true, note: 43 }];
+  const wav = readWavMono(await render("phrmulti", { mode: 16, phrase: 1, midiEvents: two }));
+  const { pitches } = stepPitches(wav, 18);
+  assertEqual(pitches.slice(0, 2), [36, 48], "phrase multi cycle 1 base");
+  assertEqual(pitches.slice(16, 18), [43, 55], "phrase multi cycle 2 base");
+}
+
 // 7) Arp aus: eingehender Akkord darf den laufenden Sequencer nicht beruehren
 {
   const withChord = await render("off1", { mode: 0, midiEvents: holdAll });
