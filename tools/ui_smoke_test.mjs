@@ -318,6 +318,26 @@ try {
     throw new Error(`Clip indicator failed: ${JSON.stringify(clipState)}`);
   }
 
+  const beyondState = await patchView.evaluate(node => {
+    node._controls.get("param11").setValue(12, true);
+    const step = node.querySelector('.sequence-step[data-step="14"]');
+    const result = {
+      beyond: step.classList.contains("beyond"),
+      note: step.querySelector(".step-note").textContent,
+      octave: step.querySelector(".step-octave").textContent,
+      led: getComputedStyle(step.querySelector(".cap-led")).backgroundImage,
+      activeNote: node.querySelector('.sequence-step[data-step="4"] .step-note').textContent,
+    };
+    node._controls.get("param11").setValue(16, true);
+    result.restoredNote = step.querySelector(".step-note").textContent;
+    return result;
+  });
+  if (!beyondState.beyond || beyondState.note !== "--" || beyondState.octave !== ""
+      || beyondState.led.includes("255,") || beyondState.activeNote === "--"
+      || beyondState.restoredNote === "--") {
+    throw new Error(`Beyond-length steps not deactivated: ${JSON.stringify(beyondState)}`);
+  }
+
   const darkOn = await patchView.evaluate(node => {
     node.querySelector(".theme-toggle").click();
     return {

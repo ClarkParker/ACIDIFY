@@ -6,6 +6,22 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.10.1] - 2026-07-30
+
+### Fixed
+
+- **Steps hinter dem Length-Ende sind jetzt sichtbar deaktiviert**:
+  keine rote LED mehr auf der Pattern-Taste, das Display darunter
+  zeigt „--" (statt Notenname), A/S-Pills sind gedimmt und nicht
+  klickbar, Studio-Notenzellen zeigen ebenfalls „--"; Tooltip
+  erklärt, dass LENGTH den Step reaktiviert.
+- **Live-Render-Bug**: `_sendParameter` hatte keinen Render-Hook für
+  `param11`/`param12` — drehte man LENGTH oder ROOT am Stepper,
+  aktualisierte sich der Step-Strip lokal nicht (das Host-Echo wird
+  als eigenes Echo verworfen). Length/Root rendern jetzt sofort.
+  `ui_smoke_test` prüft Length 12 → Steps 13–16 aus („--", LED ohne
+  Rot) und die Wiederherstellung bei Length 16.
+
 ## [2.10.0] - 2026-07-30
 
 ### Fixed

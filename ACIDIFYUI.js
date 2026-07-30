@@ -879,6 +879,13 @@ class AcidifyPatchView extends HTMLElement {
     if (endpointID === "param9" || endpointID === "param10" || endpointID === "param49") {
       this._renderTransportState();
     }
+    if (endpointID === "param11" || endpointID === "param12") {
+      // Length/Root aendern die Step-Anzeige direkt; das Host-Echo wird als
+      // eigenes Echo verworfen, also muss der lokale Send selbst rendern.
+      this._renderStepStrip();
+      this._renderStepEditor();
+      this._renderStudio();
+    }
     if (endpointID === "param61" || endpointID === "param62" || endpointID === "param63"
         || endpointID === "param64") {
       queueMicrotask(() => this._renderArpState());
@@ -2301,6 +2308,15 @@ class AcidifyPatchView extends HTMLElement {
         return;
       }
       node.classList.remove("arp-live");
+      if (index >= patternLength) {
+        // Hinter dem Length-Ende: Step ist inaktiv — LED aus (CSS ueber
+        // .beyond), Display zeigt "--".
+        node.querySelector(".step-note").textContent = "--";
+        node.querySelector(".step-octave").textContent = "";
+        node.setAttribute("aria-label", `Step ${index + 1} is beyond the pattern length and inactive`);
+        node.dataset.tooltip = `Step ${index + 1} is beyond the current pattern length (${patternLength}) and will not play. Raise LENGTH to re-enable it.`;
+        return;
+      }
       node.querySelector(".step-note").textContent = (flags & 1) !== 0 ? absoluteNote : "REST";
       node.querySelector(".step-octave").textContent = `+${Math.floor(pitch / 12)}`;
       node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}; click to edit, double-click toggles gate, wheel changes semitone, right-click chooses a note`);
@@ -2412,7 +2428,7 @@ class AcidifyPatchView extends HTMLElement {
         cell.classList.toggle("rest", !gate);
         cell.classList.toggle("beyond", index >= patternLength);
         const note = cell.querySelector(".step-note");
-        if (note) note.textContent = gate ? absoluteNote : "REST";
+        if (note) note.textContent = index >= patternLength ? "--" : (gate ? absoluteNote : "REST");
         cell.setAttribute("aria-label", `Step ${index + 1} note ${absoluteNote}, ${this._octaveLabel(pitch)}; double-click toggles gate, wheel changes semitone, right-click chooses a note`);
         cell.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${this._octaveLabel(pitch)}. Double-click toggles gate and rest; wheel changes one semitone; right-click opens direct note selection.`;
       } else {
@@ -5029,6 +5045,13 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: inset 0 3px 6px rgba(38,45,47,.5), 0 1px 0 rgba(255,255,255,.5); }
   acidify-patch-view .sequence-step.playing .step-cap { box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset -3px -5px 8px rgba(96,106,109,.22), 0 2px 3px rgba(0,0,0,.5), 0 0 14px rgba(255,70,45,.4); }
   acidify-patch-view .sequence-step.beyond .step-cap { border-color: #4e5658; }
+  acidify-patch-view .sequence-step.beyond .cap-led,
+  acidify-patch-view .sequence-step.beyond.rest .cap-led,
+  acidify-patch-view .sequence-step.beyond.selected .cap-led {
+    background: linear-gradient(180deg,#3b403f,#525857); box-shadow: inset 0 1px 2px rgba(0,0,0,.6); }
+  acidify-patch-view .sequence-step.beyond .step-pills { opacity: .35; pointer-events: none; }
+  acidify-patch-view .sequence-step.beyond .step-note-field { opacity: .55; }
+  acidify-patch-view .studio-cell.beyond { opacity: .45; }
   acidify-patch-view .cap-rocker { position: absolute; left: 1px; right: 1px; top: 1px; height: 34px; border-radius: 2px;
     background: linear-gradient(96deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.95); }
@@ -5721,7 +5744,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.10.0</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.10.1</span></div>
         </div>
       </header>
       <div class="osc-cell">

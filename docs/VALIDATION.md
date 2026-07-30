@@ -1,3 +1,17 @@
+# Validierung 2.10.1
+
+## 2.10.1
+
+Beyond-Length headless belegt: Length 12 → Step 15 hat Klasse
+beyond, Note „--", Oktave leer, cap-led ohne Rotanteil; aktiver
+Step 5 zeigt weiter seinen Notennamen; Length 16 stellt die Anzeige
+wieder her. Dabei gefundener Live-Bug behoben: param11/param12
+lösten im lokalen Send-Pfad kein Rendern aus (Echo-Schutz verwirft
+das Host-Echo) — Length-/Root-Änderungen zeichnen jetzt sofort.
+`ui_smoke_test` 3/3, `ui_lint --strict` sauber. Kein DSP-Eingriff.
+
+---
+
 # Validierung 2.10.0
 
 ## 2.10.0
