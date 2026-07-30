@@ -549,6 +549,21 @@ try {
   if ((await page.locator(".dist-mini").count()) !== 2) {
     throw new Error("Expected two front-panel distortion mini dials");
   }
+  const miniPlacement = await page.locator("acidify-patch-view").evaluate(node => {
+    const rect = sel => node.querySelector(sel).getBoundingClientRect();
+    const minis = rect(".master-minis");
+    const trigger = rect(".distortion-trigger");
+    const dial = rect(".dist-mini-dial");
+    return {
+      gapToDist: +(trigger.left - minis.right).toFixed(1),
+      bottomOffset: +Math.abs(minis.bottom - trigger.bottom).toFixed(1),
+      dialSize: +dial.width.toFixed(1),
+    };
+  });
+  if (miniPlacement.gapToDist < 4 || miniPlacement.gapToDist > 16
+      || miniPlacement.bottomOffset > 2 || miniPlacement.dialSize < 23) {
+    throw new Error(`Mini dials are not on the DIST row: ${JSON.stringify(miniPlacement)}`);
+  }
 
   const powerCell = page.locator(".power-cell");
   await powerCell.click();

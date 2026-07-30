@@ -6,6 +6,18 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.7.3] - 2026-07-30
+
+### Changed
+
+- **DRV/MIX-Miniregler zur Distortion gerückt**: Das Paar saß mittig
+  unter dem Master-Knopf und las sich dadurch wieder als Master-
+  Zubehör. Jetzt sitzt es rechtsbündig auf der Höhe der DIST/MOD-
+  Reihe (Unterkanten bündig, 11 px Abstand zum DIST-Taster) und die
+  Dials sind von 20 auf 24 px gewachsen. `ui_smoke_test` prüft die
+  Platzierung (Abstand zum DIST-Taster 4–16 px, Unterkanten-Versatz
+  ≤ 2 px, Dial ≥ 23 px).
+
 ## [2.7.2] - 2026-07-30
 
 ### Changed

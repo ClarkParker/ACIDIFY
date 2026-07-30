@@ -1,3 +1,16 @@
+# Validierung 2.7.3
+
+## 2.7.3
+
+Miniregler-Platzierung headless belegt: `.master-minis` rechts bündig
+an der Master-Zelle (rechte Kante 1048 bei Zellgrenze 1049), 11 px
+Abstand zum DIST-Taster (1059), Unterkanten 165/164 (Versatz 1 px),
+Dial-Durchmesser 24 px (vorher 20, Zeiger mitskaliert). Beide Themes
+per Screenshot abgenommen. `ui_smoke_test` 3/3 inkl. neuer
+Platzierungs-Assertion, `ui_lint --strict` sauber. Kein DSP-Eingriff.
+
+---
+
 # Validierung 2.7.2
 
 ## 2.7.2

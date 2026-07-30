@@ -4807,14 +4807,15 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .master-cell .silver-knob .led-box { order: 4; margin-top: 5px; width: auto; height: auto; border: 0; background: none; box-shadow: none; }
   acidify-patch-view .master-cell .silver-knob .led-box .value-label { color: #6c1710; font: 8px/1 'Courier New',monospace; letter-spacing: normal; text-shadow: none; }
   acidify-patch-view .output-cell { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; padding-top: 0; }
-  acidify-patch-view .master-minis { display: flex; align-items: flex-start; justify-content: center; gap: 12px; margin-top: 4px; }
+  acidify-patch-view .master-minis { display: flex; align-items: flex-start; justify-content: flex-end; gap: 9px;
+    margin-top: auto; margin-left: auto; margin-right: 1px; padding-bottom: 1px; }
   acidify-patch-view .dist-mini { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: ns-resize; touch-action: none; }
-  acidify-patch-view .dist-mini-dial { position: relative; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #565e60;
+  acidify-patch-view .dist-mini-dial { position: relative; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #565e60;
     background: linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 22%, rgba(26,32,34,.18) 58%, rgba(26,32,34,.4) 100%),
       radial-gradient(ellipse 130% 112% at 34% 16%, #ffffff 0 6%, #f1f4f4 18%, #cdd3d4 40%, #a8b0b2 66%, #8c9598 88%, #a3abad 100%);
     box-shadow: 0 2px 3px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.9), inset 0 -3px 4px rgba(40,47,49,.45); }
-  acidify-patch-view .dist-mini-pointer { position: absolute; left: 50%; top: 2px; width: 2px; height: 7px; margin-left: -1px; border-radius: 1px;
-    background: #1d2426; transform-origin: 1px 8px; transform: rotate(calc((var(--norm, .5) - .5) * 270deg)); }
+  acidify-patch-view .dist-mini-pointer { position: absolute; left: 50%; top: 2px; width: 2px; height: 9px; margin-left: -1px; border-radius: 1px;
+    background: #1d2426; transform-origin: 1px 10px; transform: rotate(calc((var(--norm, .5) - .5) * 270deg)); }
   acidify-patch-view .dist-mini-label { color: #5d6768; font: 900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
   acidify-patch-view .dist-mini.stage-off { opacity: .45; }
   acidify-patch-view .dist-mini:focus-visible { outline: 1px solid #a51d17; outline-offset: 2px; border-radius: 3px; }
@@ -5681,7 +5682,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.7.2</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.7.3</span></div>
         </div>
       </header>
       <div class="osc-cell">
