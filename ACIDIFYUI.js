@@ -1146,6 +1146,25 @@ class AcidifyPatchView extends HTMLElement {
       }
     });
 
+    // Die Bass-Line-Kontur reagiert wie die NOTE-Zeile aufs Mausrad:
+    // der Step unter dem Zeiger (bzw. die Selektion) wandert halbtonweise.
+    this.querySelectorAll(".studio-contour-svg").forEach((svg, group) => {
+      svg.addEventListener("wheel", event => {
+        if (!this._studioMode) return;
+        event.preventDefault();
+        const bounds = svg.getBoundingClientRect();
+        const local = Math.min(3, Math.max(0,
+          Math.floor((event.clientX - bounds.left) / (bounds.width / 4))));
+        const index = group * 4 + local;
+        if (!this._selectedSteps.has(index)) {
+          this._selectedStep = index;
+          this._selectedSteps = new Set([index]);
+          this._selectionAnchor = index;
+        }
+        this._transposeSelection(event.deltaY < 0 ? 1 : -1, "Bass-line wheel");
+      }, { passive: false });
+    });
+
     this._studioPointerEnd = () => {
       if (!this._paintState) return;
       this._pushHistory(this._paintState.before, `Paint ${this._paintState.kind}`);
@@ -5682,7 +5701,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.9.0</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.9.1</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -6024,7 +6043,8 @@ class AcidifyPatchView extends HTMLElement {
         <div class="studio-matrix" aria-label="Studio step editor">
           <div class="studio-ruler"><span class="studio-lane-label"></span><div class="studio-lane-cells">${studioRuler}</div></div>
           ${studioLanes}
-          <div class="studio-lane studio-contour" data-lane="contour">
+          <div class="studio-lane studio-contour" data-lane="contour"
+            data-tooltip="The contour shows each step's pitch as a red line. Scroll the wheel over it to move the step under the pointer (or the whole selection) by a semitone.">
             <span class="studio-lane-label">BASS LINE</span>
             <div class="studio-lane-cells studio-contour-groups">${studioContour}</div>
           </div>

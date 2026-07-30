@@ -900,6 +900,28 @@ try {
       throw new Error(`Studio top-strip wheel failed at step ${index + 1}`);
     }
   }
+  const contourWheel = await view.evaluate(node => {
+    const svg = node.querySelectorAll(".studio-contour-svg")[2];
+    const bounds = svg.getBoundingClientRect();
+    const before = node._stepPitch(9);
+    node._selectedStep = 0;
+    node._selectedSteps = new Set([0]);
+    svg.dispatchEvent(new WheelEvent("wheel", {
+      deltaY: -100, bubbles: true, cancelable: true,
+      clientX: bounds.left + bounds.width * 0.375, clientY: bounds.top + bounds.height / 2,
+    }));
+    return { before, after: node._stepPitch(9), selected: node._selectedStep };
+  });
+  if (contourWheel.after !== Math.min(24, contourWheel.before + 1) || contourWheel.selected !== 9) {
+    throw new Error(`Bass-line contour wheel failed: ${JSON.stringify(contourWheel)}`);
+  }
+  await view.evaluate(node => {
+    node._runStudioAction("undo");
+    node._selectedStep = 3;
+    node._selectedSteps = new Set([3, 4, 5, 6]);
+    node._selectionAnchor = 3;
+    node._renderStudio();
+  });
   await page.locator('[data-studio-action="choose-note"]').click();
   if (!(await page.locator(".pitch-menu").isVisible())) {
     throw new Error("Studio NOTE action did not open the note chooser");

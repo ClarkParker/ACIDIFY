@@ -6,6 +6,16 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.9.1] - 2026-07-30
+
+### Added
+
+- **Mausrad auf der BASS-LINE-Kontur** (Studio): Die rote Pitch-Kontur
+  reagiert jetzt wie die NOTE-Zeile aufs Rad — der Step unter dem
+  Zeiger (bzw. die aktive Mehrfachauswahl) wandert halbtonweise, mit
+  Undo-Eintrag; Tooltip an der Lane erklärt es. `ui_smoke_test` prüft
+  Zeiger-zu-Step-Zuordnung, Transponierung und Selektionsübernahme.
+
 ## [2.9.0] - 2026-07-30
 
 ### Fixed

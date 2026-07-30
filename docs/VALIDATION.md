@@ -1,3 +1,15 @@
+# Validierung 2.9.1
+
+## 2.9.1
+
+Bass-Line-Kontur headless belegt: Wheel-Event auf dem dritten
+Kontur-SVG bei 37,5 % Breite trifft Step 10 (Gruppe 2, lokal 1),
+Pitch +1 Halbton, Selektion folgt dem Zeiger, Undo stellt den
+Vorzustand wieder her. `ui_smoke_test` 3/3, `ui_lint --strict`
+sauber. Kein DSP-Eingriff.
+
+---
+
 # Validierung 2.9.0
 
 ## 2.9.0
