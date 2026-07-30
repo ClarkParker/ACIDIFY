@@ -971,6 +971,7 @@ vollständigen Repository-Commit. `0.2.0` führte den modernen Studio-Workflow
 ein. Sie werden hier ausdrücklich als historische Vorstufen festgehalten,
 besitzen aber keinen eigenen Commit-Anker im Repository.
 
+[2.3.1]: https://github.com/ClarkParker/ACIDIFY/commit/1c4d942664f33a0fd2823723c9d5bae69f09f018
 [2.3.0]: https://github.com/ClarkParker/ACIDIFY/commit/db2ac9e65b7693bd26aa9aaafe41f4c534e5467d
 [2.2.0]: https://github.com/ClarkParker/ACIDIFY/commit/5e6399cecfb09c0c1b6f15286eadf49fd1544026
 [2.1.1]: https://github.com/ClarkParker/ACIDIFY/commit/a82ae838134e7f75fdc467c7006992917dcc2da2
