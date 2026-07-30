@@ -6,6 +6,20 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.7.2] - 2026-07-30
+
+### Changed
+
+- **Tastenreihe unter dem Logo vereinheitlicht** (die 2.7.1-Zeile
+  mischte drei visuelle Sprachen: TIPS mit ON/OFF-Chip, DARK nackt,
+  POWER als Mini-Text mit separatem LED-Ring): TIPS, DARK und POWER
+  sind jetzt drei identische Rast-Tasten — gleiche Breite (flex,
+  gemessen pixelgleich), gleiche Höhe, gleiche Typo, je eine
+  Status-LED links im Tastenfeld; aktiv = versenkte Taste + rote LED.
+  Silber- und Anthrazit-Variante. Bypass zeigt weiterhin BYPASS in
+  Rot als Tastenbeschriftung. `ui_smoke_test` prüft die Reihe auf
+  exakt drei Tasten, Breiten-Spread ≤ 1 px und LED-Zustände.
+
 ## [2.7.1] - 2026-07-30
 
 ### Fixed

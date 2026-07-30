@@ -330,6 +330,21 @@ try {
   if (brandRow.parts.some(part => !part.inRow) || brandRow.rowRight > brandRow.cellRight) {
     throw new Error(`Brand row overflows its cell: ${JSON.stringify(brandRow)}`);
   }
+  const brandKeys = await patchView.evaluate(node => {
+    const keys = [...node.querySelectorAll(".tips-power-row .brand-key")];
+    const widths = keys.map(key => key.getBoundingClientRect().width);
+    return {
+      count: keys.length,
+      widthSpread: Math.max(...widths) - Math.min(...widths),
+      leds: keys.map(key => Boolean(key.querySelector(".key-led"))),
+      tipsLit: node.querySelector(".tips-led").classList.contains("lit"),
+      powerLit: node.querySelector(".power-led").classList.contains("lit"),
+    };
+  });
+  if (brandKeys.count !== 3 || brandKeys.widthSpread > 1 || brandKeys.leds.some(led => !led)
+      || !brandKeys.tipsLit || !brandKeys.powerLit) {
+    throw new Error(`Brand key row is not uniform: ${JSON.stringify(brandKeys)}`);
+  }
   const powerBefore = await patchView.evaluate(node => Number(node._values.get("param60") ?? 1));
   await page.locator(".power-cell").click();
   const powerToggled = await patchView.evaluate(node => ({

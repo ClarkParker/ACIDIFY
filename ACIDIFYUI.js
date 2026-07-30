@@ -721,6 +721,7 @@ class AcidifyPatchView extends HTMLElement {
     const toggle = this.querySelector(".theme-toggle");
     toggle?.setAttribute("aria-pressed", `${this._darkMode}`);
     toggle?.setAttribute("aria-label", `Dark panel ${this._darkMode ? "on" : "off"}; click to switch the metal finish`);
+    toggle?.querySelector(".theme-led")?.classList.toggle("lit", this._darkMode);
     if (persist) {
       try {
         window.localStorage.setItem(THEME_STORAGE_KEY, `${this._darkMode}`);
@@ -797,6 +798,7 @@ class AcidifyPatchView extends HTMLElement {
     toggle?.setAttribute("aria-label", `Tooltips ${this._tooltipsEnabled ? "on" : "off"}; click to turn them ${this._tooltipsEnabled ? "off" : "on"}`);
     const state = toggle?.querySelector(".tooltip-toggle-state");
     if (state) state.textContent = this._tooltipsEnabled ? "ON" : "OFF";
+    toggle?.querySelector(".tips-led")?.classList.toggle("lit", this._tooltipsEnabled);
     if (!this._tooltipsEnabled) this._hideTooltip();
     if (persist) {
       try {
@@ -5444,6 +5446,23 @@ class AcidifyPatchView extends HTMLElement {
     acidify-patch-view .distortion-types button small { font-size: 6px; }
   }
 
+  /* Einheitliche Tastenreihe unter dem Logo: drei gleiche Keys mit Status-LED. */
+  acidify-patch-view .deck-a .tips-power-row { gap: 6px; justify-content: stretch; }
+  acidify-patch-view .deck-a .tips-power-row .brand-key { flex: 1 1 0; min-width: 0; height: 20px; margin: 0; padding: 0;
+    display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer;
+    border-radius: 2px; border: 1px solid #1a1e1f; width: auto; transform: none; text-shadow: none;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
+  acidify-patch-view .deck-a .tips-power-row .brand-key[aria-pressed="true"] {
+    background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
+    box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5); }
+  acidify-patch-view .deck-a .tips-power-row .brand-key .key-label { font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1px; color: #1d2426; text-shadow: 0 1px 0 rgba(255,255,255,.5); }
+  acidify-patch-view .deck-a .tips-power-row .brand-key.bypassed .key-label { color: #8e1f16; }
+  acidify-patch-view .deck-a .tips-power-row .key-led { width: 5px; height: 5px; border-radius: 50%; flex: 0 0 auto;
+    background: radial-gradient(circle at 35% 30%, #55201a, #2c0b07 70%, #1a0503); box-shadow: inset 0 1px 1px rgba(255,255,255,.16); }
+  acidify-patch-view .deck-a .tips-power-row .key-led.lit {
+    background: radial-gradient(circle at 35% 30%, #ff6a54, #9d1c11 68%, #5a0d06); box-shadow: inset 0 1px 1px rgba(255,255,255,.45), 0 0 6px rgba(220,42,26,.6); }
+
   /* ---------- Dark Mode: dunkles Anthrazit-Metall ---------- */
   acidify-patch-view.theme-dark .chassis {
     background-image:
@@ -5636,6 +5655,14 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view.theme-dark .distortion-power.is-on .distortion-power-label { color: #ff5545; }
   acidify-patch-view.theme-dark .distortion-power button small,
   acidify-patch-view.theme-dark .mod-switch button small { color: #9aa19f; }
+  acidify-patch-view.theme-dark .deck-a .tips-power-row .brand-key { border-color: #101314;
+    background: linear-gradient(102deg,#5a5f61 0 18%,#4c5153 34%,#3d4245 52%,#4e5355 68%,#454a4c 86%,#33383a 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -2px 3px rgba(0,0,0,.45), 0 3px 3px rgba(0,0,0,.55); }
+  acidify-patch-view.theme-dark .deck-a .tips-power-row .brand-key[aria-pressed="true"] {
+    background: linear-gradient(102deg,#393d3f 0 18%,#313538 34%,#26292b 52%,#33373a 68%,#2b2f31 86%,#1e2123 100%);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.65), 0 1px 1px rgba(0,0,0,.5); }
+  acidify-patch-view.theme-dark .deck-a .tips-power-row .brand-key .key-label { color: #c8cdcb; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+  acidify-patch-view.theme-dark .deck-a .tips-power-row .brand-key.bypassed .key-label { color: #ff5545; }
 </style>
 <div class="chassis">
   <div class="panel">
@@ -5649,12 +5676,12 @@ class AcidifyPatchView extends HTMLElement {
         </div>
         <div class="brand-foot">
           <div class="tips-power-row">
-            <button class="tooltip-toggle" type="button" aria-pressed="true" data-tooltip="Turn the English control tooltips on or off."><span>? TIPS</span><strong class="tooltip-toggle-state">ON</strong></button>
-            <button class="theme-toggle" type="button" aria-pressed="false" data-tooltip="Switch the panel between silver and dark anthracite metal."><span>DARK</span></button>
-            <button class="power-cell" type="button" aria-pressed="true"
-              data-tooltip="Bypass the whole instrument (dry signal passes through)."><span class="power-label">POWER</span><span class="power-ring"><i class="power-led lit"></i></span></button>
+            <button class="brand-key tooltip-toggle" type="button" aria-pressed="true" data-tooltip="Turn the English control tooltips on or off."><i class="key-led tips-led lit"></i><span class="key-label">TIPS</span><strong class="tooltip-toggle-state" hidden>ON</strong></button>
+            <button class="brand-key theme-toggle" type="button" aria-pressed="false" data-tooltip="Switch the panel between silver and dark anthracite metal."><i class="key-led theme-led"></i><span class="key-label">DARK</span></button>
+            <button class="brand-key power-cell" type="button" aria-pressed="true"
+              data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.7.1</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.7.2</span></div>
         </div>
       </header>
       <div class="osc-cell">

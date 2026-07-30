@@ -1,3 +1,16 @@
+# Validierung 2.7.2
+
+## 2.7.2
+
+Tastenreihe headless belegt: drei `.brand-key` mit Breiten-Spread
+0,0 px (47,7 / 47,7 / 47,7), jede mit Status-LED, TIPS- und POWER-LED
+initial an, Containment in Zeile und Zelle unverändert grün, POWER-
+Echtklick-Test unverändert grün. Beide Themes per Screenshot
+abgenommen (Silber + Anthrazit). `ui_smoke_test` 3/3, `ui_lint
+--strict` sauber, Sync 64/64. Kein DSP-Eingriff.
+
+---
+
 # Validierung 2.7.1
 
 ## 2.7.1
