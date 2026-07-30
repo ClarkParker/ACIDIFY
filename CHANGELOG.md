@@ -6,6 +6,20 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.9.3] - 2026-07-30
+
+### Fixed
+
+- **Output-Meter zeigte viel zu wenig an** — drei Ursachen: (1) die
+  Envelope war ein 12-ms-Mittelwertfolger, der bei einer 16tel-Line
+  mit Pausen weit unter dem Peak hängt, (2) die Balkenhöhe war
+  LINEAR zur Amplitude gemappt (Peak 0,69 = −3,2 dBFS ergab nur
+  ~20 % Balken), (3) keine Peak-Ballistik. Jetzt: Peak-Detektor im
+  DSP (Attack sofort, Release ~400 ms) und dB-Skala im UI
+  (−42…0 dBFS auf die volle Balkenhöhe) — ein Peak bei −3 dBFS
+  füllt den Balken zu ~93 %, wie bei einem echten Meter. Der
+  Audiopfad ist unberührt (Serien-Smoke bit-identisch 0,69105).
+
 ## [2.9.2] - 2026-07-30
 
 ### Fixed

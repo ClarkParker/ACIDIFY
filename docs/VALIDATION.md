@@ -1,3 +1,18 @@
+# Validierung 2.9.3
+
+## 2.9.3
+
+Meter-Kette geprüft: meterOut lieferte die 12-ms-Mittelwert-Envelope
+des Ausgangs, die UI mappte linear auf 80 px Balken — beim
+Referenzpeak 0,691 (−3,2 dBFS) stand der Balken bei ~20 %. Neu:
+Peak-Detektor (max(|sample|, env·release), Release 400 ms), UI-Skala
+dB-basiert (−42…0 dBFS → 0…1): −3,2 dBFS → 0,924 Balkenfüllung.
+Audio unangetastet — Serien-Smoke bit-identisch 0,69105 @48k,
+dsp_gain (A-bewichtet, Event-Pfad) grün, matrix/arp/articulation/
+transport grün, Lints strict, ui_smoke 3/3.
+
+---
+
 # Validierung 2.9.2
 
 ## 2.9.2

@@ -576,7 +576,10 @@ class AcidifyPatchView extends HTMLElement {
 
     this._meterListener = value => {
       const n = typeof value === "object" ? Number(value.value ?? 0) : Number(value);
-      this._meter = clamp(n, 0, 1);
+      // Peak-Amplitude -> dB-Skala wie bei echten Metern: -42..0 dBFS auf 0..1.
+      const amplitude = clamp(n, 0, 1);
+      const db = 20 * Math.log10(Math.max(amplitude, 0.0001));
+      this._meter = clamp(1 + db / 42, 0, 1);
       this.querySelector(".output-lamp")?.style.setProperty("--level", this._meter);
       this.querySelector(".vu-meter")?.style.setProperty("--level", this._meter);
     };
@@ -5701,7 +5704,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.9.2</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.9.3</span></div>
         </div>
       </header>
       <div class="osc-cell">

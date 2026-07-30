@@ -894,7 +894,9 @@ processor AcidifyCore
         accentVcaFallAlpha = exponentialAlpha (102.616f, sampleRate);
         feedbackHighpassPole = float (exp (-float64 (twoPi) * 150.0 / float64 (sampleRate)));
         feedbackHighpassGain = 0.5f * (1.0f + feedbackHighpassPole);
-        meterAlpha = 1.0f - timeCoefficient (12.0f, sampleRate);
+        // Meter-Ballistik (2.9.3): Peak-Detektor statt 12-ms-Mittelwert —
+        // Attack sofort, Release ~400 ms. meterAlpha ist der Release-Faktor.
+        meterAlpha = timeCoefficient (400.0f, sampleRate);
         parameterSmoothingAlpha = 1.0f - timeCoefficient (5.0f, sampleRate);
         distortionSmoothingAlpha = 1.0f - timeCoefficient (20.0f, sampleRate);
         updateOutputNetworkCoefficients (sampleRate);
@@ -2491,7 +2493,7 @@ processor AcidifyCore
             let voice = processDistortion (driveVoice) * smoothedPower * postGain;
             let sample = abs (voice) < 0.0000000001f ? 0.0f : voice;
 
-            meterEnvelope += meterAlpha * (abs (sample) - meterEnvelope);
+            meterEnvelope = max (abs (sample), meterEnvelope * meterAlpha);
             meterCountdown -= 1;
             if (meterCountdown <= 0)
             {
