@@ -2498,7 +2498,9 @@ processor AcidifyCore
             if (meterCountdown <= 0)
             {
                 // Meter-Skala kompensiert das Makeup - Anzeige wie zuvor.
-                meterOut <- clamp (meterEnvelope, 0.0f, 1.0f);
+                // Nicht bei 1,0 kappen: Werte > 1 tragen die Clip-Information
+                // fuer die UI-Anzeige (2.9.4).
+                meterOut <- clamp (meterEnvelope, 0.0f, 8.0f);
                 meterCountdown = meterPeriod;
             }
 

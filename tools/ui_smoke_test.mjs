@@ -303,6 +303,21 @@ try {
     throw new Error(`Master double-click should reset to 0 dB, got ${masterReset}`);
   }
 
+  const clipState = await patchView.evaluate(node => {
+    node._meterListener(0.8);
+    const beforeClip = node.querySelector(".vu-clip").classList.contains("lit");
+    node._meterListener(1.4);
+    const latched = node.querySelector(".vu-clip").classList.contains("lit");
+    node._meterListener(0.2);
+    const stillLatched = node.querySelector(".vu-clip").classList.contains("lit");
+    node.querySelector(".vu-meter").click();
+    const afterReset = node.querySelector(".vu-clip").classList.contains("lit");
+    return { beforeClip, latched, stillLatched, afterReset };
+  });
+  if (clipState.beforeClip || !clipState.latched || !clipState.stillLatched || clipState.afterReset) {
+    throw new Error(`Clip indicator failed: ${JSON.stringify(clipState)}`);
+  }
+
   const darkOn = await patchView.evaluate(node => {
     node.querySelector(".theme-toggle").click();
     return {

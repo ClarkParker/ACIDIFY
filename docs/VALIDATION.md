@@ -1,3 +1,16 @@
+# Validierung 2.9.4
+
+## 2.9.4
+
+Clip-Latch headless belegt: meterOut 0,8 → Strip aus, 1,4 → latcht,
+0,2 → bleibt gelatcht, Meter-Klick → aus. DSP-Kappung von meterOut
+auf 8 angehoben (vorher 1,0 — Clips unsichtbar), Audiopfad
+unverändert (Serien-Smoke bit-identisch 0,69105, dsp_gain/matrix/
+transport grün, Lints strict, ui_smoke 3/3). Screenshot des
+leuchtenden Strips abgenommen.
+
+---
+
 # Validierung 2.9.3
 
 ## 2.9.3

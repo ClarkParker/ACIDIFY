@@ -6,6 +6,19 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.9.4] - 2026-07-30
+
+### Added
+
+- **Clip-Anzeige am Peakmeter**: roter Strip oben im VU, latcht ab
+  0 dBFS und bleibt stehen, bis man das Meter anklickt (Reset).
+  Vorher war Clipping prinzipiell unsichtbar, weil `meterOut` im DSP
+  bei 1,0 gekappt wurde — die Kappung liegt jetzt bei 8, Werte > 1
+  tragen die Clip-Information. Tooltip am Meter erklärt Skala und
+  Reset; `ui_smoke_test` prüft Latch (0,8 → kein Clip, 1,4 → latcht,
+  0,2 → bleibt) und Klick-Reset. Audio unberührt (Serien-Smoke
+  bit-identisch).
+
 ## [2.9.3] - 2026-07-30
 
 ### Fixed

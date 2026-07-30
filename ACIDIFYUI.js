@@ -582,8 +582,19 @@ class AcidifyPatchView extends HTMLElement {
       this._meter = clamp(1 + db / 42, 0, 1);
       this.querySelector(".output-lamp")?.style.setProperty("--level", this._meter);
       this.querySelector(".vu-meter")?.style.setProperty("--level", this._meter);
+      if (Number.isFinite(n) && n >= 0.999 && !this._clipLatched) {
+        this._clipLatched = true;
+        this.querySelector(".vu-clip")?.classList.add("lit");
+      }
     };
     this.pc.addEndpointListener("meterOut", this._meterListener);
+
+    this._clipLatched = false;
+    this._clipResetClick = () => {
+      this._clipLatched = false;
+      this.querySelector(".vu-clip")?.classList.remove("lit");
+    };
+    this.querySelector(".vu-meter")?.addEventListener("click", this._clipResetClick);
 
     this._tempoListener = value => {
       const n = typeof value === "object" ? Number(value.value ?? value.bpm ?? 0) : Number(value);
@@ -648,6 +659,7 @@ class AcidifyPatchView extends HTMLElement {
     if (this._stepListener) this.pc.removeEndpointListener("currentStep", this._stepListener);
     if (this._arpNoteListener) this.pc.removeEndpointListener("arpNoteOut", this._arpNoteListener);
     if (this._meterListener) this.pc.removeEndpointListener("meterOut", this._meterListener);
+    if (this._clipResetClick) this.querySelector(".vu-meter")?.removeEventListener("click", this._clipResetClick);
     if (this._tempoListener) this.pc.removeEndpointListener("effectiveTempo", this._tempoListener);
     if (this._transportListener) this.pc.removeEndpointListener("transportRunning", this._transportListener);
     if (this._syncListener) this.pc.removeEndpointListener("hostSyncStatus", this._syncListener);
@@ -4846,7 +4858,12 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .vu-scale { position: absolute; bottom: 4px; top: 4px; width: 14px; border-radius: 1px;
     background: repeating-linear-gradient(0deg, rgba(255,255,255,.055) 0 2px, transparent 2px 4px); }
   acidify-patch-view .vu-scale.l { left: 6px; } acidify-patch-view .vu-scale.r { right: 6px; }
-  acidify-patch-view .vu-bar { position: absolute; bottom: 4px; width: 14px; height: calc(var(--level, 0) * 80px); border-radius: 1px;
+  acidify-patch-view .vu-meter { cursor: pointer; }
+  acidify-patch-view .vu-clip { position: absolute; top: 2px; left: 5px; right: 5px; height: 3px; border-radius: 1px;
+    background: linear-gradient(180deg,#3a1512,#200906); box-shadow: inset 0 1px 1px rgba(0,0,0,.6); }
+  acidify-patch-view .vu-clip.lit { background: linear-gradient(180deg,#ff6a54,#a3201a);
+    box-shadow: 0 0 8px rgba(255,60,40,.85), inset 0 1px 0 rgba(255,255,255,.4); }
+  acidify-patch-view .vu-bar { position: absolute; bottom: 4px; width: 14px; height: calc(var(--level, 0) * 78px); border-radius: 1px;
     background: linear-gradient(0deg,#3fa05a,#a8c33c 58%,#e4a52c 80%,#e1382a 100%); box-shadow: 0 0 7px rgba(255,110,60,.4); transition: height 60ms linear; }
   acidify-patch-view .vu-bar.l { left: 6px; } acidify-patch-view .vu-bar.r { right: 6px; }
   acidify-patch-view .trigger-row { margin-top: 8px; display: flex; gap: 5px; padding: 0; background: none; border: 0; }
@@ -5704,7 +5721,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.9.3</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.9.4</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -5738,7 +5755,7 @@ class AcidifyPatchView extends HTMLElement {
         </div>
         <div class="output-cell">
           <div class="cell-title">OUTPUT</div>
-          <div class="vu-meter" aria-hidden="true"><i class="vu-scale l"></i><i class="vu-scale r"></i><i class="vu-bar l"></i><i class="vu-bar r"></i><span class="output-lamp" hidden></span></div>
+          <div class="vu-meter" role="button" tabindex="0" data-tooltip="Output peak meter, -42..0 dBFS. The red strip at the top latches when the output clips (over 0 dBFS); click the meter to reset it."><i class="vu-clip"></i><i class="vu-scale l"></i><i class="vu-scale r"></i><i class="vu-bar l"></i><i class="vu-bar r"></i><span class="output-lamp" hidden></span></div>
           <div class="trigger-row">
             <button class="distortion-trigger" type="button" aria-expanded="false"
               aria-controls="distortion-overlay" aria-label="Distortion disabled; open controls"
