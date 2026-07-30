@@ -1,3 +1,15 @@
+# Validierung 2.3.1
+
+## 2.3.1
+
+Headless vermessen: Titel-Linie MASTER/OUTPUT auf Knopf-Label-Höhe,
+VOLUME-Label entfernt, Miniregler-Paar [975,137 52×27] auf der
+DIST-Zeile (Taste [1059,143]), VU unverändert [1086,47]. `ui_smoke_test`
+3/3 grün (inkl. Miniregler-Wheel/Reset am neuen Ort), `ui_lint --strict`
+sauber, Sync 60/60 konsistent.
+
+---
+
 # Validierung 2.3.0
 
 ## 2.3.0

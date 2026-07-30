@@ -6,6 +6,21 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.3.1] - 2026-07-30
+
+### Changed
+
+- **Master/Output-Bereich nach Nutzervorgabe umgebaut** (die 2.3.0-Platzierung
+  der Miniregler an den VU-Flanken war eine schlechte eigenmächtige
+  Entscheidung — MIX neben dem Ausgangsmeter las sich als Master-Mix):
+  - MASTER- und OUTPUT-Überschriften sitzen jetzt auf derselben Linie wie
+    TUNING…ACCENT.
+  - Das VOLUME-Label unter dem Master-Knopf entfällt (die Überschrift MASTER
+    genügt); das dB-Display bleibt.
+  - DRIVE- und MIX-Miniregler stehen als Paar im frei gewordenen Platz unter
+    dem Master-Knopf — auf gleicher Höhe direkt links neben der DIST-Taste.
+  - VU-Meter wieder unangetastet an der Template-Position.
+
 ## [2.3.0] - 2026-07-30
 
 ### Fixed

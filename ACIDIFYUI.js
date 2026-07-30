@@ -4384,6 +4384,7 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: inset 0 2px 3px rgba(40,46,45,.5), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
 
   acidify-patch-view .deck-a .volume-bank { width: auto; flex: 0 0 auto; padding: 12px 13px; display: flex; gap: 10px; align-items: stretch; background: none; border: 0; }
+  acidify-patch-view .master-cell .cell-title, acidify-patch-view .output-cell .cell-title { place-items: start center; padding-top: 2px; }
   acidify-patch-view .master-cell .cell-title { width: 96px; height: 16px; }
   acidify-patch-view .output-cell .cell-title { width: 99px; height: 16px; }
   acidify-patch-view .osc-cell .cell-title { height: 16px; }
@@ -4394,12 +4395,11 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .master-cell .silver-knob .dial-pointer { width: 3px; height: 21px; top: 5px; margin-left: -1.5px; }
   acidify-patch-view .master-cell { display: flex; flex-direction: column; align-items: center; }
   acidify-patch-view .master-cell .silver-knob .chrome-wrap { width: 72px; height: 72px; margin-top: 11px; }
-  acidify-patch-view .master-cell .silver-knob .control-label { order: 3; margin-top: 8px; font-size: 8.5px; letter-spacing: 1.1px; }
-  acidify-patch-view .master-cell .silver-knob .led-box { order: 4; margin-top: 4px; width: auto; height: auto; border: 0; background: none; box-shadow: none; }
+  acidify-patch-view .master-cell .silver-knob .control-label { display: none; }
+  acidify-patch-view .master-cell .silver-knob .led-box { order: 4; margin-top: 5px; width: auto; height: auto; border: 0; background: none; box-shadow: none; }
   acidify-patch-view .master-cell .silver-knob .led-box .value-label { color: #6c1710; font: 8px/1 'Courier New',monospace; letter-spacing: normal; text-shadow: none; }
-  acidify-patch-view .output-cell { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; padding-top: 1px; }
-  acidify-patch-view .vu-row { display: flex; align-items: center; gap: 3px; margin-top: 9px; }
-  acidify-patch-view .vu-row .vu-meter { margin-top: 0; }
+  acidify-patch-view .output-cell { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; padding-top: 0; }
+  acidify-patch-view .master-minis { display: flex; align-items: flex-start; justify-content: center; gap: 12px; margin-top: 4px; }
   acidify-patch-view .dist-mini { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: ns-resize; touch-action: none; }
   acidify-patch-view .dist-mini-dial { position: relative; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #565e60;
     background: linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 22%, rgba(26,32,34,.18) 58%, rgba(26,32,34,.4) 100%),
@@ -4978,7 +4978,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><span class="power-label">POWER</span><span class="power-ring"><i class="power-led lit"></i></span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.3.0</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.3.1</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -4999,20 +4999,20 @@ class AcidifyPatchView extends HTMLElement {
         <div class="master-cell">
           <div class="cell-title">MASTER</div>
           ${dial("param8")}
-        </div>
-        <div class="output-cell">
-          <div class="cell-title">OUTPUT</div>
-          <div class="vu-row">
+          <div class="master-minis">
             <div class="dist-mini" data-mini="param47" role="slider" tabindex="0" aria-label="Distortion drive"
               data-tooltip="Distortion drive — quick access to the DRIVE dial in the distortion stage.">
               <div class="dist-mini-dial"><i class="dist-mini-pointer"></i></div><span class="dist-mini-label">DRV</span>
             </div>
-            <div class="vu-meter" aria-hidden="true"><i class="vu-scale l"></i><i class="vu-scale r"></i><i class="vu-bar l"></i><i class="vu-bar r"></i><span class="output-lamp" hidden></span></div>
             <div class="dist-mini" data-mini="param48" role="slider" tabindex="0" aria-label="Distortion mix"
               data-tooltip="Distortion mix — quick access to the MIX dial in the distortion stage.">
               <div class="dist-mini-dial"><i class="dist-mini-pointer"></i></div><span class="dist-mini-label">MIX</span>
             </div>
           </div>
+        </div>
+        <div class="output-cell">
+          <div class="cell-title">OUTPUT</div>
+          <div class="vu-meter" aria-hidden="true"><i class="vu-scale l"></i><i class="vu-scale r"></i><i class="vu-bar l"></i><i class="vu-bar r"></i><span class="output-lamp" hidden></span></div>
           <div class="trigger-row">
             <button class="distortion-trigger" type="button" aria-expanded="false"
               aria-controls="distortion-overlay" aria-label="Distortion disabled; open controls"
