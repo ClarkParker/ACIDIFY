@@ -6,6 +6,37 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-07-30
+
+### Added
+
+- **Live-Noten im Arp-Modus**: Die Step-Zellen zeigen nicht mehr die
+  (im Arp-Modus irrelevanten) Pattern-Noten, sondern live die Note, die
+  der Arp am jeweiligen Step tatsächlich spielt — gespeist vom neuen
+  append-only Output-Event `arpNoteOut` (Note pro Step-Start, −1 bei
+  Rest/Stopp). Noch nicht gespielte Steps zeigen `···`; Live-Noten
+  leuchten bernstein zur ARP-Identität. Die Hinweiszeile im
+  ARPEGGIATOR-Display zeigt zusätzlich live die per MIDI gehaltenen
+  Tasten (`KEYS C2 · E2 · G2`).
+- Alle 16 Figuren-Tasten tragen jetzt eigene Tooltips (die Blase hing
+  zuvor am ganzen DIRECTION-Feld und erschien weit vom Zeiger entfernt).
+
+### Fixed
+
+- **Arp-Panel-Layout** (headless vermessen): Der OCTAVES-Stepper war
+  180 px breit in einem 137-px-Block und ragte 12,5 px über die linke
+  Panelkante; die PHRASE-Zeile lief 2 px unter die Unterkante, und die
+  −/+-Tasten beider Stepper saßen 3,5 px tiefer als ihre LED-Displays
+  (das vertikale `margin-top` der Stapel-Stepper wirkte auch in den
+  horizontalen Arp-Zeilen). Octaves-LED jetzt 40 px, Margins genullt,
+  HOLD-Taste 30 px — alles nachweislich in der Zelle und bündig.
+- **Tooltip-Latenz**: Tooltips erscheinen erst nach echtem Verweilen
+  (900 ms, Timer startet bei jeder Zeigerbewegung neu) statt nach
+  360 ms — beim Überstreichen verdeckt keine Blase mehr die GUI.
+  Tastatur-Fokus zeigt sie nach 250 ms. Positions-Audit über alle
+  Zonen (Classic, Studio, Arp, Overlays) ohne Befund: Blase immer im
+  Chassis, nie über dem eigenen Ziel.
+
 ## [2.5.0] - 2026-07-30
 
 ### Added

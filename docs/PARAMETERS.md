@@ -112,6 +112,12 @@ Tabelle in DSP und UI (Marker `ARP-PHRASES-BEGIN/END`);
 `python3 tools/gen_phrases.py --check` prüft die Synchronität, die
 Referenzdaten stehen in `tools/data/arp_phrases.json`.
 
+Seit 2.5.1 meldet das append-only Output-Event `arpNoteOut` bei aktivem
+Arp an jedem Step-Start die tatsächlich gespielte MIDI-Note (−1 bei Rest,
+leerem Pool oder Transport-Stopp). Die UI speist daraus die Live-Noten
+in den Step-Zellen der Arp-Ansicht; Presets und der Parametervertrag
+bleiben unberührt (Events sind keine dynamischen Parameter).
+
 `param50` wurde in 0.7.0 append-only ergänzt. 0 % lässt jedes
 16tel-Zweierpaar gerade; 100 % verschiebt das zweite 16tel auf die letzte
 Achteltriolenposition und ergibt ein 2:1-Verhältnis. Die Paarlänge bleibt

@@ -70,9 +70,14 @@
       endpointListeners.get("transportRunning")?.forEach(fn => fn(1));
     }
     let step = 0;
+    const mockChord = [36, 40, 43];
     setInterval(() => {
       endpointListeners.get("currentStep")?.forEach(fn => fn(step));
       endpointListeners.get("meterOut")?.forEach(fn => fn(.25 + .55 * Math.abs(Math.sin(step * .71))));
+      if ((defaults.get("param61") ?? 0) > 0) {
+        const note = mockChord[step % mockChord.length] + 12 * Math.floor((step % 6) / 3);
+        endpointListeners.get("arpNoteOut")?.forEach(fn => fn(note));
+      }
       step = (step + 1) % 16;
     }, 260);
   </script>

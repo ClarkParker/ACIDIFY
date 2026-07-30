@@ -1,3 +1,30 @@
+# Validierung 2.5.1
+
+## 2.5.1
+
+Arp-Panel headless vermessen (vorher → nachher): OCTAVES-Stepper 180 px
+in 137-px-Block mit 12,5 px Überhang über die Panelkante → 132 px,
+vollständig in der Zelle; PHRASE-Zeile lief 2 px unter die Unterkante →
+bündig (Zellinhalt 863…1163 / 457…563, alle Elemente enthalten);
+−/+-Tasten beider Stepper 3,5 px unter den LED-Displays (geerbtes
+`margin-top: 7px` der Stapel-Stepper) → LED- und Tastenoberkanten
+pixelgleich (481/481 bzw. 531/531). Tooltip-Audit über 23 Ziele in
+Classic-, Arp- und Studio-Ansicht: Blase immer im Chassis, nie über dem
+eigenen Ziel, vertikaler Abstand 4–30 px; Überstreichen und Verweilen
+unter 500 ms zeigen keine Blase, echtes Verweilen (900 ms ohne
+Bewegung) zeigt sie; die 16 Figuren-Tasten haben eigene Tooltips
+(Befund: Blase hing zuvor 46 px entfernt am gesamten DIRECTION-Feld).
+Live-Noten: `arpNoteOut` im DSP an jedem Step-Start (−1 bei
+Rest/Stopp), UI-Zellen zeigen im Arp-Modus die gespielte Note in
+Bernstein, `···` vor der ersten Runde, Pattern-Anzeige kehrt beim
+Verlassen zurück (ui_smoke-Assertions liveCells/arp-live/Restore).
+Serien-Smoke bit-identisch 0,34552 @48k, dsp_arp/matrix/articulation/
+transport grün, Messstand alle Prüfsteine, partcheck 28/28, Lints
+strict sauber, `gen_phrases.py --check` synchron, `ui_smoke_test` 3/3
+(179 Tooltip-Ziele, Latenz-Vertragstest 500/1200 ms).
+
+---
+
 # Validierung 2.5.0
 
 ## 2.5.0

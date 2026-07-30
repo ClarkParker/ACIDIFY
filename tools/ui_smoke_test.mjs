@@ -229,7 +229,11 @@ try {
   const patchView = page.locator("acidify-patch-view");
   await patchView.evaluate(node => node._setTooltipsEnabled(true, false));
   await page.locator('.control[data-param="param2"] .dial').hover();
-  await page.waitForTimeout(430);
+  await page.waitForTimeout(500);
+  if (await patchView.evaluate(node => !node.querySelector(".tooltip-bubble").hidden)) {
+    throw new Error("Tooltip appeared before the rest delay elapsed");
+  }
+  await page.waitForTimeout(700);
   const tooltipOn = await patchView.evaluate(node => ({
     enabled: node._tooltipsEnabled,
     pressed: node.querySelector(".tooltip-toggle").getAttribute("aria-pressed"),
@@ -616,6 +620,18 @@ try {
   }
   const figureCount = await page.locator(".arp-direction [data-value]").count();
   if (figureCount !== 16) throw new Error(`Expected 16 arp figures, got ${figureCount}`);
+  const figureTooltips = await page.locator(".arp-direction [data-value][data-tooltip]").count();
+  if (figureTooltips !== 16) throw new Error(`Expected 16 per-figure tooltips, got ${figureTooltips}`);
+  await page.waitForTimeout(900);
+  const arpLiveState = await page.locator("acidify-patch-view").evaluate(node => ({
+    liveCells: node.querySelectorAll(".sequence-step.arp-live").length,
+    sampleNote: node.querySelector(".sequence-step.arp-live .step-note")?.textContent ?? "",
+    idleNote: node.querySelector(".sequence-step:not(.arp-live) .step-note")?.textContent ?? "",
+  }));
+  if (arpLiveState.liveCells < 1 || !/^[A-G]♯?-?\d$/.test(arpLiveState.sampleNote)
+      || (arpLiveState.idleNote !== "···" && arpLiveState.idleNote !== "")) {
+    throw new Error(`Arp live note display failed: ${JSON.stringify(arpLiveState)}`);
+  }
   await page.locator('.arp-direction [data-value="16"]').click();
   await page.locator(".arp-phrase-display").click();
   const phraseMenu = await page.locator("acidify-patch-view").evaluate(node => ({
@@ -647,8 +663,11 @@ try {
     view: node.querySelector(".studio-toggle").dataset.view,
     mode: Number(node._values.get("param61")),
     classicVisible: getComputedStyle(node.querySelector(".classic-editor")).display !== "none",
+    stepNote: node.querySelector('.sequence-step[data-step="0"] .step-note').textContent,
+    liveLeftovers: node.querySelectorAll(".sequence-step.arp-live").length,
   }));
-  if (arpOff.view !== "classic" || arpOff.mode !== 0 || !arpOff.classicVisible) {
+  if (arpOff.view !== "classic" || arpOff.mode !== 0 || !arpOff.classicVisible
+      || !/^[A-G]♯?\d$/.test(arpOff.stepNote) || arpOff.liveLeftovers !== 0) {
     throw new Error(`Arp view did not release: ${JSON.stringify(arpOff)}`);
   }
   await page.locator('.function-button[data-flag="2"]').click();

@@ -70,6 +70,10 @@ const GENERATION_SCALES = [
   { id: "chromatic", label: "CHROMATIC", sub: "ALL 12", degrees: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
 ];
 const TOOLTIP_STORAGE_KEY = "acidify.tooltips.enabled";
+// Tooltips erscheinen erst nach echtem Verweilen: der Timer startet bei jeder
+// Zeigerbewegung neu, damit die Blase die GUI beim Ueberstreichen nicht verdeckt.
+const TOOLTIP_HOVER_DELAY = 900;
+const TOOLTIP_FOCUS_DELAY = 250;
 const CONTROL_TOOLTIPS = {
   param1: "Fine-tunes the instrument by one semitone up or down. Drag or use the arrow keys; hold Shift for finer movement. Double-click to reset.",
   param2: "Sets the filter cutoff frequency. Higher values make the sound brighter. Hold Shift while dragging for finer movement.",
@@ -320,6 +324,9 @@ class AcidifyPatchView extends HTMLElement {
     this._arpView = false;
     this._lastArpMode = 0;
     this._phraseMenuOpen = false;
+    this._arpLiveNotes = new Array(16).fill(-1);
+    this._arpNoteListener = null;
+    this._midiHeld = new Set();
     this._paintState = null;
     this._paramListener = null;
     this._stepListener = null;
@@ -339,6 +346,7 @@ class AcidifyPatchView extends HTMLElement {
     this._tooltipTarget = null;
     this._tooltipToggleClick = null;
     this._tooltipPointerOver = null;
+    this._tooltipPointerMove = null;
     this._tooltipPointerOut = null;
     this._tooltipFocusIn = null;
     this._tooltipFocusOut = null;
@@ -439,6 +447,21 @@ class AcidifyPatchView extends HTMLElement {
     };
     this.pc.addEndpointListener("currentStep", this._stepListener);
 
+    this._arpNoteListener = value => {
+      const n = typeof value === "object" ? Number(value.value ?? -1) : Number(value);
+      const note = Number.isFinite(n) ? Math.round(n) : -1;
+      if (this._playingStep >= 0 && this._playingStep < 16) {
+        if (this._arpLiveNotes[this._playingStep] !== note) {
+          this._arpLiveNotes[this._playingStep] = note;
+          if (this._arpView) this._renderStepStrip();
+        }
+      } else if (note < 0 && this._arpLiveNotes.some(v => v >= 0)) {
+        this._arpLiveNotes.fill(-1);
+        if (this._arpView) this._renderStepStrip();
+      }
+    };
+    this.pc.addEndpointListener("arpNoteOut", this._arpNoteListener);
+
     this._meterListener = value => {
       const n = typeof value === "object" ? Number(value.value ?? 0) : Number(value);
       this._meter = clamp(n, 0, 1);
@@ -471,9 +494,17 @@ class AcidifyPatchView extends HTMLElement {
     this._midiHandler = messages => {
       messages.forEach(({ s, d1, d2 }) => {
         const kind = s & 0xf0;
-        if (kind === 0x90 && d2 > 0) this._showMidiNote(d1, true);
-        else if (kind === 0x80 || (kind === 0x90 && d2 === 0)) this._showMidiNote(d1, false);
+        if (kind === 0x90 && d2 > 0) {
+          this._showMidiNote(d1, true);
+          this._midiHeld.add(d1);
+        } else if (kind === 0x80 || (kind === 0x90 && d2 === 0)) {
+          this._showMidiNote(d1, false);
+          this._midiHeld.delete(d1);
+        } else if (kind === 0xb0 && (d1 === 120 || d1 === 123)) {
+          this._midiHeld.clear();
+        }
       });
+      if (this._arpView) this._renderArpHeld();
     };
     window.__amorphProcessMidi = this._midiHandler;
 
@@ -500,6 +531,7 @@ class AcidifyPatchView extends HTMLElement {
     if (!this._mounted) return;
     if (this._paramListener) this.pc.removeAllParameterListener(this._paramListener);
     if (this._stepListener) this.pc.removeEndpointListener("currentStep", this._stepListener);
+    if (this._arpNoteListener) this.pc.removeEndpointListener("arpNoteOut", this._arpNoteListener);
     if (this._meterListener) this.pc.removeEndpointListener("meterOut", this._meterListener);
     if (this._tempoListener) this.pc.removeEndpointListener("effectiveTempo", this._tempoListener);
     if (this._transportListener) this.pc.removeEndpointListener("transportRunning", this._transportListener);
@@ -514,6 +546,7 @@ class AcidifyPatchView extends HTMLElement {
     if (this._pitchMenuOutsidePointer) this.removeEventListener("pointerdown", this._pitchMenuOutsidePointer, true);
     if (this._tooltipToggleClick) this.querySelector(".tooltip-toggle")?.removeEventListener("click", this._tooltipToggleClick);
     if (this._tooltipPointerOver) this.removeEventListener("pointerover", this._tooltipPointerOver);
+    if (this._tooltipPointerMove) this.removeEventListener("pointermove", this._tooltipPointerMove);
     if (this._tooltipPointerOut) this.removeEventListener("pointerout", this._tooltipPointerOut);
     if (this._tooltipFocusIn) this.removeEventListener("focusin", this._tooltipFocusIn);
     if (this._tooltipFocusOut) this.removeEventListener("focusout", this._tooltipFocusOut);
@@ -525,6 +558,8 @@ class AcidifyPatchView extends HTMLElement {
     this._recentSends = [];
     this._paramListener = null;
     this._stepListener = null;
+    this._arpNoteListener = null;
+    this._midiHeld.clear();
     this._meterListener = null;
     this._tempoListener = null;
     this._transportListener = null;
@@ -540,6 +575,7 @@ class AcidifyPatchView extends HTMLElement {
     this._pitchMenuOutsidePointer = null;
     this._tooltipToggleClick = null;
     this._tooltipPointerOver = null;
+    this._tooltipPointerMove = null;
     this._tooltipPointerOut = null;
     this._tooltipFocusIn = null;
     this._tooltipFocusOut = null;
@@ -578,7 +614,12 @@ class AcidifyPatchView extends HTMLElement {
     this._tooltipPointerOver = event => {
       const target = this._findTooltipTarget(event.target);
       if (!target || target === this._findTooltipTarget(event.relatedTarget)) return;
-      this._scheduleTooltip(target, 360);
+      this._scheduleTooltip(target, TOOLTIP_HOVER_DELAY);
+    };
+    this._tooltipPointerMove = event => {
+      if (!this._tooltipTimer) return;
+      const target = this._findTooltipTarget(event.target);
+      if (target && target === this._tooltipTarget) this._scheduleTooltip(target, TOOLTIP_HOVER_DELAY);
     };
     this._tooltipPointerOut = event => {
       const target = this._findTooltipTarget(event.target);
@@ -587,7 +628,7 @@ class AcidifyPatchView extends HTMLElement {
     };
     this._tooltipFocusIn = event => {
       const target = this._findTooltipTarget(event.target);
-      if (target) this._scheduleTooltip(target, 120);
+      if (target) this._scheduleTooltip(target, TOOLTIP_FOCUS_DELAY);
     };
     this._tooltipFocusOut = event => {
       const target = this._findTooltipTarget(event.target);
@@ -595,6 +636,7 @@ class AcidifyPatchView extends HTMLElement {
       if (this._tooltipTarget === target) this._hideTooltip();
     };
     this.addEventListener("pointerover", this._tooltipPointerOver);
+    this.addEventListener("pointermove", this._tooltipPointerMove);
     this.addEventListener("pointerout", this._tooltipPointerOut);
     this.addEventListener("focusin", this._tooltipFocusIn);
     this.addEventListener("focusout", this._tooltipFocusOut);
@@ -1558,6 +1600,7 @@ class AcidifyPatchView extends HTMLElement {
 
   _setViewMode(view, sendParams = true) {
     const currentMode = Math.round(Number(this._values.get("param61") ?? 0));
+    if ((view === "arp") !== this._arpView) this._arpLiveNotes.fill(-1);
     this._arpView = view === "arp";
     this.classList.toggle("arp-mode", this._arpView);
     this._setStudioMode(view === "studio");
@@ -1587,6 +1630,16 @@ class AcidifyPatchView extends HTMLElement {
       }
     }
     this._renderArpState();
+    this._renderStepStrip();
+  }
+
+  _renderArpHeld() {
+    const hint = this.querySelector(".arp-hint");
+    if (!hint) return;
+    const held = [...this._midiHeld].sort((a, b) => a - b);
+    hint.textContent = held.length
+      ? `KEYS  ${held.map(note => noteName(note).replace("#", "♯")).join(" · ")}`
+      : "PATTERN GIBT GATE · ACCENT · SLIDE";
   }
 
   _renderArpState() {
@@ -1607,6 +1660,7 @@ class AcidifyPatchView extends HTMLElement {
     this.querySelector(".arp-hold")?.classList.toggle("is-on", hold);
     this.querySelector(".arp-phrase-row")?.classList.toggle("phrase-idle", mode !== 16);
     this.classList.toggle("phrase-active", this._arpView && mode === 16 && phrase > 0);
+    this._renderArpHeld();
     if (this._phraseMenuOpen) this._refreshPhraseMenu();
   }
 
@@ -1995,6 +2049,7 @@ class AcidifyPatchView extends HTMLElement {
 
   _renderStepStrip() {
     const patternLength = Math.max(1, Math.round(this._values.get("param11") ?? 16));
+    const arpLive = this._arpView && Math.round(this._values.get("param61") ?? 0) > 0;
     this.querySelectorAll(".sequence-step").forEach((node, index) => {
       const flags = this._stepFlags(index);
       node.classList.toggle("selected", index === this._selectedStep);
@@ -2012,6 +2067,21 @@ class AcidifyPatchView extends HTMLElement {
         (flags & 2) !== 0 ? "Accent" : "",
         (flags & 4) !== 0 ? "Slide" : "",
       ].filter(Boolean).join(", ");
+      if (arpLive) {
+        // Im Arp-Modus stammen die Tonhoehen aus den gehaltenen MIDI-Tasten;
+        // die Zellen zeigen live die zuletzt an diesem Step gespielte Note.
+        const liveNote = this._arpLiveNotes[index];
+        const liveName = liveNote >= 0 ? noteName(liveNote).replace("#", "♯") : "";
+        node.classList.toggle("arp-live", liveNote >= 0);
+        node.querySelector(".step-note").textContent = liveNote >= 0 ? liveName : "···";
+        const liveOctave = Math.floor((liveNote - root) / 12);
+        node.querySelector(".step-octave").textContent = liveNote >= 0
+          ? (liveOctave >= 0 ? `+${liveOctave}` : `${liveOctave}`) : "";
+        node.setAttribute("aria-label", `Step ${index + 1}, ${states}; arpeggio plays ${liveNote >= 0 ? liveName : "the held MIDI notes"} here — the pattern supplies gate, accent and slide`);
+        node.dataset.tooltip = `Step ${index + 1}: ${states}. The arpeggio note comes live from the held MIDI keys${liveNote >= 0 ? ` (last: ${liveName})` : ""}; the pattern step only supplies gate, accent and slide.`;
+        return;
+      }
+      node.classList.remove("arp-live");
       node.querySelector(".step-note").textContent = (flags & 1) !== 0 ? absoluteNote : "REST";
       node.querySelector(".step-octave").textContent = `+${Math.floor(pitch / 12)}`;
       node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}; click to edit, double-click toggles gate, wheel changes semitone, right-click chooses a note`);
@@ -4848,13 +4918,16 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .arp-tools-row { display: flex; gap: 8px; flex: 0 0 auto; }
   acidify-patch-view .arp-tool-block { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; }
   acidify-patch-view .arp-tool-block .edit-caption { flex: 0 0 auto; }
-  acidify-patch-view .arp-tool-block .silver-stepper { margin-top: 4px; width: auto; height: auto; padding: 0; background: none; border: 0; box-shadow: none;
+  acidify-patch-view .arp-tool-block .silver-stepper { margin-top: 4px; width: auto; height: 24px; padding: 0; background: none; border: 0; box-shadow: none;
     display: flex; flex-direction: row; align-items: center; gap: 6px; }
+  acidify-patch-view .arp-tool-block .silver-stepper .led-box { margin-top: 0; width: 40px; }
+  acidify-patch-view .arp-tool-block .silver-stepper .stepper-buttons,
+  acidify-patch-view .arp-phrase .stepper-buttons { margin-top: 0; }
   acidify-patch-view .arp-phrase-row { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; }
   acidify-patch-view .arp-phrase-row.phrase-idle { opacity: .45; }
-  acidify-patch-view .arp-phrase { margin-top: 4px; width: 100%; height: auto; padding: 0; background: none; border: 0; box-shadow: none;
+  acidify-patch-view .arp-phrase { margin-top: 3px; width: 100%; height: 24px; padding: 0; background: none; border: 0; box-shadow: none;
     display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 6px; }
-  acidify-patch-view .arp-phrase .led-box { width: 150px; height: 24px; cursor: pointer; }
+  acidify-patch-view .arp-phrase .led-box { margin-top: 0; width: 150px; height: 24px; cursor: pointer; }
   acidify-patch-view .phrase-menu { position: absolute; z-index: 72; left: 0; right: 0; bottom: 30px; max-height: 170px; overflow: auto; padding: 3px;
     border-radius: 3px; border: 1px solid #0a0b09; background: linear-gradient(#252824,#15170f);
     box-shadow: 0 12px 22px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.08); }
@@ -4866,8 +4939,10 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .phrase-menu button small { color: #7d8681; font: 900 5.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .5px; }
   acidify-patch-view .phrase-menu button.active small { color: #f0b0a6; }
   acidify-patch-view.phrase-active .step-row { opacity: .45; }
+  acidify-patch-view.arp-mode .sequence-step .step-note { color: #ffb86c; text-shadow: 0 0 6px rgba(255,150,40,.5); }
+  acidify-patch-view.arp-mode .sequence-step:not(.arp-live) .step-note { color: #7a4a2a; text-shadow: none; }
   acidify-patch-view .arp-hold { margin-top: 4px; width: auto; height: auto; padding: 0; background: none; border: 0; box-shadow: none; perspective: none; transform: none; }
-  acidify-patch-view .arp-hold button, acidify-patch-view .arp-hold.is-on button { width: 92px; height: 32px; margin: 0; position: static; display: flex; flex-direction: column;
+  acidify-patch-view .arp-hold button, acidify-patch-view .arp-hold.is-on button { width: 92px; height: 30px; margin: 0; position: static; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 3px; cursor: pointer; border-radius: 2px; border: 1px solid #1a1e1f; transform: none; text-shadow: none;
     background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
@@ -5186,7 +5261,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><span class="power-label">POWER</span><span class="power-ring"><i class="power-led lit"></i></span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.5.0</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.5.1</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -5470,22 +5545,22 @@ class AcidifyPatchView extends HTMLElement {
           <div class="control arp-direction" data-param="param61" data-endpoint-id="param61"
             data-min="0" data-max="16" data-step="1" data-init="0" data-control="buttons"
             data-tooltip="Arpeggio figure over the held notes; PHRASE plays the phrase bank transposed by the keys.">
-            <button data-value="1" type="button"><strong>UP</strong><small>ASCEND</small></button>
-            <button data-value="2" type="button"><strong>DOWN</strong><small>DESCEND</small></button>
-            <button data-value="3" type="button"><strong>UP-DN</strong><small>EXCL</small></button>
-            <button data-value="5" type="button"><strong>UP-DN+</strong><small>INCL</small></button>
-            <button data-value="6" type="button"><strong>DN-UP</strong><small>EXCL</small></button>
-            <button data-value="7" type="button"><strong>DN-UP+</strong><small>INCL</small></button>
-            <button data-value="8" type="button"><strong>PLAYED</strong><small>ORDER</small></button>
-            <button data-value="9" type="button"><strong>DOUBLE</strong><small>TWICE</small></button>
-            <button data-value="10" type="button"><strong>CONV</strong><small>OUT-IN</small></button>
-            <button data-value="11" type="button"><strong>DIV</strong><small>IN-OUT</small></button>
-            <button data-value="12" type="button"><strong>PINKY</strong><small>TOP PED</small></button>
-            <button data-value="13" type="button"><strong>THUMB</strong><small>BASS PED</small></button>
-            <button data-value="4" type="button"><strong>RND</strong><small>FREE</small></button>
-            <button data-value="14" type="button"><strong>RND-1</strong><small>LOOPED</small></button>
-            <button data-value="15" type="button"><strong>WALK</strong><small>DRUNK</small></button>
-            <button data-value="16" type="button"><strong>PHRASE</strong><small>BANK</small></button>
+            <button data-value="1" type="button" data-tooltip="Up: plays the held notes bottom to top."><strong>UP</strong><small>ASCEND</small></button>
+            <button data-value="2" type="button" data-tooltip="Down: plays the held notes top to bottom."><strong>DOWN</strong><small>DESCEND</small></button>
+            <button data-value="3" type="button" data-tooltip="Up-Down: rises then falls without repeating the turning points."><strong>UP-DN</strong><small>EXCL</small></button>
+            <button data-value="5" type="button" data-tooltip="Up-Down+: rises then falls and repeats the top and bottom note."><strong>UP-DN+</strong><small>INCL</small></button>
+            <button data-value="6" type="button" data-tooltip="Down-Up: falls then rises without repeating the turning points."><strong>DN-UP</strong><small>EXCL</small></button>
+            <button data-value="7" type="button" data-tooltip="Down-Up+: falls then rises and repeats the bottom and top note."><strong>DN-UP+</strong><small>INCL</small></button>
+            <button data-value="8" type="button" data-tooltip="Played: repeats the notes in the order the keys were pressed."><strong>PLAYED</strong><small>ORDER</small></button>
+            <button data-value="9" type="button" data-tooltip="Double: walks upward and plays every note twice."><strong>DOUBLE</strong><small>TWICE</small></button>
+            <button data-value="10" type="button" data-tooltip="Converge: alternates from the outside in - lowest, highest, second lowest."><strong>CONV</strong><small>OUT-IN</small></button>
+            <button data-value="11" type="button" data-tooltip="Diverge: alternates from the inside out."><strong>DIV</strong><small>IN-OUT</small></button>
+            <button data-value="12" type="button" data-tooltip="Pinky: bounces the highest note against the rising line, like a pedal tone."><strong>PINKY</strong><small>TOP PED</small></button>
+            <button data-value="13" type="button" data-tooltip="Thumb: bounces the lowest note against the rising line, like a pedal tone."><strong>THUMB</strong><small>BASS PED</small></button>
+            <button data-value="4" type="button" data-tooltip="Random: reproducible random order that never repeats a note directly."><strong>RND</strong><small>FREE</small></button>
+            <button data-value="14" type="button" data-tooltip="Rnd-1: shuffles the notes once, then loops that order."><strong>RND-1</strong><small>LOOPED</small></button>
+            <button data-value="15" type="button" data-tooltip="Walk: drunken walk - one random step up or down at a time."><strong>WALK</strong><small>DRUNK</small></button>
+            <button data-value="16" type="button" data-tooltip="Phrase: plays a phrase from the bank, transposed by the held keys; choose it below."><strong>PHRASE</strong><small>BANK</small></button>
           </div>
         </div>
         <div class="arp-tools-cell">

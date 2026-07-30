@@ -31,6 +31,7 @@ processor AcidifyCore
     output event float effectiveTempo;
     output event float transportRunning;
     output event float hostSyncStatus;
+    output event float arpNoteOut;
 
     input event float param1  [[ name: "Tuning",         min: -1.0, max: 1.0,   init: 0.0,   unit: "st" ]];
     input event float param2  [[ name: "Cut Off Freq",   min: 0.0,  max: 1.0,   init: 0.45 ]];
@@ -1379,6 +1380,7 @@ processor AcidifyCore
         dawTickReady = false;
         dawGateArmed = false;
         currentStep <- -1.0f;
+        arpNoteOut <- -1.0f;
         releaseNote();
     }
 
@@ -1431,9 +1433,10 @@ processor AcidifyCore
         let stepSamples = max (1, int (sampleRate * 60.0f * stepDuration
                                       / max (bpm, 1.0f) + 0.5f));
 
+        var note = -1;
+
         if (hasGate)
         {
-            var note = -1;
             if (arpMode == 16)
             {
                 let base = arpPhraseBaseNote();
@@ -1505,6 +1508,9 @@ processor AcidifyCore
         sequenceCountdown = stepSamples;
         gateCountdown = (flags & 4) != 0 ? stepSamples + 1 : max (1, stepSamples / 2);
         currentStep <- float (sequenceStep);
+
+        if (arpMode > 0)
+            arpNoteOut <- float (note);
     }
 
     void startNextInternalStep (float sampleRate)
@@ -2425,6 +2431,7 @@ graph Acidify [[ main ]]
     output event float effectiveTempo;
     output event float transportRunning;
     output event float hostSyncStatus;
+    output event float arpNoteOut;
 
     input event float param1  [[ name: "Tuning",         min: -1.0, max: 1.0,   init: 0.0,   unit: "st" ]];
     input event float param2  [[ name: "Cut Off Freq",   min: 0.0,  max: 1.0,   init: 0.45 ]];
@@ -2519,6 +2526,7 @@ graph Acidify [[ main ]]
         core.effectiveTempo -> effectiveTempo;
         core.transportRunning -> transportRunning;
         core.hostSyncStatus -> hostSyncStatus;
+        core.arpNoteOut -> arpNoteOut;
 
         param1 -> core.param1;   param2 -> core.param2;
         param3 -> core.param3;   param4 -> core.param4;
