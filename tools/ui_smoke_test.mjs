@@ -58,7 +58,7 @@ try {
     nativeTitles: document.querySelectorAll("[title]").length,
     screws: document.querySelectorAll(".screw").length,
   }));
-  if (counts.controls !== 27 || counts.endpointControls !== 27
+  if (counts.controls !== 30 || counts.endpointControls !== 30
       || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
       || counts.stepGroups !== 4 || counts.whiteKeys !== 7 || counts.blackKeys !== 5
       || counts.studioCells !== 48 || counts.studioCellGroups !== 12
@@ -75,7 +75,7 @@ try {
     throw new Error(`Unexpected UI element counts: ${JSON.stringify(counts)}`);
   }
 
-  // Classic-Kopf nach dc-Template: Titel links, Utility rechts, Segment-Schalter 58x15 je Segment.
+  // Classic-Kopf nach dc-Template: Titel links, Utility rechts, Segment-Schalter 44x15 je Segment (CLASSIC/STUDIO/ARP).
   const header = await page.evaluate(() => {
     const rect = selector => {
       const bounds = document.querySelector(selector).getBoundingClientRect();
@@ -93,7 +93,7 @@ try {
   if (header.title.right > header.utility.left
       || Math.round(header.headerH) !== 25
       || !/^--\s*\/\s*16$/.test(header.position)
-      || Math.round(header.segW) !== 58 || Math.round(header.segH) !== 15) {
+      || Math.round(header.segW) !== 44 || Math.round(header.segH) !== 15) {
     throw new Error(`Program header layout failed: ${JSON.stringify(header)}`);
   }
 
@@ -583,6 +583,46 @@ try {
   await page.locator('.sequence-step[data-step="4"] .pill-a').click();
   await page.locator('.sequence-step[data-step="4"] .pill-s').click();
   await page.locator('.sequence-step[data-step="7"]').click();
+
+  await page.locator(".studio-toggle .arp-label").click();
+  const arpOn = await page.locator("acidify-patch-view").evaluate(node => ({
+    view: node.querySelector(".studio-toggle").dataset.view,
+    mode: Number(node._values.get("param61")),
+    context: node.querySelector(".program-context").textContent,
+    readout: node.querySelector(".arp-readout").textContent,
+    editorVisible: getComputedStyle(node.querySelector(".arp-editor")).display !== "none",
+    classicHidden: getComputedStyle(node.querySelector(".classic-editor")).display === "none",
+    stepStripVisible: getComputedStyle(node.querySelector(".step-row")).display !== "none",
+  }));
+  if (arpOn.view !== "arp" || arpOn.mode !== 1 || arpOn.context !== "ARPEGGIATOR"
+      || arpOn.readout !== "UP" || !arpOn.editorVisible || !arpOn.classicHidden
+      || !arpOn.stepStripVisible) {
+    throw new Error(`Arp view did not engage: ${JSON.stringify(arpOn)}`);
+  }
+  await page.locator('.arp-direction [data-value="4"]').click();
+  await page.locator('.arp-tool-block .silver-stepper .stepper-buttons [data-step="1"]').click();
+  await page.locator(".arp-hold button").click();
+  const arpTuned = await page.locator("acidify-patch-view").evaluate(node => ({
+    mode: Number(node._values.get("param61")),
+    octaves: Number(node._values.get("param62")),
+    hold: Number(node._values.get("param63")),
+    readout: node.querySelector(".arp-readout").textContent,
+    holdLabel: node.querySelector(".arp-hold-label").textContent,
+    randomActive: node.querySelector('.arp-direction [data-value="4"]').classList.contains("active"),
+  }));
+  if (arpTuned.mode !== 4 || arpTuned.octaves !== 2 || arpTuned.hold !== 1
+      || arpTuned.readout !== "RND" || arpTuned.holdLabel !== "ON" || !arpTuned.randomActive) {
+    throw new Error(`Arp controls failed: ${JSON.stringify(arpTuned)}`);
+  }
+  await page.locator(".studio-toggle .classic-label").click();
+  const arpOff = await page.locator("acidify-patch-view").evaluate(node => ({
+    view: node.querySelector(".studio-toggle").dataset.view,
+    mode: Number(node._values.get("param61")),
+    classicVisible: getComputedStyle(node.querySelector(".classic-editor")).display !== "none",
+  }));
+  if (arpOff.view !== "classic" || arpOff.mode !== 0 || !arpOff.classicVisible) {
+    throw new Error(`Arp view did not release: ${JSON.stringify(arpOff)}`);
+  }
   await page.locator('.function-button[data-flag="2"]').click();
   await page.locator('[data-classic-action="clear-step"]').click();
   const clearedStep = await page.locator("acidify-patch-view").evaluate(node => node._stepSnapshot()[7]);
@@ -631,7 +671,7 @@ try {
       groupGaps: groups.slice(1).map((group, index) => group.left - groups[index].right),
     };
   });
-  if (Math.round(workflow.toggle.width) !== 118 || Math.round(workflow.toggle.height) !== 17
+  if (Math.round(workflow.toggle.width) !== 134 || Math.round(workflow.toggle.height) !== 17
       || Math.round(workflow.tools.width) !== 314 || workflow.matrix.width < 800
       || workflow.tools.right - workflow.matrix.left < 900
       || workflow.scale.width < 100 || Math.round(workflow.scale.height) !== 12
@@ -855,7 +895,7 @@ try {
     throw new Error("Studio value feedback failed");
   }
 
-  await page.locator(".studio-toggle").click();
+  await page.locator(".studio-toggle .classic-label").click();
   if (await page.locator("acidify-patch-view").evaluate(node => node.classList.contains("studio-mode"))) {
     throw new Error("Return to Classic mode failed");
   }
@@ -900,7 +940,7 @@ try {
       mounted: node._mounted,
     };
   });
-  if (reconnect.sends !== 1 || reconnect.controls !== 27 || reconnect.endpointControls !== 27
+  if (reconnect.sends !== 1 || reconnect.controls !== 30 || reconnect.endpointControls !== 30
       || reconnect.pendingEchoes !== 0 || !reconnect.mounted) {
     throw new Error(`Reconnect lifecycle failed: ${JSON.stringify(reconnect)}`);
   }

@@ -6,6 +6,36 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-07-30
+
+### Added
+
+- **Arpeggiator als dritter Modus** (`param61..63`, append-only; Schalter
+  jetzt CLASSIC/STUDIO/ARP mit 3×44-px-Segmenten):
+  - Gehaltene MIDI-Noten liefern die Tonhöhen, das 16-Step-Pattern bleibt
+    Taktgeber und liefert Gate, Accent und Slide — der Arp spielt also durch
+    die programmierte Rhythmus- und Artikulationsmaske (Konzept nach dem
+    Riff-Template-Ansatz von Phoscyon 2; Modi-Kanon nach Jupiter-8/SH-101:
+    Up, Down, Up-Down ohne doppelte Endpunkte, Random, 1–4 Oktaven, Hold).
+  - **Random** ist ein Lehmer-LCG mit festem Seed: reproduzierbar (zwei
+    Renders bit-identisch), poolgetreu, keine Direkt-Wiederholung.
+  - **Hold (Latch)**: Akkord läuft nach dem Loslassen weiter; ein neuer
+    Anschlag nach vollständigem Loslassen beginnt den nächsten Akkord;
+    Hold-Aus reduziert den Pool auf die physisch gehaltenen Tasten.
+  - Bei laufendem Sequencer triggert MIDI im Arp-Modus nie direkt, sondern
+    pflegt nur den Pool; mit Arp aus bleibt eingehendes MIDI am laufenden
+    Sequencer wirkungslos (bit-identisch belegt).
+  - **Arp-Ansicht** ersetzt die Editor-Zeile: LED-Readout des Modus,
+    DIRECTION-Tastenfeld (UP/DOWN/UP-DN/RND), OCTAVES-Stepper, HOLD-Taste;
+    der Step-Strip bleibt als Maske sichtbar und editierbar. ARP-Segment
+    aktiv in Bernstein; Presets mit `param61 > 0` öffnen die Ansicht
+    automatisch.
+  - Neuer Nachweis-Test `tools/dsp_arp_test.mjs` (Akkord per SMF in
+    `cmaj render --midi`, Tonhöhen je Step per Autokorrelation): Up/Down/
+    Up-Down-Zyklen exakt, Random-Determinismus, 2-Oktaven-Zyklus,
+    Hold-Verhalten, Arp-aus-Transparenz. `ui_smoke_test` deckt Schalter,
+    Panel-Controls und Rücksprung ab (30 Controls).
+
 ## [2.3.1] - 2026-07-30
 
 ### Changed

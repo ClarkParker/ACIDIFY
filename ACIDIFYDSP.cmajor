@@ -104,6 +104,11 @@ processor AcidifyCore
     input event float param59 [[ name: "Mod Soft Attack Amount", min: 0.0, max: 1.0, init: 0.25, step: 0.001 ]];
     input event float param60 [[ name: "Power",              min: 0.0, max: 1.0, init: 1.0, step: 1.0,
                                  text: "Bypass|On" ]];
+    input event float param61 [[ name: "Arp Mode",           min: 0.0, max: 4.0, init: 0.0, step: 1.0,
+                                 text: "Off|Up|Down|Up-Down|Random" ]];
+    input event float param62 [[ name: "Arp Octaves",        min: 1.0, max: 4.0, init: 1.0, step: 1.0 ]];
+    input event float param63 [[ name: "Arp Hold",           min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
 
     float tuning = 0.0f;
     float cutoffControl = 0.45f;
@@ -115,6 +120,15 @@ processor AcidifyCore
     float volumeDb = -6.0f;
     bool powerOn = true;
     float smoothedPower = 1.0f;
+    int arpMode = 0;
+    int arpOctaves = 1;
+    bool arpHold = false;
+    bool[128] arpKeyDown;
+    int arpPhysicalCount = 0;
+    int arpPointer = 0;
+    int arpLastRandom = -1;
+    // Lehmer-MINSTD, fester Seed: Random-Modus ist reproduzierbar testbar.
+    int64 arpRngState = 20260730L;
     bool distortionEnabled = false;
     int distortionType = 0;
     float distortionDrive = 0.35f;
@@ -855,6 +869,117 @@ processor AcidifyCore
         heldNoteCount = 0;
     }
 
+    // ---------- Arpeggiator ----------
+    // Pool = gehaltene Noten (dedupliziert, holdNote), sortiert gelesen und
+    // um arpOctaves Oktavlagen erweitert. Der Sequencer bleibt Taktgeber:
+    // Gate/Accent/Slide der 16 Steps wirken als Rhythmus- und
+    // Artikulationsmaske, nur die Tonhoehe kommt aus dem Pool.
+    int arpPoolSize()
+    {
+        return heldNoteCount * clamp (arpOctaves, 1, 4);
+    }
+
+    int sortedHeldNote (int k)
+    {
+        var last = -1;
+        var result = 0;
+        for (int rank = 0; rank <= k; rank += 1)
+        {
+            var best = 128;
+            for (int i = 0; i < heldNoteCount; i += 1)
+            {
+                let n = heldNotes.at (i);
+                if (n > last && n < best)
+                    best = n;
+            }
+            result = best;
+            last = best;
+        }
+        return clamp (result, 0, 127);
+    }
+
+    int arpNoteAt (int index)
+    {
+        let count = max (heldNoteCount, 1);
+        let octave = index / count;
+        let k = index % count;
+        return clamp (sortedHeldNote (k) + 12 * octave, 0, 127);
+    }
+
+    int nextArpIndex()
+    {
+        let size = arpPoolSize();
+        if (size <= 0)
+            return -1;
+
+        if (arpMode == 4)
+        {
+            arpRngState = arpRngState * 48271L % 2147483647L;
+            var pick = int (arpRngState % int64 (size));
+            if (size > 1 && pick == arpLastRandom)
+                pick = (pick + 1) % size;
+            arpLastRandom = pick;
+            return pick;
+        }
+
+        if (arpMode == 2)
+        {
+            let idx = arpPointer % size;
+            arpPointer += 1;
+            return size - 1 - idx;
+        }
+
+        if (arpMode == 3)
+        {
+            let cycle = size > 1 ? 2 * size - 2 : 1;
+            let pos = arpPointer % cycle;
+            arpPointer += 1;
+            return pos < size ? pos : cycle - pos;
+        }
+
+        let idx = arpPointer % size;
+        arpPointer += 1;
+        return idx;
+    }
+
+    void arpNoteOn (int note, int velocity)
+    {
+        if (arpHold && arpPhysicalCount == 0)
+            clearHeldNotes();
+        if (! arpKeyDown.at (note))
+        {
+            arpKeyDown.at (note) = true;
+            arpPhysicalCount += 1;
+        }
+        holdNote (note, velocity);
+    }
+
+    void arpNoteOff (int note)
+    {
+        if (arpKeyDown.at (note))
+        {
+            arpKeyDown.at (note) = false;
+            arpPhysicalCount -= 1;
+        }
+        if (! arpHold)
+            removeHeldNote (note);
+    }
+
+    void rebuildArpPoolFromKeys()
+    {
+        heldNoteCount = 0;
+        for (int n = 0; n < 128; n += 1)
+            if (arpKeyDown.at (n))
+                holdNote (n, 100);
+    }
+
+    void clearArpKeys()
+    {
+        for (int n = 0; n < 128; n += 1)
+            arpKeyDown.at (n) = false;
+        arpPhysicalCount = 0;
+    }
+
     void holdNote (int note, int velocity)
     {
         int existing = -1;
@@ -1065,11 +1190,30 @@ processor AcidifyCore
 
         if (hasGate)
         {
-            let note = clamp (rootNote + getPitch (sequenceStep), 0, 127);
-            if (previousSlide && gateOpen)
-                slideToNote (note, hasAccent);
+            var note = -1;
+            if (arpMode > 0)
+            {
+                let index = nextArpIndex();
+                if (index >= 0)
+                    note = arpNoteAt (index);
+            }
             else
+            {
+                note = clamp (rootNote + getPitch (sequenceStep), 0, 127);
+            }
+
+            if (note < 0)
+            {
+                releaseNote();
+            }
+            else if (previousSlide && gateOpen)
+            {
+                slideToNote (note, hasAccent);
+            }
+            else
+            {
                 triggerNote (note, hasAccent);
+            }
         }
         else
         {
@@ -1649,6 +1793,15 @@ processor AcidifyCore
     event param58 (float v) { modSoftAtkEnabled = v >= 0.5f; updateModDerived(); }
     event param59 (float v) { modSoftAtkAmount = clamp (v, 0.0f, 1.0f); updateModDerived(); }
     event param60 (float v) { powerOn = v >= 0.5f; }
+    event param61 (float v) { arpMode = clamp (int (v + 0.5f), 0, 4); }
+    event param62 (float v) { arpOctaves = clamp (int (v + 0.5f), 1, 4); }
+    event param63 (float v)
+    {
+        let hold = v >= 0.5f;
+        if (arpHold && ! hold)
+            rebuildArpPoolFromKeys();
+        arpHold = hold;
+    }
 
     // Amorph sends its DAW playhead as a rolling six-value float64 event stream:
     // play state, BPM, time-signature numerator, denominator, absolute PPQ, and
@@ -1715,11 +1868,32 @@ processor AcidifyCore
     event midiIn (std::midi::Message message)
     {
         if (sequencerRunning())
+        {
+            // Bei laufendem Sequencer spielt die Step-Engine; MIDI pflegt im
+            // Arp-Modus nur den Noten-Pool und triggert nie direkt.
+            if (arpMode <= 0)
+                return;
+
+            if (message.isControllerNumber (120) || message.isControllerNumber (123))
+            {
+                clearHeldNotes();
+                clearArpKeys();
+            }
+            else if (message.isNoteOn())
+            {
+                arpNoteOn (message.getNoteNumber(), message.getVelocity());
+            }
+            else if (message.isNoteOff())
+            {
+                arpNoteOff (message.getNoteNumber());
+            }
             return;
+        }
 
         if (message.isControllerNumber (120) || message.isControllerNumber (123))
         {
             clearHeldNotes();
+            clearArpKeys();
             releaseNote();
         }
         else if (message.isNoteOn())
@@ -1728,6 +1902,11 @@ processor AcidifyCore
             let velocity = message.getVelocity();
             let hasAccent = velocity >= 100;
             let wasHoldingNotes = heldNoteCount > 0;
+            if (! arpKeyDown.at (note))
+            {
+                arpKeyDown.at (note) = true;
+                arpPhysicalCount += 1;
+            }
             holdNote (note, velocity);
             if (wasHoldingNotes && gateOpen)
                 slideToNote (note, hasAccent);
@@ -1737,6 +1916,13 @@ processor AcidifyCore
         else if (message.isNoteOff())
         {
             let note = message.getNoteNumber();
+            if (arpKeyDown.at (note))
+            {
+                arpKeyDown.at (note) = false;
+                arpPhysicalCount -= 1;
+            }
+            if (arpHold && arpMode > 0)
+                return;
             let releasedCurrent = note == currentNote;
             if (removeHeldNote (note) && releasedCurrent)
             {
@@ -2028,6 +2214,11 @@ graph Acidify [[ main ]]
     input event float param59 [[ name: "Mod Soft Attack Amount", min: 0.0, max: 1.0, init: 0.25, step: 0.001 ]];
     input event float param60 [[ name: "Power",              min: 0.0, max: 1.0, init: 1.0, step: 1.0,
                                  text: "Bypass|On" ]];
+    input event float param61 [[ name: "Arp Mode",           min: 0.0, max: 4.0, init: 0.0, step: 1.0,
+                                 text: "Off|Up|Down|Up-Down|Random" ]];
+    input event float param62 [[ name: "Arp Octaves",        min: 1.0, max: 4.0, init: 1.0, step: 1.0 ]];
+    input event float param63 [[ name: "Arp Hold",           min: 0.0, max: 1.0, init: 0.0, step: 1.0,
+                                 text: "Off|On" ]];
 
     node core = AcidifyCore * 4;
 
@@ -2083,5 +2274,7 @@ graph Acidify [[ main ]]
         param58 -> core.param58;
         param59 -> core.param59;
         param60 -> core.param60;
+        param61 -> core.param61; param62 -> core.param62;
+        param63 -> core.param63;
     }
 }

@@ -34,6 +34,9 @@ const ACIDIFY_GLOBALS = [
   { id: "param58", type: "toggle",  label: "SOFT ATK",     min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param59", type: "dial",    label: "TIME",     min: 0,  max: 1,   step: 0.001, init: 0.25, format: v => `${(0.5 * Math.pow(60, v)).toFixed(1)}ms` },
   { id: "param60", type: "toggle",  label: "POWER",    min: 0,  max: 1,   step: 1, init: 1 },
+  { id: "param61", type: "toggle",  label: "ARP MODE", min: 0,  max: 4,   step: 1, init: 0 },
+  { id: "param62", type: "stepper", label: "OCTAVES",  min: 1,  max: 4,   step: 1, init: 1, format: v => `${Math.round(v)}` },
+  { id: "param63", type: "toggle",  label: "HOLD",     min: 0,  max: 1,   step: 1, init: 0 },
 ];
 
 const STEP_PITCH_DEFAULTS = [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7];
@@ -308,6 +311,8 @@ class AcidifyPatchView extends HTMLElement {
     this._clipboard = null;
     this._generationScaleIndex = 0;
     this._scaleMenuOpen = false;
+    this._arpView = false;
+    this._lastArpMode = 0;
     this._paintState = null;
     this._paramListener = null;
     this._stepListener = null;
@@ -382,6 +387,19 @@ class AcidifyPatchView extends HTMLElement {
       }
       if (endpointID === "param60") {
         this._renderPowerState();
+      }
+      if (endpointID === "param61") {
+        const mode = Math.round(Number(typeof value === "object" ? value.value ?? 0 : value));
+        if (mode > 0) {
+          this._lastArpMode = mode;
+          if (!this._arpView) this._setViewMode("arp", false);
+        } else if (this._arpView) {
+          this._setViewMode("classic", false);
+        }
+        this._renderArpState();
+      }
+      if (endpointID === "param62" || endpointID === "param63") {
+        this._renderArpState();
       }
       if (endpointID >= "param2" && endpointID <= "param6" && endpointID.length === 6 || endpointID === "param9") {
         this._renderScope();
@@ -654,6 +672,9 @@ class AcidifyPatchView extends HTMLElement {
     if (endpointID === "param9" || endpointID === "param10" || endpointID === "param49") {
       this._renderTransportState();
     }
+    if (endpointID === "param61" || endpointID === "param62" || endpointID === "param63") {
+      queueMicrotask(() => this._renderArpState());
+    }
     this._recentSends = this._recentSends.filter(entry => now - entry.time < 1500);
     this._recentSends.push({ endpointID, value, time: now });
     if (this._recentSends.length > 64) this._recentSends.shift();
@@ -832,8 +853,15 @@ class AcidifyPatchView extends HTMLElement {
   }
 
   _wireStudio() {
-    this.querySelector(".studio-toggle")?.addEventListener("click", () => {
-      this._setStudioMode(!this._studioMode);
+    this.querySelector(".studio-toggle")?.addEventListener("click", event => {
+      const segment = event.target instanceof Element
+        ? event.target.closest(".classic-label, .studio-label, .arp-label")
+        : null;
+      const view = segment?.classList.contains("studio-label") ? "studio"
+        : segment?.classList.contains("arp-label") ? "arp"
+        : segment ? "classic"
+        : this._studioMode || this._arpView ? "classic" : "studio";
+      this._setViewMode(view);
     });
 
     this.querySelector(".studio-scale")?.addEventListener("click", () => {
@@ -948,7 +976,7 @@ class AcidifyPatchView extends HTMLElement {
       }
       if (!command && key === "m") {
         event.preventDefault();
-        this._setStudioMode(!this._studioMode);
+        this._setViewMode(this._studioMode ? "classic" : "studio");
         return;
       }
       if (!this._studioMode) return;
@@ -1501,6 +1529,53 @@ class AcidifyPatchView extends HTMLElement {
     this.querySelector(".distortion-power-led")?.classList.toggle("lit", enabled);
     const powerLabel = this.querySelector(".distortion-power-label");
     if (powerLabel) powerLabel.textContent = enabled ? "ON" : "OFF";
+  }
+
+  _setViewMode(view, sendParams = true) {
+    const currentMode = Math.round(Number(this._values.get("param61") ?? 0));
+    this._arpView = view === "arp";
+    this.classList.toggle("arp-mode", this._arpView);
+    this._setStudioMode(view === "studio");
+    const toggle = this.querySelector(".studio-toggle");
+    toggle?.setAttribute("data-view", view);
+    if (this._arpView) {
+      const modeStatus = this.querySelector(".program-context");
+      if (modeStatus) modeStatus.textContent = "ARPEGGIATOR";
+      this.querySelector(".classic-editor")?.setAttribute("aria-hidden", "true");
+      if (toggle) {
+        toggle.setAttribute("aria-label", "Arpeggiator mode; pattern supplies gate, accent and slide");
+        toggle.dataset.tooltip = "Arpeggiator: held MIDI notes supply the pitches, the 16-step pattern supplies rhythm, accent and slide.";
+      }
+    }
+    this.querySelector(".arp-editor")?.setAttribute("aria-hidden", `${!this._arpView}`);
+    if (sendParams) {
+      if (this._arpView && currentMode === 0) {
+        const restored = this._lastArpMode || 1;
+        const owner = this._controls.get("param61");
+        if (owner) owner.setValue(restored, true);
+        else this._sendParameter("param61", restored);
+      } else if (!this._arpView && currentMode > 0) {
+        this._lastArpMode = currentMode;
+        const owner = this._controls.get("param61");
+        if (owner) owner.setValue(0, true);
+        else this._sendParameter("param61", 0);
+      }
+    }
+    this._renderArpState();
+  }
+
+  _renderArpState() {
+    const names = ["OFF", "UP", "DOWN", "UP-DN", "RND"];
+    const mode = Math.round(clamp(Number(this._values.get("param61") ?? 0), 0, 4));
+    const readout = this.querySelector(".arp-readout");
+    if (readout) readout.textContent = names[mode];
+    this.querySelectorAll(".arp-direction [data-value]").forEach(button => {
+      button.classList.toggle("active", Number(button.dataset.value) === mode && mode > 0);
+    });
+    const hold = Number(this._values.get("param63") ?? 0) >= 0.5;
+    const holdLabel = this.querySelector(".arp-hold-label");
+    if (holdLabel) holdLabel.textContent = hold ? "ON" : "OFF";
+    this.querySelector(".arp-hold")?.classList.toggle("is-on", hold);
   }
 
   _setStudioMode(enabled) {
@@ -4525,12 +4600,11 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .studio-toggle { display: flex; width: auto; height: auto; padding: 0; border: 1px solid #3d4446; border-radius: 2px; overflow: hidden;
     background: #2b302f; box-shadow: none; cursor: pointer; }
   acidify-patch-view .studio-toggle i { display: none; }
-  acidify-patch-view .studio-toggle span { position: static; z-index: auto; width: 58px; height: 15px; display: grid; place-items: center;
-    font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.2px; text-shadow: none; }
-  acidify-patch-view .studio-toggle .classic-label { background: linear-gradient(180deg,#eef1f1,#c3cacb); color: #15191a; }
-  acidify-patch-view .studio-toggle .studio-label { background: #2b302f; color: #9aa3a5; }
-  acidify-patch-view .studio-toggle[aria-pressed="true"] .classic-label { background: #2b302f; color: #9aa3a5; }
-  acidify-patch-view .studio-toggle[aria-pressed="true"] .studio-label { background: linear-gradient(180deg,#c9382c,#7d1610); color: #fff1ee; }
+  acidify-patch-view .studio-toggle span { position: static; z-index: auto; width: 44px; height: 15px; display: grid; place-items: center; cursor: pointer;
+    font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: none; background: #2b302f; color: #9aa3a5; }
+  acidify-patch-view .studio-toggle[data-view="classic"] .classic-label { background: linear-gradient(180deg,#eef1f1,#c3cacb); color: #15191a; }
+  acidify-patch-view .studio-toggle[data-view="studio"] .studio-label { background: linear-gradient(180deg,#c9382c,#7d1610); color: #fff1ee; }
+  acidify-patch-view .studio-toggle[data-view="arp"] .arp-label { background: linear-gradient(180deg,#ffc46f,#8a5312); color: #2a1a02; }
   acidify-patch-view .program-legend { display: inline-flex; align-items: center; gap: 5px; margin-left: 0; padding-left: 12px; border-left: 1px solid rgba(58,66,64,.28); }
   acidify-patch-view .program-legend i { width: 16px; height: 12px; display: grid; place-items: center; border-radius: 2px; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; font-style: normal; }
   acidify-patch-view .program-legend .legend-a { color: #fff2ee; border: 1px solid #5d1611; background: linear-gradient(180deg,#ff7361,#a3201a); box-shadow: 0 0 6px rgba(255,72,48,.5); }
@@ -4669,6 +4743,53 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .function-button.active strong { color: #8c1a12; }
   acidify-patch-view .function-button small { margin-top: 0; color: #5b6466; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .6px; }
   acidify-patch-view .function-button.active small { color: #5b6466; }
+
+  /* ---------- Arp-Editor (dritter Modus) ---------- */
+  acidify-patch-view .arp-editor { display: none; }
+  acidify-patch-view.arp-mode .classic-editor { display: none; }
+  acidify-patch-view.arp-mode .arp-editor { display: flex; gap: 8px; flex: 1; min-height: 0; margin-top: 8px; }
+  acidify-patch-view .arp-readout { margin-top: 8px; flex: 1; min-height: 22px; display: grid; place-items: center; border-radius: 2px; border: 1px solid #0a0706;
+    background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.09) 3px 4px), linear-gradient(180deg,#251614,#130b09);
+    box-shadow: inset 0 3px 6px rgba(0,0,0,.78); color: #ff513b; font: 24px/1 'Courier New',monospace; letter-spacing: 2px; white-space: nowrap;
+    text-shadow: 0 0 5px #e32418, 0 0 10px rgba(227,36,24,.4); }
+  acidify-patch-view .arp-status .octave-indicator { white-space: nowrap; overflow: hidden; }
+  acidify-patch-view .arp-direction-cell { box-sizing: border-box; flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 6px 8px 8px; border-radius: 2px;
+    border: 1px solid #7c827f; background: linear-gradient(180deg,#bcc0be,#a9adab);
+    box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .arp-direction { flex: 1; min-height: 0; margin-top: 8px; display: grid; grid-template-columns: repeat(4,1fr); gap: 6px;
+    padding: 0; background: none; border: 0; box-shadow: none; width: auto; height: auto; }
+  acidify-patch-view .arp-direction button { position: relative; height: auto; min-height: 36px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; border-radius: 2px; cursor: pointer; border: 1px solid #1a1e1f; color: #1d2426; transform: none; text-shadow: none;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
+  acidify-patch-view .arp-direction button::before { content: ""; position: absolute; left: 5px; top: 5px; width: 5px; height: 5px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.7); }
+  acidify-patch-view .arp-direction button.active { transform: none; border-color: #1a1e1f;
+    background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
+    box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5); }
+  acidify-patch-view .arp-direction button.active::before { background: radial-gradient(circle at 35% 28%, #ffe3d4 0 14%, #ff5540 46%, #8e120b 100%);
+    box-shadow: 0 0 7px rgba(255,72,48,.9), inset 0 0 2px rgba(255,255,255,.6); }
+  acidify-patch-view .arp-direction button strong { margin: 0; color: #1d2426; font: 900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .arp-direction button.active strong { color: #8c1a12; }
+  acidify-patch-view .arp-direction button small { margin: 0; color: #5b6466; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .6px; }
+  acidify-patch-view .arp-tools-cell { box-sizing: border-box; width: 300px; flex: 0 0 auto; display: flex; gap: 8px; padding: 6px 8px 8px; border-radius: 2px;
+    border: 1px solid #7c827f; background: linear-gradient(180deg,#bcc0be,#a9adab);
+    box-shadow: inset 0 3px 7px rgba(48,54,52,.45), inset 0 -1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .arp-tool-block { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+  acidify-patch-view .arp-tool-block .edit-caption { flex: 0 0 auto; }
+  acidify-patch-view .arp-tool-block .silver-stepper { margin-top: 14px; width: auto; height: auto; padding: 0; background: none; border: 0; box-shadow: none;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  acidify-patch-view .arp-hold { margin-top: 14px; width: auto; height: auto; padding: 0; background: none; border: 0; box-shadow: none; perspective: none; transform: none; }
+  acidify-patch-view .arp-hold button, acidify-patch-view .arp-hold.is-on button { width: 92px; height: 52px; margin: 0; position: static; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px; cursor: pointer; border-radius: 2px; border: 1px solid #1a1e1f; transform: none; text-shadow: none;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
+  acidify-patch-view .arp-hold.is-on button { border-color: #8c2c23;
+    background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
+    box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 0 12px rgba(181,41,33,.3); }
+  acidify-patch-view .arp-hold-label { color: #1d2426; font: 900 10px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.4px; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .arp-hold.is-on .arp-hold-label { color: #8c1a12; }
+  acidify-patch-view .arp-hold button small { margin: 0; color: #5b6466; font: 900 6.5px/7px 'Arial Narrow',Arial,sans-serif; letter-spacing: .7px; }
 
 
   /* ---------- Distortion-Overlay (Template-Layout) ---------- */
@@ -4978,7 +5099,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><span class="power-label">POWER</span><span class="power-ring"><i class="power-led lit"></i></span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.3.1</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.4.0</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -5227,9 +5348,9 @@ class AcidifyPatchView extends HTMLElement {
         <div class="utility">
           <span class="selection-caption">STEP 01 · C2 · OCT +0</span>
           <span class="step-position" role="status">-- / 16</span>
-          <button class="studio-toggle" aria-pressed="false" aria-label="Open Studio edit mode" aria-keyshortcuts="M"
+          <button class="studio-toggle" data-view="classic" aria-pressed="false" aria-label="Open Studio edit mode" aria-keyshortcuts="M"
             title="Switch editor · keyboard shortcut M">
-            <i></i><span class="classic-label">CLASSIC</span><span class="studio-label">STUDIO</span>
+            <i></i><span class="classic-label">CLASSIC</span><span class="studio-label">STUDIO</span><span class="arp-label">ARP</span>
           </button>
 
         </div>
@@ -5249,6 +5370,43 @@ class AcidifyPatchView extends HTMLElement {
           <button class="function-button" data-flag="2" title="Toggle Accent for the selected step."><strong>ACCENT</strong><small>DYNAMICS</small></button>
           <button class="function-button" data-flag="4" title="Toggle Slide into the next active step."><strong>SLIDE</strong><small>LEGATO</small></button>
           <button class="function-button" data-classic-action="clear-step" title="Reset the selected step to its default pitch and timing state."><strong>CLEAR</strong><small>THIS STEP</small></button>
+        </div>
+      </div>
+      <div class="editor arp-editor" aria-hidden="true">
+        <div class="edit-status arp-status">
+          <span class="edit-caption">ARPEGGIATOR</span>
+          <strong class="arp-readout">OFF</strong>
+          <span class="octave-indicator arp-hint">PATTERN GIBT GATE · ACCENT · SLIDE</span>
+        </div>
+        <div class="arp-direction-cell">
+          <span class="edit-caption">DIRECTION</span>
+          <div class="control arp-direction" data-param="param61" data-endpoint-id="param61"
+            data-min="0" data-max="4" data-step="1" data-init="0" data-control="buttons"
+            data-tooltip="Arpeggio direction over the held notes.">
+            <button data-value="1" type="button"><strong>UP</strong><small>ASCEND</small></button>
+            <button data-value="2" type="button"><strong>DOWN</strong><small>DESCEND</small></button>
+            <button data-value="3" type="button"><strong>UP-DN</strong><small>PING-PONG</small></button>
+            <button data-value="4" type="button"><strong>RND</strong><small>RANDOM</small></button>
+          </div>
+        </div>
+        <div class="arp-tools-cell">
+          <div class="arp-tool-block">
+            <span class="edit-caption">OCTAVES</span>
+            <div class="control silver-stepper" data-param="param62" data-endpoint-id="param62"
+              data-min="1" data-max="4" data-step="1" data-init="1" data-control="stepper"
+              data-tooltip="How many octaves the arpeggio spans above the held notes.">
+              <div class="led-box"><span class="stepper-value">1</span></div>
+              <div class="stepper-buttons"><button data-step="-1" type="button" aria-label="Octaves down">−</button><button data-step="1" type="button" aria-label="Octaves up">+</button></div>
+            </div>
+          </div>
+          <div class="arp-tool-block">
+            <span class="edit-caption">HOLD</span>
+            <div class="control run-switch arp-hold" data-param="param63" data-endpoint-id="param63"
+              data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle"
+              data-tooltip="Latch: keeps the chord arpeggiating after the keys are released.">
+              <button data-value="1" type="button"><strong class="arp-hold-label">OFF</strong><small>LATCH</small></button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="studio-editor" aria-hidden="true">

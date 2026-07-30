@@ -1,3 +1,19 @@
+# Validierung 2.4.0
+
+## 2.4.0
+
+`dsp_arp_test` (48 kHz, Akkord 36/40/43 per SMF, Pattern nur Gate):
+Up [36 40 43]-Zyklus, Down [43 40 36], Up-Down [36 40 43 40], Random
+deterministisch (Doppel-Render bit-identisch), poolgetreu ohne
+Direkt-Wiederholung, Oktaven=2 → [36 40 43 48 52 55], Hold: Tail-RMS 0,0141
+nach Loslassen vs. 0 ohne Hold, Arp aus: Render mit/ohne MIDI-Akkord
+bit-identisch. Serien-Smoke bit-identisch 0,34552 @48k (param61 init 0),
+matrix/articulation/transport grün, Messstand 11/11, partcheck 28/28,
+Lints strict sauber, `ui_smoke_test` 3/3 mit Arp-Abdeckung (Schalter 3×44,
+30 Controls, Panel-Interaktionen, Rücksprung setzt param61 = 0).
+
+---
+
 # Validierung 2.3.1
 
 ## 2.3.1

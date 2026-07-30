@@ -27,6 +27,9 @@ Parameter werden ausschließlich angehängt.
 | `param50` | Swing | 0…100 % | 0 |
 | `param51..59` | Circuit Mods | siehe `docs/MODS.md` | Serienstand |
 | `param60` | Power | 0 Bypass / 1 On | 1 |
+| `param61` | Arp Mode | 0 Off / 1 Up / 2 Down / 3 Up-Down / 4 Random | 0 |
+| `param62` | Arp Octaves | 1…4 | 1 |
+| `param63` | Arp Hold | 0/1 | 0 |
 
 Flag-Bits:
 
@@ -60,6 +63,18 @@ UI-Schrittweite beträgt 0,1 BPM, mit `Shift` 0,01 BPM.
 Design-Vorlage): 0 blendet den Instrumentausgang mit der normalen
 Parameterglättung auf Stille, 1 ist Serienstand — ältere Presets ohne den
 Parameter bleiben unverändert hörbar.
+
+`param61..63` wurden in 2.4.0 append-only ergänzt (Arpeggiator, dritter
+Modus im CLASSIC/STUDIO/ARP-Schalter). Bei `Arp Mode > 0` liefert der Pool
+der gehaltenen MIDI-Noten die Tonhöhen; die 16 Pattern-Steps bleiben
+Taktgeber und liefern Gate, Accent und Slide (Rest-Steps pausieren den
+Arp-Zeiger). Up-Down wiederholt die Endpunkte nicht; Random ist ein
+Lehmer-LCG mit festem Seed (reproduzierbar, keine Direkt-Wiederholung bei
+Poolgröße > 1). `Arp Octaves` erweitert den Pool um bis zu drei Oktavlagen
+oberhalb. `Arp Hold` hält den Akkord nach dem Loslassen (Latch; neue Noten
+nach vollständigem Loslassen beginnen einen neuen Akkord). Bei `Arp Mode = 0`
+ist eingehendes MIDI am laufenden Sequencer wirkungslos — bit-identisch
+belegt in `tools/dsp_arp_test.mjs`.
 
 `param50` wurde in 0.7.0 append-only ergänzt. 0 % lässt jedes
 16tel-Zweierpaar gerade; 100 % verschiebt das zweite 16tel auf die letzte
