@@ -433,6 +433,45 @@ try {
     throw new Error("Distortion overlay did not close with Escape");
   }
 
+  const miniDrive = page.locator('.dist-mini[data-mini="param47"]');
+  const miniDriveBefore = Number(await miniDrive.getAttribute("aria-valuenow"));
+  await miniDrive.hover();
+  await page.mouse.wheel(0, -120);
+  const miniDriveAfter = await page.locator("acidify-patch-view")
+    .evaluate(node => Number(node._values.get("param47")));
+  if (!(miniDriveAfter > miniDriveBefore)) {
+    throw new Error(`Front-panel drive mini dial failed: ${miniDriveBefore} -> ${miniDriveAfter}`);
+  }
+  await miniDrive.dblclick();
+  const miniDriveReset = await page.locator("acidify-patch-view")
+    .evaluate(node => Number(node._values.get("param47")));
+  if (Math.abs(miniDriveReset - 0.35) > 1.0e-6) {
+    throw new Error(`Front-panel drive mini reset failed: ${miniDriveReset}`);
+  }
+  if ((await page.locator(".dist-mini").count()) !== 2) {
+    throw new Error("Expected two front-panel distortion mini dials");
+  }
+
+  const powerCell = page.locator(".power-cell");
+  await powerCell.click();
+  const powerOff = await page.locator("acidify-patch-view").evaluate(node => ({
+    value: Number(node._values.get("param60")),
+    label: node.querySelector(".power-label").textContent,
+    lit: node.querySelector(".power-led").classList.contains("lit"),
+  }));
+  if (powerOff.value !== 0 || powerOff.label !== "BYPASS" || powerOff.lit) {
+    throw new Error(`Power bypass failed: ${JSON.stringify(powerOff)}`);
+  }
+  await powerCell.click();
+  const powerOn = await page.locator("acidify-patch-view").evaluate(node => ({
+    value: Number(node._values.get("param60")),
+    label: node.querySelector(".power-label").textContent,
+    lit: node.querySelector(".power-led").classList.contains("lit"),
+  }));
+  if (powerOn.value !== 1 || powerOn.label !== "POWER" || !powerOn.lit) {
+    throw new Error(`Power re-enable failed: ${JSON.stringify(powerOn)}`);
+  }
+
   const modsTrigger = page.locator(".mods-trigger");
   if (await modsTrigger.evaluate(node => node.classList.contains("active"))) {
     throw new Error("Circuit mods are not stock by default");
@@ -513,14 +552,37 @@ try {
       || directClassicPitch.octave !== "+1") {
     throw new Error(`Classic direct note choice failed: ${JSON.stringify(directClassicPitch)}`);
   }
+  const gateFlagsBefore = await page.locator("acidify-patch-view").evaluate(node => node._stepFlags(7));
   await page.locator('.sequence-step[data-step="7"]').dblclick();
+  const gateFlagsAfter = await page.locator("acidify-patch-view").evaluate(node => node._stepFlags(7));
+  if ((gateFlagsBefore ^ gateFlagsAfter) !== 1) {
+    throw new Error(`Classic double-click did not toggle the gate: ${gateFlagsBefore} -> ${gateFlagsAfter}`);
+  }
+  await page.locator('.sequence-step[data-step="7"]').dblclick();
+  if ((await page.locator("acidify-patch-view").evaluate(node => node._stepFlags(7))) !== gateFlagsBefore) {
+    throw new Error("Classic double-click gate toggle is not symmetric");
+  }
+  await page.locator('.sequence-step[data-step="7"]').click({ button: "right" });
   if (!(await page.locator(".pitch-menu").isVisible())) {
-    throw new Error("Classic double-click note chooser did not open");
+    throw new Error("Classic right-click note chooser did not open");
   }
   await page.keyboard.press("Escape");
   if (await page.locator(".pitch-menu").isVisible()) {
     throw new Error("Note chooser did not close with Escape");
   }
+  const pillFlagsBefore = await page.locator("acidify-patch-view").evaluate(node => node._stepFlags(4));
+  await page.locator('.sequence-step[data-step="4"] .pill-a').click();
+  const pillFlagsAfter = await page.locator("acidify-patch-view").evaluate(node => node._stepFlags(4));
+  if ((pillFlagsBefore ^ pillFlagsAfter) !== 2) {
+    throw new Error(`Accent pill click did not toggle accent: ${pillFlagsBefore} -> ${pillFlagsAfter}`);
+  }
+  await page.locator('.sequence-step[data-step="4"] .pill-s').click();
+  if (((await page.locator("acidify-patch-view").evaluate(node => node._stepFlags(4))) ^ pillFlagsAfter) !== 4) {
+    throw new Error("Slide pill click did not toggle slide");
+  }
+  await page.locator('.sequence-step[data-step="4"] .pill-a').click();
+  await page.locator('.sequence-step[data-step="4"] .pill-s').click();
+  await page.locator('.sequence-step[data-step="7"]').click();
   await page.locator('.function-button[data-flag="2"]').click();
   await page.locator('[data-classic-action="clear-step"]').click();
   const clearedStep = await page.locator("acidify-patch-view").evaluate(node => node._stepSnapshot()[7]);
@@ -628,11 +690,13 @@ try {
       || studioContextPitch.octave !== "+2") {
     throw new Error(`Studio right-click note choice failed: ${JSON.stringify(studioContextPitch)}`);
   }
+  const studioGateBefore = await page.locator("acidify-patch-view").evaluate(node => node._stepFlags(9));
   await page.locator('.studio-cell[data-kind="pitch"][data-step="9"]').dblclick();
-  if (!(await page.locator(".pitch-menu").isVisible())) {
-    throw new Error("Studio double-click note chooser did not open");
+  const studioGateAfter = await page.locator("acidify-patch-view").evaluate(node => node._stepFlags(9));
+  if ((studioGateBefore ^ studioGateAfter) !== 1) {
+    throw new Error(`Studio double-click did not toggle the gate: ${studioGateBefore} -> ${studioGateAfter}`);
   }
-  await page.locator(".pitch-menu-close").click();
+  await page.locator('.studio-cell[data-kind="pitch"][data-step="9"]').dblclick();
 
   const accent8 = page.locator('.studio-cell[data-kind="accent"][data-step="8"]');
   const accent9 = page.locator('.studio-cell[data-kind="accent"][data-step="9"]');
@@ -721,10 +785,22 @@ try {
 
   const initialScale = await page.locator(".studio-scale strong").textContent();
   await page.locator(".studio-scale").click();
-  await page.locator(".studio-scale").click();
+  const scaleMenuState = await page.locator("acidify-patch-view").evaluate(node => {
+    const menu = node.querySelector(".scale-menu");
+    return {
+      hidden: menu.hidden,
+      options: menu.querySelectorAll("[data-scale]").length,
+      active: menu.querySelector(".active span")?.textContent,
+    };
+  });
+  if (scaleMenuState.hidden || scaleMenuState.options !== 10 || scaleMenuState.active !== "MIN PENTA") {
+    throw new Error(`Scale menu did not open correctly: ${JSON.stringify(scaleMenuState)}`);
+  }
+  await page.locator('.scale-menu [data-scale="6"]').click();
   const selectedScale = await page.locator(".studio-scale strong").textContent();
-  if (initialScale !== "MIN PENTA" || selectedScale !== "MAJOR") {
-    throw new Error(`Studio scale selector failed: ${initialScale} -> ${selectedScale}`);
+  const scaleMenuClosed = await page.locator("acidify-patch-view").evaluate(node => node.querySelector(".scale-menu").hidden);
+  if (initialScale !== "MIN PENTA" || selectedScale !== "MAJOR" || !scaleMenuClosed) {
+    throw new Error(`Studio scale selector failed: ${initialScale} -> ${selectedScale}, closed=${scaleMenuClosed}`);
   }
 
   await view.evaluate(() => {

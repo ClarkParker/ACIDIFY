@@ -6,6 +6,50 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-07-30
+
+### Fixed
+
+- **A/S-Pills über den Steps waren nie klickbar** — der Step-Handler kannte
+  nur Selektion, für die Pills existierte kein Handler (die „klickbaren
+  Pills" aus 2.0.0 waren nur optisch; der Test prüfte Existenz, keinen
+  Klick). Jetzt togglet die A-Pill Accent, die S-Pill Slide, wählt den Step
+  an und der `ui_smoke_test` klickt beide real.
+
+### Changed
+
+- **Distortion-Lautheit auf Raw-Pegel kalibriert** („4× lauter" behoben):
+  MACKIE/PHONO lagen bis +21 dB RMS über dem Serienpegel. Die Ausgangs-RMS
+  beider Stufen folgt am Referenzpattern einer Sättigungskurve
+  (`rms ≈ c·G/(G+k)`, Fit ≤ 0,6 dB); deren Kehrwert hält jetzt jede
+  Drive-Stellung auf Raw-Lautheit. Gemessen: alle drei Modi bei Drive
+  0/0,35/0,75/1 innerhalb ±0,6 dB um Raw (−33,1 dB RMS); Spitzen sinken
+  konstruktionsbedingt, weil Sättigung den Crest-Faktor abbaut. PURE war
+  bereits pegelneutral. Alle Bypass-Pfade bleiben bit-transparent.
+- **DRIVE- und MIX-Miniregler auf der Haupt-GUI** links und rechts des
+  VU-Meters, direkt über der DIST-Taste (beauftragte Ergänzung, nicht im
+  dc-Template): 20-px-Chromdials, Drag/Wheel/Pfeiltasten/Doppelklick-Reset,
+  gedimmt bei inaktiver Stufe, ohne zweite Control-Registrierung
+  (Endpoint-Besitzer bleiben die Overlay-Dials). VU-Meter bleibt pixelstabil.
+- **Funktions-Parität mit der Design-Vorlage hergestellt** (Audit aller
+  35 Template-Handler):
+  - **POWER/BYPASS-Taste im Brand-Panel** ist jetzt funktional statt
+    statisch: `param60` (append-only) blendet den Instrumentausgang weich
+    auf Stille; Beschriftung POWER↔BYPASS und LED wie im Template.
+  - **Scale-Auswahl als Dropdown-Menü** mit den zehn Template-Skalen
+    (MIN/MAJ PENTA, NAT/HARM MINOR, DORIAN, PHRYGIAN, MAJOR, MIXOLYDIAN,
+    BLUES, CHROMATIC) samt Untertiteln statt blindem Durchschalten;
+    Escape schließt, aktive Skala markiert.
+  - **Doppelklick auf Steps togglet Gate/Rest** (Classic und Studio) wie im
+    Template; die direkte Notenwahl bleibt auf Rechtsklick.
+  - **Doppelklick-Reset auf den Mod-Spiegel-Slidern** wie auf den Dials.
+  - Vorlage vollständig abgeglichen: `selectPattern`/`prevPatch`/`nextPatch`
+    existieren dort nur als toter Mock-Code ohne Markup — bewusst nicht
+    portiert.
+- `ui_smoke_test` deckt die neuen Pfade ab: Pill-Klicks, Gate-Doppelklick
+  (symmetrisch), Scale-Menü (10 Optionen, Auswahl, Schließen), Power-Toggle,
+  Miniregler (Wheel + Reset).
+
 ## [2.2.0] - 2026-07-29
 
 ### Fixed

@@ -33,6 +33,7 @@ const ACIDIFY_GLOBALS = [
   { id: "param57", type: "dial",    label: "TIME",   min: 0,  max: 1,   step: 0.001, init: 0,    format: v => `${Math.round(22 + 110 * v)}ms` },
   { id: "param58", type: "toggle",  label: "SOFT ATK",     min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param59", type: "dial",    label: "TIME",     min: 0,  max: 1,   step: 0.001, init: 0.25, format: v => `${(0.5 * Math.pow(60, v)).toFixed(1)}ms` },
+  { id: "param60", type: "toggle",  label: "POWER",    min: 0,  max: 1,   step: 1, init: 1 },
 ];
 
 const STEP_PITCH_DEFAULTS = [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7];
@@ -48,10 +49,16 @@ const STEP_FLAG_IDS = [
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const DISTORTION_NAMES = ["PURE", "MACKIE", "PHONO"];
 const GENERATION_SCALES = [
-  { id: "minor-pentatonic", label: "MIN PENTA", degrees: [0, 3, 5, 7, 10] },
-  { id: "minor", label: "MINOR", degrees: [0, 2, 3, 5, 7, 8, 10] },
-  { id: "major", label: "MAJOR", degrees: [0, 2, 4, 5, 7, 9, 11] },
-  { id: "chromatic", label: "CHROMA", degrees: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+  { id: "minor-pentatonic", label: "MIN PENTA", sub: "1 ♭3 4 5 ♭7", degrees: [0, 3, 5, 7, 10] },
+  { id: "major-pentatonic", label: "MAJ PENTA", sub: "1 2 3 5 6", degrees: [0, 2, 4, 7, 9] },
+  { id: "natural-minor", label: "NAT MINOR", sub: "AEOLIAN", degrees: [0, 2, 3, 5, 7, 8, 10] },
+  { id: "harmonic-minor", label: "HARM MINOR", sub: "RAISED 7", degrees: [0, 2, 3, 5, 7, 8, 11] },
+  { id: "dorian", label: "DORIAN", sub: "MINOR ♯6", degrees: [0, 2, 3, 5, 7, 9, 10] },
+  { id: "phrygian", label: "PHRYGIAN", sub: "MINOR ♭2", degrees: [0, 1, 3, 5, 7, 8, 10] },
+  { id: "major", label: "MAJOR", sub: "IONIAN", degrees: [0, 2, 4, 5, 7, 9, 11] },
+  { id: "mixolydian", label: "MIXOLYDIAN", sub: "MAJOR ♭7", degrees: [0, 2, 4, 5, 7, 9, 10] },
+  { id: "blues", label: "BLUES", sub: "WITH ♭5", degrees: [0, 3, 5, 6, 7, 10] },
+  { id: "chromatic", label: "CHROMATIC", sub: "ALL 12", degrees: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
 ];
 const TOOLTIP_STORAGE_KEY = "acidify.tooltips.enabled";
 const CONTROL_TOOLTIPS = {
@@ -300,6 +307,7 @@ class AcidifyPatchView extends HTMLElement {
     this._future = [];
     this._clipboard = null;
     this._generationScaleIndex = 0;
+    this._scaleMenuOpen = false;
     this._paintState = null;
     this._paramListener = null;
     this._stepListener = null;
@@ -352,6 +360,8 @@ class AcidifyPatchView extends HTMLElement {
     this._wireDistortion();
     this._wireMods();
     this._wireModMirrors();
+    this._wirePower();
+    this._wireDistMinis();
     this._renderScope();
     this._wireTooltips();
     this._renderStepStrip();
@@ -369,6 +379,9 @@ class AcidifyPatchView extends HTMLElement {
       }
       if (endpointID >= "param51" && endpointID <= "param59" && endpointID.length === 7) {
         this._renderModState();
+      }
+      if (endpointID === "param60") {
+        this._renderPowerState();
       }
       if (endpointID >= "param2" && endpointID <= "param6" && endpointID.length === 6 || endpointID === "param9") {
         this._renderScope();
@@ -728,6 +741,18 @@ class AcidifyPatchView extends HTMLElement {
     this.querySelectorAll(".sequence-step").forEach(node => {
       node.addEventListener("click", event => {
         const index = Number(node.dataset.step);
+        const pill = event.target instanceof Element ? event.target.closest(".step-pill") : null;
+        if (pill) {
+          const bit = pill.classList.contains("pill-a") ? 2 : 4;
+          this._selectedStep = index;
+          this._selectedSteps = new Set([index]);
+          this._selectionAnchor = index;
+          this._setStepValue(index, "flags", this._stepFlags(index) ^ bit, true);
+          this._renderStepStrip();
+          this._renderStepEditor();
+          this._renderStudio();
+          return;
+        }
         if (this._studioMode) {
           this._selectStudioStep(index, event);
         } else {
@@ -763,7 +788,14 @@ class AcidifyPatchView extends HTMLElement {
       });
       node.addEventListener("dblclick", event => {
         event.preventDefault();
-        this._openPitchMenu(Number(node.dataset.step), event.clientX, event.clientY, node);
+        const index = Number(node.dataset.step);
+        this._selectedStep = index;
+        this._selectedSteps = new Set([index]);
+        this._selectionAnchor = index;
+        this._setStepValue(index, "flags", this._stepFlags(index) ^ 1, true);
+        this._renderStepStrip();
+        this._renderStepEditor();
+        this._renderStudio();
       });
     });
   }
@@ -805,9 +837,15 @@ class AcidifyPatchView extends HTMLElement {
     });
 
     this.querySelector(".studio-scale")?.addEventListener("click", () => {
-      this._generationScaleIndex = (this._generationScaleIndex + 1) % GENERATION_SCALES.length;
-      this._updateStudioToolbar();
-      this._showStudioToast(`SCALE · ${this._generationScale().label}`);
+      this._setScaleMenuOpen(!this._scaleMenuOpen);
+    });
+    this.querySelectorAll(".scale-menu [data-scale]").forEach(option => {
+      option.addEventListener("click", () => {
+        this._generationScaleIndex = Number(option.dataset.scale) % GENERATION_SCALES.length;
+        this._setScaleMenuOpen(false);
+        this._updateStudioToolbar();
+        this._showStudioToast(`SCALE · ${this._generationScale().label}`);
+      });
     });
 
     this.querySelectorAll("[data-studio-action]").forEach(button => {
@@ -876,7 +914,13 @@ class AcidifyPatchView extends HTMLElement {
         });
         cell.addEventListener("dblclick", event => {
           event.preventDefault();
-          this._openPitchMenu(index, event.clientX, event.clientY, cell);
+          this._selectedStep = index;
+          this._selectedSteps = new Set([index]);
+          this._selectionAnchor = index;
+          this._setStepValue(index, "flags", this._stepFlags(index) ^ 1, true);
+          this._renderStepStrip();
+          this._renderStepEditor();
+          this._renderStudio();
         });
       }
     });
@@ -897,6 +941,11 @@ class AcidifyPatchView extends HTMLElement {
       const key = event.key.toLowerCase();
       if (this._distortionOpen && event.key === "Escape") return;
       if (this._pitchMenuOpen && event.key === "Escape") return;
+      if (this._scaleMenuOpen && event.key === "Escape") {
+        event.preventDefault();
+        this._setScaleMenuOpen(false);
+        return;
+      }
       if (!command && key === "m") {
         event.preventDefault();
         this._setStudioMode(!this._studioMode);
@@ -1201,6 +1250,95 @@ class AcidifyPatchView extends HTMLElement {
     });
   }
 
+  _setScaleMenuOpen(open) {
+    this._scaleMenuOpen = Boolean(open);
+    const menu = this.querySelector(".scale-menu");
+    const button = this.querySelector(".studio-scale");
+    if (menu) {
+      menu.hidden = !this._scaleMenuOpen;
+      if (this._scaleMenuOpen) {
+        menu.querySelectorAll("[data-scale]").forEach(option => {
+          const active = Number(option.dataset.scale) === this._generationScaleIndex;
+          option.classList.toggle("active", active);
+          option.setAttribute("aria-checked", `${active}`);
+        });
+      }
+    }
+    button?.setAttribute("aria-expanded", `${this._scaleMenuOpen}`);
+  }
+
+  _wireDistMinis() {
+    this.querySelectorAll(".dist-mini").forEach(mini => {
+      const cfg = ACIDIFY_GLOBALS.find(c => c.id === mini.dataset.mini);
+      const send = value => {
+        const clamped = clamp(value, cfg.min, cfg.max);
+        const owner = this._controls.get(cfg.id);
+        if (owner) owner.setValue(clamped, true);
+        else this._sendParameter(cfg.id, clamped);
+        queueMicrotask(() => this._renderDistortionState());
+      };
+      const current = () => Number(this._values.get(cfg.id) ?? cfg.init);
+      let drag = null;
+      mini.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        mini.setPointerCapture(event.pointerId);
+        drag = { y: event.clientY, start: current() };
+        this.pc.sendParameterGestureStart?.(cfg.id);
+      });
+      mini.addEventListener("pointermove", event => {
+        if (!drag) return;
+        const range = (cfg.max - cfg.min) || 1;
+        const fine = event.shiftKey ? 0.25 : 1;
+        send(drag.start + (drag.y - event.clientY) * (range / 160) * fine);
+      });
+      const end = event => {
+        if (!drag) return;
+        drag = null;
+        if (mini.hasPointerCapture?.(event.pointerId)) mini.releasePointerCapture(event.pointerId);
+        this.pc.sendParameterGestureEnd?.(cfg.id);
+      };
+      mini.addEventListener("pointerup", end);
+      mini.addEventListener("pointercancel", end);
+      mini.addEventListener("wheel", event => {
+        event.preventDefault();
+        const range = (cfg.max - cfg.min) || 1;
+        send(current() + (event.deltaY < 0 ? 1 : -1) * range * 0.02);
+      }, { passive: false });
+      mini.addEventListener("dblclick", event => {
+        event.preventDefault();
+        send(cfg.init);
+      });
+      mini.addEventListener("keydown", event => {
+        const range = (cfg.max - cfg.min) || 1;
+        const step = range * (event.shiftKey ? 0.005 : 0.02);
+        if (event.key === "ArrowUp" || event.key === "ArrowRight") { event.preventDefault(); send(current() + step); }
+        else if (event.key === "ArrowDown" || event.key === "ArrowLeft") { event.preventDefault(); send(current() - step); }
+      });
+    });
+  }
+
+  _wirePower() {
+    this.querySelector(".power-cell")?.addEventListener("click", () => {
+      const on = Number(this._values.get("param60") ?? 1) >= 0.5;
+      this._sendParameter("param60", on ? 0 : 1);
+      queueMicrotask(() => this._renderPowerState());
+    });
+  }
+
+  _renderPowerState() {
+    const cell = this.querySelector(".power-cell");
+    if (!cell) return;
+    const on = Number(this._values.get("param60") ?? 1) >= 0.5;
+    cell.classList.toggle("bypassed", !on);
+    cell.setAttribute("aria-pressed", `${on}`);
+    cell.dataset.tooltip = on
+      ? "Bypass the whole instrument (dry signal passes through)."
+      : "Plugin is bypassed — click to bring the instrument back online.";
+    const label = cell.querySelector(".power-label");
+    if (label) label.textContent = on ? "POWER" : "BYPASS";
+    cell.querySelector(".power-led")?.classList.toggle("lit", on);
+  }
+
   _wireModMirrors() {
     this.querySelectorAll(".mod-slider").forEach(mirror => {
       const amountId = mirror.dataset.mirrors;
@@ -1233,6 +1371,10 @@ class AcidifyPatchView extends HTMLElement {
         const norm = (value - cfg.min) / (cfg.max - cfg.min || 1);
         apply(norm + (event.deltaY > 0 ? -0.02 : 0.02));
       }, { passive: false });
+      track.addEventListener("dblclick", event => {
+        event.preventDefault();
+        apply((cfg.init - cfg.min) / (cfg.max - cfg.min || 1));
+      });
     });
   }
 
@@ -1345,6 +1487,17 @@ class AcidifyPatchView extends HTMLElement {
     const status = this.querySelector(".distortion-status");
     if (status) status.textContent = enabled ? `${name} ACTIVE` : "TRUE BYPASS";
     this.querySelector(".distortion-led")?.classList.toggle("lit", enabled);
+    this.querySelectorAll(".dist-mini").forEach(mini => {
+      const cfg = ACIDIFY_GLOBALS.find(c => c.id === mini.dataset.mini);
+      const value = Number(this._values.get(cfg.id) ?? cfg.init);
+      const norm = (value - cfg.min) / (cfg.max - cfg.min || 1);
+      mini.style.setProperty("--norm", norm.toFixed(4));
+      mini.classList.toggle("stage-off", !enabled);
+      mini.setAttribute("aria-valuemin", `${cfg.min}`);
+      mini.setAttribute("aria-valuemax", `${cfg.max}`);
+      mini.setAttribute("aria-valuenow", value.toFixed(3));
+      mini.setAttribute("aria-valuetext", cfg.format ? cfg.format(value) : value.toFixed(2));
+    });
     this.querySelector(".distortion-power-led")?.classList.toggle("lit", enabled);
     const powerLabel = this.querySelector(".distortion-power-label");
     if (powerLabel) powerLabel.textContent = enabled ? "ON" : "OFF";
@@ -1352,6 +1505,7 @@ class AcidifyPatchView extends HTMLElement {
 
   _setStudioMode(enabled) {
     if (this._pitchMenuOpen) this._closePitchMenu(false);
+    if (this._scaleMenuOpen) this._setScaleMenuOpen(false);
     this._studioMode = Boolean(enabled);
     this.classList.toggle("studio-mode", this._studioMode);
     const toggle = this.querySelector(".studio-toggle");
@@ -1715,8 +1869,8 @@ class AcidifyPatchView extends HTMLElement {
       ].filter(Boolean).join(", ");
       node.querySelector(".step-note").textContent = (flags & 1) !== 0 ? absoluteNote : "REST";
       node.querySelector(".step-octave").textContent = `+${Math.floor(pitch / 12)}`;
-      node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}; click to edit, wheel changes semitone, right-click or double-click chooses a note`);
-      node.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}. Wheel changes one semitone; right-click or double-click opens direct note selection.`;
+      node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}; click to edit, double-click toggles gate, wheel changes semitone, right-click chooses a note`);
+      node.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${this._octaveLabel(pitch)}, ${states}. Double-click toggles gate and rest; wheel changes one semitone; right-click opens direct note selection.`;
     });
     const caption = this.querySelector(".selection-caption");
     if (caption) {
@@ -1825,8 +1979,8 @@ class AcidifyPatchView extends HTMLElement {
         cell.classList.toggle("beyond", index >= patternLength);
         const note = cell.querySelector(".step-note");
         if (note) note.textContent = gate ? absoluteNote : "REST";
-        cell.setAttribute("aria-label", `Step ${index + 1} note ${absoluteNote}, ${this._octaveLabel(pitch)}; wheel changes semitone, right-click or double-click chooses a note`);
-        cell.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${this._octaveLabel(pitch)}. Wheel changes one semitone; right-click or double-click opens direct note selection.`;
+        cell.setAttribute("aria-label", `Step ${index + 1} note ${absoluteNote}, ${this._octaveLabel(pitch)}; double-click toggles gate, wheel changes semitone, right-click chooses a note`);
+        cell.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${this._octaveLabel(pitch)}. Double-click toggles gate and rest; wheel changes one semitone; right-click opens direct note selection.`;
       } else {
         const label = kind === "gate" ? "Gate" : kind === "accent" ? "Accent" : "Slide";
         const state = active ? "on" : "off";
@@ -4151,11 +4305,14 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .deck-a .tooltip-toggle .tooltip-toggle-state { padding: 2px 4px; border-radius: 1px; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px;
     color: #fff2ed; background: linear-gradient(#b92e24,#74150f); }
   acidify-patch-view .deck-a .tooltip-toggle[aria-pressed="false"] .tooltip-toggle-state { color: #a9aaa4; background: linear-gradient(#4b4c47,#292a27); }
-  acidify-patch-view .power-cell { display: flex; align-items: center; gap: 6px; }
+  acidify-patch-view .power-cell { display: flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; cursor: pointer; }
   acidify-patch-view .power-label { color: #6d7776; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
+  acidify-patch-view .power-cell.bypassed .power-label { color: #8e1f16; }
   acidify-patch-view .power-ring { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(45,50,49,.5);
     background: radial-gradient(circle at 34% 26%, #f2f4f4, #b9bfbd 62%, #98a09e); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -2px 3px rgba(48,54,52,.35), 0 1px 0 rgba(255,255,255,.65); }
   acidify-patch-view .power-led { width: 8px; height: 8px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #55201a, #2c0b07 70%, #1a0503); box-shadow: inset 0 1px 1px rgba(255,255,255,.16); }
+  acidify-patch-view .power-led.lit {
     background: radial-gradient(circle at 35% 30%, #ff6a54, #9d1c11 68%, #5a0d06); box-shadow: inset 0 1px 1px rgba(255,255,255,.45), 0 0 8px rgba(220,42,26,.6); }
   acidify-patch-view .brand-legal { margin-top: 7px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
   acidify-patch-view .brand-legal span { font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.2px; color: #5d6767; white-space: nowrap; text-shadow: 0 1px 0 rgba(255,255,255,.8); }
@@ -4241,6 +4398,18 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .master-cell .silver-knob .led-box { order: 4; margin-top: 4px; width: auto; height: auto; border: 0; background: none; box-shadow: none; }
   acidify-patch-view .master-cell .silver-knob .led-box .value-label { color: #6c1710; font: 8px/1 'Courier New',monospace; letter-spacing: normal; text-shadow: none; }
   acidify-patch-view .output-cell { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; padding-top: 1px; }
+  acidify-patch-view .vu-row { display: flex; align-items: center; gap: 3px; margin-top: 9px; }
+  acidify-patch-view .vu-row .vu-meter { margin-top: 0; }
+  acidify-patch-view .dist-mini { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: ns-resize; touch-action: none; }
+  acidify-patch-view .dist-mini-dial { position: relative; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #565e60;
+    background: linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 22%, rgba(26,32,34,.18) 58%, rgba(26,32,34,.4) 100%),
+      radial-gradient(ellipse 130% 112% at 34% 16%, #ffffff 0 6%, #f1f4f4 18%, #cdd3d4 40%, #a8b0b2 66%, #8c9598 88%, #a3abad 100%);
+    box-shadow: 0 2px 3px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.9), inset 0 -3px 4px rgba(40,47,49,.45); }
+  acidify-patch-view .dist-mini-pointer { position: absolute; left: 50%; top: 2px; width: 2px; height: 7px; margin-left: -1px; border-radius: 1px;
+    background: #1d2426; transform-origin: 1px 8px; transform: rotate(calc((var(--norm, .5) - .5) * 270deg)); }
+  acidify-patch-view .dist-mini-label { color: #5d6768; font: 900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
+  acidify-patch-view .dist-mini.stage-off { opacity: .45; }
+  acidify-patch-view .dist-mini:focus-visible { outline: 1px solid #a51d17; outline-offset: 2px; border-radius: 3px; }
   acidify-patch-view .vu-meter { position: relative; margin-top: 9px; width: 46px; height: 88px; border-radius: 3px; overflow: hidden; border: 1px solid #0b0d0c;
     background: linear-gradient(180deg,#1a1c19,#0d0f0d); box-shadow: inset 0 3px 7px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.6); --level: 0; }
   acidify-patch-view .vu-scale { position: absolute; bottom: 4px; top: 4px; width: 14px; border-radius: 1px;
@@ -4396,7 +4565,7 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .sequence-step.beyond .step-index { color: #7b8482; }
   acidify-patch-view .sequence-step.playing .step-index { color: #b8241a; }
   acidify-patch-view .step-pills { display: flex; align-items: center; gap: 3px; }
-  acidify-patch-view .step-pill { width: 17px; height: 13px; display: grid; place-items: center; border-radius: 2px; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; font-style: normal;
+  acidify-patch-view .step-pill { width: 17px; height: 13px; display: grid; place-items: center; border-radius: 2px; cursor: pointer; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; font-style: normal;
     border: 1px solid #4f5759; color: #b6bebf; background: linear-gradient(180deg,#868e90,#6a7274); box-shadow: inset 0 1px 2px rgba(0,0,0,.42); }
   acidify-patch-view .sequence-step.accented .pill-a { color: #fff2ee; border-color: #5d1611; background: linear-gradient(180deg,#ff7361,#a3201a); box-shadow: 0 0 7px rgba(255,72,48,.65), inset 0 1px 0 rgba(255,255,255,.4); }
   acidify-patch-view .sequence-step.sliding .pill-s { color: #2a1a02; border-color: #5b3908; background: linear-gradient(180deg,#ffc776,#8d5410); box-shadow: 0 0 7px rgba(255,168,60,.6), inset 0 1px 0 rgba(255,255,255,.45); }
@@ -4720,6 +4889,16 @@ class AcidifyPatchView extends HTMLElement {
     border-radius: 2px; border: 0; background: #2b302f; color: #9aa3a5; font: 900 6px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1px; transform: none; }
   acidify-patch-view .studio-scale strong { margin-left: auto; margin-right: 2px; color: #ff9a89; font: 900 6px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px; }
   acidify-patch-view .studio-scale:active { transform: none; }
+  acidify-patch-view .scale-menu { position: absolute; z-index: 70; left: 94px; right: 0; top: 15px; max-height: 196px; overflow: auto; padding: 3px;
+    border-radius: 3px; border: 1px solid #0a0b09; background: linear-gradient(#252824,#15170f);
+    box-shadow: 0 12px 22px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.08); }
+  acidify-patch-view .scale-menu button { width: 100%; height: 17px; padding: 0 6px; display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; border: 0; border-radius: 2px; background: transparent; color: #c2c8c4; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1px;
+    transform: none; box-shadow: none; text-shadow: none; }
+  acidify-patch-view .scale-menu button:hover { background: #3a3f39; }
+  acidify-patch-view .scale-menu button.active { background: #8f1d16; color: #ffe3de; }
+  acidify-patch-view .scale-menu button small { color: #7d8681; font: 900 5.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .6px; }
+  acidify-patch-view .scale-menu button.active small { color: #f0b0a6; }
   acidify-patch-view .studio-groups { margin-top: 7px; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
   acidify-patch-view .studio-group { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 3px; }
   acidify-patch-view .studio-group-label { display: flex; align-items: center; gap: 6px; color: #93a0a2; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.4px; white-space: nowrap; }
@@ -4796,9 +4975,10 @@ class AcidifyPatchView extends HTMLElement {
         <div class="brand-foot">
           <div class="tips-power-row">
             <button class="tooltip-toggle" type="button" aria-pressed="true" data-tooltip="Turn the English control tooltips on or off."><span>? TIPS</span><strong class="tooltip-toggle-state">ON</strong></button>
-            <span class="power-cell"><span class="power-label">POWER</span><span class="power-ring"><i class="power-led"></i></span></span>
+            <button class="power-cell" type="button" aria-pressed="true"
+              data-tooltip="Bypass the whole instrument (dry signal passes through)."><span class="power-label">POWER</span><span class="power-ring"><i class="power-led lit"></i></span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.2.0</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.3.0</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -4822,7 +5002,17 @@ class AcidifyPatchView extends HTMLElement {
         </div>
         <div class="output-cell">
           <div class="cell-title">OUTPUT</div>
-          <div class="vu-meter" aria-hidden="true"><i class="vu-scale l"></i><i class="vu-scale r"></i><i class="vu-bar l"></i><i class="vu-bar r"></i><span class="output-lamp" hidden></span></div>
+          <div class="vu-row">
+            <div class="dist-mini" data-mini="param47" role="slider" tabindex="0" aria-label="Distortion drive"
+              data-tooltip="Distortion drive — quick access to the DRIVE dial in the distortion stage.">
+              <div class="dist-mini-dial"><i class="dist-mini-pointer"></i></div><span class="dist-mini-label">DRV</span>
+            </div>
+            <div class="vu-meter" aria-hidden="true"><i class="vu-scale l"></i><i class="vu-scale r"></i><i class="vu-bar l"></i><i class="vu-bar r"></i><span class="output-lamp" hidden></span></div>
+            <div class="dist-mini" data-mini="param48" role="slider" tabindex="0" aria-label="Distortion mix"
+              data-tooltip="Distortion mix — quick access to the MIX dial in the distortion stage.">
+              <div class="dist-mini-dial"><i class="dist-mini-pointer"></i></div><span class="dist-mini-label">MIX</span>
+            </div>
+          </div>
           <div class="trigger-row">
             <button class="distortion-trigger" type="button" aria-expanded="false"
               aria-controls="distortion-overlay" aria-label="Distortion disabled; open controls"
@@ -5077,10 +5267,16 @@ class AcidifyPatchView extends HTMLElement {
         <div class="studio-tools">
           <div class="studio-tool-head">
             <span class="studio-badge">STUDIO</span>
-            <button class="studio-scale" type="button" aria-label="Generation scale Minor Pentatonic; click for next scale"
+            <button class="studio-scale" type="button" aria-haspopup="menu" aria-expanded="false"
+              aria-label="Generation scale Minor Pentatonic; click to choose a scale"
               data-tooltip="Choose the scale that Generate, Mutate and note edits snap to.">
               <span>SCALE</span><strong>MIN PENTA</strong><span aria-hidden="true">▾</span>
             </button>
+            <div class="scale-menu" role="menu" hidden>
+              ${GENERATION_SCALES.map((scale, index) => `
+              <button type="button" role="menuitemradio" data-scale="${index}"
+                data-tooltip="${scale.label} — ${scale.degrees.length} notes per octave."><span>${scale.label}</span><small>${scale.sub}</small></button>`).join("")}
+            </div>
           </div>
           <div class="studio-groups">
             <div class="studio-group"><span class="studio-group-label">EDIT<i></i></span>

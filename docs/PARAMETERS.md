@@ -25,6 +25,8 @@ Parameter werden ausschließlich angehängt.
 | `param48` | Distortion Mix | 0…1 | 1 |
 | `param49` | Clock Mode | 0 Internal / 1 DAW | 0 |
 | `param50` | Swing | 0…100 % | 0 |
+| `param51..59` | Circuit Mods | siehe `docs/MODS.md` | Serienstand |
+| `param60` | Power | 0 Bypass / 1 On | 1 |
 
 Flag-Bits:
 
@@ -53,6 +55,11 @@ Seit 0.6.4 spiegelt die UI ein empfangenes DAW-Tempo bei aktivem Sync zusätzlic
 in `param9`; der DSP hält denselben Wert intern fest. Beim Wechsel zurück auf
 `Internal` bleibt deshalb das letzte Hosttempo erhalten. Die normale
 UI-Schrittweite beträgt 0,1 BPM, mit `Shift` 0,01 BPM.
+
+`param60` wurde in 2.3.0 append-only ergänzt (POWER-Taste im Brand-Panel der
+Design-Vorlage): 0 blendet den Instrumentausgang mit der normalen
+Parameterglättung auf Stille, 1 ist Serienstand — ältere Presets ohne den
+Parameter bleiben unverändert hörbar.
 
 `param50` wurde in 0.7.0 append-only ergänzt. 0 % lässt jedes
 16tel-Zweierpaar gerade; 100 % verschiebt das zweite 16tel auf die letzte

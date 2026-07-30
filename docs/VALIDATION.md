@@ -1,3 +1,21 @@
+# Validierung 2.3.0
+
+## 2.3.0
+
+Distortion-Lautheit (Referenzpattern, 48 kHz, 4 s): Raw −33,1 dB RMS; nach
+Kalibrierung PURE −33,1…−33,3, MACKIE −32,5…−33,1, PHONO −32,8…−33,5 dB über
+Drive 0/0,35/0,75/1 (vorher MACKIE bis −12,1, PHONO bis −11,4 dB).
+Matrix-Test grün, Bypass-Fälle ΔRMS = 0. Parität headless verifiziert:
+Pill-Klick Flags 1→3→7, Doppelklick-Gate 5→4→5 (Classic) und 1→0 (Studio),
+Scale-Menü 10 Optionen/Auswahl BLUES/Escape, POWER→BYPASS→POWER mit
+LED-Zustand, Miniregler Wheel 0,35→0,37 und Reset, VU-Position unverändert
+(1086/47). Smoke bit-identisch 0,34552 @48k, articulation/transport ok,
+Messstand 11/11, partcheck 28/28, Lints strict sauber (60-Parameter-Hinweis
+bleibt die dokumentierte Empfehlungswarnung), `ui_smoke_test` 3/3 grün mit
+erweiterten Prüfungen.
+
+---
+
 # Validierung 2.2.0
 
 ## 2.2.0
