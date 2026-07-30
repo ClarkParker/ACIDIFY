@@ -1,3 +1,29 @@
+# Validierung 2.9.0
+
+## 2.9.0
+
+A-bewichtete Lautheitsmessung (FFT 2^17, IEC-A-Kurve normiert auf
+1 kHz, Referenzpattern @48k) deckte die Schwäche der bisherigen
+RMS-Angleichung auf: bei Roh-RMS 0,00 dB lag MACKIE A-bewichtet
+−2,80/−6,74/−6,82/−6,44 dB (Drive 0,1/0,35/0,65/1,0) und PHONO
+−2,28…−12,21 dB unter Raw; PURE wirkte ≤ 0,25 dB (praktisch kein
+Effekt). Nach dem Umbau: PURE mit drive-abhängigem Shaper-Pegel
+(sättigt Drive 1,0 den Peak 0,74 → 0,28), PHONO als Emphasis-Clipper
+(Pre-Emphasis → tanh ×1…16 → De-Emphasis; Kleinsignal exakt
+transparent, Kurven algebraisch invers), Autogain-Tabellen auf
+A-Lautheit neu gefittet (Werte in ACIDIFYDSP.cmajor). Ergebnis:
+A-rel 0,00 dB an allen 12 Prüfpunkten (3 Modi × 4 Drives) bei Master
+−6 dB UND −18 dB (Invarianz aus 2.8.0 bestätigt); einzige Ausnahme
+PHONO Drive 1,0 mit −2,61 dB durch die Peak-Kappe am Raw-Peak 0,74
+(0,7401 gemessen, keine Übersteuerung). Audio-Nachweise (Raw, PURE,
+MACKIE, PHONO je Drive 0,5) als WAV an den Nutzer geliefert.
+Master-Range −36…+6 dB (Init −6 unverändert), Sync 64/64. Batterie
+grün: Serien-Smoke bit-identisch 0,69105, matrix (Bypass-Identitäten
+inkl. PURE Drive 0), arp/articulation/transport, Messstand alle
+Prüfsteine, partcheck 28/28, Lints strict, ui_smoke 3/3.
+
+---
+
 # Validierung 2.8.0
 
 ## 2.8.0

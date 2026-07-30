@@ -6,6 +6,47 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.9.0] - 2026-07-30
+
+### Fixed
+
+- **Distortion-Lautheit jetzt A-bewichtet kalibriert** — die bisherige
+  Angleichung nutzte unbewichtete RMS und war damit taub für die
+  massiven Spektralverschiebungen der Modi: A-bewichtet (FFT-Messung,
+  IEC-A-Kurve) lag MACKIE **−2,3…−6,7 dB** und PHONO **−9,3…−12,2 dB**
+  unter der Raw-Spur, obwohl die Roh-RMS „perfekt" abgeglichen war.
+  Genau das war das „alles leise, Modi noch leiser". Die
+  Autogain-Tabellen sind auf A-bewichtete Lautheit neu gefittet:
+  jetzt 0,00 dB an allen Rasterpunkten, mit einer einzigen bewussten
+  Ausnahme (PHONO Drive 1,0: −2,6 dB, Peak-Kappe exakt am Raw-Peak
+  statt Übersteuerung). Master-Invarianz aus 2.8.0 bleibt erhalten.
+- **PURE war faktisch keine Distortion**: Das laufende
+  Programm-Material lag weit unterhalb des sin()-Knies des
+  PurestDrive-Shapers — messbar ≤ 0,25 dB Wirkung selbst bei
+  Drive 1,0. Der Shaper bekommt jetzt einen drive-abhängigen
+  Eingangspegel (bis +18 dB, rückskaliert): Kleinsignale bleiben
+  transparent, Spitzen werden hörbar gesättigt (Drive 1,0 komprimiert
+  den Peak von 0,74 auf 0,28 vor Makeup). Drive 0 bleibt bit-exakt
+  transparent.
+- **PHONO-Klang repariert (Emphasis-Clipper)**: Bisher lief die nackte
+  RIAA-Wiedergabekurve hinter dem tanh-Overload — Ergebnis war ein
+  dumpfes, extrem leises Basswummern („Eingangssound zerstört").
+  Jetzt klassische Kette Schneidkennlinie (Pre-Emphasis) → Overload →
+  Wiedergabekurve (De-Emphasis): die Klangbalance bleibt erhalten
+  (beide Kurven heben sich im Kleinsignal exakt auf), die Sättigung
+  greift vor allem in den angehobenen Höhen — Vinyl-Overdrive statt
+  Mulm. Overload-Bereich auf ×1…×16 gefasst.
+
+### Changed
+
+- **Master-Volume bis +6 dB** (vorher Endanschlag 0 dB): Bereich
+  −36…+6 dB, Initialwert −6 dB unverändert. Gespeicherte
+  dB-Preset-Werte bleiben gültig; nur normalisierte
+  Host-Automation von param8 skaliert neu (dokumentiert).
+- Audio-Nachweise: `tools`-Messkette rendert auf Wunsch Raw + alle
+  drei Modi als WAV (an den Nutzer geliefert), A-bewichtete Messwerte
+  in docs/VALIDATION.md.
+
 ## [2.8.0] - 2026-07-30
 
 ### Fixed

@@ -12,7 +12,7 @@ Parameter werden ausschließlich angehängt.
 | `param5` | Decay | 0…1 | 0.45 |
 | `param6` | Accent | 0…1 | 0.65 |
 | `param7` | Waveform | 0 Saw / 1 Square | 0 |
-| `param8` | Volume | −36…0 dB | −6 |
+| `param8` | Volume | -36…+6 dB | −6 |
 | `param9` | Tempo | 40…300 BPM, 0,01 BPM Auflösung | 128 |
 | `param10` | Run | 0/1 | 0 |
 | `param11` | Pattern Length | 1…16 | 16 |
@@ -46,7 +46,7 @@ Distortion-Typen:
 |---:|---|---|
 | 0 | `PURE` | Airwindows PurestDrive, subtil und pegelabhängig |
 | 1 | `MACKIE` | Airwindows Mackity, pre-VLZ-1202-Eingangspfad |
-| 2 | `PHONO` | generische RIAA-Wiedergabekurve plus Eingangsübersteuerung |
+| 2 | `PHONO` | RIAA-Emphasis-Clipper: Schneidkennlinie → Overload → Wiedergabekurve |
 
 `param45..param48` wurden in 0.5.0 ausschließlich angehängt. `param49` wurde in
 0.6.0 ebenfalls append-only ergänzt; der Initialwert `Internal` bewahrt das
@@ -142,3 +142,11 @@ Parameter. Damit sind alle 50 von Amorph garantierten dynamischen Parameter
 belegt. Weitere persistente Funktionen benötigen deshalb einen späteren,
 erweiterten Zustandsvertrag; vorhandene IDs werden dafür nicht umgedeutet oder
 zusammengepackt.
+
+`param8` wurde in 2.9.0 von −36…0 dB auf −36…+6 dB erweitert (Init −6
+unverändert). Gespeicherte dB-Werte alter Presets bleiben gültig;
+normalisierte Host-Automation von `param8` skaliert durch den neuen
+Endwert neu. Die Distortion-Autogain-Tabellen sind seit 2.9.0 auf
+A-bewichtete Lautheit gefittet (statt Roh-RMS), PHONO ist ein
+Emphasis-Clipper (Pre-Emphasis → Overload → De-Emphasis) und PURE
+fährt den Shaper drive-abhängig an — Details in docs/VALIDATION.md.
