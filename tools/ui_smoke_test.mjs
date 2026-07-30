@@ -556,12 +556,12 @@ try {
     const dial = rect(".dist-mini-dial");
     return {
       gapToDist: +(trigger.left - minis.right).toFixed(1),
-      bottomOffset: +Math.abs(minis.bottom - trigger.bottom).toFixed(1),
+      dialBottomOffset: +Math.abs(dial.bottom - trigger.bottom).toFixed(1),
       dialSize: +dial.width.toFixed(1),
     };
   });
   if (miniPlacement.gapToDist < 4 || miniPlacement.gapToDist > 16
-      || miniPlacement.bottomOffset > 2 || miniPlacement.dialSize < 23) {
+      || miniPlacement.dialBottomOffset > 2 || miniPlacement.dialSize < 23) {
     throw new Error(`Mini dials are not on the DIST row: ${JSON.stringify(miniPlacement)}`);
   }
 

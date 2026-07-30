@@ -2440,8 +2440,20 @@ processor AcidifyCore
             // deren kalibrierter Arbeitspunkt (pedalGain-Referenz) und alle
             // Autogain-Kurven unveraendert gelten.
             const float instrumentMakeup = 2.0f;
-            let cleanVoice = vcaInput * ampControl * vcaGain * outputGain;
-            let voice = processDistortion (cleanVoice) * smoothedPower * instrumentMakeup;
+            // Pegel-Invarianz (2.8.0): Der Master sass VOR der Distortion,
+            // wodurch deren Arbeitspunkt mit der Reglerstellung driftete —
+            // gemessen bei Master -18 dB waren MACKIE/PHONO +6..+11 dB zu
+            // laut, bei 0 dB -4..-6 dB zu leise, und der Regler war in den
+            // Saettigungs-Modi nahezu wirkungslos. Die Distortion arbeitet
+            // jetzt auf dem festen Referenzpegel des alten -6-dB-Punkts
+            // (alle Kalibrierungen bleiben exakt gueltig), der Master ist
+            // eine reine Post-Stufe. Bei Master -6 dB ist der Pfad
+            // bit-identisch zu 2.7.x.
+            const float distortionReferenceTrim = 0.501187f;
+            let driveVoice = vcaInput * ampControl * vcaGain * distortionReferenceTrim;
+            let postGain = (outputGain / distortionReferenceTrim) * instrumentMakeup;
+            let cleanVoice = driveVoice * postGain;
+            let voice = processDistortion (driveVoice) * smoothedPower * postGain;
             let sample = abs (voice) < 0.0000000001f ? 0.0f : voice;
 
             meterEnvelope += meterAlpha * (abs (sample) - meterEnvelope);

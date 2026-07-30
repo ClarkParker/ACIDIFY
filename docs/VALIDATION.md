@@ -1,3 +1,26 @@
+# Validierung 2.8.0
+
+## 2.8.0
+
+Arbeitspunkt-Drift der Distortion nachgewiesen (Referenzpattern @48k,
+Drive 0,35/1,0, volumeDb/outputGain-States überschrieben): mit Master
+VOR der Distortion lagen die Modi bei Master −18 dB um +6,44/+9,51 dB
+(MACKIE) bzw. +4,73/+11,39 dB (PHONO) über Raw, bei Master 0 dB um
+−3,81/−5,81 bzw. −4,12/−5,88 dB darunter; der PHONO-Peak klemmte bei
+0,0636 unabhängig von der Reglerstellung. Nach der Verlegung des
+Masters hinter die Distortion (fester Referenzpegel 0,501187 = alter
+−6-dB-Punkt): 0,00 dB Modi-zu-Raw an allen sechs Rasterpunkten bei
+Master −18, −6 und 0 dB; Peaks skalieren linear (PHONO 0,016 → 0,064
+→ 0,127). Serien-Smoke bit-identisch 0,69105 @48k (Default-Pfad
+unverändert), dsp_matrix Bypass-Identitäten mit neuem Clean-Tap grün,
+dsp_arp/articulation/transport grün, Messstand alle Prüfsteine,
+partcheck 28/28, Lints strict, gen_phrases synchron. Miniregler:
+dB-Display 125–133, Labels 133–139, Dials 140–164 bündig zur
+DIST/MOD-Unterkante 164 (beide Themes per Screenshot), ui_smoke 3/3
+mit Dial-Unterkanten-Assertion.
+
+---
+
 # Validierung 2.7.3
 
 ## 2.7.3

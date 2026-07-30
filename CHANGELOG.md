@@ -6,6 +6,31 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-07-30
+
+### Fixed
+
+- **Master hinter die Distortion verlegt (Pegel-Invarianz)** — der
+  eigentliche Grund für „generell zu leise" und „Distortion-Modi
+  kaputt": Der Master-Regler saß VOR den pegelabhängigen
+  Sättigungsstufen, die Kalibrierung galt daher nur exakt am
+  Default (−6 dB). Gemessen (Referenzpattern @48k): bei Master
+  −18 dB waren MACKIE/PHONO **+6,4…+11,4 dB zu laut**, bei 0 dB
+  **−3,8…−5,9 dB zu leise**, und in den Sättigungs-Modi war der
+  Master nahezu wirkungslos (PHONO-Peak 0,064 bei −18 UND 0 dB).
+  Jetzt arbeitet die Distortion auf dem festen Referenzpegel des
+  alten −6-dB-Punkts (pedalGain-Referenz und alle Autogain-Kurven
+  bleiben exakt gültig) und der Master ist eine reine Post-Stufe.
+  Nachgemessen: 0,00 dB Modi-zu-Raw bei Master −18/−6/0 dB, Peaks
+  skalieren in allen Modi linear mit dem Regler. Bei Master −6 dB
+  ist der Signalpfad bit-identisch zu 2.7.x (Serien-Smoke 0,69105).
+- **DRV/MIX-Beschriftung über die Dials**: Durch das Label unter dem
+  Dial saßen die Knopfkörper höher als die DIST/MOD-Taster. Labels
+  jetzt oberhalb, Dial-Unterkanten bündig mit den Tastern (164/164),
+  Dial-Körper und Taster auf einer Linie; kein Überlapp mit dem
+  dB-Display (133/133…139/140 gestaffelt). Assertion misst jetzt die
+  Dial-Unterkante statt der Containerkante.
+
 ## [2.7.3] - 2026-07-30
 
 ### Changed

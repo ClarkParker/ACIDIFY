@@ -4809,14 +4809,14 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .output-cell { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; padding-top: 0; }
   acidify-patch-view .master-minis { display: flex; align-items: flex-start; justify-content: flex-end; gap: 9px;
     margin-top: auto; margin-left: auto; margin-right: 1px; padding-bottom: 1px; }
-  acidify-patch-view .dist-mini { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: ns-resize; touch-action: none; }
+  acidify-patch-view .dist-mini { display: flex; flex-direction: column; align-items: center; gap: 1px; cursor: ns-resize; touch-action: none; }
   acidify-patch-view .dist-mini-dial { position: relative; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #565e60;
     background: linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 22%, rgba(26,32,34,.18) 58%, rgba(26,32,34,.4) 100%),
       radial-gradient(ellipse 130% 112% at 34% 16%, #ffffff 0 6%, #f1f4f4 18%, #cdd3d4 40%, #a8b0b2 66%, #8c9598 88%, #a3abad 100%);
     box-shadow: 0 2px 3px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.9), inset 0 -3px 4px rgba(40,47,49,.45); }
   acidify-patch-view .dist-mini-pointer { position: absolute; left: 50%; top: 2px; width: 2px; height: 9px; margin-left: -1px; border-radius: 1px;
     background: #1d2426; transform-origin: 1px 10px; transform: rotate(calc((var(--norm, .5) - .5) * 270deg)); }
-  acidify-patch-view .dist-mini-label { color: #5d6768; font: 900 5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
+  acidify-patch-view .dist-mini-label { color: #5d6768; font: 900 5px/6px 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
   acidify-patch-view .dist-mini.stage-off { opacity: .45; }
   acidify-patch-view .dist-mini:focus-visible { outline: 1px solid #a51d17; outline-offset: 2px; border-radius: 3px; }
   acidify-patch-view .vu-meter { position: relative; margin-top: 9px; width: 46px; height: 88px; border-radius: 3px; overflow: hidden; border: 1px solid #0b0d0c;
@@ -5682,7 +5682,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.7.3</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.8.0</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -5706,11 +5706,11 @@ class AcidifyPatchView extends HTMLElement {
           <div class="master-minis">
             <div class="dist-mini" data-mini="param47" role="slider" tabindex="0" aria-label="Distortion drive"
               data-tooltip="Distortion drive — quick access to the DRIVE dial in the distortion stage.">
-              <div class="dist-mini-dial"><i class="dist-mini-pointer"></i></div><span class="dist-mini-label">DRV</span>
+              <span class="dist-mini-label">DRV</span><div class="dist-mini-dial"><i class="dist-mini-pointer"></i></div>
             </div>
             <div class="dist-mini" data-mini="param48" role="slider" tabindex="0" aria-label="Distortion mix"
               data-tooltip="Distortion mix — quick access to the MIX dial in the distortion stage.">
-              <div class="dist-mini-dial"><i class="dist-mini-pointer"></i></div><span class="dist-mini-label">MIX</span>
+              <span class="dist-mini-label">MIX</span><div class="dist-mini-dial"><i class="dist-mini-pointer"></i></div>
             </div>
           </div>
         </div>
