@@ -1,3 +1,31 @@
+# Validierung 2.7.0
+
+## 2.7.0
+
+Distortion-Autogain gemessen (Referenzpattern, 16tel-Basslauf mit
+Accents @48k, `cmaj render`): vor dem Fix RMS-Abweichung zur Raw-Spur
+bis −1,34 dB (PHONO Drive 1,0) und −1,29 dB (MACKIE Drive 0,35); nach
+Einbau der Stützstellen-Lookups (7 Drive-Punkte je Modus, linear
+interpoliert) liegen alle 21 Punkte des Rasters bei 0,00 dB
+(±0,005 dB). PURE bei Drive 0 bleibt bit-exakt transparent
+(`dsp_matrix` pure-zero-drive differenceRms 0). Ausgangs-Makeup +6 dB
+nach der Distortion: Serien-Smoke-Peak 0,34552 → 0,69105 @48k,
+Bypass-Identität aller drei expectBypass-Fälle erhalten, Peak-Decke
+1,05 nicht verletzt; VU-Skala kompensiert (Anzeige unverändert).
+Mausrad headless belegt (`ui_smoke_test` 3/3): Dial-Rast = 2 % des
+Regelwegs (Cutoff 0,45 → 0,47), Stepper-Rast = 1 Schritt (Swing),
+Mehrfach-Taster-Rast = nächster Wert (Waveform), Tempo-Vertrag
+0,1/0,01 BPM unverändert. Dark Mode: DARK-Taste im Logo-Bereich
+schaltet `theme-dark` (Chassis-Verlauf ab rgb(74,78,79) belegt),
+Zustand ON/OFF + localStorage geprüft, Abschalten stellt Silber
+wieder her; DOM-Sweep über alle sichtbaren Flächen fand nach den
+Overrides keine helle Restfläche (einzig gemeldeter Treffer
+tips-power-row wurde behoben). Übrige Batterie grün:
+dsp_arp/articulation/transport, Messstand alle Prüfsteine, partcheck
+28/28, Lints strict, `gen_phrases.py --check` synchron.
+
+---
+
 # Validierung 2.6.0
 
 ## 2.6.0

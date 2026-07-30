@@ -268,6 +268,54 @@ try {
   const after = Number(await cutoff.getAttribute("aria-valuenow"));
   if (!(after > before)) throw new Error(`Keyboard dial input failed: ${before} -> ${after}`);
 
+  const wheelChecks = await patchView.evaluate(node => {
+    const spin = (selector, deltaY) => {
+      node.querySelector(selector).dispatchEvent(new WheelEvent("wheel", { deltaY, bubbles: true, cancelable: true }));
+    };
+    const results = {};
+    const cutoffBefore = Number(node._values.get("param2"));
+    spin('.control[data-param="param2"] .dial', -100);
+    results.dialNotch = Number((Number(node._values.get("param2")) - cutoffBefore).toFixed(4));
+    spin('.control[data-param="param2"] .dial', 100);
+    const swingBeforeWheel = Number(node._values.get("param50"));
+    spin('.control[data-param="param50"]', -100);
+    results.stepperNotch = Number(node._values.get("param50")) - swingBeforeWheel;
+    spin('.control[data-param="param50"]', 100);
+    const waveBefore = Number(node._values.get("param7"));
+    spin('.control[data-param="param7"]', -100);
+    results.buttonsNotch = Number(node._values.get("param7")) - waveBefore;
+    spin('.control[data-param="param7"]', 100);
+    return results;
+  });
+  if (wheelChecks.dialNotch !== 0.02 || wheelChecks.stepperNotch !== 1 || wheelChecks.buttonsNotch !== 1) {
+    throw new Error(`Wheel steps failed: ${JSON.stringify(wheelChecks)}`);
+  }
+
+  const darkOn = await patchView.evaluate(node => {
+    node.querySelector(".theme-toggle").click();
+    return {
+      classed: node.classList.contains("theme-dark"),
+      pressed: node.querySelector(".theme-toggle").getAttribute("aria-pressed"),
+      state: node.querySelector(".theme-toggle-state").textContent,
+      chassis: getComputedStyle(node.querySelector(".chassis")).backgroundImage.includes("rgb(74, 78, 79)"),
+      stored: (() => { try { return window.localStorage.getItem("acidify.theme.dark"); } catch { return null; } })(),
+    };
+  });
+  if (!darkOn.classed || darkOn.pressed !== "true" || darkOn.state !== "ON" || !darkOn.chassis
+      || (darkOn.stored !== null && darkOn.stored !== "true")) {
+    throw new Error(`Dark mode did not engage: ${JSON.stringify(darkOn)}`);
+  }
+  const darkOff = await patchView.evaluate(node => {
+    node.querySelector(".theme-toggle").click();
+    return {
+      classed: node.classList.contains("theme-dark"),
+      state: node.querySelector(".theme-toggle-state").textContent,
+    };
+  });
+  if (darkOff.classed || darkOff.state !== "OFF") {
+    throw new Error(`Dark mode did not release: ${JSON.stringify(darkOff)}`);
+  }
+
   const swing = page.locator('.control[data-param="param50"]');
   const swingBefore = await patchView.evaluate(node => node._values.get("param50"));
   await swing.locator('button[data-step="1"]').click();

@@ -162,6 +162,7 @@ const GENERATION_SCALES = [
   { id: "chromatic", label: "CHROMATIC", sub: "ALL 12", degrees: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
 ];
 const TOOLTIP_STORAGE_KEY = "acidify.tooltips.enabled";
+const THEME_STORAGE_KEY = "acidify.theme.dark";
 // Tooltips erscheinen erst nach echtem Verweilen: der Timer startet bei jeder
 // Zeigerbewegung neu, damit die Blase die GUI beim Ueberstreichen nicht verdeckt.
 const TOOLTIP_HOVER_DELAY = 900;
@@ -263,9 +264,10 @@ class DialControl {
     this.onWheel = e => {
       e.preventDefault();
       if (this.isDisabled()) return;
+      const range = this.config.max - this.config.min;
       const increment = e.shiftKey
-        ? (this.config.fineStep || this.config.step || (this.config.max - this.config.min) / 100)
-        : (this.config.coarseStep || this.config.step || (this.config.max - this.config.min) / 100);
+        ? (this.config.fineStep || this.config.step || range / 500)
+        : (this.config.coarseStep || Math.max(this.config.step || 0, range / 50));
       this.pc.sendParameterGestureStart?.(this.config.id);
       this.showFeedback();
       this.setValue(this.value + (e.deltaY < 0 ? increment : -increment), true);
@@ -273,9 +275,10 @@ class DialControl {
     };
     this.onKeyDown = e => {
       if (this.isDisabled()) return;
+      const range = this.config.max - this.config.min;
       const increment = e.shiftKey
-        ? (this.config.fineStep || this.config.step || (this.config.max - this.config.min) / 100)
-        : (this.config.coarseStep || this.config.step || (this.config.max - this.config.min) / 100);
+        ? (this.config.fineStep || this.config.step || range / 500)
+        : (this.config.coarseStep || Math.max(this.config.step || 0, range / 50));
       let next = null;
       if (e.key === "ArrowUp" || e.key === "ArrowRight") next = this.value + increment;
       if (e.key === "ArrowDown" || e.key === "ArrowLeft") next = this.value - increment;
@@ -348,6 +351,17 @@ class ToggleControl {
       this.setValue(value, true);
     };
     node.addEventListener("click", this.onClick);
+    if (this.buttons.length > 1) {
+      this.onWheel = e => {
+        if (node.getAttribute("aria-disabled") === "true") return;
+        e.preventDefault();
+        const values = this.buttons.map(button => Number(button.dataset.value)).sort((a, b) => a - b);
+        const index = Math.max(0, values.indexOf(this.value));
+        const next = values[clamp(index + (e.deltaY < 0 ? 1 : -1), 0, values.length - 1)];
+        if (next !== this.value) this.setValue(next, true);
+      };
+      node.addEventListener("wheel", this.onWheel, { passive: false });
+    }
     this.setValue(config.init, false);
   }
 
@@ -379,6 +393,11 @@ class StepperControl {
       if (direction) this.setValue(this.value + direction * config.step, true);
     };
     node.addEventListener("click", this.onClick);
+    this.onWheel = e => {
+      e.preventDefault();
+      this.setValue(this.value + (e.deltaY < 0 ? 1 : -1) * config.step, true);
+    };
+    node.addEventListener("wheel", this.onWheel, { passive: false });
     this.setValue(config.init, false);
   }
 
@@ -638,6 +657,7 @@ class AcidifyPatchView extends HTMLElement {
     if (this._pitchMenuKeyDown) this.removeEventListener("keydown", this._pitchMenuKeyDown);
     if (this._pitchMenuOutsidePointer) this.removeEventListener("pointerdown", this._pitchMenuOutsidePointer, true);
     if (this._tooltipToggleClick) this.querySelector(".tooltip-toggle")?.removeEventListener("click", this._tooltipToggleClick);
+    if (this._themeToggleClick) this.querySelector(".theme-toggle")?.removeEventListener("click", this._themeToggleClick);
     if (this._tooltipPointerOver) this.removeEventListener("pointerover", this._tooltipPointerOver);
     if (this._tooltipPointerMove) this.removeEventListener("pointermove", this._tooltipPointerMove);
     if (this._tooltipPointerOut) this.removeEventListener("pointerout", this._tooltipPointerOut);
@@ -687,6 +707,31 @@ class AcidifyPatchView extends HTMLElement {
     }
   }
 
+  _loadThemePreference() {
+    try {
+      return window.localStorage.getItem(THEME_STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  }
+
+  _setDarkMode(enabled, persist) {
+    this._darkMode = Boolean(enabled);
+    this.classList.toggle("theme-dark", this._darkMode);
+    const toggle = this.querySelector(".theme-toggle");
+    toggle?.setAttribute("aria-pressed", `${this._darkMode}`);
+    toggle?.setAttribute("aria-label", `Dark panel ${this._darkMode ? "on" : "off"}; click to switch the metal finish`);
+    const state = toggle?.querySelector(".theme-toggle-state");
+    if (state) state.textContent = this._darkMode ? "ON" : "OFF";
+    if (persist) {
+      try {
+        window.localStorage.setItem(THEME_STORAGE_KEY, `${this._darkMode}`);
+      } catch {
+        // Hosts ohne localStorage: Einstellung gilt nur fuer diese Instanz.
+      }
+    }
+  }
+
   _wireTooltips() {
     Object.entries(CONTROL_TOOLTIPS).forEach(([id, text]) => {
       const node = this.querySelector(`.control[data-param="${id}"]`);
@@ -703,6 +748,10 @@ class AcidifyPatchView extends HTMLElement {
     const toggle = this.querySelector(".tooltip-toggle");
     this._tooltipToggleClick = () => this._setTooltipsEnabled(!this._tooltipsEnabled, true);
     toggle?.addEventListener("click", this._tooltipToggleClick);
+
+    this._themeToggleClick = () => this._setDarkMode(!this._darkMode, true);
+    this.querySelector(".theme-toggle")?.addEventListener("click", this._themeToggleClick);
+    this._setDarkMode(this._loadThemePreference(), false);
 
     this._tooltipPointerOver = event => {
       const target = this._findTooltipTarget(event.target);
@@ -4656,6 +4705,16 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .deck-a .tooltip-toggle .tooltip-toggle-state { padding: 2px 4px; border-radius: 1px; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px;
     color: #fff2ed; background: linear-gradient(#b92e24,#74150f); }
   acidify-patch-view .deck-a .tooltip-toggle[aria-pressed="false"] .tooltip-toggle-state { color: #a9aaa4; background: linear-gradient(#4b4c47,#292a27); }
+  acidify-patch-view .deck-a .theme-toggle { position: static; display: flex; align-items: center; gap: 5px; height: 18px; padding: 0 6px; cursor: pointer;
+    border-radius: 2px; border: 1px solid #1a1e1f; width: auto; font: 900 7.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; color: #1d2426;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
+  acidify-patch-view .deck-a .theme-toggle[aria-pressed="true"] {
+    background: linear-gradient(102deg,#3c4041 0 18%,#33373a 34%,#26292b 52%,#33373a 68%,#2b2f31 86%,#1e2123 100%);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.6), 0 1px 1px rgba(0,0,0,.5); color: #c8cdcb; }
+  acidify-patch-view .deck-a .theme-toggle .theme-toggle-state { padding: 2px 4px; border-radius: 1px; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: .8px;
+    color: #a9aaa4; background: linear-gradient(#4b4c47,#292a27); }
+  acidify-patch-view .deck-a .theme-toggle[aria-pressed="true"] .theme-toggle-state { color: #fff2ed; background: linear-gradient(#b92e24,#74150f); }
   acidify-patch-view .power-cell { display: flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; cursor: pointer; }
   acidify-patch-view .power-label { color: #6d7776; font: 900 7px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
   acidify-patch-view .power-cell.bypassed .power-label { color: #8e1f16; }
@@ -5388,6 +5447,84 @@ class AcidifyPatchView extends HTMLElement {
     acidify-patch-view .distortion-types button { font-size: 8px; }
     acidify-patch-view .distortion-types button small { font-size: 6px; }
   }
+
+  /* ---------- Dark Mode: dunkles Anthrazit-Metall ---------- */
+  acidify-patch-view.theme-dark .chassis {
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='2' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E"),
+      repeating-linear-gradient(93deg, rgba(255,255,255,.03) 0 1px, rgba(0,0,0,.05) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg,#4a4e4f 0%,#3b3f40 40%,#2d3132 78%,#212526 100%);
+    box-shadow: 0 26px 44px rgba(0,0,0,.65), inset 0 2px 0 rgba(255,255,255,.16), inset 0 -6px 10px rgba(0,0,0,.55);
+  }
+  acidify-patch-view.theme-dark .top-strip.deck-a { border-bottom-color: #191c1d; }
+  acidify-patch-view.theme-dark .deck-a {
+    background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.03) 0 1px, rgba(0,0,0,.06) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg,#43474a 0%,#383c3f 44%,#2b2f31 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -2px 3px rgba(0,0,0,.45); }
+  acidify-patch-view.theme-dark .deck-b { border-color: #171a1b;
+    background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.03) 0 1px, rgba(0,0,0,.06) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg,#42464900,#383c3f00), linear-gradient(180deg,#42464a 0%,#373b3e 46%,#2a2e30 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1), inset 0 -2px 3px rgba(0,0,0,.45); }
+  acidify-patch-view.theme-dark .program-strip { border-color: #171a1b;
+    background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.03) 0 1px, rgba(0,0,0,.06) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg,#42464a 0%,#373b3e 46%,#2a2e30 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1); }
+  acidify-patch-view.theme-dark .deck-a > * { border-right-color: rgba(0,0,0,.6); box-shadow: 1px 0 0 rgba(255,255,255,.07); }
+  acidify-patch-view.theme-dark .deck-a > *:last-child { box-shadow: none; }
+  acidify-patch-view.theme-dark .deckb-cell { border-right-color: rgba(0,0,0,.6); box-shadow: 1px 0 0 rgba(255,255,255,.07); }
+  acidify-patch-view.theme-dark .deckb-cell:last-child { box-shadow: none; }
+  acidify-patch-view.theme-dark .keyboard,
+  acidify-patch-view.theme-dark .time-controls {
+    border-color: #131617; background: linear-gradient(180deg,#33373a,#26292b);
+    box-shadow: inset 0 3px 7px rgba(0,0,0,.6), inset 0 -1px 0 rgba(255,255,255,.09), 0 1px 0 rgba(255,255,255,.08); }
+  acidify-patch-view.theme-dark .cell-title { color: #b8bec0; border-bottom-color: rgba(0,0,0,.55); text-shadow: 0 1px 0 rgba(0,0,0,.7); }
+  acidify-patch-view.theme-dark .silver-knob .control-label { color: #c3c8ca; }
+  acidify-patch-view.theme-dark .silver-knob:has(.mod-slider:not([hidden])) .control-label { color: #ff6a54; }
+  acidify-patch-view.theme-dark .wave-name { color: #9aa2a1; text-shadow: 0 1px 0 rgba(0,0,0,.7); }
+  acidify-patch-view.theme-dark .wave-choice:has(button.active) .wave-name { color: #ff6a54; }
+  acidify-patch-view.theme-dark .deck-a .brand { color: #b9bfc1; }
+  acidify-patch-view.theme-dark .deck-a .model { color: #b0b6b8; text-shadow: 0 -0.5px 0 rgba(0,0,0,.6), 0 1px 0 rgba(0,0,0,.4); }
+  acidify-patch-view.theme-dark .deck-a .computer { color: #848c8d; text-shadow: 0 1px 0 rgba(0,0,0,.55); }
+  acidify-patch-view.theme-dark .power-label { color: #9aa2a1; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+  acidify-patch-view.theme-dark .brand-legal span { color: #8a9293; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+  acidify-patch-view.theme-dark .brand-legal .brand-version { color: #a5adae; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+  acidify-patch-view.theme-dark .program-header { border-bottom-color: rgba(0,0,0,.6); box-shadow: 0 1px 0 rgba(255,255,255,.07); }
+  acidify-patch-view.theme-dark .program-title b { color: #ff5545; text-shadow: 0 1px 0 rgba(0,0,0,.7); }
+  acidify-patch-view.theme-dark .program-title > span:not(.program-legend) { color: #c3c8ca; text-shadow: 0 1px 0 rgba(0,0,0,.7); }
+  acidify-patch-view.theme-dark .program-context { color: #969ea0; }
+  acidify-patch-view.theme-dark .program-legend { border-left-color: rgba(255,255,255,.14); }
+  acidify-patch-view.theme-dark .program-legend em { color: #a2aaab; }
+  acidify-patch-view.theme-dark .selection-caption { color: #a2aaab; }
+  acidify-patch-view.theme-dark .step-row,
+  acidify-patch-view.theme-dark .edit-status,
+  acidify-patch-view.theme-dark .arp-direction-cell,
+  acidify-patch-view.theme-dark .arp-tools-cell {
+    border-color: #131617; background: linear-gradient(180deg,#33373a,#26292b);
+    box-shadow: inset 0 3px 7px rgba(0,0,0,.6), inset 0 -1px 0 rgba(255,255,255,.09), 0 1px 0 rgba(255,255,255,.08); }
+  acidify-patch-view.theme-dark .edit-caption { color: #a2aaab; }
+  acidify-patch-view.theme-dark .arp-status .octave-indicator,
+  acidify-patch-view.theme-dark .edit-status .octave-indicator { color: #969ea0; }
+  acidify-patch-view.theme-dark .power-ring { border-color: rgba(0,0,0,.65);
+    background: radial-gradient(circle at 34% 26%, #565b5d, #3a3e40 62%, #2b2f30);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.2), inset 0 -2px 3px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.08); }
+  acidify-patch-view.theme-dark .deck-a .tooltip-toggle[aria-pressed="false"],
+  acidify-patch-view.theme-dark .deck-a .theme-toggle[aria-pressed="false"] {
+    color: #c8cdcb;
+    background: linear-gradient(102deg,#4a4e50 0 18%,#3f4345 34%,#2f3335 52%,#3f4345 68%,#353a3c 86%,#26292b 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 -2px 3px rgba(0,0,0,.5), 0 3px 3px rgba(0,0,0,.55); }
+  acidify-patch-view.theme-dark .deck-a .tooltip-toggle[aria-pressed="true"] { color: #c8cdcb;
+    background: linear-gradient(102deg,#3c4041 0 18%,#33373a 34%,#26292b 52%,#33373a 68%,#2b2f31 86%,#1e2123 100%);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.6), 0 1px 1px rgba(0,0,0,.5); }
+  acidify-patch-view.theme-dark .scope-legend > div { border-color: #060403; }
+  acidify-patch-view.theme-dark .tips-power-row { border-color: rgba(0,0,0,.6);
+    background: linear-gradient(180deg,#2e3234,#26292b);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.08), 0 1px 0 rgba(255,255,255,.07); }
+  acidify-patch-view.theme-dark .tempo-scale { color: #969ea0; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+  acidify-patch-view.theme-dark .tempo-scale i { background: linear-gradient(90deg, rgba(0,0,0,.5), rgba(255,255,255,.25)); }
+  acidify-patch-view.theme-dark .dist-mini-label { color: #9aa2a1; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+  acidify-patch-view.theme-dark .master-cell .silver-knob .led-box .value-label,
+  acidify-patch-view.theme-dark.studio-mode .master-cell .silver-knob .value-label {
+    color: #ff6756; text-shadow: 0 0 5px rgba(255,57,37,.45); }
 </style>
 <div class="chassis">
   <div class="panel">
@@ -5402,10 +5539,11 @@ class AcidifyPatchView extends HTMLElement {
         <div class="brand-foot">
           <div class="tips-power-row">
             <button class="tooltip-toggle" type="button" aria-pressed="true" data-tooltip="Turn the English control tooltips on or off."><span>? TIPS</span><strong class="tooltip-toggle-state">ON</strong></button>
+            <button class="theme-toggle" type="button" aria-pressed="false" data-tooltip="Switch the panel between silver and dark anthracite metal."><span>DARK</span><strong class="theme-toggle-state">OFF</strong></button>
             <button class="power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><span class="power-label">POWER</span><span class="power-ring"><i class="power-led lit"></i></span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.6.0</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.7.0</span></div>
         </div>
       </header>
       <div class="osc-cell">

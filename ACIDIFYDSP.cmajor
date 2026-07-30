@@ -597,11 +597,52 @@ processor AcidifyCore
         return float (float64 (softClip (float (colored))) * loudness / pedalGain);
     }
 
+    // Vorkalkuliertes Autogain (2.7.0): Rest-Abweichung der drei Modi zur
+    // Raw-RMS am Referenzpattern (tools-Messung @48k, sieben Drive-Stuetz-
+    // stellen), als Faktor raw_rms / mode_rms hinterlegt und zur Laufzeit nur
+    // linear interpoliert — kein Messen im Hintergrund. Druecken die
+    // Angleichung von zuvor bis zu -1,34 dB auf unter +-0,3 dB.
+    const float[7] distCorrDrive = (0.1f, 0.25f, 0.35f, 0.5f, 0.65f, 0.8f, 1.0f);
+    const float[7] distCorrPure  = (1.0027f, 1.0071f, 1.0098f, 1.0139f, 1.0184f, 1.0225f, 1.0281f);
+    const float[7] distCorrMack  = (1.0633f, 1.1150f, 1.1601f, 1.1161f, 1.0515f, 1.0593f, 1.0785f);
+    const float[7] distCorrPhono = (1.0831f, 1.0673f, 1.0608f, 1.0790f, 1.1206f, 1.1530f, 1.1667f);
+
+    float distCorrAt (int type, int index)
+    {
+        let i = wrap<7> (clamp (index, 0, 6));
+        return type == 0 ? distCorrPure[i] : type == 1 ? distCorrMack[i] : distCorrPhono[i];
+    }
+
+    float distortionAutogain (int type, float drive)
+    {
+        // PURE ist bei Drive 0 bit-exakt transparent; die Korrektur laeuft
+        // dort von exakt 1,0 auf die erste Stuetzstelle. MACKIE/PHONO
+        // verzerren auch bei Drive 0 — unterhalb der ersten Stuetzstelle
+        // bleibt der Faktor flach.
+        if (drive <= distCorrDrive[0])
+        {
+            let first = distCorrAt (type, 0);
+            if (type == 0)
+                return 1.0f + (first - 1.0f) * (max (drive, 0.0f) / distCorrDrive[0]);
+            return first;
+        }
+        var index = 0;
+        while (index < 5 && drive > distCorrDrive[wrap<7> (index + 1)])
+            index += 1;
+        let d0 = distCorrDrive[wrap<7> (index)];
+        let d1 = distCorrDrive[wrap<7> (index + 1)];
+        let a = distCorrAt (type, index);
+        let b = distCorrAt (type, index + 1);
+        let t = clamp ((drive - d0) / max (d1 - d0, 0.0001f), 0.0f, 1.0f);
+        return a + (b - a) * t;
+    }
+
     float processDistortion (float signal)
     {
-        let pure = processPurestDrive (signal, smoothedDistortionDrive);
-        let mackie = processMackity (signal, smoothedDistortionDrive);
-        let phono = processPhono (signal, smoothedDistortionDrive);
+        let drive = smoothedDistortionDrive;
+        let pure = processPurestDrive (signal, drive) * distortionAutogain (0, drive);
+        let mackie = processMackity (signal, drive) * distortionAutogain (1, drive);
+        let phono = processPhono (signal, drive) * distortionAutogain (2, drive);
         if (smoothedDistortionWet <= 0.000001f)
             return signal;
 
@@ -2393,15 +2434,22 @@ processor AcidifyCore
             // otaDrive stehen, das den Knick der Kennlinie setzt.
             // Open303 stand hier mit 0,42; die Herleitung liegt 9,6 % darueber.
             const float vcaGain = 0.4601f;
+            // +6 dB Ausgangs-Makeup (2.7.0): Der Serienpegel lag mit ca. 0,37
+            // Spitzenwert bei Master -6 dB deutlich unter ueblichen
+            // Instrumentpegeln. Das Makeup sitzt NACH der Distortion, damit
+            // deren kalibrierter Arbeitspunkt (pedalGain-Referenz) und alle
+            // Autogain-Kurven unveraendert gelten.
+            const float instrumentMakeup = 2.0f;
             let cleanVoice = vcaInput * ampControl * vcaGain * outputGain;
-            let voice = processDistortion (cleanVoice) * smoothedPower;
+            let voice = processDistortion (cleanVoice) * smoothedPower * instrumentMakeup;
             let sample = abs (voice) < 0.0000000001f ? 0.0f : voice;
 
             meterEnvelope += meterAlpha * (abs (sample) - meterEnvelope);
             meterCountdown -= 1;
             if (meterCountdown <= 0)
             {
-                meterOut <- clamp (meterEnvelope * 2.0f, 0.0f, 1.0f);
+                // Meter-Skala kompensiert das Makeup - Anzeige wie zuvor.
+                meterOut <- clamp (meterEnvelope, 0.0f, 1.0f);
                 meterCountdown = meterPeriod;
             }
 

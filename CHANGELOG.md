@@ -6,6 +6,43 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-07-30
+
+### Added
+
+- **Dark Mode „Anthrazit-Metall"**: DARK-Taste im Logo-Bereich (neben
+  ? TIPS) schaltet das komplette Panel auf dunkles Anthrazit — Decks,
+  Programmer-Strip, vertiefte Zellen, Beschriftungen und Trennlinien;
+  Chrom-Knöpfe, Silbertasten, LED-Displays und Klaviatur bleiben als
+  Kontrast erhalten. Einstellung wird wie die Tooltips in
+  `localStorage` gemerkt (`acidify.theme.dark`).
+- **Mausrad überall**: Stepper (Swing, Length, Root, Octaves, Phrase)
+  und Mehrfach-Taster (Waveform, Distortion-Typ, Arp-Figur) reagieren
+  jetzt aufs Mausrad; ein Rast = ein Schritt bzw. nächster Wert.
+
+### Fixed
+
+- **Mausrad-Schrittweite der Drehregler**: Die Haupt-Dials nutzten die
+  Wert-Quantisierung (0,001) als Rad-Schritt — 1000 Rasten für den
+  vollen Weg. Ohne Shift jetzt 2 % des Regelwegs pro Rast (spürbar),
+  mit Shift weiterhin fein; Tempo behält den dokumentierten
+  0,1/0,01-BPM-Vertrag.
+- **Distortion-Autogain, vorkalkuliert**: Die Rest-Abweichung der
+  RMS-Angleichung (bis −1,34 dB, je nach Drive) ist jetzt über
+  gemessene Stützstellen (7 Drive-Punkte je Modus, tools-Messung @48k)
+  als Lookup mit linearer Interpolation im DSP hinterlegt — kein
+  Messen zur Laufzeit. Am Referenzpattern liegen alle 21 Messpunkte
+  auf 0,00 dB zur Raw-RMS; PURE bleibt bei Drive 0 bit-exakt
+  transparent.
+- **Ausgangspegel +6 dB**: Der Serienpegel lag mit ~0,37 Peak (Master
+  −6 dB) deutlich unter üblichen Instrumentpegeln. Ein festes
+  +6-dB-Makeup sitzt NACH der Distortion, damit deren kalibrierter
+  Arbeitspunkt und die Autogain-Kurven unverändert gelten; die
+  VU-Meter-Skala ist kompensiert. Hinweis: Die Modi haben bauartbedingt
+  gleiche Energie (RMS), aber unterschiedliche Spitzenwerte — MACKIE/
+  PHONO komprimieren; das Peak-Meter im Host zeigt dort systembedingt
+  weniger an, obwohl die Lautheit gleich ist.
+
 ## [2.6.0] - 2026-07-30
 
 ### Added

@@ -181,7 +181,7 @@ try {
     const outputNeedle = "out <- float<2> (sample, sample);";
     if (!source.includes(outputNeedle)) throw new Error("Stereo test output site not found");
     source = source.replace(outputNeedle,
-      "out <- float<2> (abs (cleanVoice) < 0.0000000001f ? 0.0f : cleanVoice, sample);");
+      "out <- float<2> (abs (cleanVoice * instrumentMakeup) < 0.0000000001f ? 0.0f : cleanVoice * instrumentMakeup, sample);");
     const mainNeedle = "graph Acidify [[ main ]]";
     if (!source.includes(mainNeedle)) throw new Error("Production main graph not found");
     source = `${source.replace(mainNeedle, "graph Acidify")}${harness}`;
