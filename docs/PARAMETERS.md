@@ -147,6 +147,8 @@ zusammengepackt.
 unverändert). Gespeicherte dB-Werte alter Presets bleiben gültig;
 normalisierte Host-Automation von `param8` skaliert durch den neuen
 Endwert neu. Die Distortion-Autogain-Tabellen sind seit 2.9.0 auf
-A-bewichtete Lautheit gefittet (statt Roh-RMS), PHONO ist ein
-Emphasis-Clipper (Pre-Emphasis → Overload → De-Emphasis) und PURE
-fährt den Shaper drive-abhängig an — Details in docs/VALIDATION.md.
+A-bewichtete Lautheit gefittet (statt Roh-RMS) und PURE fährt den
+Shaper drive-abhängig an. PHONO ist seit 2.10.0 der recherchierte
+Vorverstärker-Overdrive: übersteuerte MM-Stufe (bis +40 dB) →
+RIAA-Wiedergabekurve → 25-Hz-Infraschallfilter — Details in
+docs/VALIDATION.md.
