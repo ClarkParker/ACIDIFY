@@ -6,6 +6,27 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.10.0] - 2026-07-30
+
+### Fixed
+
+- **PHONO klingt jetzt wie ein übersteuerter Phono-VORVERSTÄRKER**
+  (recherchierte Topologie): Beim echten MM-Pre sitzt das
+  RIAA-Netzwerk in der Gegenkopplung der Verstärkerstufe — steckt man
+  Line-Pegel in den Millivolt-Eingang (~40 dB zu heiß), clippt ZUERST
+  die Stufe, und die Wiedergabekurve (Bass +20 dB, Höhen −20 dB)
+  formt das GECLIPPTE Signal: dunkler, bassiger, wolliger Overdrive.
+  Der 2.9.0-Aufbau (Pre-Emphasis → Clip → De-Emphasis) war die
+  SCHNEIDKETTE — heller Grit, kein Vorverstärker; der Nutzerhinweis
+  war korrekt. Neue Kette: übersteuerte Stufe (bis +40 dB) →
+  RIAA-Wiedergabe → Infraschall-Filter (25-Hz-Butterworth 2. Ordnung,
+  wie das Rumble-Filter echter Phono-Stufen — fängt die Bassanhebung
+  auf geclipptem Material ab). A-bewichtete Autogain-Tabelle neu
+  gefittet: PHONO Drive 0,35 → +0,11 dB, Drive 1,0 → +0,13 dB zur
+  Raw-Spur; 60-s-Dauerlauf stabil. Nebeneffekt: das inverse Filter
+  aus 2.9.x entfällt komplett — die Klasse „grenzstabiler Pol" ist
+  strukturell weg.
+
 ## [2.9.4] - 2026-07-30
 
 ### Added

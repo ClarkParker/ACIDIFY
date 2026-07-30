@@ -46,7 +46,7 @@ Distortion-Typen:
 |---:|---|---|
 | 0 | `PURE` | Airwindows PurestDrive, subtil und pegelabhängig |
 | 1 | `MACKIE` | Airwindows Mackity, pre-VLZ-1202-Eingangspfad |
-| 2 | `PHONO` | RIAA-Emphasis-Clipper: Schneidkennlinie → Overload → Wiedergabekurve |
+| 2 | `PHONO` | Phono-Vorverstärker-Overdrive: übersteuerte MM-Stufe → RIAA-Wiedergabe → Infraschallfilter |
 
 `param45..param48` wurden in 0.5.0 ausschließlich angehängt. `param49` wurde in
 0.6.0 ebenfalls append-only ergänzt; der Initialwert `Internal` bewahrt das

@@ -1,3 +1,25 @@
+# Validierung 2.10.0
+
+## 2.10.0
+
+PHONO als Vorverstärker-Overdrive (Clip → RIAA-Wiedergabe →
+25-Hz-Subsonic) neu vermessen: Baseline ohne Tabelle A-rel −8,23
+(Drive 0,1) … −3,80 dB (Drive 1,0); nach Refit (Tabelle
+2,5793…1,5022, Peak-Kappe nur am obersten Punkt) A-rel +0,11 dB
+(Drive 0,35) und +0,13…−0,27 dB (Drive 1,0, event-getrieben bzw.
+state-gepatcht), Peaks ≤ 0,74 = Raw-Peak. PURE/MACKIE unverändert
+(+0,04/+0,19 dB). 60-s-Dauerlauf event-getrieben stabil (RMS
+0,163…0,168, keine nicht-endlichen Samples); das inverse Filter aus
+2.9.x ist entfernt, damit existiert kein grenzstabiler Pol mehr.
+Quellen der Topologie-Recherche in CHANGELOG/Bericht (RIAA im
+Feedback der MM-Stufe, Line-in-Phono-Überlastung, Infraschallfilter).
+Batterie grün: Serien-Smoke bit-identisch 0,69105, dsp_gain/matrix/
+arp/articulation/transport, Messstand alle Prüfsteine, partcheck
+28/28, Lints strict, ui_smoke 3/3. Neue Hörbeweise (PHONO Drive 0,5
+und 1,0) an den Nutzer geliefert.
+
+---
+
 # Validierung 2.9.4
 
 ## 2.9.4

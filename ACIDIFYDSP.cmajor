@@ -324,13 +324,15 @@ processor AcidifyCore
     float64 riaaX2 = 0.0;
     float64 riaaY1 = 0.0;
     float64 riaaY2 = 0.0;
-    float64 recX1 = 0.0;
-    float64 recX2 = 0.0;
-    float64 recY1 = 0.0;
-    float64 recY2 = 0.0;
-    float64 recD0 = 1.0;
-    float64 recD1 = 0.0;
-    float64 recD2 = 0.0;
+    float64 subB0 = 1.0;
+    float64 subB1 = 0.0;
+    float64 subB2 = 0.0;
+    float64 subA1 = 0.0;
+    float64 subA2 = 0.0;
+    float64 subX1 = 0.0;
+    float64 subX2 = 0.0;
+    float64 subY1 = 0.0;
+    float64 subY2 = 0.0;
 
     int sequenceCountdown = 0;
     int gateCountdown = 0;
@@ -459,19 +461,20 @@ processor AcidifyCore
         riaaA1 = d1 / d0;
         riaaA2 = d2 / d0;
 
-        // Pre-Emphasis-Nenner (2.9.2): Die Wiedergabe-Nullstellen liegen in
-        // q = z^-1 bei q = -1 (exakt Nyquist) und q2 = -(1+z2)/(1-z2). Die
-        // nackte Inverse haette damit einen z-Pol AUF dem Einheitskreis
-        // (grenzstabil) — im Dauerbetrieb ein Risiko. Der Nyquist-Pol wird
-        // auf z = -0,995 ins Innere gedaempft; in q heisst das
-        // q = -1/0,995 (Betrag > 1!). Ungedaempft (dampQ = 1) fallen
-        // recD0/1/2 exakt auf riaaB0/1/2; die Abweichung betrifft nur das
-        // oberste Band der 4x-Rate.
-        let q2 = -(1.0 + z2) / (1.0 - z2);
-        let dampQ = 1.0 / 0.995;
-        recD2 = riaaB2;
-        recD1 = riaaB2 * (dampQ - q2);
-        recD0 = -riaaB2 * dampQ * q2;
+        // Subsonic-Filter (2.10.0): 2. Ordnung Butterworth-Hochpass bei
+        // 25 Hz, wie das Infraschall-/Rumble-Filter echter Phono-Stufen.
+        // Er faengt die +20-dB-Bassanhebung der Wiedergabekurve auf
+        // geclipptem Material ab.
+        let w0 = float64 (twoPi) * 25.0 / rate;
+        let cw = cos (w0);
+        let sw = sin (w0);
+        let alpha = sw / (2.0 * 0.70710678);
+        let a0 = 1.0 + alpha;
+        subB0 = ((1.0 + cw) / 2.0) / a0;
+        subB1 = (-(1.0 + cw)) / a0;
+        subB2 = ((1.0 + cw) / 2.0) / a0;
+        subA1 = (-2.0 * cw) / a0;
+        subA2 = (1.0 - alpha) / a0;
     }
 
     // Koppelnetz aus Stinchcombes vollstaendiger Uebertragungsfunktion
@@ -604,32 +607,35 @@ processor AcidifyCore
 
     float processPhono (float signal, float drive)
     {
-        // Emphasis-Clipper (2.9.0): RIAA-Schneidkennlinie (Pre-Emphasis,
-        // inverse Wiedergabekurve) VOR die Ueberladung, RIAA-Wiedergabe
-        // dahinter. Vorher lief die nackte Wiedergabekurve hinter dem
-        // tanh — Ergebnis war ein dumpfes, extrem leises Basswummern
-        // (A-bewichtet -9..-12 dB zur Raw-Spur). Jetzt bleibt die
-        // Klangbalance erhalten (Aufnahme- und Wiedergabekurve heben sich
-        // im Kleinsignal exakt auf), die Saettigung greift vor allem in
-        // den angehobenen Hoehen — der klassische Vinyl-Overdrive.
+        // Phono-VORVERSTAERKER-Overdrive (2.10.0, recherchierte Topologie):
+        // Beim echten MM-Pre sitzt das RIAA-Netzwerk in der Gegenkopplung
+        // der Verstaerkerstufe. Line-Pegel in den Millivolt-Eingang ist
+        // ~40 dB zu heiss — es clippt ZUERST die Stufe, und die
+        // Wiedergabekurve (Bass +20 dB, Hoehen -20 dB) formt das
+        // GECLIPPTE Signal: dunkler, bassiger, wolliger Overdrive.
+        // Danach das Infraschall-Filter, wie es echte Phono-Stufen gegen
+        // Rumpeln fuehren — es faengt die Bassanhebung auf geclipptem
+        // Material ab. Die 2.9.0-Reihenfolge (Pre-Emphasis -> Clip ->
+        // De-Emphasis) war die SCHNEIDKETTE, kein Vorverstaerker.
         let x = float64 (signal) * pedalGain;
-        let emphasized = (x + riaaA1 * recX1 + riaaA2 * recX2
-                          - recD1 * recY1 - recD2 * recY2) / recD0;
-        recX2 = recX1;
-        recX1 = x;
-        recY2 = recY1;
-        recY1 = emphasized;
-        let preGain = pow (10.0, 1.2 * float64 (drive));
-        let overloaded = tanh (emphasized * preGain);
+        let preGain = pow (10.0, 2.0 * float64 (drive));
+        let overloaded = tanh (x * preGain);
         let colored = riaaB0 * overloaded + riaaB1 * riaaX1 + riaaB2 * riaaX2
                     - riaaA1 * riaaY1 - riaaA2 * riaaY2;
         riaaX2 = riaaX1;
         riaaX1 = overloaded;
         riaaY2 = riaaY1;
         riaaY1 = colored;
-        // Kleinsignal: deemph(tanh(emph*P))/P ≈ x — Aktivieren springt nicht.
-        // Die A-bewichtete Restkorrektur liegt in den Autogain-Tabellen.
-        return float (colored / preGain / pedalGain);
+        let cleaned = subB0 * colored + subB1 * subX1 + subB2 * subX2
+                    - subA1 * subY1 - subA2 * subY2;
+        subX2 = subX1;
+        subX1 = colored;
+        subY2 = subY1;
+        subY1 = cleaned;
+        // Grundpegel aus der alten RMS-Messung derselben Topologie;
+        // die A-bewichtete Feinkorrektur liegt in der Autogain-Tabelle.
+        let base = 0.076 * (1.0 + 3.6 / preGain);
+        return float (cleaned * base / pedalGain);
     }
 
     // Vorkalkuliertes Autogain (2.7.0): Rest-Abweichung der drei Modi zur
@@ -640,7 +646,7 @@ processor AcidifyCore
     const float[7] distCorrDrive = (0.1f, 0.25f, 0.35f, 0.5f, 0.65f, 0.8f, 1.0f);
     const float[7] distCorrPure  = (1.0174f, 1.0977f, 1.1803f, 1.3521f, 1.6051f, 1.9770f, 2.7542f);
     const float[7] distCorrMack  = (1.3804f, 1.9454f, 2.1727f, 2.2491f, 2.1928f, 2.1306f, 2.0989f);
-    const float[7] distCorrPhono = (1.1722f, 1.3122f, 1.4454f, 1.7179f, 2.1135f, 2.6730f, 3.7975f);
+    const float[7] distCorrPhono = (2.5793f, 2.4491f, 2.3254f, 2.1135f, 1.9165f, 1.7239f, 1.5022f);
 
     float distCorrAt (int type, int index)
     {
