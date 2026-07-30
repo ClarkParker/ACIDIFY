@@ -291,6 +291,18 @@ try {
     throw new Error(`Wheel steps failed: ${JSON.stringify(wheelChecks)}`);
   }
 
+  const masterReset = await patchView.evaluate(node => {
+    node._controls.get("param8").setValue(-12, true);
+    node.querySelector('.control[data-param="param8"] .dial')
+      .dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    const reset = Number(node._values.get("param8"));
+    node._controls.get("param8").setValue(-6, true);
+    return reset;
+  });
+  if (masterReset !== 0) {
+    throw new Error(`Master double-click should reset to 0 dB, got ${masterReset}`);
+  }
+
   const darkOn = await patchView.evaluate(node => {
     node.querySelector(".theme-toggle").click();
     return {

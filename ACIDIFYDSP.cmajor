@@ -328,6 +328,9 @@ processor AcidifyCore
     float64 recX2 = 0.0;
     float64 recY1 = 0.0;
     float64 recY2 = 0.0;
+    float64 recD0 = 1.0;
+    float64 recD1 = 0.0;
+    float64 recD2 = 0.0;
 
     int sequenceCountdown = 0;
     int gateCountdown = 0;
@@ -455,6 +458,20 @@ processor AcidifyCore
         riaaB2 = normalise * (1.0 - z2) / d0;
         riaaA1 = d1 / d0;
         riaaA2 = d2 / d0;
+
+        // Pre-Emphasis-Nenner (2.9.2): Die Wiedergabe-Nullstellen liegen in
+        // q = z^-1 bei q = -1 (exakt Nyquist) und q2 = -(1+z2)/(1-z2). Die
+        // nackte Inverse haette damit einen z-Pol AUF dem Einheitskreis
+        // (grenzstabil) — im Dauerbetrieb ein Risiko. Der Nyquist-Pol wird
+        // auf z = -0,995 ins Innere gedaempft; in q heisst das
+        // q = -1/0,995 (Betrag > 1!). Ungedaempft (dampQ = 1) fallen
+        // recD0/1/2 exakt auf riaaB0/1/2; die Abweichung betrifft nur das
+        // oberste Band der 4x-Rate.
+        let q2 = -(1.0 + z2) / (1.0 - z2);
+        let dampQ = 1.0 / 0.995;
+        recD2 = riaaB2;
+        recD1 = riaaB2 * (dampQ - q2);
+        recD0 = -riaaB2 * dampQ * q2;
     }
 
     // Koppelnetz aus Stinchcombes vollstaendiger Uebertragungsfunktion
@@ -597,7 +614,7 @@ processor AcidifyCore
         // den angehobenen Hoehen — der klassische Vinyl-Overdrive.
         let x = float64 (signal) * pedalGain;
         let emphasized = (x + riaaA1 * recX1 + riaaA2 * recX2
-                          - riaaB1 * recY1 - riaaB2 * recY2) / riaaB0;
+                          - recD1 * recY1 - recD2 * recY2) / recD0;
         recX2 = recX1;
         recX1 = x;
         recY2 = recY1;
@@ -623,7 +640,7 @@ processor AcidifyCore
     const float[7] distCorrDrive = (0.1f, 0.25f, 0.35f, 0.5f, 0.65f, 0.8f, 1.0f);
     const float[7] distCorrPure  = (1.0174f, 1.0977f, 1.1803f, 1.3521f, 1.6051f, 1.9770f, 2.7542f);
     const float[7] distCorrMack  = (1.3804f, 1.9454f, 2.1727f, 2.2491f, 2.1928f, 2.1306f, 2.0989f);
-    const float[7] distCorrPhono = (1.2589f, 1.4962f, 1.7418f, 2.2988f, 3.1477f, 4.4157f, 5.3123f);
+    const float[7] distCorrPhono = (1.1722f, 1.3122f, 1.4454f, 1.7179f, 2.1135f, 2.6730f, 3.7975f);
 
     float distCorrAt (int type, int index)
     {

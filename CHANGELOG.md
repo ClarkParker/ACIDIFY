@@ -6,6 +6,41 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.9.2] - 2026-07-30
+
+### Fixed
+
+- **Vollrevision des Distortion-Signalpfads nach Live-Diskrepanz-
+  Verdacht**: Der komplette Pfad wurde erstmals über den ECHTEN
+  Host-Weg verifiziert — Parameter als Events in den
+  Produktions-Graphen (statt Zustands-Patches im Testharness), bei
+  44,1/48/96 kHz, plus 60-Sekunden-Dauerläufe. Ergebnis: Event-Pfad
+  und State-Pfad sind identisch, alle Raten konsistent. Dabei wurde
+  die 2.9.0-Pre-Emphasis mathematisch gehärtet: Die
+  RIAA-Wiedergabekurve hat eine Nullstelle exakt bei Nyquist
+  (z = −1); ihre Inverse hätte dort einen grenzstabilen Pol AUF dem
+  Einheitskreis. Der Pol liegt jetzt bei z = −0,995 im Inneren
+  (Achtung Domäne: in q = z⁻¹ heißt das −1/0,995 — der erste
+  Fixversuch mit q = −0,995 hätte einen INSTABILEN z-Pol bei −1,005
+  erzeugt und wurde messtechnisch gefangen). PHONO-Autogain-Tabelle
+  auf den gedämpften Filter neu gefittet; die Peak-Kappe bei
+  Drive 1,0 entfällt (jetzt +0,24 dB statt −2,6 dB Rest).
+- **Neuer Dauertest `tools/dsp_gain_test.mjs`** (läuft in der
+  Batterie): rendert Raw + alle drei Modi über den Event-Pfad und
+  prüft die A-bewichtete Lautheit gegen die Raw-Spur (±1 dB) sowie
+  Peak-Decke und Endlichkeit — die Modi-Angleichung kann nie wieder
+  nur auf dem Papier stimmen.
+- **Doppelklick auf den Master-Knopf setzt jetzt auf 0 dB** (vorher
+  auf den Initialwert −6 dB); alle anderen Regler behalten ihren
+  Init-Reset. Neues optionales `resetValue` im Control-Vertrag.
+
+### Hinweis
+
+- Wer im Plugin weiterhin den alten (dumpf-leisen) PHONO-Klang hört,
+  spielt einen veralteten Patch-Build: Die GUI zeigt die Version im
+  Brand-Panel (v2.9.2) — bei Abweichung den Patch in Amorph neu
+  laden/kompilieren.
+
 ## [2.9.1] - 2026-07-30
 
 ### Added

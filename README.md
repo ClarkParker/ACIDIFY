@@ -5,12 +5,12 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **DSP+UI 2.9.1 — Silver Series**. Clean-Core,
+> Status: **DSP+UI 2.9.2 — Silver Series**. Clean-Core,
 > 50-Parameter-Vertrag, Amorph-`transportIn`-Sync, sicherer Internal-Fallback,
 > Swing und drei getrennte Post-Stufen sind implementiert und automatisiert
 > geprüft. Studio ergänzt skalenbewusstes Generate/Mutate, Reverse, Pitch Mirror
 > und eine Bass-Line-Kontur in der Matrix. Der Nutzer hat den vorigen 0.6.4-Build in Amorph als
-> grundsätzlich passend bestätigt; der neue 2.9.1-Build muss für die
+> grundsätzlich passend bestätigt; der neue 2.9.2-Build muss für die
 > abschließende Produktbestätigung erneut in Amorph und der Ziel-DAW getestet
 > werden. Die Bezeichnung „AAA Clone“ bleibt bis zu kalibrierten
 > Hardware-Captures und Blindtests ausdrücklich ein Ziel, kein bereits
@@ -33,6 +33,7 @@ Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 - `tools/dsp_matrix_test.mjs` – vergleicht Clean- und Effektpfad im selben Render
 - `tools/dsp_articulation_test.mjs` – prüft Slide, Retrigger und gehaltene Noten
 - `tools/dsp_transport_test.mjs` – prüft interne und DAW-geführte Step-Uhr
+- `tools/dsp_gain_test.mjs` – A-bewichteter Lautheitsabgleich der Distortion über den Host-Event-Pfad
 - `tools/bench/` – Messstand für Filtergang, Aliasing, Pegel und UI-Ergonomie
 - `tools/check_version.py` – prüft konsistente Versionsmetadaten
 

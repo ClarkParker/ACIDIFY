@@ -1,3 +1,28 @@
+# Validierung 2.9.2
+
+## 2.9.2
+
+Live-Pfad-Verifikation: Parameter als Events in den
+Produktions-Graphen (Host-Weg) vs. Zustands-Patches — identische
+Ergebnisse; Raten 44,1/48/96 kHz konsistent; 60-s-Dauerlauf PHONO
+event-getrieben stabil (RMS 0,0588…0,0595 über sechs
+10-s-Segmente, keine nicht-endlichen Samples). Pol-Analyse der
+Pre-Emphasis: Wiedergabe-Nullstellen in q = z⁻¹ bei −1 (Nyquist)
+und q2 = −(1+z2)/(1−z2); Inverse gedämpft auf z-Pol −0,995
+(q = −1/0,995). Der erste Fixversuch (q = −0,995 → z-Pol −1,005,
+instabil) wurde durch die Messung gefangen: state-gepatcht
+−14,64 dB A-rel — Beleg, dass der Messstand echte Fehler findet.
+Nach Korrektur und Phono-Refit (Tabelle 1,1722…3,7975):
+`dsp_gain_test` A-rel +0,04 (PURE 0,35), +0,19 (MACKIE 0,35),
++0,10 (PHONO 0,35), +0,24 dB (PHONO 1,0) — alle über den
+Event-Pfad, Peak-Decke eingehalten. Master-Doppelklick-Reset auf
+0 dB per ui_smoke belegt (−12 → Doppelklick → 0). Batterie grün:
+Serien-Smoke bit-identisch 0,69105, matrix/arp/articulation/
+transport, Messstand alle Prüfsteine, partcheck 28/28, Lints
+strict, ui_smoke 3/3.
+
+---
+
 # Validierung 2.9.1
 
 ## 2.9.1

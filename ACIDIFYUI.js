@@ -11,7 +11,7 @@ const ACIDIFY_GLOBALS = [
   { id: "param5",  type: "dial",    label: "DECAY",        min: 0,  max: 1,   step: 0.001, init: 0.45, format: v => `${Math.round(v * 100)}` },
   { id: "param6",  type: "dial",    label: "ACCENT",       min: 0,  max: 1,   step: 0.001, init: 0.65, format: v => `${Math.round(v * 100)}` },
   { id: "param7",  type: "toggle",  label: "WAVEFORM",     min: 0,  max: 1,   step: 1, init: 0 },
-  { id: "param8",  type: "dial",    label: "VOLUME",       min: -36, max: 6,  step: 0.1, init: -6,    format: v => `${v.toFixed(1)} dB` },
+  { id: "param8",  type: "dial",    label: "VOLUME",       min: -36, max: 6,  step: 0.1, init: -6,    resetValue: 0, format: v => `${v.toFixed(1)} dB` },
   { id: "param9",  type: "dial",    label: "TEMPO",        min: 40, max: 300, step: 0.01, coarseStep: 0.1, init: 128, format: formatTempo },
   { id: "param10", type: "toggle",  label: "RUN",          min: 0,  max: 1,   step: 1, init: 0 },
   { id: "param11", type: "stepper", label: "LENGTH",       min: 1,  max: 16,  step: 1, init: 16,      format: v => `${Math.round(v)}` },
@@ -258,7 +258,7 @@ class DialControl {
       if (this.isDisabled()) return;
       this.pc.sendParameterGestureStart?.(this.config.id);
       this.showFeedback();
-      this.setValue(this.config.init, true);
+      this.setValue(this.config.resetValue ?? this.config.init, true);
       this.pc.sendParameterGestureEnd?.(this.config.id);
     };
     this.onWheel = e => {
@@ -5701,7 +5701,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.9.1</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.9.2</span></div>
         </div>
       </header>
       <div class="osc-cell">
