@@ -454,3 +454,29 @@ versionierte DF-Handbuch) wurden vollständig gegen das Modell gelesen.
   597 Hz ≥ 500 (der 10-ms-Lag-Fehlerfall läge weiter bei ~221 Hz).
 - **Folgekorrektur:** Autogain-Refit auf dem Totzonen-Spektrum;
   Smoke-Referenz Peak 0,509 / RMS 0,0182.
+
+## Umsetzung 2.17.1 — Rolands Abgleichseiten gelesen (Korrektur zweier Behauptungen)
+
+Beschämender, aber wichtiger Fund auf Nachfrage des Projektinhabers:
+Die Roland-ABGLEICHSEITEN 6/7 (150 dpi, seit 363ca8d im Repo) waren
+nie im Volltext gelesen worden. Sie korrigieren zwei Aussagen:
+
+- **TM5 „WIDTH" ist KEIN Pulsbreiten-Trim.** Roland S. 7, VCO:
+  „Check point: Q28 source or S1 WAVEFORM terminal … While tapping CL
+  and CH keys alternately, adjust TM5 WIDTH for 2:1 waveforms … Press
+  A key and adjust TM4 for 110 Hz. Confirm 4:1 ± 0.5 % with CL and CH
+  + TRANSPOSE UP." TM5 stellt die OKTAVBREITE (1-V/Okt-Skala) am
+  Sägezahn ein — deckungsgleich mit der x0x-Prozedur. Damit ist die
+  Duty des Rechtecks SCHALTUNGSBESTIMMT; ihre Herleitung blockiert
+  allein an der ungelösten Schwellen-DC-Kette (A4), nicht an einem
+  „Werksabgleich ohne Sollwert". Der 46,88-%-Messwert bleibt Anker.
+- **TM3-Spez direkt aus Roland belegt.** S. 7, VCF: „Check point:
+  TP6. CUTOFF FREQ: center, WAVEFORM: SAWTOOTH, RES: full clockwise,
+  ENV MOD/DECAY/ACC: full counterclockwise. Adjust TM3 for
+  [Ausschwingen] 2 ms ± 0,5 ms" — also 400–666 Hz. Das Modell misst
+  457,8 Hz = 2,18 ms Periode: MITTEN in Rolands Werkstoleranz. Der
+  Stimmvorschrift-Anker steht damit direkt auf Rang 1 (bisher über
+  das Fabmanual-Zitat).
+- Ergänzend belegt: TM6-Prozedur 1,000 V ± 3 mV/Okt (CV-Ausgang) und
+  TM1/TM2 (Tempo 8 ms ± 1 ms, INT-Clock 1,8 ms ± 0,2 ms) — im Modell
+  ideal (Sequencer exakt, CV ideal), als perfekt abgeglichene Trims.

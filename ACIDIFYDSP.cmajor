@@ -2582,7 +2582,11 @@ processor AcidifyCore
             // Saw-Reset zusammen. HIGH liegt deshalb im LETZTEN Abschnitt
             // der Periode. Duty 46,88 % bleibt Messwert-Anker (Open303-
             // Messung; Fabmanual bestaetigt „isnt 50% duty cycle" — die
-            // exakte Duty ist Werksabgleich TM5 „WIDTH").
+            // exakte Duty ist schaltungsbestimmt; die Herleitung blockiert nur
+            // an der ungeloesten Schwellen-DC-Kette (A4). KORREKTUR 2.17.1:
+            // TM5 "WIDTH" ist laut Roland-Abgleichseite 7 der
+            // OKTAVBREITEN-Trim des VCO (2:1-Wellenformen CL/CH am
+            // Q28-Source), KEIN Pulsbreiten-Trim.
             const float squareDuty = 0.4687857f;
             const float squareTopRise = 0.38f;   // 19 % von Vss in +-1-Einheiten
             let highStart = 1.0f - squareDuty;

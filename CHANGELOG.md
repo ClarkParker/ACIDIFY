@@ -6,6 +6,23 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.17.1] - 2026-07-31
+
+### Fixed (Dokumentation/Begründungen — kein DSP-Eingriff)
+
+- **Rolands Abgleichseiten 6/7 erstmals im Volltext gelesen** (lagen
+  seit 363ca8d im Repo) — zwei Behauptungen korrigiert:
+  **TM5 „WIDTH" ist der Oktavbreiten-Trim des VCO** (Roland S. 7:
+  „adjust TM5 WIDTH for 2:1 waveforms", Messpunkt Q28-Source), KEIN
+  Pulsbreiten-Trim — die Rechteck-Duty ist damit schaltungsbestimmt
+  und ihre Herleitung blockiert allein an der Schwellen-DC-Kette;
+  „prinzipbedingt Werksabgleich" war falsch. Und: **die
+  TM3/500-Hz-Stimmvorschrift steht jetzt direkt auf Rang 1** (Roland
+  S. 7: Ausschwingen 2 ms ± 0,5 ms = 400–666 Hz; Modell 457,8 Hz =
+  2,18 ms, mitten in der Werkstoleranz). Ergänzend belegt: TM6
+  1,000 V ± 3 mV/Okt, TM1/TM2-Timings. Quelltextkommentar,
+  SCHEMATIC_COVERAGE, THIRD_PARTY_NOTICES und OPEN_ITEMS angeglichen.
+
 ## [2.17.0] - 2026-07-31
 
 ### Fixed

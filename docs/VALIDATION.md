@@ -1,3 +1,15 @@
+# Validierung 2.17.1
+
+## 2.17.1
+
+Reines Doku-/Begründungs-Release nach Volltextlesung der
+Roland-Abgleichseiten 6/7: TM5 = Oktavbreiten-Trim (nicht Duty), TM3 =
+2 ms ± 0,5 ms Ausschwingen (Modell 2,18 ms ∈ Toleranz), TM6 = 1,000 V
+± 3 mV/Okt. Kein DSP-Eingriff: Serien-Smoke bit-identisch
+Peak 0,50919 / RMS 0,01821; Lints grün; ui_smoke grün (Brand-Span).
+
+---
+
 # Validierung 2.17.0
 
 ## 2.17.0

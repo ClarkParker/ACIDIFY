@@ -20,7 +20,7 @@ gerätegebundene Kalibrierungen, keine Schöpfung):
 
 | Wert | Stelle | Status |
 |---|---|---|
-| Rechteck-Duty `46,88 %` + Halbpegel | VCO-Shaper | Anker des 2.13.0-Former-Modells (Form aus Schaltung + Scope hergeleitet; TM5 „WIDTH" ist Werksabgleich, die Duty bleibt Messwert) |
+| Rechteck-Duty `46,88 %` + Halbpegel | VCO-Shaper | Anker des 2.13.0-Former-Modells (Form aus Schaltung + Scope hergeleitet; Duty schaltungsbestimmt, Herleitung blockiert an der Schwellen-DC-Kette — Messwert bleibt Anker) |
 | Accent-VCA-Gewicht `4.0` | ampControl-Pfad | gerätekalibrierter Fit als Anker; die Steuerkette ist vollständig netzverfolgt (2.16.0), aber Sum-/Max-Lesart am Raster nicht eindeutig — die 2.14.0-„Herleitung" (6,0) wurde als überkonfident zurückgenommen |
 | Accent-Amp-Release `50 ms` | VCA-Hüllkurve | Messwert-Anker; die Schaltungsherleitung liefert nur ein Intervall (1,55 ms … MEG-Fortlauf, siehe Quelltextkommentar) |
 

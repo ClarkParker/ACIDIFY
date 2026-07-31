@@ -13,7 +13,7 @@ geschlossen (2.16.0):
 - A1 Accent-Release: Steuerkette vollständig verfolgt (R119 →
   BA662-Steuerpin), 50 ms bleibt publizierter Messanker im
   hergeleiteten Intervall. GESCHLOSSEN (Anker).
-- A2 Duty 46,88 %: prinzipbedingt Messwert (TM5 Werksabgleich).
+- A2 Duty 46,88 %: Messwert-Anker; KORREKTUR 2.17.1: schaltungsbestimmt (TM5 ist der Oktavbreiten-Trim, kein Duty-Trim) — Herleitung blockiert allein an A4.
   GESCHLOSSEN.
 - A3 kMax: per Selbstoszillations-Messung entschieden — Serienlesart
   bestätigt, Faktor 2 = Devil-Fish-Mod. GESCHLOSSEN (gemessen).

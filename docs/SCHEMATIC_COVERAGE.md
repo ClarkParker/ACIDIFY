@@ -22,10 +22,10 @@
 |---|---|---|
 | Expo-Wandler Q26 (2SC1583) + R104 2,2 k/R45 22 k | U | ideal-exponentiell 1 Okt/V (Zeichnungsangabe „WIDTH: 1 OCT/VOLT") |
 | Posistor R100 560 Ω (Temp.-Kompensation) | X | Sollverhalten = kompensiert; bei Solltemperatur kein Klangfaktor (K3) |
-| TM4 „TUNE" | U | Tuning-Parameter (param1); Werksabgleich als idealer Trim |
+| TM4 „TUNE" (110 Hz, A-Taste) + TM5 „WIDTH" (V/Okt: 2:1 CL/CH, 4:1 ±0,5 % mit Transpose; Roland S. 7) | U | Tuning-Parameter (param1) bzw. ideale 1-V/Okt-Skala = perfekt abgeglichener Trim |
 | Sägezahnkern (C34 1 nF, Reset-One-Shot Q8/R34/R35/C10/C11) | U/A | fallende Rampe, Reset 300 µs Halbkosinus — Scope-vermessen (Fabmanual S. 8: 11,25→6,09 V, Tip rund); Rampe im auswertbaren Bereich gerade |
 | Sägezahn-Puffer Q28 (2SK30) + R105 10 k | U | Pegelanker 5,17 Vss am Abgriff R105/Q28 (x0x-vcfmods) → ladderDriveRef |
-| Rechteck-Former Q24/Q25/Q27/D25, R101/R106/R118, TM5 | U/A | Topologie netzverfolgt (Schmitt, 2.13.0); Tiefpegel flach, Dach +19 % Vss, Flanke auf Saw-Reset (Scope); Duty 46,88 % = Messwert-Anker, TM5 ist Werksabgleich |
+| Rechteck-Former Q24/Q25/Q27/D25, R101/R106/R118 | U/A | Topologie netzverfolgt (Schmitt, 2.13.0); Tiefpegel flach, Dach +19 % Vss, Flanke auf Saw-Reset (Scope); Duty 46,88 % = Messwert-Anker (schaltungsbestimmt, Herleitung blockiert an A4 — KORREKTUR 2.17.1: TM5 „WIDTH" ist der Oktavbreiten-Trim, kein Duty-Trim) |
 | Schwellen-DC-Kette D30/D31/R107 (ab TP4) | A | Kette identifiziert (TP4 − 2 Diodenstrecken); DC-Auflösung am Raster nicht eindeutig — Duty/Pegel/Dachanstieg tragen als Messanker (Analyse: SOUND_GAP_ANALYSIS „Umsetzung 2.13.0/2.16.0") |
 | Wellenformschalter + C17/R62 220 k in die Leiter | U | Eingangsstrom-Herleitung (drive = (V/220k)/(2π·f_c·33n·52mV)) |
 
@@ -39,7 +39,7 @@
 | VR3 Cutoff 50k(A) | U | A-Taper, kalibriert an der Roland-Stimmvorschrift (457,8 Hz gemessen, Soll 500 ± 100) |
 | VR5 Env Mod 50k(A) + Q9-Bias-„Gimmick" | U | Servicenotes S. 8; exponent = envScaler·(env − 0,327), Ausklang-Monotonie in CI |
 | R97/C23/R94-Netz am Antilog | U | KORRIGIERT 2.16.1: C23 = Emitter-Bypass der Antilog-Quelle (Q18, R94 10 k gegen GND, Grenze ~16 Hz) — hält die CV schnell; die 2.13.0-Lesart „10-ms-CV-Glättung" war falsch und ist entfernt. Attack-Checkpoint in CI |
-| TM3 „FREQ" 470 k | U | Endpunkt-Kalibrierung 312,5/2500 Hz (K4; Werksabgleich als Endwert) |
+| TM3 „FREQ" 470 k | U | Roland-Originalspez direkt belegt (S. 7): Ausschwingen 2 ms ± 0,5 ms bei Cutoff Mitte/Reso max = 400–666 Hz; Modell gemessen 457,8 Hz = 2,18 ms ∈ Werkstoleranz; Endpunkte 312,5/2500 Hz |
 | Accent-Sweep D24/R46 47 k/C13 1 µF an VR4 | U | nodales Modell mit persistentem C13 (Wow/Aufbau über Folgen) |
 
 ## Hüllkurven (Seite 5)
