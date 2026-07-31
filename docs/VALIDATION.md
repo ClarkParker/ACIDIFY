@@ -1,3 +1,22 @@
+# Validierung 2.11.2
+
+## 2.11.2
+
+Bank-Phrase-Zustand headless belegt: Step-Reihe opacity 0.45,
+Snapshot vor/nach Wheel+Dblclick+Pill+Kontextmenü identisch,
+Pitch-Menü bleibt geschlossen, Step-Tooltip nennt „bypassed and
+locked" samt Auswegen, Hint „PHRASE ERSETZT DAS PATTERN" ohne
+Overflow (scrollWidth ≤ clientWidth; der lange Erstentwurf maß
+213/178 px und wurde gekürzt). PHRASE-Taste: eigene Klasse,
+Hintergrund ungleich Figuren-Tasten, Amber-LED (#ffb84a) im
+Aktivzustand — hell und dunkel per Screenshot belegt. Phrase 00
+PATTERN entsperrt (Wheel editiert wieder, Hint zurück). Erster
+Testlauf fing zudem, dass der Hint von `_renderArpHeld`
+zurücküberschrieben wurde — Logik dorthin verlagert.
+`ui_smoke_test` grün, `ui_lint --strict` sauber. Kein DSP-Eingriff.
+
+---
+
 # Validierung 2.11.1
 
 ## 2.11.1

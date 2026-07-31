@@ -109,7 +109,11 @@ kuratierte Bank aus `tools/gen_phrases.py` (8 Kategorien: Octave, Acid,
 Synco, Slide, Accent, Zigzag, Rave, Electro; Phrasenlängen 8/16 Steps,
 Tonumfang −12…+24 Halbtöne, Gate/Accent/Slide pro Step kodiert). Bei
 mehreren gehaltenen Tasten wandert die Basisnote nach jedem
-Phrasendurchlauf zur nächsten Poolnote. Die Bank liegt als generierte
+Phrasendurchlauf zur nächsten Poolnote. Eine Bank-Phrase ersetzt die
+komplette Pattern-Maske (Pitch, Gate, Accent, Slide) — die 16
+Pattern-Steps sind dann wirkungslos; die UI dimmt die Step-Reihe,
+sperrt sie gegen stumme Edits und erklärt den Zustand per Tooltip
+(seit 2.11.2). Bei `param64 = 0` bleibt die Step-Reihe voll editierbar. Die Bank liegt als generierte
 Tabelle in DSP und UI (Marker `ARP-PHRASES-BEGIN/END`);
 `python3 tools/gen_phrases.py --check` prüft die Synchronität, die
 Referenzdaten stehen in `tools/data/arp_phrases.json`.

@@ -6,6 +6,36 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.11.2] - 2026-07-31
+
+### Changed
+
+- **PHRASE-Taste als Sondermodus hervorgehoben**: Die Bank-Phrase
+  ersetzt die komplette Pattern-Maske — deshalb setzt sich die Taste
+  jetzt als warme Messing-Taste mit Amber-LED von den 15 silbernen
+  Figuren-Tasten ab (hell und dunkel durchgestylt); der Tooltip
+  erklärt den Sondermodus.
+- **Step-Reihe im Bank-Phrase-Zustand konsequent gesperrt**: Die
+  Steps waren nur gedimmt, aber weiter editierbar — Änderungen waren
+  unhörbar (die Phrase liefert Pitch UND Gate/Accent/Slide). Mausrad,
+  Doppelklick, A/S-Pills und Rechtsklick-Notenwahl sind jetzt
+  gesperrt, der Step-Tooltip erklärt warum („bypassed and locked",
+  Ausweg: 00 PATTERN oder → PATTERN Capture), und der Hinweis unter
+  dem Capture-Button wechselt auf „PHRASE ERSETZT DAS PATTERN". Bei
+  Phrase 00 PATTERN und in allen anderen Arp-Figuren bleiben die
+  Steps voll editierbar, weil sie dort Gate/Accent/Slide (und bei
+  00 PATTERN auch die Tonhöhe) liefern — das ist der Grund für das
+  unterschiedliche Verhalten.
+- Tooltip der Steps bei Phrase 00 PATTERN präzisiert: der Step spielt
+  seine eigene Tonhöhe, transponiert durch die gehaltenen Tasten.
+
+### Tests
+
+- `ui_smoke_test`: Bank-Phrase-Sperre (Wheel/Dblclick/Pill/Kontextmenü
+  ändern nichts, Pitch-Menü bleibt zu), Tooltip-Inhalt, Hint-Wechsel
+  ohne Overflow, PHRASE-Tastenoptik (Klasse, abweichende Fläche,
+  Amber-LED), Entsperrung bei Phrase 00 (Wheel editiert wieder).
+
 ## [2.11.1] - 2026-07-31
 
 ### Fixed

@@ -890,6 +890,69 @@ try {
       || phrasePicked.display !== "ACID UP" || !phrasePicked.stripDimmed) {
     throw new Error(`Phrase selection failed: ${JSON.stringify(phrasePicked)}`);
   }
+  // 2.11.2: Bank-Phrase ersetzt die komplette Pattern-Maske — die Step-Reihe
+  // ist gegen stumme Edits gesperrt, und die PHRASE-Taste ist als Sondermodus
+  // (Messing-Optik, Amber-LED) von den 15 Figuren-Tasten abgesetzt.
+  const phraseLock = await page.locator("acidify-patch-view").evaluate(node => {
+    const step = node.querySelector('.sequence-step[data-step="2"]');
+    const before = JSON.stringify(node._stepSnapshot());
+    step.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+    step.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }));
+    step.querySelector(".pill-a").dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    step.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
+    const phraseButton = node.querySelector('.arp-direction [data-value="16"]');
+    const upButton = node.querySelector('.arp-direction [data-value="1"]');
+    return {
+      unchanged: JSON.stringify(node._stepSnapshot()) === before,
+      pitchMenuOpen: node._pitchMenuOpen,
+      tooltip: step.dataset.tooltip ?? "",
+      hint: node.querySelector(".arp-hint").textContent,
+      hintFits: node.querySelector(".arp-hint").scrollWidth <= node.querySelector(".arp-hint").clientWidth,
+      phraseClass: phraseButton.classList.contains("phrase-figure"),
+      distinctFace: getComputedStyle(phraseButton).backgroundImage !== getComputedStyle(upButton).backgroundImage,
+      amberLed: getComputedStyle(phraseButton, "::before").backgroundImage.includes("255, 184, 74"),
+    };
+  });
+  if (!phraseLock.unchanged || phraseLock.pitchMenuOpen
+      || !phraseLock.tooltip.includes("bypassed and locked")
+      || phraseLock.hint !== "PHRASE ERSETZT DAS PATTERN" || !phraseLock.hintFits
+      || !phraseLock.phraseClass || !phraseLock.distinctFace || !phraseLock.amberLed) {
+    throw new Error(`Phrase-bank lock failed: ${JSON.stringify(phraseLock)}`);
+  }
+  await page.locator(".arp-phrase-display").click();
+  await page.locator('.phrase-menu [data-phrase="0"]').click();
+  const phraseZero = await page.locator("acidify-patch-view").evaluate(node => {
+    node.__phrasePrevSelection = {
+      step: node._selectedStep,
+      steps: [...node._selectedSteps],
+      anchor: node._selectionAnchor,
+    };
+    const step = node.querySelector('.sequence-step[data-step="2"]');
+    const pitchBefore = node._stepSnapshot()[2].pitch;
+    step.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+    return {
+      dimmed: node.classList.contains("phrase-active"),
+      hint: node.querySelector(".arp-hint").textContent,
+      tooltip: step.dataset.tooltip ?? "",
+      edited: node._stepSnapshot()[2].pitch === pitchBefore + 1,
+    };
+  });
+  if (phraseZero.dimmed || phraseZero.hint !== "PATTERN GIBT GATE · ACCENT · SLIDE"
+      || !phraseZero.tooltip.includes("00 PATTERN") || !phraseZero.edited) {
+    throw new Error(`Phrase 00 PATTERN unlock failed: ${JSON.stringify(phraseZero)}`);
+  }
+  await page.locator("acidify-patch-view").evaluate(node => {
+    node._runStudioAction("undo");
+    const previous = node.__phrasePrevSelection;
+    node._selectedStep = previous.step;
+    node._selectedSteps = new Set(previous.steps);
+    node._selectionAnchor = previous.anchor;
+    delete node.__phrasePrevSelection;
+    node._renderStepStrip();
+    node._renderStepEditor();
+  });
+  await page.locator(".arp-phrase-display").click();
+  await page.locator('.phrase-menu [data-phrase="13"]').click();
   const beforeCapture = await page.locator("acidify-patch-view").evaluate(node => node._stepSnapshot());
   await page.locator(".arp-capture").click();
   const acidUp = JSON.parse(fs.readFileSync(path.join(root, "tools", "data", "arp_phrases.json"), "utf8"))[12];
