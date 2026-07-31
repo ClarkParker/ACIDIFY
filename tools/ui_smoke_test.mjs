@@ -868,6 +868,10 @@ try {
       || (arpLiveState.idleNote !== "···" && arpLiveState.idleNote !== "")) {
     throw new Error(`Arp live note display failed: ${JSON.stringify(arpLiveState)}`);
   }
+  await page.locator("acidify-patch-view").evaluate(node => {
+    node.__ledProbeArp = getComputedStyle(node.querySelector(
+      ".sequence-step:not(.rest):not(.playing):not(.selected) .cap-led")).backgroundImage;
+  });
   await page.locator('.arp-direction [data-value="16"]').click();
   await page.locator(".arp-phrase-display").click();
   const phraseMenu = await page.locator("acidify-patch-view").evaluate(node => ({
@@ -893,13 +897,28 @@ try {
   // 2.11.2: Bank-Phrase ersetzt die komplette Pattern-Maske — die Step-Reihe
   // ist gegen stumme Edits gesperrt, und die PHRASE-Taste ist als Sondermodus
   // (Messing-Optik, Amber-LED) von den 15 Figuren-Tasten abgesetzt.
+  // 2.11.3: LEDs/Pills zeigen die Gate/Accent/Slide-Daten der Bank-Phrase.
+  const acidUpBank = JSON.parse(fs.readFileSync(path.join(root, "tools", "data", "arp_phrases.json"), "utf8"))[12];
+  const phraseFlagsShown = await page.locator("acidify-patch-view").evaluate((node, bank) =>
+    [...node.querySelectorAll(".sequence-step")].every((step, index) => {
+      const source = bank.steps[index % bank.length];
+      return step.classList.contains("rest") === !source.gate
+        && step.classList.contains("accented") === Boolean(source.accent)
+        && step.classList.contains("sliding") === Boolean(source.slide);
+    }), acidUpBank);
+  if (!phraseFlagsShown) throw new Error("Step row does not mirror the bank phrase's gate/accent/slide");
   const phraseLock = await page.locator("acidify-patch-view").evaluate(node => {
     const step = node.querySelector('.sequence-step[data-step="2"]');
     const before = JSON.stringify(node._stepSnapshot());
+    const selectionBefore = node._selectedStep;
     step.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
     step.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }));
     step.querySelector(".pill-a").dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    step.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
     step.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
+    node.__ledProbePhrase = getComputedStyle(node.querySelector(
+      ".sequence-step:not(.rest):not(.playing):not(.selected) .cap-led")).backgroundImage;
+    node.__phraseSelectionHeld = node._selectedStep === selectionBefore;
     const phraseButton = node.querySelector('.arp-direction [data-value="16"]');
     const upButton = node.querySelector('.arp-direction [data-value="1"]');
     return {
@@ -908,12 +927,13 @@ try {
       tooltip: step.dataset.tooltip ?? "",
       hint: node.querySelector(".arp-hint").textContent,
       hintFits: node.querySelector(".arp-hint").scrollWidth <= node.querySelector(".arp-hint").clientWidth,
+      selectionHeld: node.__phraseSelectionHeld,
       phraseClass: phraseButton.classList.contains("phrase-figure"),
       distinctFace: getComputedStyle(phraseButton).backgroundImage !== getComputedStyle(upButton).backgroundImage,
       amberLed: getComputedStyle(phraseButton, "::before").backgroundImage.includes("255, 184, 74"),
     };
   });
-  if (!phraseLock.unchanged || phraseLock.pitchMenuOpen
+  if (!phraseLock.unchanged || phraseLock.pitchMenuOpen || !phraseLock.selectionHeld
       || !phraseLock.tooltip.includes("bypassed and locked")
       || phraseLock.hint !== "PHRASE ERSETZT DAS PATTERN" || !phraseLock.hintFits
       || !phraseLock.phraseClass || !phraseLock.distinctFace || !phraseLock.amberLed) {
@@ -1013,10 +1033,24 @@ try {
     classicVisible: getComputedStyle(node.querySelector(".classic-editor")).display !== "none",
     stepNote: node.querySelector('.sequence-step[data-step="0"] .step-note').textContent,
     liveLeftovers: node.querySelectorAll(".sequence-step.arp-live").length,
+    ledClassic: getComputedStyle(node.querySelector(
+      ".sequence-step:not(.rest):not(.playing):not(.selected) .cap-led")).backgroundImage,
+    ledArp: node.__ledProbeArp,
+    ledPhrase: node.__ledProbePhrase,
   }));
   if (arpOff.view !== "classic" || arpOff.mode !== 0 || !arpOff.classicVisible
       || !/^[A-G]♯?\d$/.test(arpOff.stepNote) || arpOff.liveLeftovers !== 0) {
     throw new Error(`Arp view did not release: ${JSON.stringify(arpOff)}`);
+  }
+  // 2.11.3: drei unterscheidbare Step-LED-Farbwelten — Classic/Studio rot,
+  // Arp-Figuren gruen, Phrase-Modus amber.
+  if (!arpOff.ledArp || !arpOff.ledPhrase
+      || arpOff.ledArp === arpOff.ledClassic
+      || arpOff.ledPhrase === arpOff.ledClassic
+      || arpOff.ledArp === arpOff.ledPhrase) {
+    throw new Error(`Mode LED colours not distinct: ${JSON.stringify({
+      classic: arpOff.ledClassic, arp: arpOff.ledArp, phrase: arpOff.ledPhrase,
+    })}`);
   }
   await page.locator('.function-button[data-flag="2"]').click();
   await page.locator('[data-classic-action="clear-step"]').click();

@@ -6,6 +6,44 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.11.3] - 2026-07-31
+
+### Added
+
+- **Modus-LED-Farben**: Die Step-LED-Farbe zeigt sofort den aktiven
+  Modus — Classic/Studio rot (wie bisher), Arp-Figuren grün,
+  Phrase-Modus amber (passend zur Messing-PHRASE-Taste); Playhead-LED
+  und Playbar wechseln mit, hell und dunkel.
+- **Step-Reihe zeigt im Bank-Phrase-Modus die Phrasen-Daten**: LEDs
+  und A/S-Pills spiegeln jetzt Gate, Accent und Slide der gewählten
+  Bank-Phrase (read-only, 8er-Phrasen gekachelt) statt des inaktiven
+  Patterns; der Step-Tooltip nennt die Zustände pro Step. Damit ist
+  sichtbar, dass die Phrasen sehr wohl Accents und Slides enthalten.
+
+### Fixed
+
+- **Phrase-Accents/-Slides messbar belegt** (Nutzer-Vermutung, sie
+  fehlten): Alle 90 Bank-Phrasen enthalten Accents (254) bzw. Slides
+  (95). `dsp_arp_test` misst jetzt beides am Produktions-DSP:
+  akzentuierte Phrase-Steps sind bei gleicher Tonhöhe 3,4× lauter,
+  Slide-Steps tragen den Ton über die Step-Grenze (Nicht-Slide-Enden
+  sind dort still). Der Eindruck entstand, weil die Step-Reihe die
+  Pattern- statt der Phrasen-Flags anzeigte — behoben (siehe oben).
+- **Bank-Phrase-Sperre vervollständigt**: Der einfache Klick
+  (Step-Auswahl) war noch aktiv und ließ die Reihe bedienbar wirken —
+  jetzt sind alle Step-Interaktionen gesperrt und der Cursor zeigt
+  keine Klickbarkeit mehr an.
+
+### Tests
+
+- `dsp_arp_test`: Accent-Pegelvergleich gleicher Tonhöhen (>1,1×
+  gefordert, 3,4× gemessen) und Slide-Gate-Kontinuität (Fenster
+  80–98 % der Steplänge, >3× gefordert) in Phrase 1 und 37.
+- `ui_smoke_test`: Step-Reihe spiegelt die ACID-UP-Phrasendaten
+  (Gate/Accent/Slide aller 16 Steps gegen die JSON-Quelle), Auswahl
+  bleibt bei Klick im Bank-Phrase-Modus unverändert, drei paarweise
+  verschiedene LED-Farbwelten (Classic/Arp/Phrase).
+
 ## [2.11.2] - 2026-07-31
 
 ### Changed

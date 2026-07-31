@@ -983,10 +983,10 @@ class AcidifyPatchView extends HTMLElement {
   _wireSteps() {
     this.querySelectorAll(".sequence-step").forEach(node => {
       node.addEventListener("click", event => {
+        if (this._phraseBankActive()) return;
         const index = Number(node.dataset.step);
         const pill = event.target instanceof Element ? event.target.closest(".step-pill") : null;
         if (pill) {
-          if (this._phraseBankActive()) return;
           const bit = pill.classList.contains("pill-a") ? 2 : 4;
           this._selectedStep = index;
           this._selectedSteps = new Set([index]);
@@ -1907,6 +1907,7 @@ class AcidifyPatchView extends HTMLElement {
     this.querySelector(".arp-hold")?.classList.toggle("is-on", hold);
     this.querySelector(".arp-phrase-row")?.classList.toggle("phrase-idle", mode !== 16);
     this.classList.toggle("phrase-active", this._arpView && mode === 16 && phrase > 0);
+    this.classList.toggle("phrase-mode", this._arpView && mode === 16);
     this._renderStepStrip();
     this._renderArpHeld();
     if (this._phraseMenuOpen) this._refreshPhraseMenu();
@@ -2327,12 +2328,23 @@ class AcidifyPatchView extends HTMLElement {
         node.querySelector(".step-octave").textContent = liveNote >= 0
           ? (liveOctave >= 0 ? `+${liveOctave}` : `${liveOctave}`) : "";
         if (this._phraseBankActive()) {
-          // Bank-Phrase: die Phrase ersetzt die komplette Pattern-Maske,
-          // die Steps sind wirkungslos und gegen stumme Edits gesperrt.
+          // Bank-Phrase: die Phrase ersetzt die komplette Pattern-Maske.
+          // LEDs und A/S-Pills zeigen deshalb die Gate/Accent/Slide-Daten
+          // der PHRASE (read-only, 8er-Phrasen auf 16 Steps gekachelt).
           const phraseIdx = Math.round(clamp(Number(this._values.get("param64") ?? 0), 0, 90));
-          const phraseName = ARP_PHRASES[phraseIdx - 1]?.name ?? "";
-          node.setAttribute("aria-label", `Step ${index + 1}; bank phrase ${phraseName} supplies pitch, gate, accent and slide — the pattern steps are bypassed and locked`);
-          node.dataset.tooltip = `Bank phrase ${phraseName} supplies pitch, gate, accent and slide here; the pattern steps are bypassed and locked. Select 00 PATTERN to play the own pattern, or press "→ PATTERN" to capture the phrase into the steps.`;
+          const bank = ARP_PHRASES[phraseIdx - 1];
+          const packed = bank ? bank.data[index % bank.length] : 0;
+          node.classList.toggle("rest", (packed & 64) === 0);
+          node.classList.toggle("accented", (packed & 128) !== 0);
+          node.classList.toggle("sliding", (packed & 256) !== 0);
+          const phraseStates = [
+            (packed & 64) !== 0 ? "Gate" : "Rest",
+            (packed & 128) !== 0 ? "Accent" : "",
+            (packed & 256) !== 0 ? "Slide" : "",
+          ].filter(Boolean).join(", ");
+          const phraseName = bank?.name ?? "";
+          node.setAttribute("aria-label", `Step ${index + 1}, ${phraseStates} from bank phrase ${phraseName}; the pattern steps are bypassed and locked`);
+          node.dataset.tooltip = `Step ${index + 1}: ${phraseStates} — from bank phrase ${phraseName}, which supplies pitch, gate, accent and slide; the pattern steps are bypassed and locked. Select 00 PATTERN to play the own pattern, or press "→ PATTERN" to capture the phrase into the steps.`;
           return;
         }
         if (arpMode === 16) {
@@ -5120,6 +5132,31 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .sequence-step.playing .cap-led {
     background: radial-gradient(ellipse at 50% 28%, #fff4ec 0 22%, #ff8a63 46%, #ff3a1c 78%, #b81c0c 100%);
     box-shadow: 0 0 12px rgba(255,86,52,.95), 0 0 22px rgba(255,86,52,.5), inset 0 1px 0 rgba(255,255,255,.75); }
+  /* Modus-LEDs: Classic/Studio rot, Arp-Figuren gruen, Phrase-Modus amber —
+     die Step-LED-Farbe zeigt sofort, welcher Modus die Steps interpretiert. */
+  acidify-patch-view.arp-mode .sequence-step:not(.beyond) .cap-led {
+    background: radial-gradient(ellipse at 50% 30%, #2f7a2b 0 18%, #1d521c 58%, #0f2e10 100%); box-shadow: inset 0 1px 2px rgba(0,0,0,.62); }
+  acidify-patch-view.arp-mode .sequence-step.rest:not(.beyond) .cap-led {
+    background: linear-gradient(180deg,#3b3f3e,#565c5b); box-shadow: inset 0 1px 2px rgba(0,0,0,.6); }
+  acidify-patch-view.arp-mode .sequence-step.selected:not(.rest):not(.beyond) .cap-led {
+    background: radial-gradient(ellipse at 50% 28%, #ceffb8 0 20%, #55d83c 58%, #1d7d12 100%); box-shadow: 0 0 7px rgba(96,255,72,.5), inset 0 1px 0 rgba(255,255,255,.4); }
+  acidify-patch-view.arp-mode .sequence-step.playing:not(.beyond) .cap-led {
+    background: radial-gradient(ellipse at 50% 28%, #f4ffec 0 22%, #96ff6d 46%, #3ce01f 78%, #15800b 100%);
+    box-shadow: 0 0 12px rgba(88,255,60,.9), 0 0 22px rgba(88,255,60,.45), inset 0 1px 0 rgba(255,255,255,.75); }
+  acidify-patch-view.arp-mode .sequence-step.playing .step-playbar {
+    background: linear-gradient(90deg, rgba(70,224,40,0), #46e028 25% 75%, rgba(70,224,40,0)); box-shadow: 0 0 8px rgba(70,224,40,.7); }
+  acidify-patch-view.arp-mode.phrase-mode .sequence-step:not(.beyond) .cap-led {
+    background: radial-gradient(ellipse at 50% 30%, #8a6420 0 18%, #5c4213 58%, #33240a 100%); box-shadow: inset 0 1px 2px rgba(0,0,0,.62); }
+  acidify-patch-view.arp-mode.phrase-mode .sequence-step.rest:not(.beyond) .cap-led {
+    background: linear-gradient(180deg,#3b3f3e,#565c5b); box-shadow: inset 0 1px 2px rgba(0,0,0,.6); }
+  acidify-patch-view.arp-mode.phrase-mode .sequence-step.selected:not(.rest):not(.beyond) .cap-led {
+    background: radial-gradient(ellipse at 50% 28%, #ffe9c2 0 20%, #f0ad3e 58%, #8a5208 100%); box-shadow: 0 0 7px rgba(255,184,74,.55), inset 0 1px 0 rgba(255,255,255,.4); }
+  acidify-patch-view.arp-mode.phrase-mode .sequence-step.playing:not(.beyond) .cap-led {
+    background: radial-gradient(ellipse at 50% 28%, #fff8ea 0 22%, #ffcf7d 46%, #ffa424 78%, #9c5c07 100%);
+    box-shadow: 0 0 12px rgba(255,178,58,.9), 0 0 22px rgba(255,178,58,.45), inset 0 1px 0 rgba(255,255,255,.75); }
+  acidify-patch-view.arp-mode.phrase-mode .sequence-step.playing .step-playbar {
+    background: linear-gradient(90deg, rgba(255,164,36,0), #ffa424 25% 75%, rgba(255,164,36,0)); box-shadow: 0 0 8px rgba(255,164,36,.7); }
+  acidify-patch-view.phrase-active .sequence-step { cursor: default; }
   acidify-patch-view .cap-foot { position: absolute; left: 1px; right: 1px; bottom: 0; height: 6px; border-radius: 0 0 2px 2px; background: linear-gradient(180deg,#7d8587,#5d6567); }
   acidify-patch-view .step-playbar { position: absolute; left: 4px; right: 4px; top: 63px; height: 3px; border-radius: 1px;
     background: rgba(70,78,76,.22); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
@@ -5816,7 +5853,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.11.2</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.11.3</span></div>
         </div>
       </header>
       <div class="osc-cell">

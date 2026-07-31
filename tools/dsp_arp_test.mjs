@@ -301,6 +301,61 @@ const results = {};
   assertEqual(pitches.slice(0, 2), [36, 48], "phrase multi cycle 1 base");
   assertEqual(pitches.slice(16, 18), [43, 55], "phrase multi cycle 2 base");
 }
+{
+  // Phrase-Accents sind hoerbar: OCT 8TH akzentuiert die Root-Steps 0/4/8/12,
+  // die Steps 2/6/10/14 spielen dieselbe Tonhoehe ohne Accent. Gleiche Note,
+  // gleicher Kontext — der Pegelunterschied ist allein der Accent.
+  const table = JSON.parse(await readFile(path.join(root, "tools", "data", "arp_phrases.json"), "utf8"));
+  const bank1 = table[0];
+  const accented = bank1.steps.flatMap((step, i) => (step.accent ? [i] : []));
+  const plainSame = bank1.steps.flatMap((step, i) =>
+    (!step.accent && step.gate && step.pitch === bank1.steps[accented[0]].pitch ? [i] : []));
+  if (accented.length < 2 || plainSame.length < 2) throw new Error("phrase accent probe needs pairs");
+  const single = [{ tick: 0, on: true, note: 40 }];
+  const wav = readWavMono(await render("phracc", { mode: 16, phrase: 1, midiEvents: single }));
+  let onset = -1;
+  for (let i = 0; i < wav.length; i += 1) if (Math.abs(wav[i]) > 0.02) { onset = i; break; }
+  const stepPeak = step => {
+    const from = Math.max(0, onset - 200) + step * 6000;
+    let peak = 0;
+    for (let i = from; i < from + 3000 && i < wav.length; i += 1) peak = Math.max(peak, Math.abs(wav[i]));
+    return peak;
+  };
+  const mean = list => list.reduce((a, b) => a + b, 0) / list.length;
+  const accentPeak = mean(accented.map(stepPeak));
+  const plainPeak = mean(plainSame.map(stepPeak));
+  if (!(accentPeak > plainPeak * 1.1)) {
+    throw new Error(`phrase accent inaudible: accented ${accentPeak.toFixed(4)} vs plain ${plainPeak.toFixed(4)}`);
+  }
+  results.phraseAccentRatio = Number((accentPeak / plainPeak).toFixed(3));
+}
+{
+  // Phrase-Slides sind hoerbar: SLD UP (Bank 37) bindet Step 0->1, 2->3, ...
+  // Am Ende eines Slide-Steps bleibt das Gate offen (Ton traegt ueber die
+  // Grenze), am Ende eines Nicht-Slide-Steps hat das Halbstep-Gate laengst
+  // geschlossen. Gemessen im Fenster 80..98 % der Steplaenge.
+  const table = JSON.parse(await readFile(path.join(root, "tools", "data", "arp_phrases.json"), "utf8"));
+  const bank37 = table[36];
+  if (bank37.name !== "SLD UP") throw new Error(`bank 37 expected SLD UP, got ${bank37.name}`);
+  const single = [{ tick: 0, on: true, note: 40 }];
+  const wav = readWavMono(await render("phrsld", { mode: 16, phrase: 37, midiEvents: single }));
+  let onset = -1;
+  for (let i = 0; i < wav.length; i += 1) if (Math.abs(wav[i]) > 0.02) { onset = i; break; }
+  const tailRms = step => {
+    const from = Math.max(0, onset - 200) + step * 6000 + 4800;
+    let sum = 0;
+    let count = 0;
+    for (let i = from; i < from + 1080 && i < wav.length; i += 1) { sum += wav[i] * wav[i]; count += 1; }
+    return Math.sqrt(sum / Math.max(1, count));
+  };
+  const slideTails = [0, 2, 4].map(tailRms);
+  const plainTails = [1, 3, 5].map(tailRms);
+  const mean = list => list.reduce((a, b) => a + b, 0) / list.length;
+  if (!(mean(slideTails) > mean(plainTails) * 3)) {
+    throw new Error(`phrase slide inaudible: slid tails ${JSON.stringify(slideTails)} vs plain ${JSON.stringify(plainTails)}`);
+  }
+  results.phraseSlideTailRatio = Number((mean(slideTails) / mean(plainTails)).toFixed(2));
+}
 
 // 7) Arp aus: eingehender Akkord darf den laufenden Sequencer nicht beruehren
 {

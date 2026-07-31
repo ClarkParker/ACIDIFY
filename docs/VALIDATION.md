@@ -1,3 +1,25 @@
+# Validierung 2.11.3
+
+## 2.11.3
+
+Phrase-Accents/-Slides am Produktions-DSP gemessen (`dsp_arp_test`,
+48 kHz, cmaj render mit SMF-Eingabe): OCT 8TH akzentuiert die
+Root-Steps 0/4/8/12, die Steps 2/6/10/14 spielen dieselbe Tonhöhe
+ohne Accent — Peak-Verhältnis akzentuiert/plain = 3,40 (gefordert
+> 1,1). SLD UP bindet Step 0→1, 2→3, …: RMS im Fenster 80–98 % der
+Steplänge ist auf Slide-Steps um Größenordnungen höher als auf
+Nicht-Slide-Steps (dort schließt das Halbstep-Gate; gefordert > 3×).
+Datenbasis: alle 90 Bank-Phrasen enthalten Accents (254 gesamt)
+und 95 Slides; keine Phrase ist leer. UI headless belegt: Step-Reihe
+spiegelt im Bank-Phrase-Modus die Phrasen-Flags (alle 16 Steps von
+ACID UP gegen tools/data/arp_phrases.json), einfacher Klick ändert
+die Auswahl nicht mehr, Cursor default; Step-LED-Hintergründe in
+Classic (rot), Arp-Figur (grün) und Phrase-Modus (amber) paarweise
+verschieden, Playbar folgt. `dsp_arp_test`, `ui_smoke_test`,
+`ui_lint --strict`, `check_sync` 66/66 grün.
+
+---
+
 # Validierung 2.11.2
 
 ## 2.11.2

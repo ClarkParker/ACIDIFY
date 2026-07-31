@@ -113,7 +113,11 @@ Phrasendurchlauf zur nächsten Poolnote. Eine Bank-Phrase ersetzt die
 komplette Pattern-Maske (Pitch, Gate, Accent, Slide) — die 16
 Pattern-Steps sind dann wirkungslos; die UI dimmt die Step-Reihe,
 sperrt sie gegen stumme Edits und erklärt den Zustand per Tooltip
-(seit 2.11.2). Bei `param64 = 0` bleibt die Step-Reihe voll editierbar. Die Bank liegt als generierte
+(seit 2.11.2). Seit 2.11.3 zeigen LEDs und A/S-Pills dabei die
+Gate/Accent/Slide-Daten der gewählten Phrase (read-only), und die
+Step-LED-Farbe markiert den Modus: Classic/Studio rot, Arp-Figuren
+grün, Phrase-Modus amber. Bei `param64 = 0` bleibt die Step-Reihe
+voll editierbar. Die Bank liegt als generierte
 Tabelle in DSP und UI (Marker `ARP-PHRASES-BEGIN/END`);
 `python3 tools/gen_phrases.py --check` prüft die Synchronität, die
 Referenzdaten stehen in `tools/data/arp_phrases.json`.
