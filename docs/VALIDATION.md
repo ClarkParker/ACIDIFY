@@ -1,3 +1,20 @@
+# Validierung 2.12.1
+
+## 2.12.1
+
+Header-/Dokumentations-Release, kein DSP-Eingriff — per Serien-Smoke
+bit-identisch belegt: Peak 0,50678 / RMS 0,01828 unverändert nach dem
+Header-Tausch in `ACIDIFYDSP.cmajor`. `dsp_hardware_test` grün
+(Stimmvorschrift 457,8 Hz, Env-Mod-Monotonie, Slide-Symmetrie),
+`cmajor_lint` (bekannte Param-Anzahl-Warnung), `ui_lint --strict`,
+`node --check`, `manifest_check`, `check_version` grün; `ui_smoke_test`
+nach dem UI-Header-Tausch grün. Quelltext-Grep bestätigt: kein
+Open303-Copyright mehr in Quelldateien; die drei zitierten Messwerte
+sind an ihren Stellen einzeln markiert und in THIRD_PARTY_NOTICES.md
+tabelliert.
+
+---
+
 # Validierung 2.12.0
 
 ## 2.12.0
@@ -11,7 +28,7 @@ Regler wirkungslos); > 4 dB Abfall über 800 Hz belegt. Slide in der
 Oktav-Domäne: Kreuzung der geometrischen Mitte 17,9/19,6 ms auf/ab,
 Asymmetrie 9 % (τ·ln 2 = 15,25 ms + Spur-Quantisierung). Autogain-Refit
 per gain_probe: A-Abweichung 0,00 dB an allen 21 Stützstellen, Peaks
-≤ 0,4615 < Raw-Peak 0,5082. Neue Serien-Smoke-Referenz Peak 0,459.
+≤ 0,4615 < Raw-Peak 0,5082. Neue Serien-Smoke-Referenz Peak 0,507.
 Volle Batterie grün: smoke, matrix, articulation, arp (inkl.
 Phrase-Accent/Slide), gain, transport (20 Checks), hardware (neu),
 ui_smoke, Lints strict, check_sync 66/66. Messmethodik-Korrekturen im

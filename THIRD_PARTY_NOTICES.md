@@ -1,10 +1,32 @@
 # Third-Party Notices
 
-ACIDIFY enthält eigenständige Cmajor-Ports und Anpassungen permissiv
-lizenzierter DSP-Algorithmen. Es werden keine vorkompilierten Fremdbibliotheken
-eingebunden. Die folgenden Quellstände sind für 0.5.0 festgepinnt.
+ACIDIFY enthält eigenständige Cmajor-Ports permissiv lizenzierter
+DSP-Algorithmen (Airwindows) sowie zitierte Messwerte. Es werden keine
+vorkompilierten Fremdbibliotheken eingebunden.
 
-## Open303
+## Open303 — Status seit 2.12.0: Messwertquelle, kein Code
+
+**Im aktuellen Signalweg ist kein Open303-Code und keine
+Open303-Kennlinie mehr enthalten.** Filterkern (topologiehergeleitete
+ZDF-Diodenleiter), Koppelnetz, Cutoff-/Env-Mod-Abbildung (A-Taper +
+Q9-Bias-Netz), Hüllkurvenzeiten, Slide (22 ms, CV-Domäne) und
+VCA/OTA-Stufe sind aus den Roland-Serviceschaltplänen hergeleitet
+(docs/SOUND_GAP_ANALYSIS.md, docs/HARDWARE_AUDIT.md).
+
+Verbleibend sind **drei zitierte Messwerte eines echten TB-303**, die
+über das Open303-Projekt publiziert wurden und im Quelltext einzeln als
+solche markiert sind (Messwerte sind Fakten, keine Schöpfung):
+
+| Wert | Stelle | Status |
+|---|---|---|
+| Accent-VCA-Gewicht `4.0` | ampControl-Pfad | offener Kalibrierpunkt (Fehlerprotokoll) |
+| Rechteck-Duty `46,88 %` + Halbpegel | VCO-Shaper | Anker bis zum Former-Umbau (R4) |
+| Accent-Amp-Release `50 ms` | VCA-Hüllkurve | offener Kalibrierpunkt |
+
+**Historie:** Frühe Stände (bis einschließlich der 0.7.x-Reihe, in der
+Repo-Historie enthalten) adaptierten Abbildungen und Konstanten aus
+Open303; dafür — und nur dafür — bleibt die folgende Lizenznotiz
+erhalten. Referenzstand der damaligen Nutzung:
 
 - Projekt: [RobinSchmidt/Open303](https://github.com/RobinSchmidt/Open303)
 - Commit: `313bf0d9ade7c1dcb6b3a74f5ea1780a29d70074`
@@ -29,11 +51,8 @@ eingebunden. Die folgenden Quellstände sind für 0.5.0 festgepinnt.
 | `Source/DSPCode/rosic_AcidSequencer.cpp` | `dfddda8995e769798a1a9d46a28d004a4a64509f` |
 | `Source/DSPCode/rosic_AcidSequencer.h` | `654097d9fd396587b01ab26bf7b6e8d3eba99295` |
 
-Die Cmajor-Adaption verwendet insbesondere Cutoff-/Env-Mod-Messkennlinien,
-Resonanzkrümmung, TB-Filterrekursion, Koppelfrequenzen, Hüllkurvenzeiten,
-Square-Shaper-Konstanten, Slide-Zeit und Sequencer-Gate-Länge. Architektur,
-Zustandsführung, Accent-Sweep-Knotenmodell, Hostparameter und Test-Harness sind
-für ACIDIFY neu implementiert.
+Die dort gelisteten Referenzbereiche betrafen den damaligen Stand;
+die heutige Nutzung ist ausschließlich die Messwert-Tabelle oben.
 
 ### Open303 MIT License
 
@@ -102,11 +121,22 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+## Diodenleiter-Referenzumsetzung (Faust)
+
+Die ZDF-Herleitung der Diodenleiter folgt Pirkle (App Note 6, „Virtual
+Analog Diode Ladder Filter") mit der Faust-Bibliotheksfunktion
+`vaeffects.diodeLadder` von Eric Tarr als Referenzumsetzung
+(Faust-Libraries, STK-4.3/MIT-artige Lizenz, lizenzkompatibel; im
+Quelltext an der Funktion vermerkt). ACIDIFYs Umsetzung weicht belegt
+ab: ungleiche Leiterkondensatoren 33/33/33/18 nF, Koppelnetz in der
+Resonanzschleife, frequenzabhängige Dioden-Sättigung, Newton-Schleife.
+
 ## ACIDIFY PHONO
 
-`PHONO` ist kein kopierter Fremdalgorithmus. Es ist ein generisches
-ACIDIFY-Modell aus RIAA-Wiedergabezeitkonstanten 3180/318/75 µs,
-Line-Level-Vorverstärkung, Übersteuerung und Sicherheitsbegrenzung. Ohne ein
-festgelegtes und vermessenes Phono-Vorverstärkermodell wird ausdrücklich keine
-Übereinstimmung mit einem bestimmten DJ-Mixer oder Plattenspielereingang
-behauptet.
+`PHONO` ist kein kopierter Fremdalgorithmus. Seit 2.10.0 ist es das
+recherchierte generische Modell eines übersteuerten
+MM-Phono-Vorverstärkers: übersteuerte Eingangsstufe (bis +40 dB) →
+RIAA-Wiedergabeentzerrung (3180/318/75 µs) → 25-Hz-Infraschallfilter
+2. Ordnung. Ohne ein festgelegtes und vermessenes Einzelgerät wird
+ausdrücklich keine Übereinstimmung mit einem bestimmten DJ-Mixer oder
+Plattenspielereingang behauptet.

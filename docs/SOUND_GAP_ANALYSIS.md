@@ -236,7 +236,7 @@ UI-Regressionen in `ui_smoke_test`.
 - **Folgekorrektur:** Die A-bewichteten Autogain-Tabellen der Distortion
   sind auf dem neuen (dunkleren) Serien-Referenzspektrum nachgemessen —
   Restabweichung 0,00 dB an allen Stützstellen, alle Peaks unter dem
-  Raw-Peak. Neue Serien-Smoke-Referenz: Peak 0,459 (vorher 0,691).
+  Raw-Peak. Neue Serien-Smoke-Referenz: Peak 0,507 (vorher 0,691; ein Zwischenstand mass 0,459 vor der Taper-Kalibrierung).
 - **R5:** `tools/dsp_hardware_test.mjs` kodiert Stimmvorschrift,
   Env-Mod-Monotonie (inkl. ≥4 dB über 800 Hz) und Slide-Symmetrie als
   scheiterbare Tests.

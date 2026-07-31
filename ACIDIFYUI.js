@@ -1,6 +1,12 @@
-// ACIDIFY — hardware-inspired modern 303-class Amorph instrument UI.
+// ▄▀█ █▀▀ █ █▀▄ █ █▀▀ █▄█
+// █▀█ █▄▄ █ █▄▀ █ █▀░ ░█░   SILVER SERIES CONTROL SURFACE
+//
+// Author: Clark Parker
 // WINDOW SIZE: 1180x580
 //
+// Brushed chrome, red LEDs, anthracite dark mode. Classic, Studio and
+// Arp editors over one 16-step brain — every knob wheelable, every
+// state visible, every interaction covered by tools/ui_smoke_test.mjs.
 // Single-file light-DOM Web Component. No imports, fonts, images or CDN assets.
 
 const ACIDIFY_GLOBALS = [
@@ -5901,7 +5907,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.12.0</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.12.1</span></div>
         </div>
       </header>
       <div class="osc-cell">

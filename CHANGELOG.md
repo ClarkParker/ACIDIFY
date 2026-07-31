@@ -6,6 +6,32 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.12.1] - 2026-07-31
+
+### Changed
+
+- **Datei-Header neu geschrieben (DSP + UI)**: `ACIDIFYDSP.cmajor` trug
+  noch den Open303-Copyright-Header aus der 0.7.x-Adaptions-Ära, obwohl
+  seit 2.12.0 kein Open303-Code und keine Open303-Kennlinie mehr im
+  Signalweg ist. Beide Dateien haben jetzt eigene ACIDIFY-Header mit
+  Clark Parker als Autor; Fremdanteile (Airwindows-Ports, zitierte
+  Messwerte) verweisen auf THIRD_PARTY_NOTICES.md.
+- **THIRD_PARTY_NOTICES.md präzisiert**: Open303 ist seit 2.12.0 nur
+  noch Messwertquelle (drei markierte Geräte-Messwerte: Accent-Gewicht
+  4,0, Rechteck-Duty 46,88 % + Halbpegel, Accent-Release 50 ms); die
+  MIT-Notiz bleibt ausschließlich für die 0.7.x-Stände in der
+  Repo-Historie erhalten. Neu dokumentiert: Faust
+  `vaeffects.diodeLadder` (Eric Tarr, Pirkle AN-6) als
+  ZDF-Referenzumsetzung; PHONO-Beschreibung auf den 2.10.0-Stand
+  gebracht.
+
+### Fixed
+
+- Veraltete Smoke-Referenzzahl in den Docs korrigiert: 0,459 war ein
+  Zwischenstand vor der Taper-Kalibrierung; die gültige
+  Serien-Smoke-Referenz ist Peak 0,507 (CHANGELOG-2.12.0-Eintrag,
+  VALIDATION, SOUND_GAP_ANALYSIS angeglichen). Kein DSP-Eingriff.
+
 ## [2.12.0] - 2026-07-31
 
 ### Fixed
@@ -34,7 +60,7 @@ und gemessen:
   9 %; Hz-Domäne läge bei ~45–60 %).
 - **Folgekorrektur**: Distortion-Autogain-Tabellen auf dem neuen,
   dunkleren Serien-Referenzspektrum nachgemessen (Restabweichung
-  0,00 dB an allen 21 Stützstellen); neue Smoke-Referenz Peak 0,459.
+  0,00 dB an allen 21 Stützstellen); neue Smoke-Referenz Peak 0,507.
 
 ### Added
 

@@ -1,21 +1,25 @@
 /*
-    ACIDIFY 0.7.2 — analog-modelled 303-class bassline for Amorph.
+    ▄▀█ █▀▀ █ █▀▄ █ █▀▀ █▄█
+    █▀█ █▄▄ █ █▄▀ █ █▀░ ░█░      AC-303 BASSLINE SYNTHESIZER
 
-    MIDI/16-step sequencer -> oscillator -> coupling HP -> four-stage ladder
-    -> coupling HP -> accent VCA -> output stage.
+    Author: Clark Parker
 
-    The complete core is run at 4x through the Acidify graph below. Filter
-    coefficient mapping, envelope/cutoff mapping, coupling frequencies and
-    slide constants are adapted from the MIT-licensed Open303 project:
+    Built from the schematics, not from samples. The diode ladder is
+    rebuilt node by node as a zero-delay-feedback model — every stage,
+    every diode, the coupling network inside the resonance loop, the
+    BA662 OTA, the accent-sweep capacitor and the envelope-modulation
+    bias trick straight from the Roland service notes. Slides glide in
+    the CV domain. The whole core runs 4x oversampled behind a 16-step
+    sequencer, a 16-figure arpeggiator with a 90-phrase acid bank, and
+    three loudness-matched drive stages.
 
-      Copyright (c) 2009 Robin Schmidt (www.rs-met.com)
-      https://github.com/RobinSchmidt/Open303
+    Source of truth: the TB-303 service schematics (docs/reference/).
+    Every derived behaviour is guarded by a failing test — see
+    tools/dsp_hardware_test.mjs and docs/SOUND_GAP_ANALYSIS.md.
+    Third-party attribution (Airwindows drive ports, cited hardware
+    measurements): THIRD_PARTY_NOTICES.md.
 
-    The implementation is an original Cmajor port and adaptation for Amorph.
-    The optional post stage also ports the signal paths of the MIT-licensed
-    Airwindows PurestDrive and Mackity processors. PHONO is a clearly labelled
-    generic RIAA/overload model rather than a claim to emulate one specific
-    mixer.
+    Turn the resonance up.
 */
 
 processor AcidifyCore
