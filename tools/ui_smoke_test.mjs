@@ -481,10 +481,12 @@ try {
     for (let repeat = 0; repeat < 8; repeat += 1) node._tempoListener(135.27);
     node._transportListener(1);
     node.pc.sendEventOrValue = originalSend;
+    const followButton = node.querySelector('.run-switch[data-param="param10"] button:not([hidden])');
     return {
       running: node.querySelector(".run-lamp").classList.contains("lit"),
       tooltip: node.querySelector(".tempo-cell").dataset.tooltip ?? "",
-      runText: node.querySelector('.run-switch[data-param="param10"] button:not([hidden])').textContent,
+      runText: followButton.textContent,
+      runTextFits: followButton.scrollWidth <= followButton.clientWidth,
       runDisabled: node.querySelector('.run-switch[data-param="param10"]').getAttribute("aria-disabled"),
       tempoDisabled: node.querySelector('.tempo-cell .dial').getAttribute("aria-disabled"),
       dialTempo: Number(node.querySelector('.tempo-cell .dial').getAttribute("aria-valuenow")),
@@ -494,7 +496,7 @@ try {
   });
   if (!dawLocked.running
       || !dawLocked.tooltip.includes("Tempo follows the DAW")
-      || dawLocked.runText !== "FOLLOW"
+      || dawLocked.runText !== "FOLLOW" || !dawLocked.runTextFits
       || dawLocked.runDisabled !== "true" || dawLocked.tempoDisabled !== "true"
       || Math.abs(dawLocked.dialTempo - 135.27) > 0.0001
       || Math.abs(dawLocked.parameterTempo - 135.27) > 0.0001

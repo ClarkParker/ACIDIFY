@@ -1,3 +1,16 @@
+# Validierung 2.11.1
+
+## 2.11.1
+
+FOLLOW-Label headless vermessen: im DAW-Lock (Sync-Flags 7,
+Transport 1) zeigt die RUN-Taste „FOLLOW" mit 6,5 px/0,4 px
+Letter-Spacing, `scrollWidth ≤ clientWidth` (42/42 px, kein
+Overflow), Screenshots hell/dunkel mit sichtbarem Randabstand.
+`ui_smoke_test` grün (inkl. neuem Fit-Check), `ui_lint --strict`
+sauber, `node --check` ok. Kein DSP-Eingriff.
+
+---
+
 # Validierung 2.11.0
 
 ## 2.11.0

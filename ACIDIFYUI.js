@@ -4944,11 +4944,14 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .deck-b .run-lamp.lit { box-shadow: 0 0 6px rgba(255,51,31,.85), 0 0 13px rgba(255,42,25,.5), inset 0 0 2px #fff; }
   acidify-patch-view .deck-b .run-switch { margin-top: 0; background: none; border: 0; box-shadow: none; padding: 0; width: auto; height: auto; perspective: none; border-radius: 0; }
   acidify-patch-view .deck-b .run-switch button { width: 44px; height: 34px; border-radius: 3px; cursor: pointer; border: 1px solid #1a1e1f; color: #1d2426; text-shadow: none;
+    padding: 0; overflow: hidden; white-space: nowrap;
     font: 900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1px;
     background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
   acidify-patch-view .deck-b .run-switch.is-on button { transform: none; color: #8c1a12; border-color: #8c2c23;
     background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5), 0 0 14px rgba(181,41,33,.3); }
+
+  acidify-patch-view .deck-b .run-switch.daw-controlled button { font-size: 6.5px; letter-spacing: .4px; }
 
   acidify-patch-view .grid-cell { width: 172px; flex: 0 0 auto; flex-direction: row; gap: 8px; justify-content: center; align-items: stretch; }
   acidify-patch-view .grid-cell .stepper-block .cell-title { width: 70px; }
@@ -5756,7 +5759,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.11.0</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.11.1</span></div>
         </div>
       </header>
       <div class="osc-cell">

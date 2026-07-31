@@ -5,12 +5,12 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **DSP+UI 2.11.0 — Silver Series**. Clean-Core,
+> Status: **DSP+UI 2.11.1 — Silver Series**. Clean-Core,
 > 50-Parameter-Vertrag, Amorph-`transportIn`-Sync, sicherer Internal-Fallback,
 > Swing und drei getrennte Post-Stufen sind implementiert und automatisiert
 > geprüft. Studio ergänzt skalenbewusstes Generate/Mutate, Reverse, Pitch Mirror
 > und eine Bass-Line-Kontur in der Matrix. Der Nutzer hat den vorigen 0.6.4-Build in Amorph als
-> grundsätzlich passend bestätigt; der neue 2.11.0-Build muss für die
+> grundsätzlich passend bestätigt; der neue 2.11.1-Build muss für die
 > abschließende Produktbestätigung erneut in Amorph und der Ziel-DAW getestet
 > werden. Die Bezeichnung „AAA Clone“ bleibt bis zu kalibrierten
 > Hardware-Captures und Blindtests ausdrücklich ein Ziel, kein bereits
@@ -91,11 +91,11 @@ Notenstapel zur zuletzt noch gehaltenen Note zurück.
 
 Der kleine `INT/DAW`-Schalter im Transportmodul wählt die Taktquelle:
 
-- `INT`: Der Tempo-Regler bestimmt 40…300 BPM; `RUN / STOP` startet und stoppt
-  den internen 16tel-Sequencer.
+- `INT`: Der Tempo-Regler bestimmt 40…300 BPM; `RUN` startet und stoppt
+  den internen Sequencer (Notenwert über `GRID` wählbar).
 - `DAW`: Der im Dev-Kit dokumentierte Amorph-Eingang
   `input event float64 transportIn` übernimmt BPM, Play/Stop und PPQ-Position.
-  Host-Tempo sperrt nur den BPM-Regler, Host-Transport nur `RUN / STOP`. Sind
+  Host-Tempo sperrt nur den BPM-Regler, Host-Transport nur die `RUN`-Taste (sie zeigt dann `FOLLOW`). Sind
   beide vorhanden, folgen Tempo und Play/Stop der DAW. Liefert der Host außerdem
   die Songposition, folgen Pattern-Phase, Loop und Seek dem DAW-16tel-Raster.
 - Solange Host-Tempo anliegt, folgt auch die sichtbare Stellung des
@@ -104,7 +104,7 @@ Der kleine `INT/DAW`-Schalter im Transportmodul wählt die Taktquelle:
   Mausrad und Pfeiltasten ändern anschließend 0,1 BPM; mit gedrückter
   `Shift`-Taste sind 0,01-BPM-Schritte möglich.
 - `DAW · INT FALLBACK` bedeutet, dass der Host noch keinen
-  Amorph-Transportstream weitergibt. Der Sequencer bleibt dann mit internem BPM und `RUN / STOP`
+  Amorph-Transportstream weitergibt. Der Sequencer bleibt dann mit internem BPM und der `RUN`-Taste
   vollständig bedienbar, statt stillzustehen.
 - Teilweise Hostdaten werden als `DAW … · INT RUN` beziehungsweise
   `INT … · DAW RUN` ausgewiesen; die jeweils fehlende Funktion bleibt intern.

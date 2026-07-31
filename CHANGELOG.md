@@ -6,6 +6,19 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.11.1] - 2026-07-31
+
+### Fixed
+
+- **FOLLOW-Beschriftung passte nicht auf die RUN-Taste** (Nutzer-
+  Feedback mit Screenshot): Im DAW-kontrollierten Zustand lief der
+  Text bis an die Tastenkanten, sobald die Schrift auf Arial statt
+  Arial Narrow zurückfällt. Die Taste hat jetzt `padding: 0`,
+  `overflow: hidden` und im FOLLOW-Zustand 6,5 px Schriftgröße mit
+  reduziertem Letter-Spacing — der Schriftzug sitzt mit klarem Rand.
+  `ui_smoke_test` prüft im DAW-Lock zusätzlich, dass der Text nicht
+  über die Taste hinausmisst (`scrollWidth ≤ clientWidth`).
+
 ## [2.11.0] - 2026-07-31
 
 ### Added
