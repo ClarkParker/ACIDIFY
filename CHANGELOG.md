@@ -6,6 +6,46 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.13.0] - 2026-07-31
+
+### Fixed
+
+Antwort auf den zweiten A/B-Befund („nicht druckvoll genug, nicht gritty
+genug"; „PHONO klingt nicht wie ein Phono-Vorverstärker"); alle drei
+Umbauten sind aus Schaltung bzw. Scope-Messungen hergeleitet und
+vermessen (docs/SOUND_GAP_ANALYSIS.md, „Umsetzung 2.13.0"):
+
+- **VCO-Former (Befund 4/R4)**: Der Sägezahn FÄLLT jetzt wie am Gerät
+  (Scope: 11,25 → 6,09 V) und hat den runden 300-µs-Reset des
+  One-Shot-Rückladers („the tip of the saw isnt 'sharp'") — höhere
+  Lagen werden weicher, wie am Gerät. Das Rechteck kommt aus dem
+  hergeleiteten Schmitt-Former (Q25-Emitter am Sägezahn, R118-
+  Mitkopplung, Q27/D25/Q24-Folger gegen die 5,333-V-Schiene): Tiefpegel
+  flach, das Dach steigt ~19 % von Vss über die High-Phase (Scope-
+  Foto pixelvermessen), die fallende Flanke liegt auf dem Saw-Reset,
+  Duty 46,88 % bleibt Messwert-Anker. Kein Lehrbuch-Oszillator mehr.
+- **K1 — CV-Glättung R97/C23**: Netzverfolgung belegt 10 k × 1 µF
+  (τ = 10 ms) auf der GESAMTEN Cutoff-CV vor dem Antilog-Wandler.
+  Eingebaut auf dem Summen-Exponenten: Hüllkurve und Accent-Sweep
+  werden gemeinsam gerundet — der „Squelch"-Attack des Geräts.
+- **PHONO-Topologie**: Beim NFB-RIAA-Vorverstärker liegt die Entzerrung
+  in der Gegenkopplung — geclippt wird das bereits RIAA-geformte
+  Signal. Neue Kette: EQ → asymmetrischer Rail-Clip → Blocking
+  (Koppel-C-Arbeitspunkt, τ = 50 ms) → Rumble-Filter. Gemessen: die
+  geradzahligen Harmonischen tragen jetzt (H2 −8,2 dB, H4 −16,4 dB über
+  H3/H5) — Signatur echten Rail-Clippings; 2.10.0 fiel monoton
+  (symmetrische tanh-Kette).
+- **Folgekorrektur**: Autogain-Refit aller drei Distortion-Tabellen auf
+  dem neuen Referenzspektrum (A-Restabweichung 0,00 dB an 12 geprüften
+  Stützstellen). Neue Serien-Smoke-Referenz Peak 0,480.
+- Doku: R104 = 2,2 k (Stücklisten-Korrektur, vorher fälschlich 22 k).
+
+### Hinweis
+
+Presets klingen absichtlich anders: Wellenform und Sweep-Verlauf sind
+jetzt hardware-hergeleitet; PHONO ist deutlich bassiger und
+asymmetrischer.
+
 ## [2.12.1] - 2026-07-31
 
 ### Changed

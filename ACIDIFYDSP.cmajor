@@ -289,6 +289,16 @@ processor AcidifyCore
     float meterAlpha = 0.0f;
     float parameterSmoothingAlpha = 1.0f;
     float distortionSmoothingAlpha = 1.0f;
+    // K1 (2.13.0): R97 = 10 k laedt C23 = 1 uF in der Cutoff-CV-Leitung
+    // vor dem Antilog-Wandler (Seite 5, FREQ-Netz um Q18/TM3). Die
+    // GESAMTE CV — Huellkurve, Accent-Sweep und Reglerangebot — wird am
+    // Geraet mit tau = 10 ms geglaettet.
+    float cvSmoothAlpha = 1.0f;
+    float cvSmoothExponent = 0.0f;
+    // PHONO (2.13.0): Arbeitspunktverschiebung des Koppel-C bei
+    // asymmetrischem Clipping (Blocking-Distortion), tau = 50 ms.
+    float phonoBiasAlpha = 0.0f;
+    float64 phonoBias = 0.0;
 
 
 
@@ -628,34 +638,53 @@ processor AcidifyCore
 
     float processPhono (float signal, float drive)
     {
-        // Phono-VORVERSTAERKER-Overdrive (2.10.0, recherchierte Topologie):
-        // Beim echten MM-Pre sitzt das RIAA-Netzwerk in der Gegenkopplung
-        // der Verstaerkerstufe. Line-Pegel in den Millivolt-Eingang ist
-        // ~40 dB zu heiss — es clippt ZUERST die Stufe, und die
-        // Wiedergabekurve (Bass +20 dB, Hoehen -20 dB) formt das
-        // GECLIPPTE Signal: dunkler, bassiger, wolliger Overdrive.
-        // Danach das Infraschall-Filter, wie es echte Phono-Stufen gegen
-        // Rumpeln fuehren — es faengt die Bassanhebung auf geclipptem
-        // Material ab. Die 2.9.0-Reihenfolge (Pre-Emphasis -> Clip ->
-        // De-Emphasis) war die SCHNEIDKETTE, kein Vorverstaerker.
+        // Phono-VORVERSTAERKER-Overdrive, 2.13.0: In der NFB-RIAA-Stufe
+        // (Standardschaltung der Consumer-Verstaerker, ein Verstaerker mit
+        // RIAA-Netzwerk in der Gegenkopplung — nachrechenbare Topologie,
+        // z. B. LM833-Applikationsschaltung) liegt die Entzerrung IN der
+        // Schleife: Der Ausgang ist das bereits RIAA-geformte Signal, und
+        // GENAU DIESES clippt an den Rails. Reihenfolge also
+        // EQ -> Clip, nicht Clip -> EQ (2.10.0 modellierte eine passive
+        // Entzerrung zwischen zwei Stufen — falsche Topologie fuer den
+        // 303-in-den-Phono-Eingang-Trick der 90er).
+        //
+        // Folgen, hoerbar: Die Bassanhebung (+20 dB bei 20 Hz) clippt
+        // ZUERST — der Bass wird rechteckig und traegt die Hoehen als
+        // Reiter; die beim Clippen NEU entstehenden Obertoene werden nicht
+        // mehr weggefiltert. Dazu Blocking-Distortion: Der Eingangskoppel-C
+        // laedt sich bei asymmetrischem Clipping um, der Arbeitspunkt
+        // verschiebt sich und erholt sich mit tau = 50 ms — das „Pumpen"
+        // nach lauten Passagen. Die Rails sind asymmetrisch modelliert
+        // (einfache diskrete Stufe, generisch dokumentiert): +1,0 / -0,65.
         let x = float64 (signal) * pedalGain;
         let preGain = pow (10.0, 2.0 * float64 (drive));
-        let overloaded = tanh (x * preGain);
-        let colored = riaaB0 * overloaded + riaaB1 * riaaX1 + riaaB2 * riaaX2
+        let hot = x * preGain;
+        let colored = riaaB0 * hot + riaaB1 * riaaX1 + riaaB2 * riaaX2
                     - riaaA1 * riaaY1 - riaaA2 * riaaY2;
         riaaX2 = riaaX1;
-        riaaX1 = overloaded;
+        riaaX1 = hot;
         riaaY2 = riaaY1;
         riaaY1 = colored;
-        let cleaned = subB0 * colored + subB1 * subX1 + subB2 * subX2
+        // Arbeitspunktverschiebung (Blocking): der Koppel-C sieht den
+        // Gleichanteil des GECLIPPTEN Ausgangs und schiebt den Eingang
+        // dagegen.
+        let biased = colored - phonoBias;
+        var clipped = 0.0;
+        if (biased >= 0.0)
+            clipped = tanh (biased);
+        else
+            clipped = 0.65 * tanh (biased / 0.65);
+        phonoBias += float64 (phonoBiasAlpha) * (clipped - phonoBias);
+        let cleaned = subB0 * clipped + subB1 * subX1 + subB2 * subX2
                     - subA1 * subY1 - subA2 * subY2;
         subX2 = subX1;
-        subX1 = colored;
+        subX1 = clipped;
         subY2 = subY1;
         subY1 = cleaned;
-        // Grundpegel aus der alten RMS-Messung derselben Topologie;
-        // die A-bewichtete Feinkorrektur liegt in der Autogain-Tabelle.
-        let base = 0.076 * (1.0 + 3.6 / preGain);
+        // Grundpegel: die RIAA-Bassanhebung VOR dem Clip macht die Stufe
+        // frueher laut; Feinabgleich liegt in der Autogain-Tabelle
+        // (gain_probe-Refit 2.13.0).
+        let base = 0.24 * (1.0 + 1.2 / preGain);
         return float (cleaned * base / pedalGain);
     }
 
@@ -665,13 +694,14 @@ processor AcidifyCore
     // linear interpoliert — kein Messen im Hintergrund. Druecken die
     // Angleichung von zuvor bis zu -1,34 dB auf unter +-0,3 dB.
     const float[7] distCorrDrive = (0.1f, 0.25f, 0.35f, 0.5f, 0.65f, 0.8f, 1.0f);
-    // Refit 2.12.0: Die Hardware-Fixes (A-Taper-Cutoff, Env-Mod-Bias) machen
-    // das Referenzspektrum dunkler; die A-bewichteten Tabellen sind auf dem
-    // neuen Serien-Render nachgemessen (gain_probe, 7 Stuetzstellen je Typ,
-    // Restabweichung nach Refit < 0,5 dB — dsp_gain_test wacht darueber).
-    const float[7] distCorrPure  = (1.0069f, 1.0543f, 1.1104f, 1.2261f, 1.3820f, 1.5904f, 1.9611f);
-    const float[7] distCorrMack  = (1.0666f, 1.2346f, 1.2823f, 1.3244f, 1.3092f, 1.2706f, 1.2204f);
-    const float[7] distCorrPhono = (1.8197f, 1.6634f, 1.5595f, 1.3996f, 1.2546f, 1.1220f, 0.9733f);
+    // Refit 2.13.0: VCO-Former (fallender Saegezahn, Reset-Rundung,
+    // Rechteck-Dachanstieg) und die neue PHONO-Topologie (EQ -> Clip)
+    // verschieben das Referenzspektrum; die A-bewichteten Tabellen sind
+    // auf dem neuen Serien-Render nachgemessen (gain_probe, 7 Stuetz-
+    // stellen je Typ, dsp_gain_test wacht ueber die Restabweichung).
+    const float[7] distCorrPure  = (1.0081f, 1.0592f, 1.1194f, 1.2446f, 1.4142f, 1.6425f, 2.0606f);
+    const float[7] distCorrMack  = (1.1041f, 1.3138f, 1.4093f, 1.4690f, 1.4521f, 1.4093f, 1.3536f);
+    const float[7] distCorrPhono = (1.3381f, 1.1749f, 1.0789f, 0.9616f, 0.8730f, 0.8017f, 0.7316f);
 
     float distCorrAt (int type, int index)
     {
@@ -954,6 +984,14 @@ processor AcidifyCore
         meterAlpha = timeCoefficient (400.0f, sampleRate);
         parameterSmoothingAlpha = 1.0f - timeCoefficient (5.0f, sampleRate);
         distortionSmoothingAlpha = 1.0f - timeCoefficient (20.0f, sampleRate);
+        // K1: CV-Glaettung R97/C23 = 10 k * 1 uF = 10 ms (Seite 5, verfolgt
+        // am FREQ-Netz: R98 -> R97 -> C23 -> R94 -> Antilog). Sie formt den
+        // Sweep hoerbar — Attack-Anteile der Filterbewegung werden rund.
+        cvSmoothAlpha = 1.0f - timeCoefficient (10.0f, sampleRate);
+        // PHONO-Blocking: Koppel-C-Arbeitspunkt, tau = 50 ms (generischer
+        // Wert einer 0,47-uF/100-k-Eingangskopplung, dokumentiert in
+        // THIRD_PARTY_NOTICES.md als Modellannahme).
+        phonoBiasAlpha = 1.0f - timeCoefficient (50.0f, sampleRate);
         updateOutputNetworkCoefficients (sampleRate);
         updateCouplingCoefficients (sampleRate);
         updateVcaBranchCoefficients (sampleRate);
@@ -2470,29 +2508,59 @@ processor AcidifyCore
                 phase -= 1.0;
 
             let phaseValue = float (phase);
-            let saw = phaseValue + phaseValue - 1.0f - polyBlep (phaseValue, phaseIncrement);
 
-            // The stock square is derived from the saw comparator rather than
-            // generated by an independent oscillator. Open303's measured
-            // shaper constants imply a 46.88% transition point and half level.
-            // Der 303 hat ZWEI getrennte Abgriffe, keinen aus dem Saegezahn
-            // abgeleiteten Komparator: Rechteck an R36/Q8, Saegezahn an
-            // R105/Q28 (x0x-VCF-Mods-Seite, „Take the feed from the square wave
-            // (R36/Q8) and the saw wave (R105/Q28)").
+            // R4 (2.13.0): VCO-Former aus Schaltung + Scope-Messung statt
+            // Lehrbuch-Oszillator.
             //
-            // BEWUSST NICHT ERSETZT. Der Wert stammt aus einer Messung an einem
-            // echten 303 (Open303), nicht aus einem Modellkompromiss. Ihn durch
-            // eine Herleitung aus unbestimmten Komparatorschwellen zu ersetzen
-            // waere ein Rueckschritt: gemessene Hardware schlaegt geschaetzte
-            // Schaltung. Der VCO-Umbau selbst braucht ausserdem eine eigene
-            // Antialiasing-Strategie, der PolyBLEP hier ist antialiasiert.
+            // SAEGEZAHN: Am Geraet FAELLT die Rampe (x0x-Fabmanual-Scope,
+            // C1: Vmax 11,25 V -> Vmin 6,09 V, dann schneller Ruecklauf).
+            // Der Ruecklauf ist kein Sprung, sondern der One-Shot-
+            // Rueckladevorgang um Q8 (R34/R35/C10/C11): im 64,5-Hz-Foto
+            // 2..4 px = 0,3..0,6 ms inkl. Kamera-Bloom; modelliert werden
+            // 300 us als Halbkosinus — beide Ecken rund („the tip of the
+            // saw isnt 'sharp'", Fabmanual). Die Rueckladezeit ist eine
+            // Hardware-Konstante: hoehere Lagen verbringen einen groesseren
+            // Periodenanteil im Ruecklauf und werden weicher, wie am Geraet.
+            // Ohne Sprungstelle braucht der Saegezahn keinen PolyBLEP;
+            // die verbleibenden Knickstellen falten bei 4x-Oversampling
+            // vernachlaessigbar (~1/n^2).
+            let resetFraction = clamp (0.0003f * currentFrequency, 0.012f, 0.45f);
+            var saw = 0.0f;
+            if (phaseValue < 1.0f - resetFraction)
+                saw = 1.0f - 2.0f * (phaseValue / (1.0f - resetFraction));
+            else
+                saw = -cos (float (pi) * (phaseValue - (1.0f - resetFraction)) / resetFraction);
+
+            // RECHTECK: Schmitt-Former, Netzverfolgung am x0x-Beta-Plan
+            // (identische Werte wie Roland Seite 5): Saegezahn treibt den
+            // EMITTER von Q25; die Basis haengt ueber R118 = 100 k am
+            // Ausgangsknoten (D25-Kathode/Q24) — Mitkopplung, daher schnelle
+            // Flanken trotz langsamer Rampe. Q27 (2SA733, Emitter an +12 V)
+            // speist ueber D25 den als Folger verschalteten Q24; R101 = 10 k
+            // zieht den Ausgang auf die 5,333-V-Schiene. Gemessen (Scope,
+            // C2): Tiefpegel 5,000 V flach; das Dach ist NICHT flach — Q27
+            // bleibt aktiv und der Ausgang folgt dem fallenden Saegezahn
+            // invertiert: Anstieg ~19 % von Vss ueber die High-Phase, Ende
+            // bei Vmax = 9,063 V, die fallende Flanke faellt mit dem
+            // Saw-Reset zusammen. HIGH liegt deshalb im LETZTEN Abschnitt
+            // der Periode. Duty 46,88 % bleibt Messwert-Anker (Open303-
+            // Messung; Fabmanual bestaetigt „isnt 50% duty cycle" — die
+            // exakte Duty ist Werksabgleich TM5 „WIDTH").
             const float squareDuty = 0.4687857f;
-            float square303 = phaseValue < squareDuty ? 1.0f : -1.0f;
-            square303 += polyBlep (phaseValue, phaseIncrement);
-            var squareEdge = phaseValue - squareDuty;
-            if (squareEdge < 0.0f)
-                squareEdge += 1.0f;
-            square303 -= polyBlep (squareEdge, phaseIncrement);
+            const float squareTopRise = 0.38f;   // 19 % von Vss in +-1-Einheiten
+            let highStart = 1.0f - squareDuty;
+            var square303 = -1.0f;
+            if (phaseValue >= highStart)
+                square303 = (1.0f - squareTopRise)
+                          + squareTopRise * ((phaseValue - highStart) / squareDuty);
+            // PolyBLEP-Korrekturen, auf die Sprunghoehen skaliert (polyBlep
+            // korrigiert einen +-1-Sprung der Hoehe 2): steigende Flanke
+            // -1 -> 0,62 (Faktor 0,81), fallende Flanke 1,0 -> -1 (Faktor 1,0).
+            var riseEdge = phaseValue - highStart;
+            if (riseEdge < 0.0f)
+                riseEdge += 1.0f;
+            square303 += 0.81f * polyBlep (riseEdge, phaseIncrement);
+            square303 -= polyBlep (phaseValue, phaseIncrement);
             square303 *= 0.5f;
             let oscillator = saw + (square303 - saw) * waveformBlend;
 
@@ -2505,11 +2573,17 @@ processor AcidifyCore
             filterEnvelope *= accented ? accentDecayCoeff : normalDecayCoeff;
             filterEnvelopeRC += filterAttackAlpha * (filterEnvelope - filterEnvelopeRC);
 
-            let exponent = envScaler * (filterEnvelopeRC - envOffset)
-                         + processAccentSweep (accented && gateOpen
-                                                ? accentControl * filterEnvelope
-                                                : 0.0f,
-                                               sampleRate);
+            let exponentTarget = envScaler * (filterEnvelopeRC - envOffset)
+                               + processAccentSweep (accented && gateOpen
+                                                      ? accentControl * filterEnvelope
+                                                      : 0.0f,
+                                                     sampleRate);
+            // K1 (2.13.0): Die CV-Glaettung R97/C23 (tau = 10 ms) liegt am
+            // Geraet HINTER der Summierung — sie glaettet Huellkurve UND
+            // Accent-Sweep gemeinsam und rundet den Attack-Anteil des
+            // Sweeps. Vorher wirkte nur die 100-us-MEG-Attack-Stufe.
+            cvSmoothExponent += cvSmoothAlpha * (exponentTarget - cvSmoothExponent);
+            let exponent = cvSmoothExponent;
             let instantaneousCutoff = baseCutoff * float (pow (2.0, float64 (exponent)));
             let filtered = processLadder (preFiltered, instantaneousCutoff, sampleRate);
 

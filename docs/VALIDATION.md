@@ -1,3 +1,30 @@
+# Validierung 2.13.0
+
+## 2.13.0
+
+VCO-Former: Formeln im JS-Spiegel exakt belegt (Duty 46,86 %, Dach
+0,310 → 0,500 in ±0,5-Einheiten, Boden −0,500 flach, Reset 0,302 ms
+Halbkosinus, Rampe konstant fallend); Ketten-Render belegt die
+Rampen-Inversion (Median-Steigung +/− gegen 2.11.6, Duty-Kennzahlen
+verschoben wie erwartet — das Koppelnetz differenziert bei 55 Hz).
+Scope-Grundlage pixelvermessen (Fabmanual S. 8/9): Saw 11,25 → 6,09 V
+fallend, Reset 2–4 px = 0,3–0,6 ms inkl. Bloom; Square Tiefpegel
+5,000 V, Dachanstieg ≈ 17–21 % von Vss (drei saubere Pulse), Vmax
+9,063 V am Dachende. K1: Netzverfolgung R98 → R97 10 k → C23 1 µF →
+R94 → Antilog am Seite-5-Scan. PHONO (55 Hz, Drive 0,8): H2 −8,2 /
+H3 −25,7 / H4 −16,4 / H5 −23,9 dB rel H1 (geradzahlige Signatur;
+2.11.6: monoton −8,5/−19,2/−26,2/−30,5). Autogain-Refit per
+gain_probe: A-Restabweichung 0,00 dB an 12 Stützstellen (PURE/MACKIE/
+PHONO je 4 geprüft nach 7-Punkt-Fit). Neue Serien-Smoke-Referenz
+Peak 0,48012 / RMS 0,01858. Volle Batterie grün: smoke, matrix,
+articulation, arp (inkl. Phrase-Accent/Slide), gain, transport
+(20 Checks), hardware (Stimmvorschrift 457,8 Hz unverändert, Env-Mod-
+Monotonie, Slide-Asymmetrie 21,9 % < 30 %), ui_smoke, Lints strict.
+A/B-Hörbelege (Saw/Square/PHONO, 2.13.0 gegen 2.11.6) im
+Sitzungsbericht.
+
+---
+
 # Validierung 2.12.1
 
 ## 2.12.1

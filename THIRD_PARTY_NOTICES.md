@@ -20,7 +20,7 @@ solche markiert sind (Messwerte sind Fakten, keine Schöpfung):
 | Wert | Stelle | Status |
 |---|---|---|
 | Accent-VCA-Gewicht `4.0` | ampControl-Pfad | offener Kalibrierpunkt (Fehlerprotokoll) |
-| Rechteck-Duty `46,88 %` + Halbpegel | VCO-Shaper | Anker bis zum Former-Umbau (R4) |
+| Rechteck-Duty `46,88 %` + Halbpegel | VCO-Shaper | Anker des 2.13.0-Former-Modells (Form aus Schaltung + Scope hergeleitet; TM5 „WIDTH" ist Werksabgleich, die Duty bleibt Messwert) |
 | Accent-Amp-Release `50 ms` | VCA-Hüllkurve | offener Kalibrierpunkt |
 
 **Historie:** Frühe Stände (bis einschließlich der 0.7.x-Reihe, in der
@@ -133,10 +133,13 @@ Resonanzschleife, frequenzabhängige Dioden-Sättigung, Newton-Schleife.
 
 ## ACIDIFY PHONO
 
-`PHONO` ist kein kopierter Fremdalgorithmus. Seit 2.10.0 ist es das
-recherchierte generische Modell eines übersteuerten
-MM-Phono-Vorverstärkers: übersteuerte Eingangsstufe (bis +40 dB) →
-RIAA-Wiedergabeentzerrung (3180/318/75 µs) → 25-Hz-Infraschallfilter
-2. Ordnung. Ohne ein festgelegtes und vermessenes Einzelgerät wird
-ausdrücklich keine Übereinstimmung mit einem bestimmten DJ-Mixer oder
-Plattenspielereingang behauptet.
+`PHONO` ist kein kopierter Fremdalgorithmus. Seit 2.13.0 ist es das
+generische Modell einer übersteuerten NFB-RIAA-Vorverstärkerstufe
+(Standardschaltung der Consumer-Verstärker, RIAA-Netzwerk in der
+Gegenkopplung): RIAA-Wiedergabeentzerrung (3180/318/75 µs) VOR der
+Sättigung → asymmetrischer Rail-Clip (+1,0/−0,65, Modellannahme einer
+einfachen diskreten Stufe) → Koppel-C-Arbeitspunktverschiebung
+(Blocking, τ = 50 ms, Modellannahme 0,47 µF/100 k) →
+25-Hz-Infraschallfilter 2. Ordnung. Ohne ein festgelegtes und
+vermessenes Einzelgerät wird ausdrücklich keine Übereinstimmung mit
+einem bestimmten Verstärker- oder DJ-Mixer-Eingang behauptet.

@@ -1,13 +1,14 @@
 # Fehlerprotokoll: Modell gegen Schaltung (vollständiger Audit)
 
-> **Status 2.12.0:** Befunde 1–3 sind umgesetzt und gemessen (siehe
-> „Umsetzung 2.12.0" am Ende); Befund 4 (VCO) bleibt offen, seine
-> „gerundeter Sägezahn"-Teilthese ist auf Rang 4 herabgestuft (der
-> herleitbare Kern — Stromquelle in C34, schnelle FET-Entladung — spricht
-> für einen weitgehend linearen Sägezahn; belastbar ist nur der
-> Former-Umbau des Rechtecks). Kleinbefund K1 (C23-Glättung) ist NICHT
-> eingebaut: die Zuordnung (dynamische CV vs. FREQ-Trim-Siebung) braucht
-> erst die Netzverfolgung.
+> **Status 2.13.0:** Befunde 1–4 sind umgesetzt und gemessen (siehe
+> „Umsetzung 2.12.0" und „Umsetzung 2.13.0" am Ende). Der VCO-Former
+> (Befund 4) ist aus der Netzverfolgung des x0x-Beta-Plans plus den
+> Scope-Fotos des Fabmanuals hergeleitet: fallender Sägezahn mit rundem
+> Reset, Rechteck mit steigendem Dach und Schmitt-Flanken; die
+> Sägezahn-RAMPE bleibt gerade (die „Krümmungs"-These bleibt auf Rang 4).
+> Kleinbefund K1 (C23-Glättung) ist EINGEBAUT: die Netzverfolgung am
+> FREQ-Netz (R98 → R97 = 10 k → C23 = 1 µF → R94 → Antilog) belegt die
+> Glättung der GESAMTEN Cutoff-CV mit τ = 10 ms.
 
 Anlass: A/B-Test des Projektinhabers gegen eine echte TB-303 — „Ähnlichkeiten,
 aber meilenweit entfernt". Dieses Protokoll ist der vollständige Abgleich des
@@ -122,7 +123,7 @@ Oktaven.
 ## Befund 4 — Die Klangquelle ist ein Lehrbuch-Oszillator
 
 **Rang-1-Fakten (Seite 5, VCO-Abschnitt):** Sägezahnkern = Integrator
-IC11a (AN6562) mit C34 = 1 nF, R104 = 22 k, Entladung über 2SK30-FET,
+IC11a (AN6562) mit C34 = 1 nF, R104 = 2,2 k (Fabmanual-Stückliste; frühere Lesart „22 k" korrigiert), Entladung über 2SK30-FET,
 Expo-Wandler Q26 (2SC1583-Paar) mit **Posistor R100 = 560 Ω**
 (Temperaturkompensation); Hub laut Zeichnung 5,5→12 V. Das Rechteck
 entsteht NICHT per Komparator, sondern im **Ein-Transistor-Former
@@ -165,7 +166,7 @@ Analyse Q24/Q25/Q27/D25) und Abgleich gegen Scope-Referenzen; die
 
 | # | Stelle | Schaltung | Modell | Einordnung |
 |---|---|---|---|---|
-| K1 | CV-Glättung R97+C23 → τ ≈ 10 ms auf der GESAMTEN Cutoff-CV | vorhanden | 5-ms-Parameterglättung nur auf Reglerwerten, nicht auf Env/Accent-Weg | prüfen: glättet am Gerät auch die Hüllkurven-CV (formt den Sweep!) — Kandidat für hörbaren Unterschied, gehört in R1-Herleitung |
+| K1 | CV-Glättung R97+C23 → τ ≈ 10 ms auf der GESAMTEN Cutoff-CV | vorhanden | 5-ms-Parameterglättung nur auf Reglerwerten, nicht auf Env/Accent-Weg | ERLEDIGT 2.13.0: Netz verfolgt (R98 → R97 → C23 → R94 → Antilog), τ = 10 ms auf dem Summen-Exponenten eingebaut |
 | K2 | Decay-Obergrenze | 2,5 s (Zeichnung) | 2,5 s seit 10-%-Lesart ✓ | erledigt |
 | K3 | Posistor R100 (Temp.-Kompensation VCO) | vorhanden | nicht modelliert | bewusst offen: Sollverhalten = kompensiert; kein Klangfaktor bei Solltemperatur |
 | K4 | TM3 „FREQ"-Trimmer 470 k | Werksabgleich der Cutoff-Lage | fester Endwert 2500 Hz | über Befund-4-Anker mitkalibrieren |
@@ -247,3 +248,63 @@ Stimmvorschrift; Stücklisten) · docs/reference/x0xb0x_mainboard.sch ·
 docs/reference/DevilFishManual.pdf (Originalgerät-Stellen) ·
 docs/HARDWARE_AUDIT.md · Sonic Potions, „Analysis of the µPD650C-133 CPU
 timing" · Open303 nur als Messwert-Vergleich (Rang 4).
+
+## Umsetzung 2.13.0 — gemessen
+
+Anlass: zweiter A/B-Befund des Projektinhabers („besser, aber nicht
+druckvoll genug, Grundcharakter nicht gritty genug"; PHONO klingt nicht
+wie ein übersteuerter Phono-Eingang). Umgesetzt wurden Befund 4 (R4),
+Kleinbefund K1 und der PHONO-Topologiefehler.
+
+- **Befund 4 / R4 (VCO-Former):** Netzverfolgung am x0x-Beta-Plan
+  (docs/reference/x0xb0x_mainboard_beta.png, Werte identisch mit Roland
+  Seite 5): Der Sägezahn treibt den EMITTER von Q25 (2SC536F); die Basis
+  hängt über R118 = 100 k am Ausgangsknoten (D25-Kathode/Q24) —
+  Mitkopplung (Schmitt), daher schnelle Flanken. Q27 (2SA733P, Emitter
+  an +12 V) speist über D25 den Basis-Kollektor-verbundenen Folger Q24;
+  R101 = 10 k zieht den Ausgang auf die 5,333-V-Schiene. Scope-Fotos
+  (Fabmanual, Seiten 8/9, pixelvermessen): Sägezahn FÄLLT (11,25 →
+  6,09 V), Rampe im auswertbaren Bereich gerade, Reset 0,3–0,6 ms mit
+  runden Ecken („the tip of the saw isnt 'sharp'"); Rechteck: Tiefpegel
+  5,000 V flach, Dach steigt ~19 % von Vss über die High-Phase auf
+  Vmax = 9,063 V, fallende Flanke fällt mit dem Saw-Reset zusammen,
+  Duty ≠ 50 %. Modell: fallende Rampe + 300-µs-Halbkosinus-Reset
+  (tonhöhenunabhängige Hardware-Zeit → höhere Lagen werden weicher);
+  Rechteck-High im letzten 46,88 % der Periode (Duty bleibt
+  Messwert-Anker, TM5 ist Werksabgleich) mit linearem Dachanstieg 0,38
+  in ±1-Einheiten und flankenhöhen-skalierten PolyBLEPs. JS-Spiegel
+  bestätigt die Formeln exakt (Duty 46,86 %, Dach 0,310 → 0,500, Boden
+  −0,500, Reset 0,302 ms); Ketten-Render bestätigt die Inversion der
+  Rampe. Der Leiter-Eingangspegel war bereits Rang-1-verankert
+  (5,17 Vss über C17/R62) — kein Eingriff.
+- **K1 (CV-Glättung):** Netzverfolgung am Seite-5-Scan (FREQ-Netz):
+  R98 2,2 k → **R97 10 k → C23 1 µF** → R94 10 k → Antilog-Basis. Die
+  gesamte Cutoff-CV — Hüllkurve, Accent-Sweep, Reglerangebot — wird mit
+  τ = 10 ms geglättet. Eingebaut auf dem Summen-Exponenten
+  (`cvSmoothExponent`); rundet den Attack-Anteil des Sweeps („Squelch").
+  Alle Hardware-Checkpoints bleiben grün (Stimmvorschrift 457,8 Hz,
+  Env-Mod-Monotonie, Slide-Symmetrie 21,9 %-Fenster unverändert erfüllt).
+- **PHONO-Topologie:** In der NFB-RIAA-Stufe (Standard-Consumer-Schaltung,
+  ein Verstärker mit RIAA-Netzwerk in der Gegenkopplung) liegt die
+  Entzerrung IN der Schleife: geclippt wird das bereits RIAA-geformte
+  Signal. 2.10.0 hatte Clip → EQ (passive Entzerrung zwischen zwei
+  Stufen) — falsche Topologie für den „303 in den Phono-Eingang"-Trick.
+  Neu: EQ → asymmetrischer Rail-Clip (+1,0/−0,65, generisch dokumentiert)
+  → Koppel-C-Arbeitspunktverschiebung (Blocking, τ = 50 ms) →
+  Rumble-Filter. Messung (55 Hz, Drive 0,8): geradzahlige Harmonische
+  tragen jetzt — H2 −8,2 dB, H4 −16,4 dB ÜBER H3 (−25,7) und H5 (−23,9);
+  die alte Kette fiel monoton (H3 −19,2 > H4 −26,2). Das ist die
+  Signatur asymmetrischen Rail-Clippings statt symmetrischer
+  tanh-Sättigung.
+- **Folgekorrektur:** Autogain-Refit aller drei Tabellen per gain_probe
+  (A-Restabweichung 0,00 dB an 12 geprüften Stützstellen). Neue
+  Serien-Smoke-Referenz: Peak 0,480 / RMS 0,0186.
+- **Doku-Korrektur:** R104 = 2,2 k (Fabmanual-Stückliste), nicht 22 k.
+
+**Offen bleibt (ehrlich):** Die DC-Herleitung der Former-Schwelle
+(D30/D31/R107-Kette) ist am Raster nicht auflösbar — unkritisch, weil
+Duty/Pegel als Messwert-Anker gesetzt sind und TM5 am Gerät ohnehin
+Werksabgleich ist. Die exakte Dachanstiegs-Größe trägt ±0,05-Toleranz
+aus der Foto-Vermessung. Blocking-Pumpen ist Modellannahme mit
+dokumentiertem τ; ein isolierter Messbeleg steht aus (die
+Klirrsignatur belegt nur die Asymmetrie).
