@@ -1,6 +1,6 @@
 # Schaltplan-Abdeckung — vollständige Tabelle
 
-> Stand 2.16.0. Jede Baugruppe der Roland-Servicenotes (Seite 4/5) hat
+> Stand 2.16.1. Jede Baugruppe der Roland-Servicenotes (Seite 4/5) hat
 > genau einen Status: **U** = umgesetzt mit Herleitung/Anker,
 > **X** = begründet ausgeschlossen, **A** = umgesetzt mit publiziertem
 > Messwert-Anker, wo die Schaltung keinen eindeutigen Wert hergibt.
