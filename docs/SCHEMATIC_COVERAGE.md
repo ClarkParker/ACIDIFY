@@ -52,6 +52,7 @@
 | VEG (Q32/R132 100 Ω/C42 1 µF/R123 1,5 M) | U | Attack schnell, Decay τ = 1,5 s aus Bauteilen |
 | VEG-Release unaccentiert | A | 16 ms (8+8, Whittle-MESSUNG am Serien-303); der schnelle Entladepfad ist am Raster nicht bauteilgenau zuordenbar |
 | VEG-Release accentiert | A | 50 ms (publizierter Open303-Fit an Aufnahmen); Schaltungsintervall hergeleitet: 1,55 ms (C36/R119) … MEG-Fortlauf; Struktur vollständig verfolgt (2.16.0) |
+| Gate→Ton-Totzone ~4 ms (Dioden-/Basisstrecken am Steuerknoten) | A | Whittle-MESSUNG am Serien-303 („typically 4 ms"); 2.17.0 eingebaut (4 ms + 0,5-ms-Anstieg, entfällt mit DF-Soft-Attack); gemessen 3,47 ms + Anstieg |
 
 ## VCA / Accent-Steuerkette (Seite 5)
 
@@ -59,7 +60,7 @@
 |---|---|---|
 | BA662A-OTA (IC15) | U | tanh-Kennlinie, otaDrive/vcaGain aus Bauteilwerten |
 | Steuerkette Q31-Knoten → D27 → R120 22 k → C36 33 n → R119 47 k → BA662-Steuerpin | U | 2.16.0 vollständig netzverfolgt (Roland S. 5); Anstieg 726 µs = R120·C36 ✓ im Modell |
-| Zusammenführung Hüllkurve (Q31/R131 220 k) + Accent (D35/R133 2,2 k) | U/A | Struktur belegt; Sum-/Max-/Stromlenkungs-Lesart am Raster nicht eindeutig trennbar → Gewicht 4,0 = gerätekalibrierter Fit als Anker (2.14.0-Herleitung „6,0" war überkonfident und ist zurückgenommen) |
+| Zusammenführung Hüllkurve (Q31/R131 220 k) + Accent (D35/R133 2,2 k) | U/A | Struktur BEWIESEN additiv (Whittle: „It adds to the control current of the VCA … the primary reason why accented notes are louder", 2.17.0); Gewichtswert 4,0 bleibt gerätekalibrierter Fit-Anker |
 | Ausgangsnetzwerk (C38/C21/C22, R121 220 k/R122 100 k; Summenzweige 71,6/155,7 Hz) | U | updateOutputNetworkCoefficients + VCA-Zweige aus Bauteilwerten |
 | R162 2,2 k/C40 (Bias) | X | reine DC-Arbeitspunktbildung; im Signalmodell implizit |
 

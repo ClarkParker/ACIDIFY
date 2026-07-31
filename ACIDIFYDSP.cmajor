@@ -282,6 +282,9 @@ processor AcidifyCore
     float64 modKBoost = 1.0;         // abgeleitet aus modResoBoost
     float ampAttackRamp = 1.0f;
     float ampAttackAlpha = 1.0f;
+    // Serien-Totzone Gate->Ton (~4 ms, Whittle-Messung); 0 bei DF-Soft-Attack.
+    int   ampGateDelayRemaining = 0;
+    float ampStockRiseAlpha = 1.0f;
     float accentVcaRiseAlpha = 0.0f;
     float accentVcaFallAlpha = 0.0f;
     float feedbackHighpassPole = 0.0f;
@@ -707,13 +710,12 @@ processor AcidifyCore
     // linear interpoliert — kein Messen im Hintergrund. Druecken die
     // Angleichung von zuvor bis zu -1,34 dB auf unter +-0,3 dB.
     const float[7] distCorrDrive = (0.1f, 0.25f, 0.35f, 0.5f, 0.65f, 0.8f, 1.0f);
-    // Refit 2.16.1: Referenzspektrum nach K1-Ruecknahme (schneller
-    // Sweep-Attack wiederhergestellt) mit Accent-Gewicht 4,0.
-    // gain_probe, 7 Stuetzstellen je Typ; dsp_gain_test wacht ueber
-    // die Restabweichung.
-    const float[7] distCorrPure  = (1.0093f, 1.0665f, 1.1298f, 1.2590f, 1.4388f, 1.6866f, 2.1379f);
-    const float[7] distCorrMack  = (1.1298f, 1.3741f, 1.4622f, 1.5102f, 1.4962f, 1.4521f, 1.3979f);
-    const float[7] distCorrPhono = (1.3693f, 1.1995f, 1.1015f, 0.9863f, 0.8975f, 0.8242f, 0.7512f);
+    // Refit 2.17.0: Referenzspektrum mit 4-ms-Gate-Totzone (Whittle-
+    // Messung am Serien-303). gain_probe, 7 Stuetzstellen je Typ;
+    // dsp_gain_test wacht ueber die Restabweichung.
+    const float[7] distCorrPure  = (1.0081f, 1.0579f, 1.1169f, 1.2374f, 1.4044f, 1.6312f, 2.0464f);
+    const float[7] distCorrMack  = (1.0977f, 1.3198f, 1.3964f, 1.4340f, 1.4141f, 1.3693f, 1.3152f);
+    const float[7] distCorrPhono = (1.3289f, 1.1535f, 1.0543f, 0.9387f, 0.8522f, 0.7817f, 0.7100f);
 
     float distCorrAt (int type, int index)
     {
@@ -1003,6 +1005,9 @@ processor AcidifyCore
         // Meter-Ballistik (2.9.3): Peak-Detektor statt 12-ms-Mittelwert —
         // Attack sofort, Release ~400 ms. meterAlpha ist der Release-Faktor.
         meterAlpha = timeCoefficient (400.0f, sampleRate);
+        // Anstieg nach der Gate-Totzone: 0,5 ms (DF-Doku ueber den vom
+        // Dead-Band befreiten Serienanstieg).
+        ampStockRiseAlpha = 1.0f - timeCoefficient (0.5f, sampleRate);
         parameterSmoothingAlpha = 1.0f - timeCoefficient (5.0f, sampleRate);
         distortionSmoothingAlpha = 1.0f - timeCoefficient (20.0f, sampleRate);
         // PHONO-Blocking: Koppel-C-Arbeitspunkt, tau = 50 ms (generischer
@@ -1445,7 +1450,18 @@ processor AcidifyCore
         currentPitchOctave = log (float64 (max (frequency, 1.0f))) / log (2.0);
         filterEnvelope = 1.0f;
         ampEnvelope = 1.0f;
-        ampAttackRamp = modSoftAtkEnabled ? 0.0f : 1.0f;
+        // Gate->Ton-Verzoegerung (2.17.0, Whittle am Serien-303 GEMESSEN):
+        // "the start of the audible note was between 1 and 5 ms (typically
+        // 4 ms) after the start of the gate signal" — die Steuer-CV muss
+        // erst die Dioden-/Basisstrecken am D34/R137-Knoten durchqueren
+        // (Totzone), dann oeffnet der VCA schnell. Der Devil Fish bewirbt
+        // genau die Beseitigung dieser Verzoegerung (0,3..0,5 ms) — mit
+        // aktivem Soft-Attack-Mod entfaellt sie deshalb und die
+        // DF-Rampenzeit uebernimmt.
+        ampAttackRamp = 0.0f;
+        ampGateDelayRemaining = modSoftAtkEnabled
+                                    ? 0
+                                    : int (0.004f * cachedRate);
         accented = hasAccent;
         gateOpen = true;
     }
@@ -2619,7 +2635,16 @@ processor AcidifyCore
             if (gateOpen)
             {
                 ampEnvelope *= ampBodyCoeff;
-                ampAttackRamp += ampAttackAlpha * (1.0f - ampAttackRamp);
+                // Serien-303: ~4 ms Totzone nach dem Gate (Whittle-Messung),
+                // danach schnelles Oeffnen (~0,5 ms — die DF-Doku nennt
+                // 0,3..0,5 ms als Tempo des von der Totzone befreiten
+                // Anstiegs). Mit DF-Soft-Attack ersetzt die Mod-Rampe beides.
+                if (ampGateDelayRemaining > 0)
+                    ampGateDelayRemaining -= 1;
+                else
+                    ampAttackRamp += (modSoftAtkEnabled ? ampAttackAlpha
+                                                        : ampStockRiseAlpha)
+                                     * (1.0f - ampAttackRamp);
                 ampReleaseElapsed = 0;
             }
             else if (accented)

@@ -6,6 +6,34 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.17.0] - 2026-07-31
+
+### Fixed
+
+- **Gate→Ton-Totzone des Serien-303 eingebaut (~4 ms).** Whittle-
+  Messung am Gerät: „the start of the audible note was between 1 and
+  5 ms (typically 4 ms) after the start of the gate signal" — die
+  Steuer-CV muss die Dioden-/Basisstrecken am Steuerknoten durchqueren,
+  der Devil Fish bewirbt genau deren Beseitigung (0,3–0,5 ms). Modell:
+  4-ms-Totzone + 0,5-ms-Anstieg im Serienzustand; mit DF-Soft-Attack-
+  Mod entfällt sie wie am Gerät. Gemessen: hörbarer Start 3,47 ms +
+  Anstieg ≈ 4 ms nach Gate. Bisher öffnete der VCA sofort — ein
+  weiterer Baustein des „Timing-Feels" der Hardware.
+
+### Changed
+
+- **Accent→VCA-Struktur BEWIESEN (Summe).** Whittle wörtlich: „It adds
+  to the control current of the VCA … the primary reason why accented
+  notes are louder." Die 2.16.0-Ambiguität (Summe vs. Max) ist damit
+  aufgelöst; die Additiv-Struktur des Modells ist belegt, der
+  Gewichtswert 4,0 bleibt gerätekalibrierter Fit-Anker. Zusätzlich
+  bestätigt: MEG-Decay-Kurzschluss bei Accent und die reso-abhängige
+  Sweep-Glättung — beides war bereits korrekt modelliert.
+- Attack-Checkpoint bleed-robust (Onset-Schwelle 25 % statt 1 %, der
+  BA662-Durchgriff liegt bei ~−20 dB); grün bei 597 Hz ≥ 500.
+- Autogain-Refit auf dem Totzonen-Spektrum; Smoke-Referenz
+  Peak 0,509 / RMS 0,0182.
+
 ## [2.16.1] - 2026-07-31
 
 ### Fixed

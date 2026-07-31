@@ -1,3 +1,23 @@
+# Validierung 2.17.0
+
+## 2.17.0
+
+Gate→Ton-Totzone: hörbarer Start (2-%-Schwelle) 3,47 ms nach dem
+Zustand ohne Totzone, plus 0,5-ms-Anstieg ≈ 4 ms nach Gate — in
+Whittles Messfenster 1–5 ms („typically 4 ms"). Accent→VCA-Struktur
+per Rang-3-Primärtext bewiesen (Whittle 303-unique: additiv über
+R119/C36 in den Steuerstrom); MEG-Accent-Kurzschluss und
+reso-abhängige Sweep-Glättung textlich bestätigt (bereits modelliert).
+Attack-Checkpoint mit 25-%-Onset-Schwelle: 597,1 Hz ≥ 500 grün (der
+BA662-Durchgriff vor dem Öffnen liegt bei ~−20 dB und fängt den
+Detektor nicht mehr; der 10-ms-Lag-Fehlerfall bliebe bei ~221 Hz).
+Autogain-Refit nach Totzone (7-Punkt, Restabweichung ≤ 0,34 dB an den
+Testpunkten, gain test grün). Serien-Smoke Peak 0,50919 / RMS 0,01821.
+Volle Batterie grün: smoke, hardware (5 Checkpoints), gain, arp,
+articulation, matrix, transport, ui_smoke, Lints strict.
+
+---
+
 # Validierung 2.16.1
 
 ## 2.16.1

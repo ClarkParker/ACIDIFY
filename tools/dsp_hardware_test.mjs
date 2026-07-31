@@ -295,9 +295,13 @@ const single36 = [{ tick: 0, on: true, note: 36 }];
   const wav = await render("attack", { param2: 0.45, param3: 0.72, param4: 0.9, param5: 0.5 }, single36);
   let peak = 0;
   for (let i = 0; i < wav.length; i += 1) peak = Math.max(peak, Math.abs(wav[i]));
+  // Onset = echtes VCA-Oeffnen. Schwelle 25 % vom Peak, weil vor dem
+  // Oeffnen der modellierte BA662-Durchgriff (~-20 dB, dumpf) liegt —
+  // seit der 4-ms-Gate-Totzone (2.17.0) ist dieses Fenster sichtbar
+  // und darf den Detektor nicht fangen.
   let onset = 0;
   for (let i = 0; i < wav.length; i += 1) {
-    if (Math.abs(wav[i]) > 0.01 * peak) { onset = i; break; }
+    if (Math.abs(wav[i]) > 0.25 * peak) { onset = i; break; }
   }
   const win = Math.round(rate * 0.004);
   const seg = wav.slice(onset, onset + win);

@@ -419,3 +419,38 @@ sich seltsam". Ursachenanalyse gegen die Hardware, wie angeordnet:
 - **Einordnung:** VCO-Former (Scope-vermessen) und die übrigen
   2.13.0-Bausteine sind davon unberührt; der „seltsame" Env/Cutoff-
   Eindruck ist auf K1 zurückgeführt und behoben.
+
+## Umsetzung 2.17.0 — Whittle-Texte ausgeschöpft: Struktur bewiesen, Totzone eingebaut
+
+Auftrag: „keine Geheimnisse mehr" — die öffentlichen Primärtexte
+(Whittle, firstpr.com.au/rwi/dfish/303-unique.html, sowie das bereits
+versionierte DF-Handbuch) wurden vollständig gegen das Modell gelesen.
+
+- **Accent→VCA-Struktur BEWIESEN (Summe):** Whittle wörtlich: „It adds
+  to the control current of the VCA. (Via an RC network of a 47k and a
+  0.033uF to soften the attack a little.) This is the primary reason
+  why accented notes are louder." Die Sum-/Max-Ambiguität aus 2.16.0
+  ist damit aufgelöst: Die `+=`-Struktur des Modells ist korrekt
+  (Rang 3, am Gerät gearbeitet); nur der Zahlenwert bleibt Fit-Anker
+  4,0. R119/C36 als Attack-Weichzeichner bestätigt zusätzlich die
+  2.16.0-Netzverfolgung (R119 → Steuerpin).
+- **MEG-Decay-Kurzschluss bei Accent bestätigt** („this is shorted out
+  and MEG runs to the relatively short time") — im Modell seit jeher
+  `accentDecayCoeff` ✓.
+- **Reso-abhängige Sweep-Glättung bestätigt** (CCW „sudden hit", CW
+  über C13 geglättet + Aufbau über Folgen) — deckungsgleich mit dem
+  nodalen processAccentSweep-Modell ✓.
+- **NEUER Gerätefakt eingebaut: ~4 ms Gate→Ton-Totzone.** DF-Handbuch,
+  Messung am Serien-303: „the start of the audible note was between 1
+  and 5 ms (typically 4 ms) after the start of the gate signal" (der
+  Devil Fish bewirbt die Reduktion auf 0,3..0,5 ms). Physik: Die
+  Steuer-CV muss die Dioden-/Basisstrecken am D34/R137-Knoten
+  durchqueren. Modell: 4-ms-Totzone + 0,5-ms-Anstieg im Serienzustand;
+  mit DF-Soft-Attack-Mod entfällt sie (wie am Gerät). GEMESSEN:
+  hörbarer Start 3,47 ms + Anstieg ≈ 4 ms nach Gate.
+- **Test-Härtung:** Der Attack-Checkpoint detektiert den Onset jetzt
+  bleed-robust (25-%-Schwelle statt 1 % — vor dem VCA-Öffnen liegt der
+  modellierte BA662-Durchgriff bei ~−20 dB); Checkpoint grün bei
+  597 Hz ≥ 500 (der 10-ms-Lag-Fehlerfall läge weiter bei ~221 Hz).
+- **Folgekorrektur:** Autogain-Refit auf dem Totzonen-Spektrum;
+  Smoke-Referenz Peak 0,509 / RMS 0,0182.
