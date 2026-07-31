@@ -6,6 +6,28 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.11.5] - 2026-07-31
+
+### Fixed
+
+- **Pattern-Rests im Arp-Modus sind jetzt lesbar und erklärt**
+  (Nutzerfrage „bestimmte Steps sind off — was passiert hier?"):
+  Stille Steps zeigten „···" — nicht unterscheidbar von „Note kommt
+  gleich". Es ist keine Phrase aktiv: In den Arp-Figuren liefert das
+  Pattern den Rhythmus (Gate/Accent/Slide), und das Default-Pattern
+  enthält einen Rest auf Step 9. Rest-Steps zeigen jetzt „REST"
+  (auch für Phrasen-Rests im Bank-Modus), und die Tooltips nennen
+  den Weg zur Aktivierung: Doppelklick schaltet Gate/Rest, die
+  A/S-Pills Accent und Slide — beides war schon immer auch in der
+  Arp-Ansicht möglich, nur nicht kommuniziert.
+
+### Tests
+
+- `ui_smoke_test`: Default-Rest Step 9 zeigt „REST" + graue LED,
+  Doppelklick aktiviert (Flags 0 → 1, Anzeige wechselt), erneuter
+  Doppelklick stellt den Rest wieder her; Tooltip nennt den
+  Doppelklick-Weg.
+
 ## [2.11.4] - 2026-07-31
 
 ### Fixed

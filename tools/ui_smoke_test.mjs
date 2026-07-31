@@ -872,6 +872,46 @@ try {
     node.__ledProbeArp = getComputedStyle(node.querySelector(
       ".sequence-step:not(.rest):not(.playing):not(.selected) .cap-led")).backgroundImage;
   });
+  // 2.11.5: Pattern-Rests sind im Arp-Modus als "REST" lesbar und per
+  // Doppelklick aktivierbar (Default-Pattern: Step 9 ist ein Rest).
+  const arpRest = await page.locator("acidify-patch-view").evaluate(node => {
+    const previousSelection = {
+      step: node._selectedStep,
+      steps: [...node._selectedSteps],
+      anchor: node._selectionAnchor,
+    };
+    const step = node.querySelector('.sequence-step[data-step="8"]');
+    const initial = {
+      note: step.querySelector(".step-note").textContent,
+      rest: step.classList.contains("rest"),
+      tooltip: step.dataset.tooltip ?? "",
+      flags: node._stepSnapshot()[8].flags,
+    };
+    step.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }));
+    const enabled = {
+      note: step.querySelector(".step-note").textContent,
+      rest: step.classList.contains("rest"),
+      flags: node._stepSnapshot()[8].flags,
+    };
+    step.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }));
+    const restored = {
+      note: step.querySelector(".step-note").textContent,
+      rest: step.classList.contains("rest"),
+      flags: node._stepSnapshot()[8].flags,
+    };
+    node._selectedStep = previousSelection.step;
+    node._selectedSteps = new Set(previousSelection.steps);
+    node._selectionAnchor = previousSelection.anchor;
+    node._renderStepStrip();
+    node._renderStepEditor();
+    return { initial, enabled, restored };
+  });
+  if (arpRest.initial.note !== "REST" || !arpRest.initial.rest || arpRest.initial.flags !== 0
+      || !arpRest.initial.tooltip.includes("Double-click toggles gate")
+      || arpRest.enabled.note === "REST" || arpRest.enabled.rest || arpRest.enabled.flags !== 1
+      || arpRest.restored.note !== "REST" || !arpRest.restored.rest || arpRest.restored.flags !== 0) {
+    throw new Error(`Arp rest display/toggle failed: ${JSON.stringify(arpRest)}`);
+  }
   // 2.11.4: Ohne PHRASE-Figur ist die Phrasen-Zeile gesperrt — kein Menue,
   // kein Stepper, kein Mausrad, aria-disabled gesetzt.
   const phraseIdle = await page.locator("acidify-patch-view").evaluate(node => {

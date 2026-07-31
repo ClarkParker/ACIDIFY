@@ -1,3 +1,18 @@
+# Validierung 2.11.5
+
+## 2.11.5
+
+Headless belegt (Arp-Figur aktiv, Default-Pattern): Step 9 (Flags 0)
+zeigt „REST" mit grauer LED statt „···"; Doppelklick setzt Flags
+0 → 1 (Anzeige verlässt REST, LED grün), erneuter Doppelklick stellt
+Flags 0 und „REST" wieder her. Tooltips der Arp-Ansicht nennen
+Doppelklick (Gate/Rest) und A/S-Pills als Editierweg; Phrasen-Rests
+im Bank-Modus zeigen ebenfalls „REST". Screenshot: Live-Noten amber,
+REST deutlich lesbar. `ui_smoke_test`, `ui_lint --strict`,
+`node --check` grün. Kein DSP-Eingriff.
+
+---
+
 # Validierung 2.11.4
 
 ## 2.11.4
