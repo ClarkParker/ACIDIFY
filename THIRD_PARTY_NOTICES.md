@@ -137,13 +137,24 @@ Resonanzschleife, frequenzabhängige Dioden-Sättigung, Newton-Schleife.
 
 ## ACIDIFY PHONO
 
-`PHONO` ist kein kopierter Fremdalgorithmus. Seit 2.13.0 ist es das
-generische Modell einer übersteuerten NFB-RIAA-Vorverstärkerstufe
-(Standardschaltung der Consumer-Verstärker, RIAA-Netzwerk in der
-Gegenkopplung): RIAA-Wiedergabeentzerrung (3180/318/75 µs) VOR der
-Sättigung → asymmetrischer Rail-Clip (+1,0/−0,65, Modellannahme einer
-einfachen diskreten Stufe) → Koppel-C-Arbeitspunktverschiebung
-(Blocking, τ = 50 ms, Modellannahme 0,47 µF/100 k) →
-25-Hz-Infraschallfilter 2. Ordnung. Ohne ein festgelegtes und
-vermessenes Einzelgerät wird ausdrücklich keine Übereinstimmung mit
-einem bestimmten Verstärker- oder DJ-Mixer-Eingang behauptet.
+`PHONO` ist kein kopierter Fremdalgorithmus. Es modelliert die
+recherchierte Standardkette eines Consumer-Phono-Eingangs der
+80er/90er (2.15.0, Quellen: TI/National AN-346 „High-Performance
+Audio Applications of the LM833"; ESP/Rod Elliott, Project 06;
+JRC/TI-Datenblätter 4558/NE5532):
+
+RCA-Eingang → 47-k-Abschluss + Koppel-C (für Line-Pegel wirkungslos)
+→ EIN Verstärker (4558-Klasse) mit RIAA-Netzwerk in der Gegenkopplung
+(30–40 dB bei 1 kHz, Bass +20 dB) → Sättigung an den Rails →
+Ausgangskopplung → Wahlschalter/Tape-Out (flach; dort wurde
+aufgenommen). Modelliert als: RIAA-Wiedergabeentzerrung (3180/318/
+75 µs) VOR der Sättigung → asymmetrischer Rail-Clip (+1,0/−0,65,
+Modellannahme einer einfachen Stufe) → Slew-Limit 1 V/µs
+(4558-Datenblatt; am 48-k-Serienmaterial messbar inert, dokumentiert)
+→ Koppel-C-Arbeitspunktverschiebung (Blocking, τ = 50 ms,
+Modellannahme) → 25-Hz-Infraschallfilter 2. Ordnung. Der
+HF-Unity-Gain-Zero der NFB-Stufe liegt oberhalb von 20 kHz und ist
+bei 48 kHz Abtastrate außerhalb des Bandes (nicht modelliert,
+begründet). Ohne ein festgelegtes und vermessenes Einzelgerät wird
+ausdrücklich keine Übereinstimmung mit einem bestimmten Verstärker-
+oder DJ-Mixer-Eingang behauptet.

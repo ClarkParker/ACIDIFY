@@ -6,6 +6,23 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.15.0] - 2026-07-31
+
+### Added
+
+- **`docs/OPEN_ITEMS.md`**: die EINE vollständige Liste aller offenen
+  Punkte (Klang/DSP, Produkt/Release, UI) mit Status und Weg zur
+  Schließung — Pflicht-Nachführung bei jeder Änderung.
+- **PHONO: Kette Eingang→Ausgang recherchiert und dokumentiert**
+  (AN-346/LM833, ESP Project 06, 4558/NE5532-Datenblätter): RCA →
+  47 k → NFB-RIAA-Stufe (30–40 dB @ 1 kHz) → Rail-Sättigung →
+  Tape-Out. Das 2.13.0-Modell deckt diese Kette ab; ergänzt wurde das
+  **Slew-Limit der 4558-Klasse (1 V/µs)** — ehrlich vermessen: am
+  48-k-Serienmaterial spektral inert (die RIAA-Schleife begrenzt die
+  Flanken stärker als der OP), wirksam nur bei Extremmaterial;
+  als Korrektheitsglied enthalten. PHONO-Änderungen sind ab jetzt
+  ausdrücklich befundgetrieben.
+
 ## [2.14.0] - 2026-07-31
 
 ### Changed

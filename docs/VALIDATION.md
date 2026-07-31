@@ -1,3 +1,20 @@
+# Validierung 2.15.0
+
+## 2.15.0
+
+PHONO-Slew-Limit (1 V/µs, 4558-Datenblatt; 63 462 Einheiten/s auf der
+1,65-Einheiten-Rail-Spanne, volle Flanke ≈ 26 µs) eingebaut und
+EHRLICH vermessen: Bandanteile > 4/8/12 kHz am A3-Ton, Drive 1,0,
+gegen 2.14.0 identisch (−24,5/−33,3/−40,5 dB) — die RIAA-Entzerrung
+in der Schleife begrenzt die Flanken bereits stärker als der OP; das
+Glied wirkt nur bei Extremmaterial und bleibt als Korrektheitsglied.
+Kein Autogain-Refit nötig (A-Restabweichung unverändert 0,00 dB an
+den geprüften Stützstellen; gain test grün). Serien-Smoke unverändert
+Peak 0,64623 / RMS 0,02356. Batterie grün: smoke, hardware, gain,
+matrix, Lints; docs/OPEN_ITEMS.md neu (vollständige Offen-Liste).
+
+---
+
 # Validierung 2.14.0
 
 ## 2.14.0

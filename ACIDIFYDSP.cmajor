@@ -299,6 +299,14 @@ processor AcidifyCore
     // asymmetrischem Clipping (Blocking-Distortion), tau = 50 ms.
     float phonoBiasAlpha = 0.0f;
     float64 phonoBias = 0.0;
+    // PHONO (2.15.0): Slew-Limit der 4558-Klasse (1 V/us laut
+    // JRC-Datenblatt; Streuung bis 2,2 V/us bei TIs RC4558) — der
+    // Standard-Doppel-OP der japanischen Consumer-Geraete der
+    // 80er/90er. Bei ~26 V Rail-Spanne (+-13 V) und Rails-Modell
+    // +1,0/-0,65 (1,65 Einheiten) entspricht 1 V/us 38 445
+    // Einheiten/s; eine volle Flanke dauert ~26 us.
+    float phonoSlewPerSample = 1.0e9f;
+    float64 phonoSlewState = 0.0;
 
 
 
@@ -675,10 +683,19 @@ processor AcidifyCore
         else
             clipped = 0.65 * tanh (biased / 0.65);
         phonoBias += float64 (phonoBiasAlpha) * (clipped - phonoBias);
-        let cleaned = subB0 * clipped + subB1 * subX1 + subB2 * subX2
+        // Slew-Limit der 4558-Klasse (2.15.0, recherchiert): Bei tiefem
+        // Uebersteuern schafft der OP die Rail-zu-Rail-Flanke nur mit
+        // 1 V/us — die Clip-Kanten werden zu Rampen (~26 us), das nimmt
+        // dem Overdrive das Fizzeln und macht ihn dunkler/weicher, wie
+        // am Geraet der Aera.
+        let dv = clipped - phonoSlewState;
+        phonoSlewState += clamp (dv, -float64 (phonoSlewPerSample),
+                                      float64 (phonoSlewPerSample));
+        let slewed = phonoSlewState;
+        let cleaned = subB0 * slewed + subB1 * subX1 + subB2 * subX2
                     - subA1 * subY1 - subA2 * subY2;
         subX2 = subX1;
-        subX1 = clipped;
+        subX1 = slewed;
         subY2 = subY1;
         subY1 = cleaned;
         // Grundpegel: die RIAA-Bassanhebung VOR dem Clip macht die Stufe
@@ -998,6 +1015,10 @@ processor AcidifyCore
         // Wert einer 0,47-uF/100-k-Eingangskopplung, dokumentiert in
         // THIRD_PARTY_NOTICES.md als Modellannahme).
         phonoBiasAlpha = 1.0f - timeCoefficient (50.0f, sampleRate);
+        // PHONO-Slew: 1 V/us auf 1,65 Einheiten je 26 V Rail-Spanne
+        // = 63 462 Einheiten/s * (1,65/2,0)... direkt: 1e6 V/s / 26 V
+        // * 1,65 Einheiten = 63 462 Einheiten/s.
+        phonoSlewPerSample = 63462.0f / max (sampleRate, 1.0f);
         updateOutputNetworkCoefficients (sampleRate);
         updateCouplingCoefficients (sampleRate);
         updateVcaBranchCoefficients (sampleRate);
