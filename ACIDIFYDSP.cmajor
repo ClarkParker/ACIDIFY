@@ -711,14 +711,14 @@ processor AcidifyCore
     // linear interpoliert — kein Messen im Hintergrund. Druecken die
     // Angleichung von zuvor bis zu -1,34 dB auf unter +-0,3 dB.
     const float[7] distCorrDrive = (0.1f, 0.25f, 0.35f, 0.5f, 0.65f, 0.8f, 1.0f);
-    // Refit 2.14.0: Das hergeleitete Accent-VCA-Gewicht 6,0 (vorher
-    // Open303-Fit 4,0) hebt die Serien-Referenz an; die A-bewichteten
-    // Tabellen sind auf dem neuen Serien-Render nachgemessen (gain_probe,
-    // 7 Stuetzstellen je Typ, dsp_gain_test wacht ueber die
-    // Restabweichung).
-    const float[7] distCorrPure  = (1.0174f, 1.0990f, 1.1803f, 1.3413f, 1.5632f, 1.8707f, 2.4490f);
-    const float[7] distCorrMack  = (1.2927f, 1.5850f, 1.7378f, 1.8387f, 1.8344f, 1.7865f, 1.7218f);
-    const float[7] distCorrPhono = (1.5523f, 1.4305f, 1.3319f, 1.2022f, 1.1003f, 1.0139f, 0.9263f);
+    // Refit 2.13.0, mit 2.16.0 wiederhergestellt: Die Tabellen gelten
+    // fuer das Referenzspektrum mit Accent-Gewicht 4,0 (die 2.14.0-
+    // Tabellen gehoerten zum verworfenen Gewicht 6,0). gain_probe,
+    // 7 Stuetzstellen je Typ; dsp_gain_test wacht ueber die
+    // Restabweichung.
+    const float[7] distCorrPure  = (1.0081f, 1.0592f, 1.1194f, 1.2446f, 1.4142f, 1.6425f, 2.0606f);
+    const float[7] distCorrMack  = (1.1041f, 1.3138f, 1.4093f, 1.4690f, 1.4521f, 1.4093f, 1.3536f);
+    const float[7] distCorrPhono = (1.3381f, 1.1749f, 1.0789f, 0.9616f, 0.8730f, 0.8017f, 0.7316f);
 
     float distCorrAt (int type, int index)
     {
@@ -996,8 +996,11 @@ processor AcidifyCore
         // Die 47 k / 33 nF wurden zuvor als „R26/C26" gefuehrt — gleiche Werte,
         // die Bezeichner der TB-303-Zeichnung sind R119/C36.
         //
-        // Einschraenkung: R119 fuehrt an die OTA-Ausgangsstufe, nicht gegen
-        // Masse; die Fallzeitkonstante ist damit eine Naeherung erster Ordnung.
+        // Praezisiert 2.16.0 (Roland S. 5): R119 fuehrt an den
+        // BA662A-STEUERPIN (nicht an die Ausgangsstufe, wie zuvor
+        // vermerkt); C36 haengt in der Mitte des R120/R119-Teilers. Die
+        // Fallzeitkonstante gegen den Steuerpin-Ruhepegel bleibt eine
+        // Naeherung erster Ordnung (untere Schranke 1,55 ms).
         accentVcaRiseAlpha = exponentialAlpha (219.24f, sampleRate);
         accentVcaFallAlpha = exponentialAlpha (102.616f, sampleRate);
         feedbackHighpassPole = float (exp (-float64 (twoPi) * 150.0 / float64 (sampleRate)));
@@ -2656,24 +2659,21 @@ processor AcidifyCore
                 // Der Term `0.45f * filterEnvelope` hatte damit kein Bauteil
                 // hinter sich und ist entfallen.
                 //
-                // HERGELEITET (2.14.0, Netzverfolgung x0x-Beta-Plan, VCA-
-                // Abschnitt) — ersetzt Open303s Fit 4.0. Der BA662-Steuer-
-                // strom summiert zwei Pfade am D34/R137-Knoten:
-                //   Huellkurve: Q31 (PNP) mit R131 = 220 k Emitter-
-                //     degeneration gegen +12 V, Basis am C42-Knoten ->
-                //     Kollektor-STROMQUELLE i_env = (12 - 0,6 - V_C42)/220k,
-                //     Spitze (V_C42 = 0,4 V, Q32 gesaettigt) = 50 uA.
-                //   Accent: VR4-Bus (MEG-Spitze 10 V, Zeichnungsanker aus
-                //     der 2.12.0-Env-Herleitung) -> D27 -> R120 = 22 k
-                //     (C36-Formung, accentVcaRise/Fall) -> Sammelschiene ->
-                //     R133 = 2,2 k -> D35 -> Knoten: i_acc,max =
-                //     (10 - 1,2 - 1,6)/24,2k = 298 uA.
-                // Gewicht = i_acc,max/i_env,max = 5,95 ~= 6,0; Toleranzband
-                // 4,8..6,7 ueber MEG-Hub und Knoten-Bias (dokumentiert in
-                // docs/SOUND_GAP_ANALYSIS.md). Open303s 4.0 liegt am
-                // unteren Rand des Bandes (andere Normierung) und dient nur
-                // noch als Plausibilitaetsvergleich.
-                ampControl += 6.0f * accentVcaRC;
+                // KORRIGIERT 2.16.0: Die 2.14.0-Herleitung (Gewicht 6,0 aus
+                // einer Stromsummen-Lesart) haelt der besseren Netzverfolgung
+                // NICHT stand. Roland Seite 5 zeigt die Steuerkette
+                // Q31-Knoten -> D27 -> R120 = 22 k -> C36 -> R119 = 47 k ->
+                // BA662A-STEUERPIN; Huellkurve (Q31-Folger, R131 = 220 k
+                // Last) und Accent (D35/R133 = 2,2 k vom VR4-Bus) fuehren am
+                // Q31-Knoten MAX-artig zusammen (PNP-Folger kann gegen die
+                // Dioden-Einspeisung nicht sinken). Sum-, Max- und
+                // Stromlenkungs-Lesart sind am Raster nicht eindeutig zu
+                // trennen — das Gewicht ist damit NICHT eindeutig herleitbar
+                // (Analyse: docs/SOUND_GAP_ANALYSIS.md, Umsetzung 2.16.0).
+                // Es gilt wieder der einzige geraetegebundene Anker:
+                // Open303s Fit 4,0, kalibriert gegen Aufnahmen eines echten
+                // 303 — gleicher Status wie squareDuty.
+                ampControl += 4.0f * accentVcaRC;
             }
             else
             {

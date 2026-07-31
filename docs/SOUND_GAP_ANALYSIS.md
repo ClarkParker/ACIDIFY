@@ -355,3 +355,37 @@ ausschließlich Schaltplan und publizierte Fremdmessungen.
    gesetzt sind.
 5. PHONO — ohne Rang-1-Vorlage (generisches Modell, bewusst); weitere
    Änderungen nur gegen konkreten Hörbefund.
+
+## Umsetzung 2.16.0 — Vollständigkeit statt Tropfen
+
+Auftrag: alle offenen Punkte schließen, nichts selbstständig
+offenlassen. Ergebnis: docs/SCHEMATIC_COVERAGE.md (jede Baugruppe der
+Seiten 4/5 mit Status U/X/A, keine Zeile „offen") und
+docs/OPEN_ITEMS.md ohne offene A-Punkte.
+
+- **A3/kMax GEMESSEN entschieden:** Serie (18,7/1,06): alle Top-Linien
+  auf dem Obertonraster (0–1 %) — keine Selbstoszillation. Faktor 2:
+  dominante freilaufende Linie 1477 Hz, 41 % neben dem Raster =
+  Grenzzyklus. Deckt sich mit dem Devil-Fish-Manual („double the usual
+  feedback so as to allow the filter to self-oscillate"): Faktor 2 ist
+  der Mod, nicht die Serie.
+- **Accent-Steuerkette vollständig verfolgt (Roland S. 5):**
+  Q31-Knoten → D27 → R120 22 k → C36 → R119 47 k → **BA662A-Steuerpin**
+  (frühere Lesart „R119 an die Ausgangsstufe" korrigiert). Hüllkurve
+  (Q31-Folger, R131 220 k) und Accent (D35/R133 2,2 k) führen am
+  Q31-Knoten max-artig zusammen.
+- **EHRLICHE RÜCKNAHME:** Die 2.14.0-„Herleitung" des Accent-Gewichts
+  6,0 beruhte auf einer Stromsummen-Lesart, die die bessere
+  Netzverfolgung nicht bestätigt (Max-/Stromlenkungs-Deutungen am
+  Raster nicht trennbar). Das Gewicht ist NICHT eindeutig herleitbar;
+  es gilt wieder der einzige gerätegebundene Anker 4,0 (Open303-Fit an
+  Aufnahmen; gleicher Status wie squareDuty). Autogain-Tabellen auf den
+  2.13.0-Messstand zurückgestellt. Lehre: „hergeleitet" nur bei
+  eindeutiger Netzlage — sonst Anker, kein Rechenkunststück.
+- **A6/Blocking isoliert gemessen** (Serie gegen Kontrollvariante mit
+  eingefrorenem Bias): Δmean −6e−5 → 0 binnen ~70 ms; der DC-Anteil
+  wird vom Rumble-Filter gesperrt, hörbar trägt die Asymmetrie
+  (Klirrsignatur H2/H4). Modellannahme bleibt, Wirkung quantifiziert.
+- **A8/K5 geschlossen:** Pegelanker 5,17 Vss gilt am Abgriff R105/Q28
+  (x0x-vcfmods, speist den Mixer); die Zeichnungsangabe 5,5–12 V gilt
+  am TP4-Puffer vor dem Former — kein Widerspruch, zwei Messpunkte.

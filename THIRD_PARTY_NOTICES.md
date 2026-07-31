@@ -13,19 +13,16 @@ Q9-Bias-Netz), Hüllkurvenzeiten, Slide (22 ms, CV-Domäne) und
 VCA/OTA-Stufe sind aus den Roland-Serviceschaltplänen hergeleitet
 (docs/SOUND_GAP_ANALYSIS.md, docs/HARDWARE_AUDIT.md).
 
-Verbleibend sind **zwei zitierte Messwerte eines echten TB-303**, die
-über das Open303-Projekt publiziert wurden und im Quelltext einzeln als
-solche markiert sind (Messwerte sind Fakten, keine Schöpfung):
+Verbleibend sind **drei zitierte Werte eines echten TB-303**, die über
+das Open303-Projekt publiziert wurden und im Quelltext einzeln als
+solche markiert sind (Messwerte/Geräte-Fits sind Fakten bzw.
+gerätegebundene Kalibrierungen, keine Schöpfung):
 
 | Wert | Stelle | Status |
 |---|---|---|
 | Rechteck-Duty `46,88 %` + Halbpegel | VCO-Shaper | Anker des 2.13.0-Former-Modells (Form aus Schaltung + Scope hergeleitet; TM5 „WIDTH" ist Werksabgleich, die Duty bleibt Messwert) |
-| Accent-Amp-Release `50 ms` | VCA-Hüllkurve | Messwert-Anker; die Schaltungsherleitung liefert nur ein Intervall (1,55 ms … ≥ 200 ms, siehe Quelltextkommentar) |
-
-Das Accent-VCA-Gewicht ist seit 2.14.0 **hergeleitet** (nodale Analyse
-des D34/R137-Summenknotens: Q31/R131 = 220 k Stromquelle gegen
-D27/R120 = 22 k + R133 = 2,2 k Accent-Pfad → 6,0); Open303s gefittete
-4,0 dient nur noch als Plausibilitätsvergleich.
+| Accent-VCA-Gewicht `4.0` | ampControl-Pfad | gerätekalibrierter Fit als Anker; die Steuerkette ist vollständig netzverfolgt (2.16.0), aber Sum-/Max-Lesart am Raster nicht eindeutig — die 2.14.0-„Herleitung" (6,0) wurde als überkonfident zurückgenommen |
+| Accent-Amp-Release `50 ms` | VCA-Hüllkurve | Messwert-Anker; die Schaltungsherleitung liefert nur ein Intervall (1,55 ms … MEG-Fortlauf, siehe Quelltextkommentar) |
 
 **Historie:** Frühe Stände (bis einschließlich der 0.7.x-Reihe, in der
 Repo-Historie enthalten) adaptierten Abbildungen und Konstanten aus

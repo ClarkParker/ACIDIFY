@@ -6,6 +6,38 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.16.0] - 2026-07-31
+
+### Added
+
+- **`docs/SCHEMATIC_COVERAGE.md`**: vollständige Abdeckungstabelle des
+  Schaltplans — jede Baugruppe der Seiten 4/5 mit Status
+  umgesetzt/ausgeschlossen/Messanker, KEINE Zeile „offen". Das ist ab
+  jetzt der Maßstab für „entspricht dem Schaltplan".
+
+### Changed
+
+- **kMax-Lesart GEMESSEN entschieden (A3)**: Serie (18,7/1,06) zeigt
+  ausschließlich Linien auf dem Obertonraster; Faktor 2 erzeugt eine
+  freilaufende Linie 41 % neben dem Raster (Grenzzyklus) — deckungs-
+  gleich mit dem Devil-Fish-Manual („double the usual feedback … to
+  allow the filter to self-oscillate"). Serienlesart bestätigt.
+- **Accent-Steuerkette vollständig netzverfolgt (A1)**: Q31-Knoten →
+  D27 → R120 22 k → C36 → R119 47 k → BA662A-STEUERPIN (frühere Lesart
+  „R119 an die Ausgangsstufe" korrigiert). 50-ms-Release bleibt
+  publizierter Messanker im hergeleiteten Intervall.
+- **Ehrliche Rücknahme: Accent-Gewicht zurück auf 4,0.** Die
+  2.14.0-„Herleitung" (6,0) beruhte auf einer Stromsummen-Lesart, die
+  die bessere Netzverfolgung nicht bestätigt (max-artige
+  Zusammenführung am Q31-Knoten; Lesarten am Raster nicht trennbar).
+  Es gilt wieder der gerätekalibrierte Fit 4,0; Autogain-Tabellen auf
+  den 2.13.0-Messstand zurückgestellt.
+- **A6 Blocking isoliert gemessen** (Kontrollvariante mit
+  eingefrorenem Bias): Zustandserholung ~70 ms, Ausgangs-DC-Anteil
+  klein (Rumble-Filter sperrt), hörbare Wirkung = Klirr-Asymmetrie.
+- A8/K5 dokumentiert (zwei Messpunkte: R105/Q28-Abgriff vs
+  TP4-Puffer); OPEN_ITEMS ohne offene Klang-/DSP-Punkte.
+
 ## [2.15.0] - 2026-07-31
 
 ### Added

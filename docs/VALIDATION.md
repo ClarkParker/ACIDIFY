@@ -1,3 +1,23 @@
+# Validierung 2.16.0
+
+## 2.16.0
+
+kMax-Entscheid gemessen: Serie — Top-5-Linien bei C2/Reso max alle
+0–1 % vom Obertonraster (65,2/65,9/1308/131/130 Hz); Faktor 2 —
+dominante Linie 1477,3 Hz mit 41 % Rasterabstand (freilaufender
+Grenzzyklus). Accent-Kette netzverfolgt (Roland S. 5, Rasterkrops im
+Sitzungsprotokoll): D27→R120→C36→R119→BA662-Steuerpin. Gewicht 4,0
+wiederhergestellt; Autogain-Tabellen = 2.13.0-Messstand, gain_probe
+bestätigt A-Restabweichung 0,00 dB (4 Stützstellen je Typ geprüft),
+dsp_gain_test grün. Blocking isoliert: Δmean(Serie −
+Bias-eingefroren) −6e−5 → 0 binnen ~70 ms (2-Perioden-Fenster).
+Serien-Smoke-Referenz wieder Peak 0,48012 / RMS 0,01858 (Stand
+2.13.0, da Gewicht 4,0). Volle Batterie grün: smoke, hardware, gain,
+arp, articulation, matrix, transport, ui_smoke, Lints strict.
+SCHEMATIC_COVERAGE.md neu; OPEN_ITEMS ohne offene A-Punkte.
+
+---
+
 # Validierung 2.15.0
 
 ## 2.15.0
