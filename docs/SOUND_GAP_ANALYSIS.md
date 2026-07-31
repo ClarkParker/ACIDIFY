@@ -308,3 +308,50 @@ Werksabgleich ist. Die exakte Dachanstiegs-Größe trägt ±0,05-Toleranz
 aus der Foto-Vermessung. Blocking-Pumpen ist Modellannahme mit
 dokumentiertem τ; ein isolierter Messbeleg steht aus (die
 Klirrsignatur belegt nur die Asymmetrie).
+
+## Umsetzung 2.14.0 — Accent-Pfad hergeleitet
+
+Anlass: Auftrag, die verbliebenen Accent-Konstanten aus der Schaltung
+abzuleiten statt sie als „offene Kalibrierpunkte" zu führen. Es wird
+NICHT am Referenzgerät des Projektinhabers gemessen; Anker sind
+ausschließlich Schaltplan und publizierte Fremdmessungen.
+
+- **Accent-VCA-Gewicht: 4,0 (Open303-Fit) → 6,0 (hergeleitet).**
+  Netzverfolgung am x0x-Beta-Plan (VCA-Abschnitt): Der BA662-
+  Steuerstrom summiert am D34/R137-Knoten zwei Pfade.
+  Hüllkurve: Q31 (2SA733P) mit R131 = 220 k Emitterdegeneration gegen
+  +12 V, Basis am C42-Knoten — Kollektor-Stromquelle
+  i_env = (12 − 0,6 − V_C42)/220 k, Spitze 50 µA (V_C42 = 0,4 V, Q32
+  gesättigt). Accent: VR4-Bus (MEG-Spitze 10 V, derselbe
+  Zeichnungsanker wie in der 2.12.0-Env-Herleitung) → D27 →
+  R120 = 22 k (C36-Formung = accentVcaRise/Fall) → Sammelschiene →
+  R133 = 2,2 k → D35 → Knoten: i_acc,max = (10 − 1,2 − 1,6)/24,2 k =
+  298 µA. Gewicht = 298/50 = **5,95 ≈ 6,0**; Toleranzband 4,8–6,7
+  über MEG-Hub (9–10,5 V) und Knoten-Bias (1,2–2,0 V). Open303s 4,0
+  liegt am unteren Bandrand (andere Normierung) — Plausibilität, keine
+  Quelle. Wirkung: Accents ≈ +1,6 dB kräftiger als vorher.
+- **Accent-Amp-Release: bleibt 50 ms (publizierte Fremdmessung).**
+  Die Schaltung liefert kein eindeutiges τ: Am Gate-Ende stehen C36
+  über R119 = 47 k gegen die OTA-Ausgangsstufe (Potenzial unbestimmt,
+  untere Schranke 1,55 ms) und die weiterlaufende MEG-Decay-Rampe
+  (obere Schranke ≥ 200 ms). Der Messwert 50 ms liegt im Intervall und
+  bleibt Anker; die Schranken stehen im Quelltextkommentar.
+- **Folgekorrektur:** Autogain-Refit (A-Restabweichung 0,00 dB an
+  12 Stützstellen); neue Serien-Smoke-Referenz Peak 0,646.
+
+**Restliste Klangcharakter (vollständig, Stand 2.14.0):**
+1. Accent-Amp-Release 50 ms — Messwert-Anker, Intervall hergeleitet
+   (s. o.); eine engere Herleitung bräuchte die OTA-Ausgangsstufen-
+   Potenziale (Netzverfolgung möglich, Aufwand mittel).
+2. Rechteck-Duty 46,88 % — bleibt prinzipbedingt Messwert: TM5
+   „WIDTH" ist Werksabgleich, im Plan steht kein Sollwert für die
+   Duty selbst.
+3. kMax-Faktor-2-Lesart der Stinchcombe-Übertragungsfunktion —
+   Rang-3-Literaturfrage, ändert die Anschwinggrenze; Prüfstein wäre
+   ein Grenzzyklus-Vergleich beider Lesarten gegen die dokumentierte
+   Selbstoszillations-Grenze.
+4. VCO-Former-Schwellen-DC (D30/D31/R107) — am Raster nicht
+   auflösbar; unkritisch, da Duty/Pegel/Dachanstieg als Messanker
+   gesetzt sind.
+5. PHONO — ohne Rang-1-Vorlage (generisches Modell, bewusst); weitere
+   Änderungen nur gegen konkreten Hörbefund.

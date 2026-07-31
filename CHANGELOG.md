@@ -6,6 +6,27 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.14.0] - 2026-07-31
+
+### Changed
+
+- **Accent-VCA-Gewicht hergeleitet: 4,0 → 6,0.** Die nodale Analyse des
+  D34/R137-Summenknotens (Netzverfolgung x0x-Beta-Plan, VCA-Abschnitt)
+  ersetzt Open303s gefittete 4,0: Hüllkurven-Stromquelle Q31/R131 220 k
+  (Spitze 50 µA) gegen Accent-Pfad D27/R120 22 k + R133 2,2 k/D35
+  (Spitze 298 µA) → Gewicht 5,95 ≈ 6,0 (Toleranzband 4,8–6,7
+  dokumentiert). Accents schlagen hörbar kräftiger durch (≈ +1,6 dB
+  gegenüber 2.13.0). Damit ist einer der beiden verbliebenen
+  Open303-Messwert-Anker durch eine Schaltungsherleitung ersetzt.
+- **Accent-Amp-Release bleibt 50 ms**, jetzt mit hergeleitetem
+  Schaltungsintervall (1,55 ms … ≥ 200 ms; publizierte Fremdmessung
+  als Anker im Intervall — keine Messung am Referenzgerät nötig).
+- **Folgekorrektur:** Autogain-Refit aller drei Distortion-Tabellen
+  (A-Restabweichung 0,00 dB an 12 Stützstellen); neue
+  Serien-Smoke-Referenz Peak 0,646.
+- Fehlerprotokoll: vollständige Restliste Klangcharakter
+  (docs/SOUND_GAP_ANALYSIS.md, „Umsetzung 2.14.0").
+
 ## [2.13.0] - 2026-07-31
 
 ### Fixed

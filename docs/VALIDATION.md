@@ -1,3 +1,23 @@
+# Validierung 2.14.0
+
+## 2.14.0
+
+Accent-VCA-Gewicht 6,0 aus der Schaltung: nodale Rechnung belegt
+(i_env,max = 50 µA aus Q31/R131 220 k; i_acc,max = 298 µA aus
+D27/R120 22 k + R133 2,2 k/D35 bei MEG-Spitze 10 V und Knoten-Bias
+1,6 V → 5,95; Toleranzband 4,8–6,7 über die dokumentierten Spannen).
+Accent-Release-Intervall hergeleitet (untere Schranke R119·C36 =
+1,55 ms, obere Schranke MEG-Decay ≥ 200 ms; Messwert 50 ms im
+Intervall, bleibt Anker). Autogain-Refit per gain_probe:
+A-Restabweichung 0,00 dB an 12 Stützstellen. Neue
+Serien-Smoke-Referenz Peak 0,64623 / RMS 0,02356 (Accents kräftiger).
+Volle Batterie grün: smoke, hardware (Stimmvorschrift 457,8 Hz,
+Env-Mod-Monotonie, Slide-Symmetrie), gain, arp, articulation, matrix,
+transport, ui_smoke, Lints strict, check_sync 66/66. Kein Eingriff in
+Sequencer/UI.
+
+---
+
 # Validierung 2.13.0
 
 ## 2.13.0

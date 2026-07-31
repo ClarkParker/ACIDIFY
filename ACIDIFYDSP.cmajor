@@ -694,14 +694,14 @@ processor AcidifyCore
     // linear interpoliert — kein Messen im Hintergrund. Druecken die
     // Angleichung von zuvor bis zu -1,34 dB auf unter +-0,3 dB.
     const float[7] distCorrDrive = (0.1f, 0.25f, 0.35f, 0.5f, 0.65f, 0.8f, 1.0f);
-    // Refit 2.13.0: VCO-Former (fallender Saegezahn, Reset-Rundung,
-    // Rechteck-Dachanstieg) und die neue PHONO-Topologie (EQ -> Clip)
-    // verschieben das Referenzspektrum; die A-bewichteten Tabellen sind
-    // auf dem neuen Serien-Render nachgemessen (gain_probe, 7 Stuetz-
-    // stellen je Typ, dsp_gain_test wacht ueber die Restabweichung).
-    const float[7] distCorrPure  = (1.0081f, 1.0592f, 1.1194f, 1.2446f, 1.4142f, 1.6425f, 2.0606f);
-    const float[7] distCorrMack  = (1.1041f, 1.3138f, 1.4093f, 1.4690f, 1.4521f, 1.4093f, 1.3536f);
-    const float[7] distCorrPhono = (1.3381f, 1.1749f, 1.0789f, 0.9616f, 0.8730f, 0.8017f, 0.7316f);
+    // Refit 2.14.0: Das hergeleitete Accent-VCA-Gewicht 6,0 (vorher
+    // Open303-Fit 4,0) hebt die Serien-Referenz an; die A-bewichteten
+    // Tabellen sind auf dem neuen Serien-Render nachgemessen (gain_probe,
+    // 7 Stuetzstellen je Typ, dsp_gain_test wacht ueber die
+    // Restabweichung).
+    const float[7] distCorrPure  = (1.0174f, 1.0990f, 1.1803f, 1.3413f, 1.5632f, 1.8707f, 2.4490f);
+    const float[7] distCorrMack  = (1.2927f, 1.5850f, 1.7378f, 1.8387f, 1.8344f, 1.7865f, 1.7218f);
+    const float[7] distCorrPhono = (1.5523f, 1.4305f, 1.3319f, 1.2022f, 1.1003f, 1.0139f, 0.9263f);
 
     float distCorrAt (int type, int index)
     {
@@ -958,10 +958,16 @@ processor AcidifyCore
         // Die fruehere Abschaltanalyse (51..104 ms aus R123/C42 und einer
         // Silizium-Schwelle) ist durch Whittles MESSUNG am Original widerlegt:
         // ~16 ms gesamt. Der Analyse fehlte der schnelle Entladepfad.
-        // Accent-Release 50 ms: Open303-Wert, dort aus Aufnahmen eines echten
-        // 303 gewonnen (accentAmpRelease = 50.0). Der unaccentierte Fall ist
-        // direkt gemessen (Whittle: 8 ms Halten + 8 ms linear) und steht als
-        // Halte-/Rampenlogik in der Hauptschleife.
+        // Accent-Release 50 ms: publizierte Messung an einem echten 303
+        // (Open303, accentAmpRelease = 50.0). Schaltungsseitig NICHT
+        // eindeutig herleitbar (2.14.0-Netzverfolgung): Der Accent-Pfad
+        // haelt am Gate-Ende zwei Kandidaten-Zeitkonstanten — C36 ueber
+        // R119 = 47 k gegen die OTA-Ausgangsstufe (Potenzialdifferenz
+        // unbestimmt, untere Schranke 1,55 ms) und die weiterlaufende
+        // MEG-Decay-Rampe (obere Schranke >= 200 ms); der Messwert 50 ms
+        // liegt im Intervall und bleibt der Anker. Der unaccentierte Fall
+        // ist direkt gemessen (Whittle: 8 ms Halten + 8 ms linear) und
+        // steht als Halte-/Rampenlogik in der Hauptschleife.
         ampAccentReleaseCoeff = timeCoefficient (50.0f, sampleRate);
         // 47k * 0.033uF RC between the accent switch and VCA summing node.
         // Accent-Netz am VCA, aus dem Plan gelesen: D27 (1N4148) in Reihe mit
@@ -2629,17 +2635,24 @@ processor AcidifyCore
                 // Der Term `0.45f * filterEnvelope` hatte damit kein Bauteil
                 // hinter sich und ist entfallen.
                 //
-                // Der Accent dagegen speist ueber D35/R133 = 2,2 k in den
-                // Q31-Knoten (R131 = 220 k traegt die Huellkurve). Die
-                // Stromquellen-Hypothese fuer Q36 ist am Schaltbild WIDERLEGT
-                // (Emitter direkt an +12 V, R145 am Kollektor), und ein
-                // oeffentliches Netz existiert nicht (EAGLE: nur Werte;
-                // RE-303: "no schematic, no netlist"). Die 4.0 kommt aus
-                // Open303 — rosic_Open303.h: (0.45 + 4*accentGain)*mainEnvOut —
-                // und ist dort gegen Aufnahmen eines echten 303 kalibriert.
-                // Damit gilt derselbe Status wie fuer squareDuty: gemessene
-                // Hardware schlaegt geschaetzte Schaltung. BEWUSST BEHALTEN.
-                ampControl += 4.0f * accentVcaRC;
+                // HERGELEITET (2.14.0, Netzverfolgung x0x-Beta-Plan, VCA-
+                // Abschnitt) — ersetzt Open303s Fit 4.0. Der BA662-Steuer-
+                // strom summiert zwei Pfade am D34/R137-Knoten:
+                //   Huellkurve: Q31 (PNP) mit R131 = 220 k Emitter-
+                //     degeneration gegen +12 V, Basis am C42-Knoten ->
+                //     Kollektor-STROMQUELLE i_env = (12 - 0,6 - V_C42)/220k,
+                //     Spitze (V_C42 = 0,4 V, Q32 gesaettigt) = 50 uA.
+                //   Accent: VR4-Bus (MEG-Spitze 10 V, Zeichnungsanker aus
+                //     der 2.12.0-Env-Herleitung) -> D27 -> R120 = 22 k
+                //     (C36-Formung, accentVcaRise/Fall) -> Sammelschiene ->
+                //     R133 = 2,2 k -> D35 -> Knoten: i_acc,max =
+                //     (10 - 1,2 - 1,6)/24,2k = 298 uA.
+                // Gewicht = i_acc,max/i_env,max = 5,95 ~= 6,0; Toleranzband
+                // 4,8..6,7 ueber MEG-Hub und Knoten-Bias (dokumentiert in
+                // docs/SOUND_GAP_ANALYSIS.md). Open303s 4.0 liegt am
+                // unteren Rand des Bandes (andere Normierung) und dient nur
+                // noch als Plausibilitaetsvergleich.
+                ampControl += 6.0f * accentVcaRC;
             }
             else
             {
