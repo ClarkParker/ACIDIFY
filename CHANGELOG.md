@@ -6,6 +6,26 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.11.6] - 2026-07-31
+
+### Changed
+
+- **Mausrad editiert im Arp-Modus das Gate statt der Tonhöhe**
+  (Nutzererwartung): In der Arp-Ansicht kommen die Tonhöhen aus den
+  gehaltenen Tasten — das Pattern ist dort ein Rhythmus-Editor.
+  Rad hoch öffnet das Gate, Rad runter setzt den Step auf Rest
+  (deterministisch, kein Toggle-Springen); gilt auch bei Phrase
+  00 PATTERN. Classic/Studio behalten Rad = Halbton, die
+  Bank-Phrase-Sperre bleibt unberührt. Tooltips nennen die neue
+  Rad-Belegung.
+
+### Tests
+
+- `ui_smoke_test`: Rad-Kontrakt in der Arp-Ansicht (hoch auf Rest →
+  Gate an, nochmals hoch → unverändert, runter → Rest; Tonhöhe
+  bleibt unangetastet), Phrase-00-Entsperrtest auf Gate-Editieren
+  umgestellt.
+
 ## [2.11.5] - 2026-07-31
 
 ### Fixed

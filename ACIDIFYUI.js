@@ -1014,6 +1014,20 @@ class AcidifyPatchView extends HTMLElement {
         event.preventDefault();
         if (this._phraseBankActive()) return;
         const index = Number(node.dataset.step);
+        if (this._arpView && Math.round(clamp(Number(this._values.get("param61") ?? 0), 0, 16)) > 0) {
+          // Arp-Ansicht: Tonhoehen kommen aus den gehaltenen Tasten, das
+          // Pattern ist hier ein Rhythmus-Editor — Rad hoch oeffnet das
+          // Gate, Rad runter setzt den Step auf Rest.
+          const flags = this._stepFlags(index);
+          const gated = (flags & 1) !== 0;
+          const wantGate = event.deltaY < 0;
+          this._selectedStep = index;
+          this._selectedSteps = new Set([index]);
+          this._selectionAnchor = index;
+          if (wantGate !== gated) this._setStepValue(index, "flags", flags ^ 1, true);
+          else this._renderStepStrip();
+          return;
+        }
         const offset = event.deltaY < 0 ? 1 : -1;
         if (this._studioMode) {
           if (!this._selectedSteps.has(index)) {
@@ -2383,11 +2397,11 @@ class AcidifyPatchView extends HTMLElement {
           // Phrase 00 PATTERN: der Step liefert auch die Tonhoehe (relativ
           // zur Root), die gehaltenen Tasten transponieren die Phrase.
           node.setAttribute("aria-label", `Step ${index + 1}, ${absoluteNote}, ${states}; phrase 00 PATTERN plays this step's own pitch transposed by the held MIDI keys`);
-          node.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${states}. Phrase 00 PATTERN plays the step's own pitch, transposed by the held MIDI keys; gate, accent and slide come from the pattern. Double-click toggles gate and rest; the A/S pills switch accent and slide.`;
+          node.dataset.tooltip = `Step ${index + 1}: ${absoluteNote}, ${states}. Phrase 00 PATTERN plays the step's own pitch, transposed by the held MIDI keys; gate, accent and slide come from the pattern. Double-click toggles gate and rest; wheel up opens the gate, wheel down mutes the step; the A/S pills switch accent and slide.`;
           return;
         }
         node.setAttribute("aria-label", `Step ${index + 1}, ${states}; arpeggio plays ${liveNote >= 0 ? liveName : "the held MIDI notes"} here — the pattern supplies gate, accent and slide; double-click toggles gate and rest`);
-        node.dataset.tooltip = `Step ${index + 1}: ${states}. The arpeggio note comes live from the held MIDI keys${liveNote >= 0 ? ` (last: ${liveName})` : ""}; the pattern step only supplies gate, accent and slide. Double-click toggles gate and rest; the A/S pills switch accent and slide.`;
+        node.dataset.tooltip = `Step ${index + 1}: ${states}. The arpeggio note comes live from the held MIDI keys${liveNote >= 0 ? ` (last: ${liveName})` : ""}; the pattern step only supplies gate, accent and slide. Double-click toggles gate and rest; wheel up opens the gate, wheel down mutes the step; the A/S pills switch accent and slide.`;
         return;
       }
       node.classList.remove("arp-live");
@@ -5887,7 +5901,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.11.5</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.11.6</span></div>
         </div>
       </header>
       <div class="osc-cell">

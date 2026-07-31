@@ -899,17 +899,29 @@ try {
       rest: step.classList.contains("rest"),
       flags: node._stepSnapshot()[8].flags,
     };
+    // 2.11.6: Mausrad editiert im Arp-Modus das Gate, nicht die Tonhoehe.
+    const pitchBeforeWheel = node._stepSnapshot()[8].pitch;
+    step.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+    const wheelOn = node._stepSnapshot()[8].flags;
+    step.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+    const wheelOnAgain = node._stepSnapshot()[8].flags;
+    step.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true }));
+    const wheelOff = node._stepSnapshot()[8].flags;
+    const pitchAfterWheel = node._stepSnapshot()[8].pitch;
     node._selectedStep = previousSelection.step;
     node._selectedSteps = new Set(previousSelection.steps);
     node._selectionAnchor = previousSelection.anchor;
     node._renderStepStrip();
     node._renderStepEditor();
-    return { initial, enabled, restored };
+    return { initial, enabled, restored, wheelOn, wheelOnAgain, wheelOff, pitchBeforeWheel, pitchAfterWheel };
   });
   if (arpRest.initial.note !== "REST" || !arpRest.initial.rest || arpRest.initial.flags !== 0
       || !arpRest.initial.tooltip.includes("Double-click toggles gate")
+      || !arpRest.initial.tooltip.includes("wheel up opens the gate")
       || arpRest.enabled.note === "REST" || arpRest.enabled.rest || arpRest.enabled.flags !== 1
-      || arpRest.restored.note !== "REST" || !arpRest.restored.rest || arpRest.restored.flags !== 0) {
+      || arpRest.restored.note !== "REST" || !arpRest.restored.rest || arpRest.restored.flags !== 0
+      || arpRest.wheelOn !== 1 || arpRest.wheelOnAgain !== 1 || arpRest.wheelOff !== 0
+      || arpRest.pitchAfterWheel !== arpRest.pitchBeforeWheel) {
     throw new Error(`Arp rest display/toggle failed: ${JSON.stringify(arpRest)}`);
   }
   // 2.11.4: Ohne PHRASE-Figur ist die Phrasen-Zeile gesperrt — kein Menue,
@@ -1009,13 +1021,14 @@ try {
       anchor: node._selectionAnchor,
     };
     const step = node.querySelector('.sequence-step[data-step="2"]');
-    const pitchBefore = node._stepSnapshot()[2].pitch;
-    step.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+    const flagsBefore = node._stepSnapshot()[2].flags;
+    step.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true }));
     return {
       dimmed: node.classList.contains("phrase-active"),
       hint: node.querySelector(".arp-hint").textContent,
       tooltip: step.dataset.tooltip ?? "",
-      edited: node._stepSnapshot()[2].pitch === pitchBefore + 1,
+      flagsBefore,
+      edited: (flagsBefore & 1) === 1 && (node._stepSnapshot()[2].flags & 1) === 0,
     };
   });
   if (phraseZero.dimmed || phraseZero.hint !== "PATTERN GIBT GATE · ACCENT · SLIDE"

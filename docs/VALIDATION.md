@@ -1,3 +1,19 @@
+# Validierung 2.11.6
+
+## 2.11.6
+
+Headless belegt (Arp-Figur aktiv, Step 9 = Rest): Rad hoch setzt
+Flags 0 → 1, nochmals Rad hoch ändert nichts, Rad runter setzt
+zurück auf 0; die Tonhöhe des Steps bleibt über alle Rad-Events
+identisch. Phrase 00 PATTERN: Rad runter schließt das Gate eines
+aktiven Steps (Beleg der Entsperrung nach der Bank-Phrase-Sperre).
+Tooltips nennen „wheel up opens the gate, wheel down mutes the
+step". Classic-Rad (Halbton) und Studio-Rad unverändert durch die
+bestehenden Checks abgedeckt. `ui_smoke_test`, `ui_lint --strict`,
+`node --check` grün. Kein DSP-Eingriff.
+
+---
+
 # Validierung 2.11.5
 
 ## 2.11.5
