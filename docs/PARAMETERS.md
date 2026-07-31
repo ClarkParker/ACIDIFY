@@ -31,6 +31,8 @@ Parameter werden ausschließlich angehängt.
 | `param62` | Arp Octaves | 1…4 | 1 |
 | `param63` | Arp Hold | 0/1 | 0 |
 | `param64` | Arp Phrase | 0 Pattern / 1…90 Phrasen-Bank | 0 |
+| `param65` | Grid | 0…13 Notenwerte (siehe unten) | 3 (1/16) |
+| `param66` | Play Mode | 0 FWD / 1 REV / 2 FWD&REV / 3 INVERT / 4 RND | 0 |
 
 Flag-Bits:
 
@@ -127,10 +129,49 @@ Offsets oktavweise auf die Root normalisiert), Figuren frieren den
 Parameter.
 
 `param50` wurde in 0.7.0 append-only ergänzt. 0 % lässt jedes
-16tel-Zweierpaar gerade; 100 % verschiebt das zweite 16tel auf die letzte
-Achteltriolenposition und ergibt ein 2:1-Verhältnis. Die Paarlänge bleibt
-konstant. Internal-Clock und DAW-PPQ verwenden dieselbe Berechnung; der
-Initialwert 0 % erhält das bisherige Timing.
+Grid-Zweierpaar gerade; 100 % verschiebt den zweiten Step des Paars auf
+die letzte Triolenposition und ergibt ein 2:1-Verhältnis. Die Paarlänge
+bleibt konstant. Internal-Clock und DAW-PPQ verwenden dieselbe
+Berechnung; der Initialwert 0 % erhält das bisherige Timing. Seit 2.11.0
+skaliert der Swing-Versatz mit der Grid-Auflösung (`param65`), sodass das
+2:1-Gefühl bei jedem Notenwert erhalten bleibt; bei 1/16 ist das Timing
+bit-identisch zu vorher.
+
+`param65` und `param66` wurden in 2.11.0 append-only ergänzt (die frei
+gewordene TRANSPORT-Zelle; RUN/STOP wanderte als dritte Taste in die
+CLOCK-Zelle). `param65` setzt den Notenwert eines Sequencer-Steps:
+
+| Wert | Grid | Viertelnoten pro Step |
+|---:|---|---:|
+| 0 | 1/32 | 0.125 |
+| 1 | 1/16T | 1/6 |
+| 2 | 1/16. | 0.375 |
+| 3 | 1/16 | 0.25 (Initial, klassisches 303-Raster) |
+| 4 | 1/8T | 1/3 |
+| 5 | 1/8. | 0.75 |
+| 6 | 1/8 | 0.5 |
+| 7 | 1/4T | 2/3 |
+| 8 | 1/4. | 1.5 |
+| 9 | 1/4 | 1.0 |
+| 10 | 1/2 | 2.0 |
+| 11 | 1/1 | 4.0 |
+| 12 | 2/1 | 8.0 |
+| 13 | 3/1 | 12.0 |
+
+`param66` bestimmt die Abspielreihenfolge der Pattern-Steps: FWD (0)
+vorwärts, REV (1) rückwärts, FWD&REV (2) als Pendel ohne
+Endpunkt-Wiederholung, INVERT (3) außen→innen alternierend (0, L−1, 1,
+L−2, …), RND (4) deterministisch per Lehmer-LCG mit festem Seed (keine
+Direkt-Wiederholung bei Länge > 1; nach Transport-Reset reproduzierbar).
+Der Swing hängt an der metrischen Zählzeit (gerade/ungerade gespielte
+Steps), nicht am Pattern-Index — dadurch bleibt er in allen Play-Modi und
+bei ungeraden Pattern-Längen konsistent mit dem DAW-Pfad. Im DAW-Sync
+bleibt FWD exakt positionsgebunden an die Host-PPQ (Grid-Paare von zwei
+Steps, Seeks springen auf den korrekten absoluten Step); REV, FWD&REV,
+INVERT und RND zählen die Host-Ticks intern (ein Tick = ein Step), da
+eine Timeline-Position dort keine eindeutige Step-Zuordnung besitzt.
+Beide Parameter sind preset-sicher: ältere Presets ohne die IDs behalten
+1/16-FWD-Verhalten bit-identisch.
 
 Der Dev-Kit-dokumentierte Eingang `input event float64 transportIn` ist
 Amorph-Hostkontext, kein dynamischer Parameter und benötigt kein

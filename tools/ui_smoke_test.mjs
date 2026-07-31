@@ -59,7 +59,7 @@ try {
     nativeTitles: document.querySelectorAll("[title]").length,
     screws: document.querySelectorAll(".screw").length,
   }));
-  if (counts.controls !== 31 || counts.endpointControls !== 31
+  if (counts.controls !== 33 || counts.endpointControls !== 33
       || counts.sequenceSteps !== 16 || counts.pitchKeys !== 12
       || counts.stepGroups !== 4 || counts.whiteKeys !== 7 || counts.blackKeys !== 5
       || counts.studioCells !== 48 || counts.studioCellGroups !== 12
@@ -454,7 +454,7 @@ try {
     tempoDisabled: node.querySelector('.tempo-cell .dial').getAttribute("aria-disabled"),
   }));
   if (dawFallback.mode !== 1 || dawFallback.run === runBeforeDawClick
-      || dawFallback.activeMode !== "DAW" || dawFallback.runText !== "RUN / STOP"
+      || dawFallback.activeMode !== "DAW" || dawFallback.runText !== "RUN"
       || dawFallback.runDisabled !== "false" || dawFallback.tempoDisabled !== "false") {
     throw new Error(`DAW fallback state failed: ${JSON.stringify(dawFallback)}`);
   }
@@ -494,7 +494,7 @@ try {
   });
   if (!dawLocked.running
       || !dawLocked.tooltip.includes("Tempo follows the DAW")
-      || dawLocked.runText !== "DAW FOLLOW"
+      || dawLocked.runText !== "FOLLOW"
       || dawLocked.runDisabled !== "true" || dawLocked.tempoDisabled !== "true"
       || Math.abs(dawLocked.dialTempo - 135.27) > 0.0001
       || Math.abs(dawLocked.parameterTempo - 135.27) > 0.0001
@@ -539,6 +539,84 @@ try {
     .evaluate(node => node._values.get("param9"));
   if (Math.abs(fineTempo - 135.38) > 0.0001) {
     throw new Error(`Fine manual tempo adjustment failed: ${fineTempo}`);
+  }
+
+  // 2.11.0: RUN als dritte 44x34-Taste in der CLOCK-Zelle, buendig mit
+  // INT/DAW; die frei gewordene Zelle traegt GRID- und PLAY-MODE-Stepper.
+  const transportLayout = await page.evaluate(() => {
+    const rect = selector => document.querySelector(selector).getBoundingClientRect();
+    const clockCell = rect(".clock-cell");
+    const gridCell = rect(".grid-cell");
+    const stepperCell = rect(".stepper-cell");
+    const intButton = rect('.clock-mode button[data-value="0"]');
+    const dawButton = rect('.clock-mode button[data-value="1"]');
+    const runButton = rect('.run-switch[data-param="param10"] button:not([hidden])');
+    const gridControl = rect('.grid-stepper');
+    const playControl = rect('.play-mode-stepper');
+    return {
+      transportCellGone: !document.querySelector(".transport-cell"),
+      runSize: { width: runButton.width, height: runButton.height },
+      intSize: { width: intButton.width, height: intButton.height },
+      runTopAligned: Math.abs(runButton.top - intButton.top),
+      runAfterDaw: runButton.left - dawButton.right,
+      runInsideClockCell: runButton.left >= clockCell.left && runButton.right <= clockCell.right
+        && runButton.bottom <= clockCell.bottom,
+      gridInsideCell: gridControl.left >= gridCell.left && gridControl.right <= gridCell.right,
+      playInsideCell: playControl.left >= gridCell.left && playControl.right <= gridCell.right,
+      playAfterGrid: playControl.left - gridControl.right,
+      cellsOrdered: clockCell.right <= gridCell.left + 1 && gridCell.right <= stepperCell.left + 1,
+    };
+  });
+  if (!transportLayout.transportCellGone
+      || Math.round(transportLayout.runSize.width) !== 44 || Math.round(transportLayout.runSize.height) !== 34
+      || Math.round(transportLayout.intSize.width) !== 44 || Math.round(transportLayout.intSize.height) !== 34
+      || transportLayout.runTopAligned > 1
+      || transportLayout.runAfterDaw < 4 || transportLayout.runAfterDaw > 24
+      || !transportLayout.runInsideClockCell
+      || !transportLayout.gridInsideCell || !transportLayout.playInsideCell
+      || transportLayout.playAfterGrid < 4
+      || !transportLayout.cellsOrdered) {
+    throw new Error(`Transport layout failed: ${JSON.stringify(transportLayout)}`);
+  }
+
+  const gridStates = await page.locator("acidify-patch-view").evaluate(node => {
+    const read = param => ({
+      value: node._values.get(param) ?? node._controls.get(param)?.value,
+      display: node.querySelector(`.control[data-param="${param}"] .stepper-value`).textContent,
+    });
+    const states = { init: { grid: read("param65"), play: read("param66") } };
+    node.querySelector('.grid-stepper button[data-step="1"]').click();
+    node.querySelector('.play-mode-stepper button[data-step="1"]').click();
+    states.plus = { grid: read("param65"), play: read("param66") };
+    node.querySelector(".grid-stepper").dispatchEvent(
+      new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true }));
+    node.querySelector(".play-mode-stepper").dispatchEvent(
+      new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+    states.wheel = { grid: read("param65"), play: read("param66") };
+    for (let i = 0; i < 6; i += 1) node.querySelector('.play-mode-stepper button[data-step="1"]').click();
+    states.clamped = { grid: read("param65"), play: read("param66") };
+    for (let i = 0; i < 6; i += 1) node.querySelector('.play-mode-stepper button[data-step="-1"]').click();
+    states.restored = { grid: read("param65"), play: read("param66") };
+    return {
+      states,
+      gridTooltip: node.querySelector(".grid-stepper").dataset.tooltip ?? "",
+      playTooltip: node.querySelector(".play-mode-stepper").dataset.tooltip ?? "",
+    };
+  });
+  const gs = gridStates.states;
+  if (gs.init.grid.value !== 3 || gs.init.grid.display !== "1/16"
+      || gs.init.play.value !== 0 || gs.init.play.display !== "FWD"
+      || gs.plus.grid.value !== 4 || gs.plus.grid.display !== "1/8T"
+      || gs.plus.play.value !== 1 || gs.plus.play.display !== "REV"
+      || gs.wheel.grid.value !== 3 || gs.wheel.grid.display !== "1/16"
+      || gs.wheel.play.value !== 2 || gs.wheel.play.display !== "FWD&REV"
+      || gs.clamped.play.value !== 4 || gs.clamped.play.display !== "RND"
+      || gs.clamped.grid.value !== 3
+      || gs.restored.grid.value !== 3 || gs.restored.grid.display !== "1/16"
+      || gs.restored.play.value !== 0 || gs.restored.play.display !== "FWD"
+      || !gridStates.gridTooltip.includes("1/32")
+      || !gridStates.playTooltip.includes("INVERT")) {
+    throw new Error(`Grid/play-mode controls failed: ${JSON.stringify(gridStates)}`);
   }
 
   const distortionTrigger = page.locator(".distortion-trigger");
@@ -1214,7 +1292,7 @@ try {
       mounted: node._mounted,
     };
   });
-  if (reconnect.sends !== 1 || reconnect.controls !== 31 || reconnect.endpointControls !== 31
+  if (reconnect.sends !== 1 || reconnect.controls !== 33 || reconnect.endpointControls !== 33
       || reconnect.pendingEchoes !== 0 || !reconnect.mounted) {
     throw new Error(`Reconnect lifecycle failed: ${JSON.stringify(reconnect)}`);
   }

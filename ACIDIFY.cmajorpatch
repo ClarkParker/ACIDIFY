@@ -1,7 +1,7 @@
 {
   "CmajorVersion": 1,
   "ID": "com.clarkparker.acidify",
-  "version": "2.10.1",
+  "version": "2.11.0",
   "name": "ACIDIFY",
   "description": "Analog-modelled 303-class bassline instrument with synchronized swing, smart pattern editing and Amorph DAW transport.",
   "category": "instrument",

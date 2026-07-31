@@ -38,7 +38,12 @@ const ACIDIFY_GLOBALS = [
   { id: "param64", type: "stepper", label: "PHRASE",   min: 0,  max: 90,  step: 1, init: 0, format: v => { const i = Math.round(v); return i <= 0 ? "PATTERN" : ARP_PHRASES[i - 1].name; } },
   { id: "param62", type: "stepper", label: "OCTAVES",  min: 1,  max: 4,   step: 1, init: 1, format: v => `${Math.round(v)}` },
   { id: "param63", type: "toggle",  label: "HOLD",     min: 0,  max: 1,   step: 1, init: 0 },
+  { id: "param65", type: "stepper", label: "GRID",     min: 0,  max: 13,  step: 1, init: 3, format: v => GRID_NAMES[clamp(Math.round(v), 0, 13)] },
+  { id: "param66", type: "stepper", label: "PLAY MODE", min: 0, max: 4,   step: 1, init: 0, format: v => PLAY_MODE_NAMES[clamp(Math.round(v), 0, 4)] },
 ];
+
+const GRID_NAMES = ["1/32", "1/16T", "1/16.", "1/16", "1/8T", "1/8.", "1/8", "1/4T", "1/4.", "1/4", "1/2", "1/1", "2/1", "3/1"];
+const PLAY_MODE_NAMES = ["FWD", "REV", "FWD&REV", "INVERT", "RND"];
 
 const STEP_PITCH_DEFAULTS = [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7];
 const STEP_FLAG_DEFAULTS = [3, 5, 1, 1, 3, 5, 1, 1, 0, 1, 3, 5, 1, 1, 1, 5];
@@ -185,7 +190,9 @@ const CONTROL_TOOLTIPS = {
   param47: "Sets the amount of drive applied by the selected distortion character.",
   param48: "Blends the distorted signal with the clean instrument output.",
   param49: "Selects the clock source. INT uses the internal tempo and RUN/STOP; DAW follows host tempo, transport and position.",
-  param50: "Adds swing to each pair of sixteenth notes. 0% is straight; 100% reaches a 2:1 triplet feel.",
+  param50: "Adds swing to each pair of grid steps. 0% is straight; 100% reaches a 2:1 triplet feel.",
+  param65: "Sets the note value of one sequencer step, from 1/32 to 3/1 including dotted (.) and triplet (T) grids. 1/16 is the classic 303 resolution.",
+  param66: "Selects the pattern play order: FWD, REV, FWD&REV pendulum, INVERT (outside-in alternating) or deterministic RND. In DAW sync, FWD stays locked to the host position; the other modes count host ticks internally.",
   param51: "Devil Fish filter overdrive on/off. Off is the stock 303 input level.",
   param52: "Overdrive amount, 1x to 66.6x the stock ladder drive (R62 220k down to 3.3k).",
   param53: "x0x resonance boost (R97 10k to 8.2k): enables self-oscillation at the top of the resonance range.",
@@ -1712,7 +1719,7 @@ class AcidifyPatchView extends HTMLElement {
         ? "No DAW transport received; RUN/STOP controls the internal fallback"
         : CONTROL_TOOLTIPS.param10;
     const runButton = runSwitch?.querySelector('[data-value="0"]');
-    if (runButton) runButton.textContent = runHostControlled ? "DAW FOLLOW" : "RUN / STOP";
+    if (runButton) runButton.textContent = runHostControlled ? "FOLLOW" : "RUN";
 
     const tempoBox = this.querySelector(".tempo-cell");
     tempoBox?.classList.toggle("daw-locked", tempoHostControlled);
@@ -4914,9 +4921,10 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .tempo-scale { display: flex; align-items: center; justify-content: space-between; color: #4d5658; font: 900 6.5px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
   acidify-patch-view .tempo-scale i { flex: 1; margin: 0 5px; height: 1px; background: linear-gradient(90deg, rgba(45,50,49,.35), rgba(255,255,255,.5)); }
 
-  acidify-patch-view .clock-cell { width: 143px; flex: 0 0 auto; }
-  acidify-patch-view .clock-cell .cell-title { width: 100px; }
-  acidify-patch-view .deck-b .clock-mode { margin-top: 8px; display: flex; gap: 8px; background: none; border: 0; box-shadow: none; padding: 0; width: auto; height: auto; }
+  acidify-patch-view .clock-cell { width: 175px; flex: 0 0 auto; }
+  acidify-patch-view .clock-cell .cell-title { width: 148px; }
+  acidify-patch-view .clock-row { margin-top: 8px; display: flex; gap: 8px; align-items: flex-start; }
+  acidify-patch-view .deck-b .clock-mode { display: flex; gap: 8px; background: none; border: 0; box-shadow: none; padding: 0; width: auto; height: auto; }
   acidify-patch-view .clock-choice { display: flex; flex-direction: column; align-items: center; gap: 6px; }
   acidify-patch-view .clock-lamp { width: 7px; height: 7px; border-radius: 50%;
     background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.14) 0 12%, #46201c 55%, #24100e 100%); box-shadow: inset 0 -1px 1px rgba(0,0,0,.7); }
@@ -4930,18 +4938,22 @@ class AcidifyPatchView extends HTMLElement {
     background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
     box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5); }
 
-  acidify-patch-view .transport-cell { width: 183px; flex: 0 0 auto; }
-  acidify-patch-view .transport-cell .cell-title { width: 140px; }
-  acidify-patch-view .deck-b .run-lamp { position: static; margin-top: 7px; width: 11px; height: 11px; border-radius: 50%; border: 1px solid #4f1a15;
+  acidify-patch-view .run-choice { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  acidify-patch-view .deck-b .run-lamp { position: static; margin: 0; width: 7px; height: 7px; border-radius: 50%; border: 1px solid #4f1a15;
     box-shadow: 0 1px 0 rgba(255,255,255,.62), inset 0 -2px 3px #170403; }
   acidify-patch-view .deck-b .run-lamp.lit { box-shadow: 0 0 6px rgba(255,51,31,.85), 0 0 13px rgba(255,42,25,.5), inset 0 0 2px #fff; }
-  acidify-patch-view .deck-b .run-switch { margin-top: 6px; background: none; border: 0; box-shadow: none; padding: 0; width: auto; height: auto; perspective: none; border-radius: 0; }
-  acidify-patch-view .deck-b .run-switch button { width: 140px; height: 36px; border-radius: 3px; cursor: pointer; border: 1px solid #1a1e1f; color: #1d2426; text-shadow: none;
-    font: 900 10px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.5px;
+  acidify-patch-view .deck-b .run-switch { margin-top: 0; background: none; border: 0; box-shadow: none; padding: 0; width: auto; height: auto; perspective: none; border-radius: 0; }
+  acidify-patch-view .deck-b .run-switch button { width: 44px; height: 34px; border-radius: 3px; cursor: pointer; border: 1px solid #1a1e1f; color: #1d2426; text-shadow: none;
+    font: 900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1px;
     background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
   acidify-patch-view .deck-b .run-switch.is-on button { transform: none; color: #8c1a12; border-color: #8c2c23;
     background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5), 0 0 14px rgba(181,41,33,.3); }
+
+  acidify-patch-view .grid-cell { width: 172px; flex: 0 0 auto; flex-direction: row; gap: 8px; justify-content: center; align-items: stretch; }
+  acidify-patch-view .grid-cell .stepper-block .cell-title { width: 70px; }
+  acidify-patch-view .grid-cell .silver-stepper .led-box { width: 70px; }
+  acidify-patch-view .grid-cell .stepper-buttons button { width: 32px; }
 
   acidify-patch-view .stepper-cell { width: 315px; flex: 0 0 auto; flex-direction: row; gap: 8px; justify-content: center; align-items: stretch; }
   acidify-patch-view .stepper-block { display: flex; flex-direction: column; align-items: center; }
@@ -5744,7 +5756,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.10.1</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.11.0</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -5804,19 +5816,36 @@ class AcidifyPatchView extends HTMLElement {
       </div>
       <div class="deckb-cell clock-cell">
         <div class="cell-title">CLOCK</div>
-        <div class="control clock-mode" data-param="param49" data-endpoint-id="param49"
-          data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons"
-          aria-label="Clock source">
-          <div class="clock-choice"><span class="clock-lamp int"></span><button data-value="0" type="button">INT</button></div>
-          <div class="clock-choice"><span class="clock-lamp daw"></span><button data-value="1" type="button">DAW</button></div>
+        <div class="clock-row">
+          <div class="control clock-mode" data-param="param49" data-endpoint-id="param49"
+            data-min="0" data-max="1" data-step="1" data-init="0" data-control="buttons"
+            aria-label="Clock source">
+            <div class="clock-choice"><span class="clock-lamp int"></span><button data-value="0" type="button">INT</button></div>
+            <div class="clock-choice"><span class="clock-lamp daw"></span><button data-value="1" type="button">DAW</button></div>
+          </div>
+          <div class="clock-choice run-choice">
+            <span class="run-lamp"></span>
+            <div class="control run-switch" data-param="param10" data-endpoint-id="param10" data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
+              <button data-value="0">RUN</button>
+              <button data-value="1" hidden>RUN</button>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="deckb-cell transport-cell">
-        <div class="cell-title">TRANSPORT</div>
-        <span class="run-lamp"></span>
-        <div class="control run-switch" data-param="param10" data-endpoint-id="param10" data-min="0" data-max="1" data-step="1" data-init="0" data-control="toggle">
-          <button data-value="0">RUN / STOP</button>
-          <button data-value="1" hidden>RUN</button>
+      <div class="deckb-cell grid-cell">
+        <div class="stepper-block">
+          <div class="cell-title">GRID</div>
+          <div class="control silver-stepper grid-stepper" data-param="param65" data-endpoint-id="param65" data-min="0" data-max="13" data-step="1" data-init="3" data-control="stepper">
+            <div class="led-box"><span class="stepper-value">1/16</span></div>
+            <div class="stepper-buttons"><button data-step="-1" type="button" aria-label="Grid finer">−</button><button data-step="1" type="button" aria-label="Grid coarser">+</button></div>
+          </div>
+        </div>
+        <div class="stepper-block">
+          <div class="cell-title">PLAY MODE</div>
+          <div class="control silver-stepper play-mode-stepper" data-param="param66" data-endpoint-id="param66" data-min="0" data-max="4" data-step="1" data-init="0" data-control="stepper">
+            <div class="led-box"><span class="stepper-value">FWD</span></div>
+            <div class="stepper-buttons"><button data-step="-1" type="button" aria-label="Play mode previous">−</button><button data-step="1" type="button" aria-label="Play mode next">+</button></div>
+          </div>
         </div>
       </div>
       <div class="deckb-cell stepper-cell">

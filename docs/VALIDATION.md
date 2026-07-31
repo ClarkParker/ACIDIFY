@@ -1,3 +1,38 @@
+# Validierung 2.11.0
+
+## 2.11.0
+
+Grid (`param65`) und Play-Modus (`param66`) headless gegen den
+Produktionsgraphen vermessen (`dsp_transport_test`, zweiter Render,
+8 Trace-Kanäle, 48 kHz, Toleranz 4 Frames):
+
+- Grid 1/8 intern @120 BPM: Steps exakt alle 12000 Frames; Grid
+  1/16T: exakt alle 4000 Frames (16er-Wrap über 37 Übergänge).
+- Grid 1/8 × Swing 100 %: Paare 16000+8000 Frames (2/3+1/3
+  Viertelnote) — der Swing-Versatz skaliert korrekt mit dem Grid.
+- REV: 15→0 exakt; FWD&REV: 0…7,6…1,0,… ohne Endpunkt-Doppel
+  (Periode 2L−2); INVERT (L=8): 0,7,1,6,2,5,3,4 wiederholt exakt.
+- RND: Sequenz 4,0,6,5,6,7,1,4,… bit-identisch zum JS-gespiegelten
+  Lehmer-Generator (Seed 20260731, keine Direkt-Wiederholung).
+- DAW-PPQ bei Grid 1/8: Steps an jeder halben Viertelnote, Seek auf
+  PPQ 100.25 → absoluter Step 200 → Pattern-Step 8, danach
+  positionsgenaue Fortsetzung; Stop setzt auf −1.
+- Rückwärtskompatibilität: alle 12 bestehenden Transport-Checks
+  (intern/DAW/Fallback/Swing/Seek/Tempo-Handoff) unverändert grün —
+  Init Grid 1/16 + FWD ist bit-identisch zum 2.10-Timing.
+
+Swing-Paritätsbasis ist jetzt die metrische Zählzeit (wie im
+DAW-Pfad schon immer); bei gerader Pattern-Länge in FWD unverändert.
+UI headless belegt (`ui_smoke_test`): RUN-Taste 44×34 in der
+CLOCK-Zelle, oberkantenbündig mit INT/DAW (Δ ≤ 1 px), TRANSPORT-Zelle
+entfernt, GRID/PLAY-MODE-Stepper in der neuen Zelle (Init „1/16"/
+„FWD", ±-Tasten, Mausrad-Kontrakt, Clamp, Tooltips), FOLLOW-Label
+bei DAW-Kontrolle. Volle Batterie: smoke, matrix, arp, articulation,
+gain, transport, ui_smoke, cmajor_lint, ui_lint --strict, check_sync
+66/66, manifest_check --strict grün.
+
+---
+
 # Validierung 2.10.1
 
 ## 2.10.1

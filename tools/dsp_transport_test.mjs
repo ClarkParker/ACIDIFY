@@ -224,6 +224,198 @@ graph AcidifyTransportTest [[ main ]]
 }
 `;
 
+const gridHarness = String.raw`
+
+processor AcidifyGridEvents
+{
+    output event float tempoOut;
+    output event float runOut;
+    output event float swingOut;
+    output event float gridEighthOut;
+    output event float gridTripletOut;
+    output event float lengthEightOut;
+    output event float modeRevOut;
+    output event float modePendulumOut;
+    output event float modeInvertOut;
+    output event float modeRandomOut;
+    output event float dawModeOut;
+    output event float64 transportOut;
+
+    int frame = 0;
+
+    void sendAmorphTransport (bool playing, float64 bpm, float64 quarterNote)
+    {
+        transportOut <- playing ? 1.0 : 0.0;
+        transportOut <- bpm;
+        transportOut <- 4.0;
+        transportOut <- 4.0;
+        transportOut <- quarterNote;
+        transportOut <- 0.0;
+    }
+
+    void main()
+    {
+        let seekFrame = int (float (processor.frequency) * 1.4f);
+        let stopFrame = int (float (processor.frequency) * 3.05f);
+
+        loop
+        {
+            if (frame == 0)
+            {
+                tempoOut <- 120.0f;
+                runOut <- 1.0f;
+                swingOut <- 100.0f;
+                gridEighthOut <- 6.0f;
+                gridTripletOut <- 1.0f;
+                lengthEightOut <- 8.0f;
+                modeRevOut <- 1.0f;
+                modePendulumOut <- 2.0f;
+                modeInvertOut <- 3.0f;
+                modeRandomOut <- 4.0f;
+                dawModeOut <- 1.0f;
+                sendAmorphTransport (true, 120.0, 0.0);
+            }
+            else if (frame == seekFrame)
+            {
+                // Seek mid-step: grid 1/8 pairs span one quarter note, so PPQ
+                // 100.25 sits in the even half of pair 100 -> absolute step 200.
+                sendAmorphTransport (true, 120.0, 100.25);
+            }
+            else if (frame == stopFrame)
+            {
+                runOut <- 0.0f;
+                sendAmorphTransport (false, 120.0, -1.0);
+            }
+
+            frame += 1;
+            advance();
+        }
+    }
+}
+
+processor AcidifyStepTrace
+{
+    input event float stepIn;
+    output stream float out;
+    float value = 0.0f;
+
+    event stepIn (float step)
+    {
+        value = (step + 1.0f) / 16.0f;
+    }
+
+    void main()
+    {
+        loop
+        {
+            out <- value;
+            advance();
+        }
+    }
+}
+
+processor AcidifyGridMerge
+{
+    input stream float gridEighthIn;
+    input stream float gridTripletIn;
+    input stream float gridSwingIn;
+    input stream float reverseIn;
+    input stream float pendulumIn;
+    input stream float invertIn;
+    input stream float randomIn;
+    input stream float dawGridIn;
+    output stream float<8> out;
+
+    void main()
+    {
+        loop
+        {
+            out <- float<8> (gridEighthIn, gridTripletIn, gridSwingIn,
+                             reverseIn, pendulumIn, invertIn, randomIn,
+                             dawGridIn);
+            advance();
+        }
+    }
+}
+
+graph AcidifyGridTest [[ main ]]
+{
+    output stream float<8> out;
+
+    node events = AcidifyGridEvents;
+    node gridEighth = Acidify;
+    node gridTriplet = Acidify;
+    node gridSwing = Acidify;
+    node reverse = Acidify;
+    node pendulum = Acidify;
+    node invert = Acidify;
+    node random = Acidify;
+    node dawGrid = Acidify;
+    node gridEighthTrace = AcidifyStepTrace;
+    node gridTripletTrace = AcidifyStepTrace;
+    node gridSwingTrace = AcidifyStepTrace;
+    node reverseTrace = AcidifyStepTrace;
+    node pendulumTrace = AcidifyStepTrace;
+    node invertTrace = AcidifyStepTrace;
+    node randomTrace = AcidifyStepTrace;
+    node dawGridTrace = AcidifyStepTrace;
+    node merge = AcidifyGridMerge;
+
+    connection
+    {
+        events.tempoOut -> gridEighth.param9;
+        events.tempoOut -> gridTriplet.param9;
+        events.tempoOut -> gridSwing.param9;
+        events.tempoOut -> reverse.param9;
+        events.tempoOut -> pendulum.param9;
+        events.tempoOut -> invert.param9;
+        events.tempoOut -> random.param9;
+        events.runOut -> gridEighth.param10;
+        events.runOut -> gridTriplet.param10;
+        events.runOut -> gridSwing.param10;
+        events.runOut -> reverse.param10;
+        events.runOut -> pendulum.param10;
+        events.runOut -> invert.param10;
+        events.runOut -> random.param10;
+
+        events.gridEighthOut -> gridEighth.param65;
+        events.gridEighthOut -> gridSwing.param65;
+        events.gridEighthOut -> dawGrid.param65;
+        events.gridTripletOut -> gridTriplet.param65;
+        events.swingOut -> gridSwing.param50;
+
+        events.lengthEightOut -> pendulum.param11;
+        events.lengthEightOut -> invert.param11;
+        events.lengthEightOut -> random.param11;
+        events.modeRevOut -> reverse.param66;
+        events.modePendulumOut -> pendulum.param66;
+        events.modeInvertOut -> invert.param66;
+        events.modeRandomOut -> random.param66;
+
+        events.dawModeOut -> dawGrid.param49;
+        events.transportOut -> dawGrid.transportIn;
+
+        gridEighth.currentStep -> gridEighthTrace.stepIn;
+        gridTriplet.currentStep -> gridTripletTrace.stepIn;
+        gridSwing.currentStep -> gridSwingTrace.stepIn;
+        reverse.currentStep -> reverseTrace.stepIn;
+        pendulum.currentStep -> pendulumTrace.stepIn;
+        invert.currentStep -> invertTrace.stepIn;
+        random.currentStep -> randomTrace.stepIn;
+        dawGrid.currentStep -> dawGridTrace.stepIn;
+        gridEighthTrace.out -> merge.gridEighthIn;
+        gridTripletTrace.out -> merge.gridTripletIn;
+        gridSwingTrace.out -> merge.gridSwingIn;
+        reverseTrace.out -> merge.reverseIn;
+        pendulumTrace.out -> merge.pendulumIn;
+        invertTrace.out -> merge.invertIn;
+        randomTrace.out -> merge.randomIn;
+        dawGridTrace.out -> merge.dawGridIn;
+        merge.out -> out;
+    }
+}
+`;
+
 function findChunk(buffer, name) {
   let offset = 12;
   while (offset + 8 <= buffer.length) {
@@ -336,6 +528,94 @@ function expectedDawSwing() {
   ];
 }
 
+// Mirror of the DSP countdown: each internal step lasts
+// round(rate * 60 * durationQN / bpm) frames, accumulated per step, so the
+// expectation stays sample-accurate at every rate.
+function internalTimeline(stepOf, durationOf, stopTime, bpm = 120) {
+  const stopFrame = Math.round(sampleRate * stopTime);
+  const entries = [];
+  let frame = 0;
+  let index = 0;
+  while (frame < stopFrame) {
+    entries.push({ time: frame / sampleRate, step: stepOf(index) });
+    frame += Math.max(1, Math.round((sampleRate * 60 * durationOf(index)) / bpm));
+    index += 1;
+  }
+  entries.push({ time: stopTime, step: -1 });
+  return entries;
+}
+
+// Mirror of the DSP RND mode: Lehmer MINSTD from the fixed seed, never the
+// same step twice in a row while the pattern is longer than one step.
+function lehmerSteps(count, length) {
+  let state = 20260731n;
+  let last = -1;
+  const steps = [];
+  for (let index = 0; index < count; index += 1) {
+    state = (state * 48271n) % 2147483647n;
+    if (length <= 1 || last < 0) {
+      last = Number(state % BigInt(length));
+    } else {
+      let draw = Number(state % BigInt(length - 1));
+      if (draw >= last) draw += 1;
+      last = draw;
+    }
+    steps.push(last);
+  }
+  return steps;
+}
+
+function expectedGridEighth() {
+  return internalTimeline(k => k % 16, () => 0.5, 3.05);
+}
+
+function expectedGridTriplet() {
+  return internalTimeline(k => k % 16, () => 1 / 6, 3.05);
+}
+
+function expectedGridSwing() {
+  // Grid 1/8 at 100% swing: pairs of 2/3 + 1/3 quarter notes.
+  return internalTimeline(k => k % 16, k => (k % 2 === 0 ? 2 / 3 : 1 / 3), 3.05);
+}
+
+function expectedReverse() {
+  return internalTimeline(k => 15 - (k % 16), () => 0.25, 3.05);
+}
+
+function expectedPendulum() {
+  return internalTimeline(k => {
+    const p = k % 14;
+    return p < 8 ? p : 14 - p;
+  }, () => 0.25, 3.05);
+}
+
+function expectedInvert() {
+  return internalTimeline(k => {
+    const p = k % 8;
+    return p % 2 === 0 ? p / 2 : 7 - (p - 1) / 2;
+  }, () => 0.25, 3.05);
+}
+
+function expectedRandom() {
+  const steps = lehmerSteps(64, 8);
+  return internalTimeline(k => steps[k], () => 0.25, 3.05);
+}
+
+function expectedDawGrid() {
+  // Grid 1/8 in DAW sync: one absolute step per half quarter note, bound to
+  // the host PPQ. The 1.4s seek to PPQ 100.25 lands in the even half of pair
+  // 100 -> absolute step 200 -> pattern step 200 % 16 = 8.
+  return [
+    ...[0, 1, 2, 3, 4, 5].map(step => ({ time: step * 0.25, step })),
+    { time: 1.4, step: 8 },
+    ...[9, 10, 11, 12, 13, 14, 15].map((step, index) => ({
+      time: 1.525 + index * 0.25,
+      step,
+    })),
+    { time: 3.05, step: -1 },
+  ];
+}
+
 function validate(actual, expected, label) {
   if (actual.length !== expected.length) {
     throw new Error(`${label}: expected ${expected.length} transitions, got ${actual.length}: `
@@ -357,21 +637,25 @@ function validate(actual, expected, label) {
   return timelineOrigin;
 }
 
-try {
-  const sourcePath = path.join(temp, "ACIDIFYDSP.cmajor");
-  const manifestPath = path.join(temp, "ACIDIFY.cmajorpatch");
-  const wavPath = path.join(temp, "transport.wav");
+async function renderTrace(tag, harnessText, channelCount, lengthSeconds) {
+  const sourceName = `ACIDIFY_${tag}.cmajor`;
+  const sourcePath = path.join(temp, sourceName);
+  const manifestPath = path.join(temp, `ACIDIFY_${tag}.cmajorpatch`);
+  const wavPath = path.join(temp, `${tag}.wav`);
   const mainNeedle = "graph Acidify [[ main ]]";
   if (!sourceTemplate.includes(mainNeedle)) throw new Error("Production main graph not found");
-  const source = `${sourceTemplate.replace(mainNeedle, "graph Acidify")}${harness}`;
-  await writeFile(sourcePath, source);
-  await writeFile(manifestPath, `${JSON.stringify({ ...manifestTemplate, view: undefined }, null, 2)}\n`);
+  await writeFile(sourcePath, `${sourceTemplate.replace(mainNeedle, "graph Acidify")}${harnessText}`);
+  await writeFile(manifestPath, `${JSON.stringify({
+    ...manifestTemplate,
+    source: sourceName,
+    view: undefined,
+  }, null, 2)}\n`);
 
   const render = spawnSync(cmaj, [
     "render",
     `--rate=${sampleRate}`,
-    `--length=${Math.round(sampleRate * 3.0)}`,
-    "--channels=6",
+    `--length=${Math.round(sampleRate * lengthSeconds)}`,
+    `--channels=${channelCount}`,
     "--blockSize=128",
     `--output=${wavPath}`,
     manifestPath,
@@ -379,11 +663,18 @@ try {
   if (render.status !== 0) {
     process.stderr.write(render.stdout || "");
     process.stderr.write(render.stderr || "");
-    throw new Error(`cmaj render failed with exit code ${render.status}`);
+    throw new Error(`cmaj render (${tag}) failed with exit code ${render.status}`);
   }
 
   const channels = readChannels(await readFile(wavPath));
-  if (channels.length !== 6) throw new Error(`Expected 6-channel trace, got ${channels.length} channels`);
+  if (channels.length !== channelCount) {
+    throw new Error(`${tag}: expected ${channelCount}-channel trace, got ${channels.length} channels`);
+  }
+  return channels;
+}
+
+try {
+  const channels = await renderTrace("transport", harness, 6, 3.0);
   const internal = transitions(channels[0]);
   const daw = transitions(channels[1]);
   const fallback = transitions(channels[2]);
@@ -400,6 +691,24 @@ try {
   const handoffBeforeChange = handoffTempo(0.75);
   const handoffDuringSync = handoffTempo(1.8);
   const handoffAfterRelease = handoffTempo(2.7);
+
+  const gridChannels = await renderTrace("grid", gridHarness, 8, 3.75);
+  const gridEighth = transitions(gridChannels[0]);
+  const gridTriplet = transitions(gridChannels[1]);
+  const gridSwing = transitions(gridChannels[2]);
+  const reverse = transitions(gridChannels[3]);
+  const pendulum = transitions(gridChannels[4]);
+  const invert = transitions(gridChannels[5]);
+  const random = transitions(gridChannels[6]);
+  const dawGrid = transitions(gridChannels[7]);
+  validate(gridEighth, expectedGridEighth(), "Grid 1/8 internal");
+  validate(gridTriplet, expectedGridTriplet(), "Grid 1/16T internal");
+  validate(gridSwing, expectedGridSwing(), "Grid 1/8 + 100% swing");
+  validate(reverse, expectedReverse(), "Play mode REV");
+  validate(pendulum, expectedPendulum(), "Play mode FWD&REV");
+  validate(invert, expectedInvert(), "Play mode INVERT");
+  validate(random, expectedRandom(), "Play mode RND (Lehmer)");
+  validate(dawGrid, expectedDawGrid(), "DAW PPQ binding at grid 1/8");
   if (Math.abs(handoffBeforeChange - 120) > 0.02
       || Math.abs(handoffDuringSync - 180) > 0.02
       || Math.abs(handoffAfterRelease - 180) > 0.02) {
@@ -425,6 +734,16 @@ try {
     fallbackTransitions: fallback,
     internalSwingTransitions: internalSwing,
     dawSwingTransitions: dawSwing,
+    gridTransitions: {
+      gridEighth,
+      gridTriplet,
+      gridSwing,
+      reverse,
+      pendulum,
+      invert,
+      random,
+      dawGrid,
+    },
     tempoHandoff: {
       beforeHostChange: handoffBeforeChange,
       duringSync: handoffDuringSync,
@@ -443,6 +762,14 @@ try {
       hostTempoHandoff: true,
       internalTripletSwing: true,
       dawTripletSwing: true,
+      gridEighthInternal: true,
+      gridTripletInternal: true,
+      gridSwingPairs: true,
+      playModeReverse: true,
+      playModePendulum: true,
+      playModeInvert: true,
+      playModeRandomDeterministic: true,
+      dawGridPositionBinding: true,
     },
   }));
 } finally {

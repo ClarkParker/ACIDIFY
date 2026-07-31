@@ -6,6 +6,50 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.11.0] - 2026-07-31
+
+### Added
+
+- **Grid-Auflösung (`param65`, append-only)**: Der Notenwert eines
+  Sequencer-Steps ist wählbar — 1/32 · 1/16T · 1/16. · 1/16 · 1/8T ·
+  1/8. · 1/8 · 1/4T · 1/4. · 1/4 · 1/2 · 1/1 · 2/1 · 3/1. Initial 1/16
+  = bisheriges Verhalten, bit-identisches Timing. Der Swing-Versatz
+  skaliert mit dem Grid (2:1-Triolengefühl bei jedem Notenwert), der
+  DAW-PPQ-Pfad rechnet die Paar-Geometrie im selben Raster (Seeks
+  springen auf den korrekten absoluten Step, belegt bei Grid 1/8 mit
+  Seek auf PPQ 100.25 → Step 8).
+- **Play-Modus (`param66`, append-only)**: FWD · REV · FWD&REV
+  (Pendel ohne Endpunkt-Doppel) · INVERT (außen→innen alternierend:
+  0, L−1, 1, L−2, …) · RND (deterministischer Lehmer-LCG, keine
+  Direkt-Wiederholung, reproduzierbar nach Transport-Reset). Im
+  DAW-Sync bleibt FWD exakt positionsgebunden; die übrigen Modi
+  zählen Host-Ticks intern (dokumentiert in docs/PARAMETERS.md).
+- **Transport-Umbau**: RUN/STOP ist jetzt eine dritte 44×34-Taste in
+  der CLOCK-Zelle (bündig mit INT/DAW, Lampe darüber, Beschriftung
+  RUN bzw. FOLLOW bei DAW-Kontrolle); die frei gewordene Zelle trägt
+  die neuen GRID- und PLAY-MODE-Stepper mit LED-Displays.
+
+### Changed
+
+- Swing hängt intern jetzt an der metrischen Zählzeit (gerade/
+  ungerade gespielte Steps) statt am Pattern-Index — identisch zum
+  DAW-Pfad und dadurch auch bei Reverse/Pendel/Invert/Random und
+  ungeraden Pattern-Längen konsistent. Bei FWD mit gerader Länge
+  (Standardfall) ist das Timing unverändert.
+
+### Tests
+
+- `dsp_transport_test` um einen zweiten Render erweitert (8 Kanäle):
+  Grid 1/8 und 1/16T sample-genau, Grid×Swing-Paare (2/3+1/3),
+  exakte Step-Folgen für REV/FWD&REV/INVERT, RND gegen den
+  JS-gespiegelten Lehmer-Generator, DAW-PPQ-Bindung bei Grid 1/8
+  inkl. Seek — 20 Checks gesamt, alle bestehenden 12 unverändert
+  grün (Rückwärtskompatibilität belegt).
+- `ui_smoke_test`: 33 Controls, Transport-Layout-Geometrie (RUN-Taste
+  44×34 bündig neben DAW, Zellenreihenfolge, keine TRANSPORT-Zelle
+  mehr), GRID/PLAY-MODE-Stepper (Init 1/16 / FWD, ±-Tasten, Mausrad,
+  Clamp an den Enden, Anzeige-Namen, Tooltips).
+
 ## [2.10.1] - 2026-07-30
 
 ### Fixed
