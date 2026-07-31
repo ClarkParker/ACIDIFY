@@ -8,6 +8,22 @@ Behebungs-Roadmap fest. Stand der Prüfung: 2.11.6.
 Regel für dieses Dokument: Jeder Befund trägt Beleg und Prüfstein. Ein
 Prüfstein ist ein Test, der scheitern kann.
 
+## Verbindliche Quellenordnung (Korrektur nach berechtigtem Einwand)
+
+Die Erstfassung dieser Analyse behandelte Forenaussagen als Belege — derselbe
+Fehler, den sie am Prozess diagnostiziert. Ab jetzt gilt:
+
+| Rang | Quelle | Status |
+|---|---|---|
+| 1 | Schaltung: Servicezeichnung (Feb 1982), annotierte TD-3-Fassung, x0xb0x-EAGLE-Quelle | beweisfähig (Werte + Netzverfolgung) |
+| 2 | Messungen am Referenzgerät des Projektinhabers | beweisfähig |
+| 3 | Nachrechenbare Ingenieursliteratur über das Original (Whittle, Stinchcombe) | belastbar, wo herleitbar oder als benannte Messung |
+| 4 | Foren, Open303-Konstanten | **nur Hypothesenquelle** — erzeugt Tests, niemals DSP-Konstanten |
+
+**Keine Zahl aus Rang 4 geht in den DSP.** Die Befunde unten sind entsprechend
+neu klassifiziert; der ⅓-Offset in Befund 1 ist damit ausdrücklich eine
+**Hypothese**, kein Fixwert.
+
 ---
 
 ## Befund 1 — Env-Mod-Abbildung strukturell falsch (eigene Regression)
@@ -46,9 +62,28 @@ entfernt. Die Struktur `envScaler·(env − offset)` skaliert den Offset
 automatisch mit dem Regler; bei Env Mod 0 bleibt trotzdem exakt null
 Modulation. Die „sauberere" Formel war eine Verschlimmbesserung.
 
+**Neu klassifiziert:**
+
+- **Rang-1-Fakt (eigene Messung am Modell):** Env Mod ist statisch und im
+  Ausklang wirkungslos — die Tabelle oben. Das steht unabhängig von jeder
+  Fremdquelle.
+- **Rang-4-Hypothese:** Größe und Form der Verschiebung („~⅓ des Hubs",
+  „auch statisch wirksam") stammen aus Foren und Open303. Sie erzeugen den
+  Prüfstein, aber **keinen Einbauwert**.
+- **Rang-1-Stand der Herleitung (aus der EAGLE-Quelle extrahiert):**
+  VR5 = 50K(A); R61 = 10 k in Serie; Summierknoten-Umfeld R71 = 2,2 k **an
+  +5,333 V** (Bias am Knoten!), R72 = R73 = 100 k, R63 = 220 k; Kandidaten
+  C32 = 10 µ/16, C33 = 10 n, C34 = 1 n im MEG-Umfeld. Werte belegt —
+  **Topologie offen**: Ob und wie der MEG-Pfad kapazitiv/vorgespannt in den
+  Knoten läuft, entscheidet die Netzverfolgung (nettrace) auf den
+  Servicezeichnungen. Die Scans liegen dieser Umgebung nicht mehr vor und
+  müssen erneut beigestellt werden — oder die Frage wird direkt am Gerät
+  gemessen (R4), was jede Herleitung schlägt.
+
 **Prüfstein für den Fix:** Mit steigendem Env Mod muss (a) der eingeschwungene
 Ausklang messbar dumpfer werden und (b) das Sweep-Minimum unter die
 Cutoff-Basis fallen; bei Env Mod 0 muss die Modulation exakt null bleiben.
+Der Zahlenwert des Offsets kommt aus Rang 1 oder Rang 2, nicht aus Rang 4.
 
 ---
 
@@ -150,10 +185,12 @@ UI-Regressionen in `ui_smoke_test`: Sie können nie wieder still verschwinden.
 
 ## Roadmap
 
-1. **R1 — Env-Mod-Offset wiederherstellen** (klein, sofort):
-   `exponent = envScaler·(env − ⅓)`; Offset skaliert mit dem Regler, Env Mod 0
-   bleibt exakt modulationsfrei. Danach Herleitung des exakten Offsets aus dem
-   VR5-Summierknoten (nettrace) statt der ⅓-Literaturzahl. Prüfsteine s. o.
+1. **R1 — Env-Mod-Offset herleiten, dann einbauen** (Reihenfolge korrigiert):
+   ERST Netzverfolgung des VR5-Pfads auf den erneut beizustellenden
+   Servicezeichnungen (oder Direktmessung am Gerät, R4) — DANN
+   `exponent = envScaler·(env − offset)` mit dem hergeleiteten bzw. gemessenen
+   Offset. Die ⅓-Literaturzahl ist nur die Hypothese, die der Test prüft;
+   sie wird nicht verbaut. Prüfsteine s. o.
 2. **R2 — Slide in die CV-Domäne** (klein): Glättung auf der Tonhöhe in
    Oktaven (log2-Domäne), τ = 22 ms; DF-Slide-Mod skaliert weiter die
    Zeitkonstante. Prüfstein: Auf-/Ab-Symmetrie.
