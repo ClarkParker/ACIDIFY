@@ -6,6 +6,26 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.11.4] - 2026-07-31
+
+### Fixed
+
+- **Phrasen-Zeile ist ohne PHRASE-Figur jetzt wirklich gesperrt**
+  (Nutzerfund): Die gedimmte Zeile war weiter bedienbar — das Menü
+  öffnete halbtransparent und Phrasen ließen sich auswählen. Display,
+  ±-Stepper und Mausrad sind jetzt bei inaktiver PHRASE-Figur
+  blockiert (`aria-disabled`, Tastatur-Fokus raus, Cursor default),
+  ein noch offenes Menü schließt beim Verlassen des Phrase-Modus,
+  und der Tooltip erklärt „Inactive: select the PHRASE figure…".
+  `StepperControl` respektiert `aria-disabled` jetzt generell (wie
+  `ToggleControl`).
+
+### Tests
+
+- `ui_smoke_test`: Bei Figur ≠ PHRASE bleibt das Menü zu, ±/Mausrad
+  ändern `param64` nicht, `aria-disabled` und Inactive-Tooltip
+  gesetzt; der bestehende Phrase-Modus-Flow belegt die Entsperrung.
+
 ## [2.11.3] - 2026-07-31
 
 ### Added

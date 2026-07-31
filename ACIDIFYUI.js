@@ -396,12 +396,14 @@ class StepperControl {
     this.valueLabel = node.querySelector(".stepper-value");
     this.value = config.init;
     this.onClick = e => {
+      if (node.getAttribute("aria-disabled") === "true") return;
       const direction = Number(e.target.closest("button[data-step]")?.dataset.step || 0);
       if (direction) this.setValue(this.value + direction * config.step, true);
     };
     node.addEventListener("click", this.onClick);
     this.onWheel = e => {
       e.preventDefault();
+      if (node.getAttribute("aria-disabled") === "true") return;
       this.setValue(this.value + (e.deltaY < 0 ? 1 : -1) * config.step, true);
     };
     node.addEventListener("wheel", this.onWheel, { passive: false });
@@ -1595,12 +1597,22 @@ class AcidifyPatchView extends HTMLElement {
     });
   }
 
+  // Die Phrasen-Bank ist nur mit gewaehlter PHRASE-Figur bedienbar; sonst
+  // bleibt die Zeile gedimmt UND gesperrt (kein halbtransparentes Menue).
+  _phraseControlsEnabled() {
+    return Math.round(clamp(Number(this._values.get("param61") ?? 0), 0, 16)) === 16;
+  }
+
   _wirePhraseMenu() {
     const display = this.querySelector(".arp-phrase-display");
-    display?.addEventListener("click", () => this._setPhraseMenuOpen(!this._phraseMenuOpen));
+    display?.addEventListener("click", () => {
+      if (!this._phraseControlsEnabled()) return;
+      this._setPhraseMenuOpen(!this._phraseMenuOpen);
+    });
     display?.addEventListener("keydown", event => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
+        if (!this._phraseControlsEnabled()) return;
         this._setPhraseMenuOpen(!this._phraseMenuOpen);
       }
     });
@@ -1906,6 +1918,15 @@ class AcidifyPatchView extends HTMLElement {
     if (holdLabel) holdLabel.textContent = hold ? "ON" : "OFF";
     this.querySelector(".arp-hold")?.classList.toggle("is-on", hold);
     this.querySelector(".arp-phrase-row")?.classList.toggle("phrase-idle", mode !== 16);
+    const phraseControl = this.querySelector(".arp-phrase");
+    const phraseDisplay = this.querySelector(".arp-phrase-display");
+    phraseControl?.setAttribute("aria-disabled", `${mode !== 16}`);
+    phraseDisplay?.setAttribute("aria-disabled", `${mode !== 16}`);
+    if (phraseDisplay) phraseDisplay.tabIndex = mode === 16 ? 0 : -1;
+    if (phraseControl) phraseControl.dataset.tooltip = mode === 16
+      ? "Phrase bank for the PHRASE figure: 00 plays your own pattern, 01-90 play the curated bank, transposed by the held keys."
+      : "Inactive: select the PHRASE figure to use the phrase bank.";
+    if (mode !== 16 && this._phraseMenuOpen) this._setPhraseMenuOpen(false);
     this.classList.toggle("phrase-active", this._arpView && mode === 16 && phrase > 0);
     this.classList.toggle("phrase-mode", this._arpView && mode === 16);
     this._renderStepStrip();
@@ -5289,6 +5310,8 @@ class AcidifyPatchView extends HTMLElement {
   acidify-patch-view .arp-phrase .stepper-buttons { margin-top: 0; }
   acidify-patch-view .arp-phrase-row { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; }
   acidify-patch-view .arp-phrase-row.phrase-idle { opacity: .45; }
+  acidify-patch-view .arp-phrase-row.phrase-idle .led-box,
+  acidify-patch-view .arp-phrase-row.phrase-idle .stepper-buttons button { cursor: default; }
   acidify-patch-view .arp-phrase { margin-top: 3px; width: 100%; height: 24px; padding: 0; background: none; border: 0; box-shadow: none;
     display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 6px; }
   acidify-patch-view .arp-phrase .led-box { margin-top: 0; width: 150px; height: 24px; cursor: pointer; }
@@ -5853,7 +5876,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.11.3</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.11.4</span></div>
         </div>
       </header>
       <div class="osc-cell">

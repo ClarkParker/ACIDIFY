@@ -1,3 +1,17 @@
+# Validierung 2.11.4
+
+## 2.11.4
+
+Headless belegt (Arp-Figur RND aktiv, PHRASE nicht gewählt): Klick
+auf das Phrasen-Display öffnet kein Menü, ±-Tasten und Mausrad
+lassen `param64` unverändert, `aria-disabled="true"` auf Control und
+Display, Tooltip „Inactive: select the PHRASE figure…". Nach Wahl
+der PHRASE-Figur öffnet das Menü wie zuvor (91 Einträge, bestehende
+Checks unverändert grün). `ui_smoke_test`, `ui_lint --strict`,
+`node --check` grün. Kein DSP-Eingriff.
+
+---
+
 # Validierung 2.11.3
 
 ## 2.11.3

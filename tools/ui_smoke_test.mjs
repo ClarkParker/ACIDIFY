@@ -872,6 +872,27 @@ try {
     node.__ledProbeArp = getComputedStyle(node.querySelector(
       ".sequence-step:not(.rest):not(.playing):not(.selected) .cap-led")).backgroundImage;
   });
+  // 2.11.4: Ohne PHRASE-Figur ist die Phrasen-Zeile gesperrt — kein Menue,
+  // kein Stepper, kein Mausrad, aria-disabled gesetzt.
+  const phraseIdle = await page.locator("acidify-patch-view").evaluate(node => {
+    const before = Number(node._values.get("param64") ?? 0);
+    node.querySelector(".arp-phrase-display").click();
+    const menuStaysHidden = node.querySelector(".phrase-menu").hidden;
+    node.querySelector('.arp-phrase .stepper-buttons [data-step="1"]').click();
+    node.querySelector(".arp-phrase").dispatchEvent(
+      new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+    return {
+      menuStaysHidden,
+      value: Number(node._values.get("param64") ?? 0),
+      before,
+      disabled: node.querySelector(".arp-phrase").getAttribute("aria-disabled"),
+      tooltip: node.querySelector(".arp-phrase").dataset.tooltip ?? "",
+    };
+  });
+  if (!phraseIdle.menuStaysHidden || phraseIdle.value !== phraseIdle.before
+      || phraseIdle.disabled !== "true" || !phraseIdle.tooltip.includes("Inactive")) {
+    throw new Error(`Idle phrase row is not locked: ${JSON.stringify(phraseIdle)}`);
+  }
   await page.locator('.arp-direction [data-value="16"]').click();
   await page.locator(".arp-phrase-display").click();
   const phraseMenu = await page.locator("acidify-patch-view").evaluate(node => ({
