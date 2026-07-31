@@ -6,6 +6,31 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.16.1] - 2026-07-31
+
+### Fixed
+
+- **K1 zurückgenommen — Sweep-Attack wieder wie am Gerät.** Der
+  gemeldete Befund („ENV MOD und Cutoff verhalten sich seltsam") ist
+  auf die 2.13.0-K1-Lesart zurückgeführt: Die dort eingebaute
+  10-ms-Trägheit auf der gesamten Cutoff-CV existiert in der Hardware
+  NICHT — der x0x-Vektorplan zeigt C23 als Emitter-Bypass der
+  Antilog-Stromquelle (Q18, R94 10 k gegen GND), der die CV schnell
+  hält. Gemessen: Schwerpunkt im ersten 4-ms-Fenster nach Note-On
+  jetzt 728 Hz = exakt der 2.12.0-Stand (727 Hz); mit dem Lag waren
+  es 221 Hz. Die Lesart war geraten, obwohl das eigene Protokoll die
+  Netzverfolgung als Voraussetzung benannt hatte — dokumentiert in
+  SOUND_GAP_ANALYSIS „Umsetzung 2.16.1".
+- **Neuer CI-Checkpoint „sweep attack fast (no CV lag)"** in
+  tools/dsp_hardware_test.mjs: Schwerpunkt des ersten 4-ms-Fensters
+  ≥ 500 Hz — der fehlerhafte 2.13.0–2.16.0-Zustand wäre daran
+  gescheitert. Damit ist die Testlücke geschlossen, durch die der
+  Fehler rutschte (alle bisherigen Checkpoints maßen eingeschwungene
+  Zustände).
+- Autogain-Refit auf dem korrigierten Spektrum (A-Restabweichung
+  0,00 dB); neue Serien-Smoke-Referenz Peak 0,509 (≈ 2.12.0-Niveau).
+  SCHEMATIC_COVERAGE-Zeile korrigiert.
+
 ## [2.16.0] - 2026-07-31
 
 ### Added

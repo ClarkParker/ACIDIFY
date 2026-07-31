@@ -6,9 +6,9 @@
 > Scope-Fotos des Fabmanuals hergeleitet: fallender Sägezahn mit rundem
 > Reset, Rechteck mit steigendem Dach und Schmitt-Flanken; die
 > Sägezahn-RAMPE bleibt gerade (die „Krümmungs"-These bleibt auf Rang 4).
-> Kleinbefund K1 (C23-Glättung) ist EINGEBAUT: die Netzverfolgung am
-> FREQ-Netz (R98 → R97 = 10 k → C23 = 1 µF → R94 → Antilog) belegt die
-> Glättung der GESAMTEN Cutoff-CV mit τ = 10 ms.
+> Kleinbefund K1 ist mit 2.16.1 ZURÜCKGENOMMEN: C23 ist Emitter-Bypass
+> der Antilog-Quelle (Q18/R94), KEINE CV-Glättung — die 2.13.0-Lesart
+> war ein Ratefehler und ist entfernt (siehe „Umsetzung 2.16.1").
 
 Anlass: A/B-Test des Projektinhabers gegen eine echte TB-303 — „Ähnlichkeiten,
 aber meilenweit entfernt". Dieses Protokoll ist der vollständige Abgleich des
@@ -389,3 +389,33 @@ docs/OPEN_ITEMS.md ohne offene A-Punkte.
 - **A8/K5 geschlossen:** Pegelanker 5,17 Vss gilt am Abgriff R105/Q28
   (x0x-vcfmods, speist den Mixer); die Zeichnungsangabe 5,5–12 V gilt
   am TP4-Puffer vor dem Former — kein Widerspruch, zwei Messpunkte.
+
+## Umsetzung 2.16.1 — K1-Rücknahme (Befund des Projektinhabers bestätigt)
+
+Der Projektinhaber meldete nach 2.16.0: „ENV MOD und Cutoff verhalten
+sich seltsam". Ursachenanalyse gegen die Hardware, wie angeordnet:
+
+- **Testprotokoll-Befund:** Alle Hardware-Checkpoints maßen bis dahin
+  EINGESCHWUNGENE Zustände (Tail-Schwerpunkte ab t = 2 s) oder
+  Tonhöhenspuren — kein einziger Test prüfte die Attack-Dynamik des
+  Sweeps. Deshalb konnte der Fehler die Batterie passieren.
+- **Der Fehler:** Die 2.13.0-Lesart von K1 („R97/C23 glättet die
+  gesamte Cutoff-CV mit τ = 10 ms") war GERATEN — die eigene Warnung
+  aus 2.12.0 („Zuordnung dynamische CV vs. FREQ-Trim-Siebung braucht
+  erst die Netzverfolgung") wurde übergangen. Der x0x-Vektorplan
+  zeigt eindeutig: **C23 = 1 µF liegt am Emitterknoten von Q18 mit
+  R94 = 10 k gegen GND** — ein Emitter-Bypass der Antilog-Stromquelle
+  (Grenze ≈ 16 Hz), der die dynamische CV SCHNELL hält. Die Hardware
+  hat keine 10-ms-Trägheit; das Modell hatte sie seit 2.13.0.
+- **Messbeleg:** Schwerpunkt im ersten 4-ms-Fenster nach Note-On
+  (C2, Cutoff 0,45, Reso 0,72, Env Mod 0,9): korrigiert **728 Hz** =
+  2.12.0-Stand **727 Hz**; mit dem K1-Lag nur **221 Hz**. Der Fix
+  stellt das 2.12.0-Attackverhalten exakt wieder her.
+- **Konsequenz:** Neuer scheiterbarer CI-Checkpoint
+  „sweep attack fast (no CV lag)": Schwerpunkt des ersten
+  4-ms-Fensters ≥ 500 Hz — der 2.13.0-Zustand wäre daran gescheitert.
+  Autogain-Refit auf dem korrigierten Spektrum (0,00 dB Rest);
+  Serien-Smoke-Referenz 0,509 (≈ 2.12.0-Niveau 0,507, plausibel).
+- **Einordnung:** VCO-Former (Scope-vermessen) und die übrigen
+  2.13.0-Bausteine sind davon unberührt; der „seltsame" Env/Cutoff-
+  Eindruck ist auf K1 zurückgeführt und behoben.

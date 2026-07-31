@@ -284,4 +284,35 @@ const single36 = [{ tick: 0, on: true, note: 36 }];
   };
 }
 
+// 5) Sweep-Attack-Geschwindigkeit (2.16.1): Die Cutoff-CV kennt am
+//    Geraet KEINE Traegheit — nur die 100-us-MEG-Attack-Stufe (D37/
+//    R152/C62); C23 ist Emitter-Bypass der Antilog-Quelle, keine
+//    CV-Glaettung. Der Filter-Schwerpunkt muss deshalb schon im ersten
+//    4-ms-Fenster nach Note-On hell sein. Referenz: 2.12.0/korrigiert
+//    ~728 Hz; die faelschliche 10-ms-CV-Glaettung (2.13.0-2.16.0) lag
+//    bei ~221 Hz und MUSS hier scheitern.
+{
+  const wav = await render("attack", { param2: 0.45, param3: 0.72, param4: 0.9, param5: 0.5 }, single36);
+  let peak = 0;
+  for (let i = 0; i < wav.length; i += 1) peak = Math.max(peak, Math.abs(wav[i]));
+  let onset = 0;
+  for (let i = 0; i < wav.length; i += 1) {
+    if (Math.abs(wav[i]) > 0.01 * peak) { onset = i; break; }
+  }
+  const win = Math.round(rate * 0.004);
+  const seg = wav.slice(onset, onset + win);
+  let num = 0, den = 0;
+  for (let f = 100; f <= 4000; f += 50) {
+    const w = 2 * Math.PI * f / rate, c = Math.cos(w);
+    let s0 = 0, s1 = 0, s2 = 0;
+    for (let i = 0; i < seg.length; i += 1) { s0 = seg[i] + 2 * c * s1 - s2; s2 = s1; s1 = s0; }
+    const p = Math.max(s1 * s1 + s2 * s2 - 2 * c * s1 * s2, 0);
+    num += f * p; den += p;
+  }
+  const firstWindowCentroidHz = den > 1e-30 ? num / den : 0;
+  assertOk(firstWindowCentroidHz >= 500,
+    "sweep attack fast (no CV lag): first 4 ms window bright", { firstWindowCentroidHz });
+  results.attackFirstWindowCentroidHz = Number(firstWindowCentroidHz.toFixed(1));
+}
+
 console.log(JSON.stringify({ ok: true, sampleRate: rate, results }, null, 1));

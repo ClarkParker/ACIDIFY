@@ -38,7 +38,7 @@
 | Resonanzweg, kMax = 18,7/1,06 | U | 2.16.0 GEMESSEN bestätigt: Serie oszilliert nicht selbst (alle Linien auf dem Obertonraster); Faktor 2 = freilaufende Linie 41 % neben dem Raster = Devil-Fish-„double feedback"-Mod |
 | VR3 Cutoff 50k(A) | U | A-Taper, kalibriert an der Roland-Stimmvorschrift (457,8 Hz gemessen, Soll 500 ± 100) |
 | VR5 Env Mod 50k(A) + Q9-Bias-„Gimmick" | U | Servicenotes S. 8; exponent = envScaler·(env − 0,327), Ausklang-Monotonie in CI |
-| CV-Glättung R97 10 k/C23 1 µF | U | Netz verfolgt (R98→R97→C23→R94→Antilog); τ = 10 ms auf dem Summen-Exponenten (2.13.0) |
+| R97/C23/R94-Netz am Antilog | U | KORRIGIERT 2.16.1: C23 = Emitter-Bypass der Antilog-Quelle (Q18, R94 10 k gegen GND, Grenze ~16 Hz) — hält die CV schnell; die 2.13.0-Lesart „10-ms-CV-Glättung" war falsch und ist entfernt. Attack-Checkpoint in CI |
 | TM3 „FREQ" 470 k | U | Endpunkt-Kalibrierung 312,5/2500 Hz (K4; Werksabgleich als Endwert) |
 | Accent-Sweep D24/R46 47 k/C13 1 µF an VR4 | U | nodales Modell mit persistentem C13 (Wow/Aufbau über Folgen) |
 

@@ -1,3 +1,21 @@
+# Validierung 2.16.1
+
+## 2.16.1
+
+K1-Rücknahme belegt: Attack-Trajektorie (C2, Cutoff 0,45, Reso 0,72,
+Env Mod 0,9; Schwerpunkt 100–4000 Hz im 4-ms-Fenster ab Note-On) —
+korrigiert 728 Hz, 2.12.0-Referenz 727 Hz, fehlerhafter
+2.13.0–2.16.0-Stand 221 Hz. Netzbeleg: x0x-Vektorplan, C23 = 1 µF am
+Q18-Emitter mit R94 = 10 k gegen GND (Bypass-Grenze ≈ 16 Hz). Neuer
+CI-Checkpoint attackFirstWindowCentroidHz = 727,5 ≥ 500 grün; der
+Lag-Zustand wäre gescheitert. Autogain-Refit: A-Restabweichung
+0,00–0,01 dB an 6 geprüften Stützstellen nach 7-Punkt-Fit; neue
+Serien-Smoke-Referenz Peak 0,50919 / RMS 0,01848. Volle Batterie
+grün: smoke, hardware (jetzt 5 Checkpoints), gain, arp, articulation,
+matrix, transport, ui_smoke, Lints strict.
+
+---
+
 # Validierung 2.16.0
 
 ## 2.16.0

@@ -289,12 +289,8 @@ processor AcidifyCore
     float meterAlpha = 0.0f;
     float parameterSmoothingAlpha = 1.0f;
     float distortionSmoothingAlpha = 1.0f;
-    // K1 (2.13.0): R97 = 10 k laedt C23 = 1 uF in der Cutoff-CV-Leitung
-    // vor dem Antilog-Wandler (Seite 5, FREQ-Netz um Q18/TM3). Die
-    // GESAMTE CV — Huellkurve, Accent-Sweep und Reglerangebot — wird am
-    // Geraet mit tau = 10 ms geglaettet.
-    float cvSmoothAlpha = 1.0f;
-    float cvSmoothExponent = 0.0f;
+    // K1 entfernt (2.16.1): C23 ist Emitter-Bypass der Antilog-Quelle
+    // (Q18/R94), KEINE CV-Glaettung — siehe Hauptschleifen-Kommentar.
     // PHONO (2.13.0): Arbeitspunktverschiebung des Koppel-C bei
     // asymmetrischem Clipping (Blocking-Distortion), tau = 50 ms.
     float phonoBiasAlpha = 0.0f;
@@ -711,14 +707,13 @@ processor AcidifyCore
     // linear interpoliert — kein Messen im Hintergrund. Druecken die
     // Angleichung von zuvor bis zu -1,34 dB auf unter +-0,3 dB.
     const float[7] distCorrDrive = (0.1f, 0.25f, 0.35f, 0.5f, 0.65f, 0.8f, 1.0f);
-    // Refit 2.13.0, mit 2.16.0 wiederhergestellt: Die Tabellen gelten
-    // fuer das Referenzspektrum mit Accent-Gewicht 4,0 (die 2.14.0-
-    // Tabellen gehoerten zum verworfenen Gewicht 6,0). gain_probe,
-    // 7 Stuetzstellen je Typ; dsp_gain_test wacht ueber die
-    // Restabweichung.
-    const float[7] distCorrPure  = (1.0081f, 1.0592f, 1.1194f, 1.2446f, 1.4142f, 1.6425f, 2.0606f);
-    const float[7] distCorrMack  = (1.1041f, 1.3138f, 1.4093f, 1.4690f, 1.4521f, 1.4093f, 1.3536f);
-    const float[7] distCorrPhono = (1.3381f, 1.1749f, 1.0789f, 0.9616f, 0.8730f, 0.8017f, 0.7316f);
+    // Refit 2.16.1: Referenzspektrum nach K1-Ruecknahme (schneller
+    // Sweep-Attack wiederhergestellt) mit Accent-Gewicht 4,0.
+    // gain_probe, 7 Stuetzstellen je Typ; dsp_gain_test wacht ueber
+    // die Restabweichung.
+    const float[7] distCorrPure  = (1.0093f, 1.0665f, 1.1298f, 1.2590f, 1.4388f, 1.6866f, 2.1379f);
+    const float[7] distCorrMack  = (1.1298f, 1.3741f, 1.4622f, 1.5102f, 1.4962f, 1.4521f, 1.3979f);
+    const float[7] distCorrPhono = (1.3693f, 1.1995f, 1.1015f, 0.9863f, 0.8975f, 0.8242f, 0.7512f);
 
     float distCorrAt (int type, int index)
     {
@@ -1010,10 +1005,6 @@ processor AcidifyCore
         meterAlpha = timeCoefficient (400.0f, sampleRate);
         parameterSmoothingAlpha = 1.0f - timeCoefficient (5.0f, sampleRate);
         distortionSmoothingAlpha = 1.0f - timeCoefficient (20.0f, sampleRate);
-        // K1: CV-Glaettung R97/C23 = 10 k * 1 uF = 10 ms (Seite 5, verfolgt
-        // am FREQ-Netz: R98 -> R97 -> C23 -> R94 -> Antilog). Sie formt den
-        // Sweep hoerbar — Attack-Anteile der Filterbewegung werden rund.
-        cvSmoothAlpha = 1.0f - timeCoefficient (10.0f, sampleRate);
         // PHONO-Blocking: Koppel-C-Arbeitspunkt, tau = 50 ms (generischer
         // Wert einer 0,47-uF/100-k-Eingangskopplung, dokumentiert in
         // THIRD_PARTY_NOTICES.md als Modellannahme).
@@ -2603,17 +2594,22 @@ processor AcidifyCore
             filterEnvelope *= accented ? accentDecayCoeff : normalDecayCoeff;
             filterEnvelopeRC += filterAttackAlpha * (filterEnvelope - filterEnvelopeRC);
 
-            let exponentTarget = envScaler * (filterEnvelopeRC - envOffset)
-                               + processAccentSweep (accented && gateOpen
-                                                      ? accentControl * filterEnvelope
-                                                      : 0.0f,
-                                                     sampleRate);
-            // K1 (2.13.0): Die CV-Glaettung R97/C23 (tau = 10 ms) liegt am
-            // Geraet HINTER der Summierung — sie glaettet Huellkurve UND
-            // Accent-Sweep gemeinsam und rundet den Attack-Anteil des
-            // Sweeps. Vorher wirkte nur die 100-us-MEG-Attack-Stufe.
-            cvSmoothExponent += cvSmoothAlpha * (exponentTarget - cvSmoothExponent);
-            let exponent = cvSmoothExponent;
+            // K1 KORRIGIERT (2.16.1): Die 2.13.0-Lesart „R97/C23 glaettet
+            // die gesamte Cutoff-CV mit 10 ms" war FALSCH — ein Ratefehler
+            // trotz protokollierter Warnung („Zuordnung braucht erst die
+            // Netzverfolgung"). Der x0x-Vektorplan zeigt C23 = 1 uF am
+            // EMITTERKNOTEN von Q18 mit R94 = 10 k gegen GND: ein
+            // Emitter-Bypass/Bias der Antilog-Stromquelle (Grenze
+            // 1/(2*pi*10k*1u) ~= 16 Hz) — er haelt die dynamische CV
+            // SCHNELL, statt sie zu verzoegern. Die 10-ms-Traegheit ist
+            // entfernt; es wirkt wieder nur die belegte 100-us-MEG-Attack-
+            // Stufe plus die C13-Sweep-Dynamik. Ein Attack-Checkpoint in
+            // tools/dsp_hardware_test.mjs wacht jetzt darueber.
+            let exponent = envScaler * (filterEnvelopeRC - envOffset)
+                         + processAccentSweep (accented && gateOpen
+                                                ? accentControl * filterEnvelope
+                                                : 0.0f,
+                                               sampleRate);
             let instantaneousCutoff = baseCutoff * float (pow (2.0, float64 (exponent)));
             let filtered = processLadder (preFiltered, instantaneousCutoff, sampleRate);
 
