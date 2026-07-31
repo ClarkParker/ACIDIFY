@@ -1,5 +1,14 @@
 # Fehlerprotokoll: Modell gegen Schaltung (vollständiger Audit)
 
+> **Status 2.12.0:** Befunde 1–3 sind umgesetzt und gemessen (siehe
+> „Umsetzung 2.12.0" am Ende); Befund 4 (VCO) bleibt offen, seine
+> „gerundeter Sägezahn"-Teilthese ist auf Rang 4 herabgestuft (der
+> herleitbare Kern — Stromquelle in C34, schnelle FET-Entladung — spricht
+> für einen weitgehend linearen Sägezahn; belastbar ist nur der
+> Former-Umbau des Rechtecks). Kleinbefund K1 (C23-Glättung) ist NICHT
+> eingebaut: die Zuordnung (dynamische CV vs. FREQ-Trim-Siebung) braucht
+> erst die Netzverfolgung.
+
 Anlass: A/B-Test des Projektinhabers gegen eine echte TB-303 — „Ähnlichkeiten,
 aber meilenweit entfernt". Dieses Protokoll ist der vollständige Abgleich des
 DSP gegen die inzwischen im Repo gesicherten Rang-1-Quellen
@@ -202,6 +211,35 @@ UI-Regressionen in `ui_smoke_test`.
    die Kleinbefund-Tabelle wird dort abgetragen.
 6. **R6 — (optional, Rang 2)** Referenzaufnahmen irgendeines belegten
    Geräts, wenn verfügbar — zur Endabnahme, nicht als Voraussetzung.
+
+---
+
+## Umsetzung 2.12.0 — gemessen
+
+- **Befund 1 (Env-Mod-Netz):** `exponent = envScaler·(env − 0,327)` mit
+  offsetFraction = VQ9/ΔV_env = (5,333/2 + 0,6)/10 — hergeleitet aus dem
+  Q9-Folger am 5,333-V-Rail; unabhängige Konvergenz: Open303 hat 0,32 am
+  Gerät gemessen (Bestätigung, nicht Quelle). Env-Spanne 5,625 Okt bei
+  Vollausschlag (3 Okt pro 5,333 V mal 10 V MEG-Hub; die
+  VR3-Domänen-Annahme ist im Quelltext benannt). Messung: Ausklang-
+  Schwerpunkt 138,6 / 105,4 / 69,6 Hz bei Env Mod 0 / 0,5 / 1,0 —
+  vorher 231,5 / 231,7 / 231,9 (wirkungslos).
+- **Befund 2 (Kennlinien):** A-Taper auf VR3/VR5; Krümmung innerhalb der
+  A-Familie am Roland-Anker kalibriert (Basis 10 → 24 % bei halbem Weg).
+  Messung per Verhältnis-Spektrum (Reso max / Reso 0): Resonanzspitze
+  **457,8 Hz** bei C1/Cutoff 50 % — Vorschrift 500 ± 100. Linear standen
+  hier 884 Hz.
+- **Befund 3 (Slide):** Glättung der Tonhöhe in Oktaven (τ = 22 ms).
+  Messung: Kreuzung der geometrischen Mitte auf/ab 17,9 / 19,6 ms,
+  Asymmetrie 9 % (Spur-Quantisierung); theoretisch τ·ln 2 = 15,25 ms.
+  Hz-Domäne läge bei ~45–60 % Asymmetrie.
+- **Folgekorrektur:** Die A-bewichteten Autogain-Tabellen der Distortion
+  sind auf dem neuen (dunkleren) Serien-Referenzspektrum nachgemessen —
+  Restabweichung 0,00 dB an allen Stützstellen, alle Peaks unter dem
+  Raw-Peak. Neue Serien-Smoke-Referenz: Peak 0,459 (vorher 0,691).
+- **R5:** `tools/dsp_hardware_test.mjs` kodiert Stimmvorschrift,
+  Env-Mod-Monotonie (inkl. ≥4 dB über 800 Hz) und Slide-Symmetrie als
+  scheiterbare Tests.
 
 Quellen: docs/reference/hyperreal/roland.TB-303.schem-5.gif und -8.gif
 (Roland, Feb 1982) · docs/reference/x0xb0xfabmanual.pdf (VCF-Abschnitt,

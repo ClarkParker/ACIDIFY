@@ -5,12 +5,12 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **DSP+UI 2.11.6 — Silver Series**. Clean-Core,
+> Status: **DSP+UI 2.12.0 — Silver Series, Hardware-Fixes aus den Servicenotes**. Clean-Core,
 > 50-Parameter-Vertrag, Amorph-`transportIn`-Sync, sicherer Internal-Fallback,
 > Swing und drei getrennte Post-Stufen sind implementiert und automatisiert
 > geprüft. Studio ergänzt skalenbewusstes Generate/Mutate, Reverse, Pitch Mirror
 > und eine Bass-Line-Kontur in der Matrix. Der Nutzer hat den vorigen 0.6.4-Build in Amorph als
-> grundsätzlich passend bestätigt; der neue 2.11.6-Build muss für die
+> grundsätzlich passend bestätigt; der neue 2.12.0-Build muss für die
 > abschließende Produktbestätigung erneut in Amorph und der Ziel-DAW getestet
 > werden. Die Bezeichnung „AAA Clone“ bleibt bis zu kalibrierten
 > Hardware-Captures und Blindtests ausdrücklich ein Ziel, kein bereits
@@ -34,6 +34,9 @@ Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 - `tools/dsp_articulation_test.mjs` – prüft Slide, Retrigger und gehaltene Noten
 - `tools/dsp_transport_test.mjs` – prüft interne und DAW-geführte Step-Uhr
 - `tools/dsp_gain_test.mjs` – A-bewichteter Lautheitsabgleich der Distortion über den Host-Event-Pfad
+- `tools/dsp_hardware_test.mjs` – Geräte-Fakten der Servicenotes als scheiterbare Tests (Stimmvorschrift, Env-Mod, Slide)
+- `docs/reference/` – gesicherte Schaltplan- und Referenzquellen (Roland-Servicenotes, x0xb0x, Devil Fish)
+- `docs/SOUND_GAP_ANALYSIS.md` – Fehlerprotokoll Modell↔Schaltung mit Quellenordnung und Roadmap
 - `tools/bench/` – Messstand für Filtergang, Aliasing, Pegel und UI-Ergonomie
 - `tools/check_version.py` – prüft konsistente Versionsmetadaten
 
@@ -52,8 +55,9 @@ Zwei Workflows laufen bei jedem Push und Pull Request:
 
 - `.github/workflows/versioning.yml` – Versionsmetadaten und Changelog-Links,
 - `.github/workflows/ci.yml` – Preflight und Manifestprüfung mit dem Dev-Kit,
-  `node --check` der UI, der UI-Rauchtest in headless Chromium sowie C++-Codegen
-  und MIDI-Render mit dem echten `cmaj`-Compiler über alle sechs Samplerates.
+  `node --check` der UI, der UI-Rauchtest in headless Chromium, C++-Codegen
+  und MIDI-Render mit dem echten `cmaj`-Compiler über alle sechs Samplerates
+  sowie die Hardware-Verhaltens-Prüfsteine (`dsp_hardware_test`).
 
 ## Start
 

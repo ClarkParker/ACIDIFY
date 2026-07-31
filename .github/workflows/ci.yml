@@ -96,3 +96,6 @@ jobs:
           for rate in 44100 48000 88200 96000 176400 192000; do
             node tools/smoke_test.mjs cmaj-bin/linux/x64/cmaj "$rate"
           done
+
+      - name: Hardware behaviour checkpoints (Roland service notes)
+        run: CMAJ=cmaj-bin/linux/x64/cmaj node tools/dsp_hardware_test.mjs

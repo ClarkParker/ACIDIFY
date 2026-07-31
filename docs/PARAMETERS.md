@@ -192,6 +192,18 @@ belegt. Weitere persistente Funktionen benötigen deshalb einen späteren,
 erweiterten Zustandsvertrag; vorhandene IDs werden dafür nicht umgedeutet oder
 zusammengepackt.
 
+Seit 2.12.0 folgen `param2` (Cutoff) und `param4` (Env Mod) den
+belegten Hardware-Gesetzen (docs/SOUND_GAP_ANALYSIS.md): Beide Regler
+laufen über eine A-Kennlinie (50K(A)-Potis; Krümmung an der
+Roland-Stimmvorschrift kalibriert — C1, Cutoff 50 %, Resonanz max →
+Resonanzspitze ~500 Hz), und `param4` arbeitet nach dem Roland-„Gimmick"
+der Servicenotes S. 8: Mehr Env Mod speist mehr Hüllkurve ein UND senkt
+zugleich die Basis-Cutoff (Q9-Bias-Überblendung an VR5) — der Regler
+wirkt damit auch statisch und macht den Notenausklang dunkler. Die
+Slide-Zeitkonstante (22 ms) glättet seit 2.12.0 die Tonhöhe in der
+CV-Domäne (Oktaven), nicht in Hertz. Parameterbereiche und IDs sind
+unverändert; nur die Klangabbildung entspricht jetzt dem Gerät.
+
 `param8` wurde in 2.9.0 von −36…0 dB auf −36…+6 dB erweitert (Init −6
 unverändert). Gespeicherte dB-Werte alter Presets bleiben gültig;
 normalisierte Host-Automation von `param8` skaliert durch den neuen

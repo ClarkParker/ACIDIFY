@@ -6,6 +6,51 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.12.0] - 2026-07-31
+
+### Fixed
+
+Hardware-Fixes nach dem A/B-Befund „meilenweit entfernt" und dem
+vollständigen Schaltungs-Audit (docs/SOUND_GAP_ANALYSIS.md); alle drei
+Änderungen sind aus den Roland-Servicenotes/Serviceplänen hergeleitet
+und gemessen:
+
+- **Env-Mod-Netz (Befund 1)**: Der Roland-„Gimmick" (Servicenotes S. 8)
+  ist eingebaut — VR5 blendet zwischen Q9-Bias und Hüllkurve über, mehr
+  Env Mod senkt die Basis-Cutoff („equal to turning CUTOFF knob
+  counterclockwise"). `exponent = envScaler·(env − 0,327)`;
+  offsetFraction aus VQ9 = 5,333/2 + 0,6 V und 10-V-MEG-Hub hergeleitet
+  (Open303s Geräte-Messung 0,32 bestätigt unabhängig). Gemessen:
+  Ausklang-Schwerpunkt fällt jetzt 138,6 → 105,4 → 69,6 Hz über den
+  Reglerweg — vorher war der Regler dort komplett wirkungslos.
+- **Potikennlinien (Befund 2)**: VR3/VR5 sind 50K(A)-Log-Potis; die
+  Abbildung war linear. A-Taper eingebaut, Krümmung am Rang-1-Anker
+  kalibriert: Roland-Stimmvorschrift „C1, Cutoff 50 %, Resonanz max →
+  Resonanzspitze 500 Hz ± 100". Gemessen (Verhältnis-Spektrum):
+  457,8 Hz — vorher 884 Hz.
+- **Slide-Domäne (Befund 3)**: Der Slide gleitet jetzt in der CV-Domäne
+  (Oktaven, τ = 22 ms) statt in Hertz — Auf-/Abwärts-Slides sind
+  tonhöhensymmetrisch wie am Gerät (gemessen 17,9/19,6 ms, Asymmetrie
+  9 %; Hz-Domäne läge bei ~45–60 %).
+- **Folgekorrektur**: Distortion-Autogain-Tabellen auf dem neuen,
+  dunkleren Serien-Referenzspektrum nachgemessen (Restabweichung
+  0,00 dB an allen 21 Stützstellen); neue Smoke-Referenz Peak 0,459.
+
+### Added
+
+- **`tools/dsp_hardware_test.mjs` (R5)**: Geräte-Fakten als scheiterbare
+  Tests — Roland-Stimmvorschrift, Env-Mod-Monotonie (inkl. ≥ 4 dB
+  dunkler über 800 Hz), Slide-Symmetrie in Oktaven. Läuft in der CI.
+- `docs/reference/`: Alle Schaltplan- und Referenzquellen dauerhaft
+  versioniert (Roland-Servicenotes S. 1–8 inkl. 150-dpi-Scans,
+  x0xb0x-EAGLE/PNG/Fabmanual, Devil-Fish-Handbuch, x0x-VCF-Mods).
+
+### Hinweis
+
+Presets klingen absichtlich anders als 2.11.x: Cutoff-/Env-Mod-Regler
+arbeiten jetzt auf der Hardware-Kennlinie und dem Hardware-Verhalten.
+Der Standard-Patch ist dunkler und „squelchiger" — das ist der Punkt.
+
 ## [2.11.6] - 2026-07-31
 
 ### Changed

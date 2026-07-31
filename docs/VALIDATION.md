@@ -1,3 +1,25 @@
+# Validierung 2.12.0
+
+## 2.12.0
+
+Hardware-Fixes gemessen (Details docs/SOUND_GAP_ANALYSIS.md,
+„Umsetzung 2.12.0"): Roland-Stimmvorschrift per Verhältnis-Spektrum
+Reso max/Reso 0 → Resonanzspitze 457,8 Hz (Soll 500 ± 100; linear
+vorher 884 Hz). Env-Mod-Ausklang monoton dunkler: Schwerpunkt
+138,6/105,4/69,6 Hz bei Env Mod 0/0,5/1,0 (vorher 231,5/231,7/231,9 —
+Regler wirkungslos); > 4 dB Abfall über 800 Hz belegt. Slide in der
+Oktav-Domäne: Kreuzung der geometrischen Mitte 17,9/19,6 ms auf/ab,
+Asymmetrie 9 % (τ·ln 2 = 15,25 ms + Spur-Quantisierung). Autogain-Refit
+per gain_probe: A-Abweichung 0,00 dB an allen 21 Stützstellen, Peaks
+≤ 0,4615 < Raw-Peak 0,5082. Neue Serien-Smoke-Referenz Peak 0,459.
+Volle Batterie grün: smoke, matrix, articulation, arp (inkl.
+Phrase-Accent/Slide), gain, transport (20 Checks), hardware (neu),
+ui_smoke, Lints strict, check_sync 66/66. Messmethodik-Korrekturen im
+neuen Test dokumentiert (Resonanzlage quellunabhängig per
+Verhältnis-Spektrum; Slide-Timing aus der Tonhöhenspur selbst).
+
+---
+
 # Validierung 2.11.6
 
 ## 2.11.6
