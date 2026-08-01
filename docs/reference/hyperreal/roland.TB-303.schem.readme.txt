@@ -1,0 +1,20 @@
+these are the roland TB-303 service notes:
+
+roland.TR-303.schem-1.gif  43k	specifications, knob/ case part no. 
+roland.TR-303.schem-2.gif  40k	IC pinouts
+roland.TR-303.schem-3.gif  57k	block diagram
+roland.TR-303.schem-4.gif 105k	digital schematic
+roland.TR-303.schem-5.gif 145k	analogue schematic
+roland.TR-303.schem-6.gif  83k	adjustment, view from component side
+roland.TR-303.schem-7.gif  69k	adjustment, view from foil side
+roland.TR-303.schem-8.gif  47k	vcf envelope modulation, parts list
+
+
+
+additional higher resolution scans of pages 6 and 7 are split into left
+and right pages. scans by robin whittle (http://www.firstpr.com.au)
+
+roland.TB-303.schem-6-left-150dpi.jpg
+roland.TB-303.schem-6-right-150dpi.jpg
+roland.TB-303.schem-7-left-150dpi.jpg
+roland.TB-303.schem-7-right-150dpi.jpg

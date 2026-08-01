@@ -1,3 +1,199 @@
+# Validierung 2.17.2
+
+## 2.17.2
+
+Vollständiger Zeilen-Audit ACIDIFYDSP.cmajor (alle 2941 Zeilen gelesen,
+Befundliste in docs/SOUND_GAP_ANALYSIS.md, „Umsetzung 2.17.2"). Ein
+Codefix: DAW-Gate-Abschaltung nutzt jetzt die effektiven Flags
+(Phrase-Maske) statt der Pattern-Flags. Nachweis im erweiterten
+tools/dsp_transport_test.mjs, Szenario DAW-Sync + Phrase 37, beide
+Fehlrichtungen falsifizierbar: Slide-Step (Phrase sagt Slide, Pattern
+nur Gate) hält den ganzen Step — RMS spät im Step 0,0347; reiner
+Gate-Step (Phrase sagt Gate, Pattern Rest) endet in Stepmitte — RMS
+exakt 0. Gegenprobe: mit der alten Zeile (`getFlags`) schlägt der Test
+reproduzierbar fehl („slide step was cut at mid-step, late rms
+≈ 2,8e-45"). Serienpfad unberührt: Serien-Smoke bit-identisch
+Peak 0,50919 / RMS 0,01821. Volle Batterie grün: smoke, hardware
+(5 Checkpoints), gain (Restabweichung ≤ 0,34 dB), arp, articulation,
+matrix, transport (inkl. neuem Checkpoint dawPhraseEffectiveFlags),
+ui_smoke, cmajor_lint (bekannte Param-Warnung), ui_lint --strict,
+manifest_check, node --check, check_version.
+
+---
+
+# Validierung 2.17.1
+
+## 2.17.1
+
+Reines Doku-/Begründungs-Release nach Volltextlesung der
+Roland-Abgleichseiten 6/7: TM5 = Oktavbreiten-Trim (nicht Duty), TM3 =
+2 ms ± 0,5 ms Ausschwingen (Modell 2,18 ms ∈ Toleranz), TM6 = 1,000 V
+± 3 mV/Okt. Kein DSP-Eingriff: Serien-Smoke bit-identisch
+Peak 0,50919 / RMS 0,01821; Lints grün; ui_smoke grün (Brand-Span).
+
+---
+
+# Validierung 2.17.0
+
+## 2.17.0
+
+Gate→Ton-Totzone: hörbarer Start (2-%-Schwelle) 3,47 ms nach dem
+Zustand ohne Totzone, plus 0,5-ms-Anstieg ≈ 4 ms nach Gate — in
+Whittles Messfenster 1–5 ms („typically 4 ms"). Accent→VCA-Struktur
+per Rang-3-Primärtext bewiesen (Whittle 303-unique: additiv über
+R119/C36 in den Steuerstrom); MEG-Accent-Kurzschluss und
+reso-abhängige Sweep-Glättung textlich bestätigt (bereits modelliert).
+Attack-Checkpoint mit 25-%-Onset-Schwelle: 597,1 Hz ≥ 500 grün (der
+BA662-Durchgriff vor dem Öffnen liegt bei ~−20 dB und fängt den
+Detektor nicht mehr; der 10-ms-Lag-Fehlerfall bliebe bei ~221 Hz).
+Autogain-Refit nach Totzone (7-Punkt, Restabweichung ≤ 0,34 dB an den
+Testpunkten, gain test grün). Serien-Smoke Peak 0,50919 / RMS 0,01821.
+Volle Batterie grün: smoke, hardware (5 Checkpoints), gain, arp,
+articulation, matrix, transport, ui_smoke, Lints strict.
+
+---
+
+# Validierung 2.16.1
+
+## 2.16.1
+
+K1-Rücknahme belegt: Attack-Trajektorie (C2, Cutoff 0,45, Reso 0,72,
+Env Mod 0,9; Schwerpunkt 100–4000 Hz im 4-ms-Fenster ab Note-On) —
+korrigiert 728 Hz, 2.12.0-Referenz 727 Hz, fehlerhafter
+2.13.0–2.16.0-Stand 221 Hz. Netzbeleg: x0x-Vektorplan, C23 = 1 µF am
+Q18-Emitter mit R94 = 10 k gegen GND (Bypass-Grenze ≈ 16 Hz). Neuer
+CI-Checkpoint attackFirstWindowCentroidHz = 727,5 ≥ 500 grün; der
+Lag-Zustand wäre gescheitert. Autogain-Refit: A-Restabweichung
+0,00–0,01 dB an 6 geprüften Stützstellen nach 7-Punkt-Fit; neue
+Serien-Smoke-Referenz Peak 0,50919 / RMS 0,01848. Volle Batterie
+grün: smoke, hardware (jetzt 5 Checkpoints), gain, arp, articulation,
+matrix, transport, ui_smoke, Lints strict.
+
+---
+
+# Validierung 2.16.0
+
+## 2.16.0
+
+kMax-Entscheid gemessen: Serie — Top-5-Linien bei C2/Reso max alle
+0–1 % vom Obertonraster (65,2/65,9/1308/131/130 Hz); Faktor 2 —
+dominante Linie 1477,3 Hz mit 41 % Rasterabstand (freilaufender
+Grenzzyklus). Accent-Kette netzverfolgt (Roland S. 5, Rasterkrops im
+Sitzungsprotokoll): D27→R120→C36→R119→BA662-Steuerpin. Gewicht 4,0
+wiederhergestellt; Autogain-Tabellen = 2.13.0-Messstand, gain_probe
+bestätigt A-Restabweichung 0,00 dB (4 Stützstellen je Typ geprüft),
+dsp_gain_test grün. Blocking isoliert: Δmean(Serie −
+Bias-eingefroren) −6e−5 → 0 binnen ~70 ms (2-Perioden-Fenster).
+Serien-Smoke-Referenz wieder Peak 0,48012 / RMS 0,01858 (Stand
+2.13.0, da Gewicht 4,0). Volle Batterie grün: smoke, hardware, gain,
+arp, articulation, matrix, transport, ui_smoke, Lints strict.
+SCHEMATIC_COVERAGE.md neu; OPEN_ITEMS ohne offene A-Punkte.
+
+---
+
+# Validierung 2.15.0
+
+## 2.15.0
+
+PHONO-Slew-Limit (1 V/µs, 4558-Datenblatt; 63 462 Einheiten/s auf der
+1,65-Einheiten-Rail-Spanne, volle Flanke ≈ 26 µs) eingebaut und
+EHRLICH vermessen: Bandanteile > 4/8/12 kHz am A3-Ton, Drive 1,0,
+gegen 2.14.0 identisch (−24,5/−33,3/−40,5 dB) — die RIAA-Entzerrung
+in der Schleife begrenzt die Flanken bereits stärker als der OP; das
+Glied wirkt nur bei Extremmaterial und bleibt als Korrektheitsglied.
+Kein Autogain-Refit nötig (A-Restabweichung unverändert 0,00 dB an
+den geprüften Stützstellen; gain test grün). Serien-Smoke unverändert
+Peak 0,64623 / RMS 0,02356. Batterie grün: smoke, hardware, gain,
+matrix, Lints; docs/OPEN_ITEMS.md neu (vollständige Offen-Liste).
+
+---
+
+# Validierung 2.14.0
+
+## 2.14.0
+
+Accent-VCA-Gewicht 6,0 aus der Schaltung: nodale Rechnung belegt
+(i_env,max = 50 µA aus Q31/R131 220 k; i_acc,max = 298 µA aus
+D27/R120 22 k + R133 2,2 k/D35 bei MEG-Spitze 10 V und Knoten-Bias
+1,6 V → 5,95; Toleranzband 4,8–6,7 über die dokumentierten Spannen).
+Accent-Release-Intervall hergeleitet (untere Schranke R119·C36 =
+1,55 ms, obere Schranke MEG-Decay ≥ 200 ms; Messwert 50 ms im
+Intervall, bleibt Anker). Autogain-Refit per gain_probe:
+A-Restabweichung 0,00 dB an 12 Stützstellen. Neue
+Serien-Smoke-Referenz Peak 0,64623 / RMS 0,02356 (Accents kräftiger).
+Volle Batterie grün: smoke, hardware (Stimmvorschrift 457,8 Hz,
+Env-Mod-Monotonie, Slide-Symmetrie), gain, arp, articulation, matrix,
+transport, ui_smoke, Lints strict, check_sync 66/66. Kein Eingriff in
+Sequencer/UI.
+
+---
+
+# Validierung 2.13.0
+
+## 2.13.0
+
+VCO-Former: Formeln im JS-Spiegel exakt belegt (Duty 46,86 %, Dach
+0,310 → 0,500 in ±0,5-Einheiten, Boden −0,500 flach, Reset 0,302 ms
+Halbkosinus, Rampe konstant fallend); Ketten-Render belegt die
+Rampen-Inversion (Median-Steigung +/− gegen 2.11.6, Duty-Kennzahlen
+verschoben wie erwartet — das Koppelnetz differenziert bei 55 Hz).
+Scope-Grundlage pixelvermessen (Fabmanual S. 8/9): Saw 11,25 → 6,09 V
+fallend, Reset 2–4 px = 0,3–0,6 ms inkl. Bloom; Square Tiefpegel
+5,000 V, Dachanstieg ≈ 17–21 % von Vss (drei saubere Pulse), Vmax
+9,063 V am Dachende. K1: Netzverfolgung R98 → R97 10 k → C23 1 µF →
+R94 → Antilog am Seite-5-Scan. PHONO (55 Hz, Drive 0,8): H2 −8,2 /
+H3 −25,7 / H4 −16,4 / H5 −23,9 dB rel H1 (geradzahlige Signatur;
+2.11.6: monoton −8,5/−19,2/−26,2/−30,5). Autogain-Refit per
+gain_probe: A-Restabweichung 0,00 dB an 12 Stützstellen (PURE/MACKIE/
+PHONO je 4 geprüft nach 7-Punkt-Fit). Neue Serien-Smoke-Referenz
+Peak 0,48012 / RMS 0,01858. Volle Batterie grün: smoke, matrix,
+articulation, arp (inkl. Phrase-Accent/Slide), gain, transport
+(20 Checks), hardware (Stimmvorschrift 457,8 Hz unverändert, Env-Mod-
+Monotonie, Slide-Asymmetrie 21,9 % < 30 %), ui_smoke, Lints strict.
+A/B-Hörbelege (Saw/Square/PHONO, 2.13.0 gegen 2.11.6) im
+Sitzungsbericht.
+
+---
+
+# Validierung 2.12.1
+
+## 2.12.1
+
+Header-/Dokumentations-Release, kein DSP-Eingriff — per Serien-Smoke
+bit-identisch belegt: Peak 0,50678 / RMS 0,01828 unverändert nach dem
+Header-Tausch in `ACIDIFYDSP.cmajor`. `dsp_hardware_test` grün
+(Stimmvorschrift 457,8 Hz, Env-Mod-Monotonie, Slide-Symmetrie),
+`cmajor_lint` (bekannte Param-Anzahl-Warnung), `ui_lint --strict`,
+`node --check`, `manifest_check`, `check_version` grün; `ui_smoke_test`
+nach dem UI-Header-Tausch grün. Quelltext-Grep bestätigt: kein
+Open303-Copyright mehr in Quelldateien; die drei zitierten Messwerte
+sind an ihren Stellen einzeln markiert und in THIRD_PARTY_NOTICES.md
+tabelliert.
+
+---
+
+# Validierung 2.12.0
+
+## 2.12.0
+
+Hardware-Fixes gemessen (Details docs/SOUND_GAP_ANALYSIS.md,
+„Umsetzung 2.12.0"): Roland-Stimmvorschrift per Verhältnis-Spektrum
+Reso max/Reso 0 → Resonanzspitze 457,8 Hz (Soll 500 ± 100; linear
+vorher 884 Hz). Env-Mod-Ausklang monoton dunkler: Schwerpunkt
+138,6/105,4/69,6 Hz bei Env Mod 0/0,5/1,0 (vorher 231,5/231,7/231,9 —
+Regler wirkungslos); > 4 dB Abfall über 800 Hz belegt. Slide in der
+Oktav-Domäne: Kreuzung der geometrischen Mitte 17,9/19,6 ms auf/ab,
+Asymmetrie 9 % (τ·ln 2 = 15,25 ms + Spur-Quantisierung). Autogain-Refit
+per gain_probe: A-Abweichung 0,00 dB an allen 21 Stützstellen, Peaks
+≤ 0,4615 < Raw-Peak 0,5082. Neue Serien-Smoke-Referenz Peak 0,507.
+Volle Batterie grün: smoke, matrix, articulation, arp (inkl.
+Phrase-Accent/Slide), gain, transport (20 Checks), hardware (neu),
+ui_smoke, Lints strict, check_sync 66/66. Messmethodik-Korrekturen im
+neuen Test dokumentiert (Resonanzlage quellunabhängig per
+Verhältnis-Spektrum; Slide-Timing aus der Tonhöhenspur selbst).
+
+---
+
 # Validierung 2.11.6
 
 ## 2.11.6

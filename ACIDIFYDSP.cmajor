@@ -1,21 +1,25 @@
 /*
-    ACIDIFY 0.7.2 — analog-modelled 303-class bassline for Amorph.
+    ▄▀█ █▀▀ █ █▀▄ █ █▀▀ █▄█
+    █▀█ █▄▄ █ █▄▀ █ █▀░ ░█░      AC-303 BASSLINE SYNTHESIZER
 
-    MIDI/16-step sequencer -> oscillator -> coupling HP -> four-stage ladder
-    -> coupling HP -> accent VCA -> output stage.
+    Author: Clark Parker
 
-    The complete core is run at 4x through the Acidify graph below. Filter
-    coefficient mapping, envelope/cutoff mapping, coupling frequencies and
-    slide constants are adapted from the MIT-licensed Open303 project:
+    Built from the schematics, not from samples. The diode ladder is
+    rebuilt node by node as a zero-delay-feedback model — every stage,
+    every diode, the coupling network inside the resonance loop, the
+    BA662 OTA, the accent-sweep capacitor and the envelope-modulation
+    bias trick straight from the Roland service notes. Slides glide in
+    the CV domain. The whole core runs 4x oversampled behind a 16-step
+    sequencer, a 16-figure arpeggiator with a 90-phrase acid bank, and
+    three loudness-matched drive stages.
 
-      Copyright (c) 2009 Robin Schmidt (www.rs-met.com)
-      https://github.com/RobinSchmidt/Open303
+    Source of truth: the TB-303 service schematics (docs/reference/).
+    Every derived behaviour is guarded by a failing test — see
+    tools/dsp_hardware_test.mjs and docs/SOUND_GAP_ANALYSIS.md.
+    Third-party attribution (Airwindows drive ports, cited hardware
+    measurements): THIRD_PARTY_NOTICES.md.
 
-    The implementation is an original Cmajor port and adaptation for Amorph.
-    The optional post stage also ports the signal paths of the MIT-licensed
-    Airwindows PurestDrive and Mackity processors. PHONO is a clearly labelled
-    generic RIAA/overload model rather than a claim to emulate one specific
-    mixer.
+    Turn the resonance up.
 */
 
 processor AcidifyCore
@@ -197,6 +201,10 @@ processor AcidifyCore
     float64 phase = 0.0;
     float currentFrequency = 65.4064f;
     float targetFrequency = 65.4064f;
+    // Slide-Zustand in der CV-Domaene: Das 100k/0,22uF-RC des Geraets sitzt
+    // auf der Pitch-CV (1 Okt/V), die Annaeherung ist also exponentiell in
+    // OKTAVEN, nicht in Hertz (Befund 3, docs/SOUND_GAP_ANALYSIS.md).
+    float64 currentPitchOctave = 6.03135;   // log2(65.4064)
     int currentNote = -1;
     bool gateOpen = false;
     bool accented = false;
@@ -274,6 +282,9 @@ processor AcidifyCore
     float64 modKBoost = 1.0;         // abgeleitet aus modResoBoost
     float ampAttackRamp = 1.0f;
     float ampAttackAlpha = 1.0f;
+    // Serien-Totzone Gate->Ton (~4 ms, Whittle-Messung); 0 bei DF-Soft-Attack.
+    int   ampGateDelayRemaining = 0;
+    float ampStockRiseAlpha = 1.0f;
     float accentVcaRiseAlpha = 0.0f;
     float accentVcaFallAlpha = 0.0f;
     float feedbackHighpassPole = 0.0f;
@@ -281,6 +292,21 @@ processor AcidifyCore
     float meterAlpha = 0.0f;
     float parameterSmoothingAlpha = 1.0f;
     float distortionSmoothingAlpha = 1.0f;
+    // K1 entfernt (2.16.1): C23 ist Emitter-Bypass der Antilog-Quelle
+    // (Q18/R94), KEINE CV-Glaettung — siehe Hauptschleifen-Kommentar.
+    // PHONO (2.13.0): Arbeitspunktverschiebung des Koppel-C bei
+    // asymmetrischem Clipping (Blocking-Distortion), tau = 50 ms.
+    float phonoBiasAlpha = 0.0f;
+    float64 phonoBias = 0.0;
+    // PHONO (2.15.0): Slew-Limit der 4558-Klasse (1 V/us laut
+    // JRC-Datenblatt; Streuung bis 2,2 V/us bei TIs RC4558) — der
+    // Standard-Doppel-OP der japanischen Consumer-Geraete der
+    // 80er/90er. Bei ~26 V Rail-Spanne (+-13 V) und Rails-Modell
+    // +1,0/-0,65 (1,65 Einheiten) entspricht 1 V/us
+    // 1e6 V/s / 26 V * 1,65 = 63 462 Einheiten/s (gesetzt in
+    // updateRateConstants); eine volle Flanke dauert ~26 us.
+    float phonoSlewPerSample = 1.0e9f;
+    float64 phonoSlewState = 0.0;
 
 
 
@@ -620,34 +646,62 @@ processor AcidifyCore
 
     float processPhono (float signal, float drive)
     {
-        // Phono-VORVERSTAERKER-Overdrive (2.10.0, recherchierte Topologie):
-        // Beim echten MM-Pre sitzt das RIAA-Netzwerk in der Gegenkopplung
-        // der Verstaerkerstufe. Line-Pegel in den Millivolt-Eingang ist
-        // ~40 dB zu heiss — es clippt ZUERST die Stufe, und die
-        // Wiedergabekurve (Bass +20 dB, Hoehen -20 dB) formt das
-        // GECLIPPTE Signal: dunkler, bassiger, wolliger Overdrive.
-        // Danach das Infraschall-Filter, wie es echte Phono-Stufen gegen
-        // Rumpeln fuehren — es faengt die Bassanhebung auf geclipptem
-        // Material ab. Die 2.9.0-Reihenfolge (Pre-Emphasis -> Clip ->
-        // De-Emphasis) war die SCHNEIDKETTE, kein Vorverstaerker.
+        // Phono-VORVERSTAERKER-Overdrive, 2.13.0: In der NFB-RIAA-Stufe
+        // (Standardschaltung der Consumer-Verstaerker, ein Verstaerker mit
+        // RIAA-Netzwerk in der Gegenkopplung — nachrechenbare Topologie,
+        // z. B. LM833-Applikationsschaltung) liegt die Entzerrung IN der
+        // Schleife: Der Ausgang ist das bereits RIAA-geformte Signal, und
+        // GENAU DIESES clippt an den Rails. Reihenfolge also
+        // EQ -> Clip, nicht Clip -> EQ (2.10.0 modellierte eine passive
+        // Entzerrung zwischen zwei Stufen — falsche Topologie fuer den
+        // 303-in-den-Phono-Eingang-Trick der 90er).
+        //
+        // Folgen, hoerbar: Die Bassanhebung (+20 dB bei 20 Hz) clippt
+        // ZUERST — der Bass wird rechteckig und traegt die Hoehen als
+        // Reiter; die beim Clippen NEU entstehenden Obertoene werden nicht
+        // mehr weggefiltert. Dazu Blocking-Distortion: Der Eingangskoppel-C
+        // laedt sich bei asymmetrischem Clipping um, der Arbeitspunkt
+        // verschiebt sich und erholt sich mit tau = 50 ms — das „Pumpen"
+        // nach lauten Passagen. Die Rails sind asymmetrisch modelliert
+        // (einfache diskrete Stufe, generisch dokumentiert): +1,0 / -0,65.
         let x = float64 (signal) * pedalGain;
         let preGain = pow (10.0, 2.0 * float64 (drive));
-        let overloaded = tanh (x * preGain);
-        let colored = riaaB0 * overloaded + riaaB1 * riaaX1 + riaaB2 * riaaX2
+        let hot = x * preGain;
+        let colored = riaaB0 * hot + riaaB1 * riaaX1 + riaaB2 * riaaX2
                     - riaaA1 * riaaY1 - riaaA2 * riaaY2;
         riaaX2 = riaaX1;
-        riaaX1 = overloaded;
+        riaaX1 = hot;
         riaaY2 = riaaY1;
         riaaY1 = colored;
-        let cleaned = subB0 * colored + subB1 * subX1 + subB2 * subX2
+        // Arbeitspunktverschiebung (Blocking): der Koppel-C sieht den
+        // Gleichanteil des GECLIPPTEN Ausgangs und schiebt den Eingang
+        // dagegen.
+        let biased = colored - phonoBias;
+        var clipped = 0.0;
+        if (biased >= 0.0)
+            clipped = tanh (biased);
+        else
+            clipped = 0.65 * tanh (biased / 0.65);
+        phonoBias += float64 (phonoBiasAlpha) * (clipped - phonoBias);
+        // Slew-Limit der 4558-Klasse (2.15.0, recherchiert): Bei tiefem
+        // Uebersteuern schafft der OP die Rail-zu-Rail-Flanke nur mit
+        // 1 V/us — die Clip-Kanten werden zu Rampen (~26 us), das nimmt
+        // dem Overdrive das Fizzeln und macht ihn dunkler/weicher, wie
+        // am Geraet der Aera.
+        let dv = clipped - phonoSlewState;
+        phonoSlewState += clamp (dv, -float64 (phonoSlewPerSample),
+                                      float64 (phonoSlewPerSample));
+        let slewed = phonoSlewState;
+        let cleaned = subB0 * slewed + subB1 * subX1 + subB2 * subX2
                     - subA1 * subY1 - subA2 * subY2;
         subX2 = subX1;
-        subX1 = colored;
+        subX1 = slewed;
         subY2 = subY1;
         subY1 = cleaned;
-        // Grundpegel aus der alten RMS-Messung derselben Topologie;
-        // die A-bewichtete Feinkorrektur liegt in der Autogain-Tabelle.
-        let base = 0.076 * (1.0 + 3.6 / preGain);
+        // Grundpegel: die RIAA-Bassanhebung VOR dem Clip macht die Stufe
+        // frueher laut; Feinabgleich liegt in der Autogain-Tabelle
+        // (gain_probe-Refit 2.13.0).
+        let base = 0.24 * (1.0 + 1.2 / preGain);
         return float (cleaned * base / pedalGain);
     }
 
@@ -657,9 +711,12 @@ processor AcidifyCore
     // linear interpoliert — kein Messen im Hintergrund. Druecken die
     // Angleichung von zuvor bis zu -1,34 dB auf unter +-0,3 dB.
     const float[7] distCorrDrive = (0.1f, 0.25f, 0.35f, 0.5f, 0.65f, 0.8f, 1.0f);
-    const float[7] distCorrPure  = (1.0174f, 1.0977f, 1.1803f, 1.3521f, 1.6051f, 1.9770f, 2.7542f);
-    const float[7] distCorrMack  = (1.3804f, 1.9454f, 2.1727f, 2.2491f, 2.1928f, 2.1306f, 2.0989f);
-    const float[7] distCorrPhono = (2.5793f, 2.4491f, 2.3254f, 2.1135f, 1.9165f, 1.7239f, 1.5022f);
+    // Refit 2.17.0: Referenzspektrum mit 4-ms-Gate-Totzone (Whittle-
+    // Messung am Serien-303). gain_probe, 7 Stuetzstellen je Typ;
+    // dsp_gain_test wacht ueber die Restabweichung.
+    const float[7] distCorrPure  = (1.0081f, 1.0579f, 1.1169f, 1.2374f, 1.4044f, 1.6312f, 2.0464f);
+    const float[7] distCorrMack  = (1.0977f, 1.3198f, 1.3964f, 1.4340f, 1.4141f, 1.3693f, 1.3152f);
+    const float[7] distCorrPhono = (1.3289f, 1.1535f, 1.0543f, 0.9387f, 0.8522f, 0.7817f, 0.7100f);
 
     float distCorrAt (int type, int index)
     {
@@ -795,41 +852,65 @@ processor AcidifyCore
         return flags16;
     }
 
+    float potTaperA (float x)
+    {
+        // VR3 und VR5 sind 50K(A)-Potis (Log-Taper) — Serviceplan S. 5 und
+        // x0xb0x-Stueckliste. Die fruehere Abbildung nahm den Reglerweg
+        // LINEAR (Befund 2, docs/SOUND_GAP_ANALYSIS.md).
+        //
+        // Die exakte Kruemmung innerhalb der A-Familie (10-25 % bei halbem
+        // Weg) ist im Plan nicht beziffert; sie ist am Rang-1-Anker
+        // kalibriert: Roland-Stimmvorschrift (x0xb0x-Fabmanual, VCF) — C1,
+        // Cutoff-Knopf 50 %, Resonanz max -> Resonanzspitze 500 Hz +-100.
+        // Basis 10 ergibt 24 % bei halbem Weg, Parameter 514 Hz, gemessene
+        // Spitze ~460 Hz. Linear standen hier 884 Hz. dsp_hardware_test
+        // kodiert die Vorschrift als scheiterbaren Test.
+        let c = clamp (x, 0.0f, 1.0f);
+        return (float (pow (10.0, float64 (c))) - 1.0f) / 9.0f;
+    }
+
     void updateFilterMapping()
     {
-        // Cutoff- und Env-Mod-Abbildung aus der Schaltung statt aus sieben
-        // Open303-Polynomkoeffizienten.
+        // Cutoff- und Env-Mod-Abbildung aus der Schaltung.
         //
         // Obergrenze belegt: Whittle, Devil-Fish-Handbuch, Versionsnotiz 2.1C —
-        // die maximale resonante Filterfrequenz des Mods ist 5 kHz und damit
-        // „an octave above the standard frequency of the TB-303". Serienstand
-        // also 2500 Hz. Das ist genau die Groesse, die der Modellparameter
-        // seit dem Wegfall von peakToParameter fuehrt.
-        //
-        // Spanne: Cutoff und Env Mod speisen den Steuerknoten ueber IDENTISCHE
-        // Netze — VR3 = 50 k mit R47 = 10 k, VR5 = 50 k mit R61 = 10 k. Beide
-        // Wege haben damit dasselbe Gewicht, also dieselbe Spanne in Oktaven.
-        // Drei Oktaven unter 2500 Hz sind 312,5 Hz; Open303s gefittetes
-        // Minimum von 313,8 Hz liegt 0,4 % daneben und stuetzt den Wert.
-        // MOD-Eingriffe: DF-Cutoff bis 5 kHz ("an octave above"), DF-Env-Mod
-        // verdreifacht. Beide Toggles aus, ergibt exakt den Serienstand.
-        // Env x3 greift NUR in den Env-Pfad (VR5-Netz) ein — die Spanne des
-        // Cutoff-Potis (VR3-Netz) bleibt bei 3 Oktaven; dort aendert der
-        // DF-Mod kein Bauteil.
+        // Serienstand 2500 Hz. Spanne des Cutoff-Potis: 3 Oktaven (identische
+        // Injektionsnetze VR3+R47 / VR5+R61, siehe HARDWARE_AUDIT), also
+        // 312,5 Hz am unteren Anschlag.
         let highCutoff = modCutoffExt ? 5000.0f : 2500.0f;
         let cutoffOctaves = 3.0f;
-        let octaves = 3.0f * (modEnvX3 ? 3.0f : 1.0f);
 
-        let c = clamp (cutoffControl, 0.0f, 1.0f);
-        let e = clamp (envModControl, 0.0f, 1.0f);
+        let c = potTaperA (cutoffControl);
+        let e = potTaperA (envModControl);
 
         baseCutoffTarget = highCutoff * float (pow (2.0, float64 (cutoffOctaves * (c - 1.0f))));
 
-        // Env Mod null heisst KEINE Modulation. Open303 lieferte hier 0,864
-        // statt 0 und brauchte deshalb envOffset als Gegengewicht — eine
-        // Restmodulation, fuer die es in der Schaltung kein Bauteil gibt.
-        envScalerTarget = octaves * e;
-        envOffsetTarget = 0.0f;
+        // Env-Mod-Pfad nach Roland-Servicenotes S. 8 („VCF ENVELOPE
+        // MODULATION") und dem Netz auf S. 5: VR5 blendet zwischen dem
+        // Q9-Bias (Terminal 1) und der MEG (Terminal 3) ueber; der Schleifer
+        // speist ueber R61 = 10 k denselben Summenknoten wie das Cutoff-Poti
+        // ueber R47 = 10 k. Mehr Env Mod nimmt also zwingend Bias weg —
+        // Roland: „equal to turning CUTOFF knob counterclockwise".
+        //
+        //   V_wiper = VQ9 + p_eff * (V_env(t) - VQ9)
+        //   => exponent = envScaler(p_eff) * (env(t) - offsetFraction)
+        //
+        // offsetFraction = (VQ9 - V_env,Ruhe) / dV_env. Hergeleitet:
+        // Q9 (2SA733, PNP-Folger) mit Basisteiler R64/R65 = 10 k/10 k am
+        // 5,333-V-Analograil (EAGLE: P+1-Netz im Filterbereich, u. a. an
+        // R71) -> VQ9 = 5,333/2 + 0,6 = 3,27 V; MEG-Hub laut Zeichnung
+        // „10 V = 100 %", Ruhepegel ~0 V -> offsetFraction = 0,327.
+        // Unabhaengige Konvergenz: Open303 hat am Geraet 0,32 GEMESSEN —
+        // Bestaetigung, nicht Quelle (Rang 4 liefert keine Konstanten).
+        //
+        // Spanne des Env-Pfads: 3 Oktaven pro 5,333 V (Cutoff-Poti-Spanne)
+        // mal 10 V MEG-Hub = 5,625 Oktaven bei Vollausschlag. Die Annahme
+        // „VR3 laeuft ueber die volle 5,333-V-Domaene" ist benannt; der
+        // Verhaltenstest prueft Monotonie und Minimum-unter-Basis, nicht
+        // diese eine Zahl. Env x3 (DF-Mod) skaliert nur den Env-Pfad.
+        const float envSpanOctaves = 5.625f;
+        envScalerTarget = envSpanOctaves * e * (modEnvX3 ? 3.0f : 1.0f);
+        envOffsetTarget = 0.327f;
     }
 
     void updateResonanceMapping()
@@ -892,10 +973,16 @@ processor AcidifyCore
         // Die fruehere Abschaltanalyse (51..104 ms aus R123/C42 und einer
         // Silizium-Schwelle) ist durch Whittles MESSUNG am Original widerlegt:
         // ~16 ms gesamt. Der Analyse fehlte der schnelle Entladepfad.
-        // Accent-Release 50 ms: Open303-Wert, dort aus Aufnahmen eines echten
-        // 303 gewonnen (accentAmpRelease = 50.0). Der unaccentierte Fall ist
-        // direkt gemessen (Whittle: 8 ms Halten + 8 ms linear) und steht als
-        // Halte-/Rampenlogik in der Hauptschleife.
+        // Accent-Release 50 ms: publizierte Messung an einem echten 303
+        // (Open303, accentAmpRelease = 50.0). Schaltungsseitig NICHT
+        // eindeutig herleitbar (2.14.0-Netzverfolgung): Der Accent-Pfad
+        // haelt am Gate-Ende zwei Kandidaten-Zeitkonstanten — C36 ueber
+        // R119 = 47 k gegen die OTA-Ausgangsstufe (Potenzialdifferenz
+        // unbestimmt, untere Schranke 1,55 ms) und die weiterlaufende
+        // MEG-Decay-Rampe (obere Schranke >= 200 ms); der Messwert 50 ms
+        // liegt im Intervall und bleibt der Anker. Der unaccentierte Fall
+        // ist direkt gemessen (Whittle: 8 ms Halten + 8 ms linear) und
+        // steht als Halte-/Rampenlogik in der Hauptschleife.
         ampAccentReleaseCoeff = timeCoefficient (50.0f, sampleRate);
         // 47k * 0.033uF RC between the accent switch and VCA summing node.
         // Accent-Netz am VCA, aus dem Plan gelesen: D27 (1N4148) in Reihe mit
@@ -907,8 +994,11 @@ processor AcidifyCore
         // Die 47 k / 33 nF wurden zuvor als „R26/C26" gefuehrt — gleiche Werte,
         // die Bezeichner der TB-303-Zeichnung sind R119/C36.
         //
-        // Einschraenkung: R119 fuehrt an die OTA-Ausgangsstufe, nicht gegen
-        // Masse; die Fallzeitkonstante ist damit eine Naeherung erster Ordnung.
+        // Praezisiert 2.16.0 (Roland S. 5): R119 fuehrt an den
+        // BA662A-STEUERPIN (nicht an die Ausgangsstufe, wie zuvor
+        // vermerkt); C36 haengt in der Mitte des R120/R119-Teilers. Die
+        // Fallzeitkonstante gegen den Steuerpin-Ruhepegel bleibt eine
+        // Naeherung erster Ordnung (untere Schranke 1,55 ms).
         accentVcaRiseAlpha = exponentialAlpha (219.24f, sampleRate);
         accentVcaFallAlpha = exponentialAlpha (102.616f, sampleRate);
         feedbackHighpassPole = float (exp (-float64 (twoPi) * 150.0 / float64 (sampleRate)));
@@ -916,8 +1006,19 @@ processor AcidifyCore
         // Meter-Ballistik (2.9.3): Peak-Detektor statt 12-ms-Mittelwert —
         // Attack sofort, Release ~400 ms. meterAlpha ist der Release-Faktor.
         meterAlpha = timeCoefficient (400.0f, sampleRate);
+        // Anstieg nach der Gate-Totzone: 0,5 ms (DF-Doku ueber den vom
+        // Dead-Band befreiten Serienanstieg).
+        ampStockRiseAlpha = 1.0f - timeCoefficient (0.5f, sampleRate);
         parameterSmoothingAlpha = 1.0f - timeCoefficient (5.0f, sampleRate);
         distortionSmoothingAlpha = 1.0f - timeCoefficient (20.0f, sampleRate);
+        // PHONO-Blocking: Koppel-C-Arbeitspunkt, tau = 50 ms (generischer
+        // Wert einer 0,47-uF/100-k-Eingangskopplung, dokumentiert in
+        // THIRD_PARTY_NOTICES.md als Modellannahme).
+        phonoBiasAlpha = 1.0f - timeCoefficient (50.0f, sampleRate);
+        // PHONO-Slew: 1 V/us auf 1,65 Einheiten je 26 V Rail-Spanne
+        // = 63 462 Einheiten/s * (1,65/2,0)... direkt: 1e6 V/s / 26 V
+        // * 1,65 Einheiten = 63 462 Einheiten/s.
+        phonoSlewPerSample = 63462.0f / max (sampleRate, 1.0f);
         updateOutputNetworkCoefficients (sampleRate);
         updateCouplingCoefficients (sampleRate);
         updateVcaBranchCoefficients (sampleRate);
@@ -1347,9 +1448,21 @@ processor AcidifyCore
         currentNote = note;
         targetFrequency = frequency;
         currentFrequency = frequency;
+        currentPitchOctave = log (float64 (max (frequency, 1.0f))) / log (2.0);
         filterEnvelope = 1.0f;
         ampEnvelope = 1.0f;
-        ampAttackRamp = modSoftAtkEnabled ? 0.0f : 1.0f;
+        // Gate->Ton-Verzoegerung (2.17.0, Whittle am Serien-303 GEMESSEN):
+        // "the start of the audible note was between 1 and 5 ms (typically
+        // 4 ms) after the start of the gate signal" — die Steuer-CV muss
+        // erst die Dioden-/Basisstrecken am D34/R137-Knoten durchqueren
+        // (Totzone), dann oeffnet der VCA schnell. Der Devil Fish bewirbt
+        // genau die Beseitigung dieser Verzoegerung (0,3..0,5 ms) — mit
+        // aktivem Soft-Attack-Mod entfaellt sie deshalb und die
+        // DF-Rampenzeit uebernimmt.
+        ampAttackRamp = 0.0f;
+        ampGateDelayRemaining = modSoftAtkEnabled
+                                    ? 0
+                                    : int (0.004f * cachedRate);
         accented = hasAccent;
         gateOpen = true;
     }
@@ -1710,7 +1823,16 @@ processor AcidifyCore
             lastDawTick = absoluteStep;
             dawTickReady = true;
 
-            let flags = getFlags (sequenceStep);
+            // EFFEKTIVE Flags des gerade gestarteten Steps (Zeilen-Audit
+            // 2.17.2): Im Phrase-Modus (arpMode 16, Bank > 0) ersetzt die
+            // Phrase die Gate/Accent/Slide-Maske des Patterns —
+            // startSequenceStepAt legt das Ergebnis in lastEffectiveFlags ab.
+            // Vorher stand hier getFlags(sequenceStep), also die PATTERN-
+            // Flags: Bei DAW-Sync + Phrase wurde das Gate nach der falschen
+            // Maske abgeschaltet (Phrase-Slides in Stepmitte gekappt,
+            // Phrase-Gates ueber Pattern-Rests nie halbiert). Der interne
+            // Clock-Pfad nutzte immer schon die effektiven Flags.
+            let flags = lastEffectiveFlags;
             dawGateArmed = (flags & 1) != 0 && (flags & 4) == 0;
             let stepStart = isOddStep ? oddStepStart : pairStart;
             let stepEnd = isOddStep ? pairStart + pairSpan : oddStepStart;
@@ -2420,36 +2542,76 @@ processor AcidifyCore
                     processInternalClock (sampleRate);
             }
 
-            currentFrequency = targetFrequency + glideCoeff * (currentFrequency - targetFrequency);
+            // Slide in der CV-Domaene: exponentielle Annaeherung der OKTAVE
+            // (RC auf der Pitch-CV, 1 Okt/V), tau = 22 ms. Auf- und
+            // Abwaertsslides sind damit tonhoehensymmetrisch wie am Geraet.
+            let targetOctave = log (float64 (max (targetFrequency, 1.0f))) / log (2.0);
+            currentPitchOctave = targetOctave
+                               + float64 (glideCoeff) * (currentPitchOctave - targetOctave);
+            currentFrequency = float (pow (2.0, currentPitchOctave));
             let phaseIncrement = clamp (currentFrequency / sampleRate, 0.0f, 0.45f);
             phase += float64 (phaseIncrement);
             if (phase >= 1.0)
                 phase -= 1.0;
 
             let phaseValue = float (phase);
-            let saw = phaseValue + phaseValue - 1.0f - polyBlep (phaseValue, phaseIncrement);
 
-            // The stock square is derived from the saw comparator rather than
-            // generated by an independent oscillator. Open303's measured
-            // shaper constants imply a 46.88% transition point and half level.
-            // Der 303 hat ZWEI getrennte Abgriffe, keinen aus dem Saegezahn
-            // abgeleiteten Komparator: Rechteck an R36/Q8, Saegezahn an
-            // R105/Q28 (x0x-VCF-Mods-Seite, „Take the feed from the square wave
-            // (R36/Q8) and the saw wave (R105/Q28)").
+            // R4 (2.13.0): VCO-Former aus Schaltung + Scope-Messung statt
+            // Lehrbuch-Oszillator.
             //
-            // BEWUSST NICHT ERSETZT. Der Wert stammt aus einer Messung an einem
-            // echten 303 (Open303), nicht aus einem Modellkompromiss. Ihn durch
-            // eine Herleitung aus unbestimmten Komparatorschwellen zu ersetzen
-            // waere ein Rueckschritt: gemessene Hardware schlaegt geschaetzte
-            // Schaltung. Der VCO-Umbau selbst braucht ausserdem eine eigene
-            // Antialiasing-Strategie, der PolyBLEP hier ist antialiasiert.
+            // SAEGEZAHN: Am Geraet FAELLT die Rampe (x0x-Fabmanual-Scope,
+            // C1: Vmax 11,25 V -> Vmin 6,09 V, dann schneller Ruecklauf).
+            // Der Ruecklauf ist kein Sprung, sondern der One-Shot-
+            // Rueckladevorgang um Q8 (R34/R35/C10/C11): im 64,5-Hz-Foto
+            // 2..4 px = 0,3..0,6 ms inkl. Kamera-Bloom; modelliert werden
+            // 300 us als Halbkosinus — beide Ecken rund („the tip of the
+            // saw isnt 'sharp'", Fabmanual). Die Rueckladezeit ist eine
+            // Hardware-Konstante: hoehere Lagen verbringen einen groesseren
+            // Periodenanteil im Ruecklauf und werden weicher, wie am Geraet.
+            // Ohne Sprungstelle braucht der Saegezahn keinen PolyBLEP;
+            // die verbleibenden Knickstellen falten bei 4x-Oversampling
+            // vernachlaessigbar (~1/n^2).
+            let resetFraction = clamp (0.0003f * currentFrequency, 0.012f, 0.45f);
+            var saw = 0.0f;
+            if (phaseValue < 1.0f - resetFraction)
+                saw = 1.0f - 2.0f * (phaseValue / (1.0f - resetFraction));
+            else
+                saw = -cos (float (pi) * (phaseValue - (1.0f - resetFraction)) / resetFraction);
+
+            // RECHTECK: Schmitt-Former, Netzverfolgung am x0x-Beta-Plan
+            // (identische Werte wie Roland Seite 5): Saegezahn treibt den
+            // EMITTER von Q25; die Basis haengt ueber R118 = 100 k am
+            // Ausgangsknoten (D25-Kathode/Q24) — Mitkopplung, daher schnelle
+            // Flanken trotz langsamer Rampe. Q27 (2SA733, Emitter an +12 V)
+            // speist ueber D25 den als Folger verschalteten Q24; R101 = 10 k
+            // zieht den Ausgang auf die 5,333-V-Schiene. Gemessen (Scope,
+            // C2): Tiefpegel 5,000 V flach; das Dach ist NICHT flach — Q27
+            // bleibt aktiv und der Ausgang folgt dem fallenden Saegezahn
+            // invertiert: Anstieg ~19 % von Vss ueber die High-Phase, Ende
+            // bei Vmax = 9,063 V, die fallende Flanke faellt mit dem
+            // Saw-Reset zusammen. HIGH liegt deshalb im LETZTEN Abschnitt
+            // der Periode. Duty 46,88 % bleibt Messwert-Anker (Open303-
+            // Messung; Fabmanual bestaetigt „isnt 50% duty cycle" — die
+            // exakte Duty ist schaltungsbestimmt; die Herleitung blockiert nur
+            // an der ungeloesten Schwellen-DC-Kette (A4). KORREKTUR 2.17.1:
+            // TM5 "WIDTH" ist laut Roland-Abgleichseite 7 der
+            // OKTAVBREITEN-Trim des VCO (2:1-Wellenformen CL/CH am
+            // Q28-Source), KEIN Pulsbreiten-Trim.
             const float squareDuty = 0.4687857f;
-            float square303 = phaseValue < squareDuty ? 1.0f : -1.0f;
-            square303 += polyBlep (phaseValue, phaseIncrement);
-            var squareEdge = phaseValue - squareDuty;
-            if (squareEdge < 0.0f)
-                squareEdge += 1.0f;
-            square303 -= polyBlep (squareEdge, phaseIncrement);
+            const float squareTopRise = 0.38f;   // 19 % von Vss in +-1-Einheiten
+            let highStart = 1.0f - squareDuty;
+            var square303 = -1.0f;
+            if (phaseValue >= highStart)
+                square303 = (1.0f - squareTopRise)
+                          + squareTopRise * ((phaseValue - highStart) / squareDuty);
+            // PolyBLEP-Korrekturen, auf die Sprunghoehen skaliert (polyBlep
+            // korrigiert einen +-1-Sprung der Hoehe 2): steigende Flanke
+            // -1 -> 0,62 (Faktor 0,81), fallende Flanke 1,0 -> -1 (Faktor 1,0).
+            var riseEdge = phaseValue - highStart;
+            if (riseEdge < 0.0f)
+                riseEdge += 1.0f;
+            square303 += 0.81f * polyBlep (riseEdge, phaseIncrement);
+            square303 -= polyBlep (phaseValue, phaseIncrement);
             square303 *= 0.5f;
             let oscillator = saw + (square303 - saw) * waveformBlend;
 
@@ -2462,6 +2624,17 @@ processor AcidifyCore
             filterEnvelope *= accented ? accentDecayCoeff : normalDecayCoeff;
             filterEnvelopeRC += filterAttackAlpha * (filterEnvelope - filterEnvelopeRC);
 
+            // K1 KORRIGIERT (2.16.1): Die 2.13.0-Lesart „R97/C23 glaettet
+            // die gesamte Cutoff-CV mit 10 ms" war FALSCH — ein Ratefehler
+            // trotz protokollierter Warnung („Zuordnung braucht erst die
+            // Netzverfolgung"). Der x0x-Vektorplan zeigt C23 = 1 uF am
+            // EMITTERKNOTEN von Q18 mit R94 = 10 k gegen GND: ein
+            // Emitter-Bypass/Bias der Antilog-Stromquelle (Grenze
+            // 1/(2*pi*10k*1u) ~= 16 Hz) — er haelt die dynamische CV
+            // SCHNELL, statt sie zu verzoegern. Die 10-ms-Traegheit ist
+            // entfernt; es wirkt wieder nur die belegte 100-us-MEG-Attack-
+            // Stufe plus die C13-Sweep-Dynamik. Ein Attack-Checkpoint in
+            // tools/dsp_hardware_test.mjs wacht jetzt darueber.
             let exponent = envScaler * (filterEnvelopeRC - envOffset)
                          + processAccentSweep (accented && gateOpen
                                                 ? accentControl * filterEnvelope
@@ -2476,7 +2649,16 @@ processor AcidifyCore
             if (gateOpen)
             {
                 ampEnvelope *= ampBodyCoeff;
-                ampAttackRamp += ampAttackAlpha * (1.0f - ampAttackRamp);
+                // Serien-303: ~4 ms Totzone nach dem Gate (Whittle-Messung),
+                // danach schnelles Oeffnen (~0,5 ms — die DF-Doku nennt
+                // 0,3..0,5 ms als Tempo des von der Totzone befreiten
+                // Anstiegs). Mit DF-Soft-Attack ersetzt die Mod-Rampe beides.
+                if (ampGateDelayRemaining > 0)
+                    ampGateDelayRemaining -= 1;
+                else
+                    ampAttackRamp += (modSoftAtkEnabled ? ampAttackAlpha
+                                                        : ampStockRiseAlpha)
+                                     * (1.0f - ampAttackRamp);
                 ampReleaseElapsed = 0;
             }
             else if (accented)
@@ -2512,16 +2694,38 @@ processor AcidifyCore
                 // Der Term `0.45f * filterEnvelope` hatte damit kein Bauteil
                 // hinter sich und ist entfallen.
                 //
-                // Der Accent dagegen speist ueber D35/R133 = 2,2 k in den
-                // Q31-Knoten (R131 = 220 k traegt die Huellkurve). Die
-                // Stromquellen-Hypothese fuer Q36 ist am Schaltbild WIDERLEGT
-                // (Emitter direkt an +12 V, R145 am Kollektor), und ein
-                // oeffentliches Netz existiert nicht (EAGLE: nur Werte;
-                // RE-303: "no schematic, no netlist"). Die 4.0 kommt aus
-                // Open303 — rosic_Open303.h: (0.45 + 4*accentGain)*mainEnvOut —
-                // und ist dort gegen Aufnahmen eines echten 303 kalibriert.
-                // Damit gilt derselbe Status wie fuer squareDuty: gemessene
-                // Hardware schlaegt geschaetzte Schaltung. BEWUSST BEHALTEN.
+                // KORRIGIERT 2.16.0: Die 2.14.0-Herleitung (Gewicht 6,0 aus
+                // einer Stromsummen-Lesart) haelt der besseren Netzverfolgung
+                // NICHT stand. Roland Seite 5 zeigt die Steuerkette
+                // Q31-Knoten -> D27 -> R120 = 22 k -> C36 -> R119 = 47 k ->
+                // BA662A-STEUERPIN; Huellkurve (Q31-Folger, R131 = 220 k
+                // Last) und Accent (D35/R133 = 2,2 k vom VR4-Bus) fuehren am
+                // Q31-Knoten MAX-artig zusammen (PNP-Folger kann gegen die
+                // Dioden-Einspeisung nicht sinken). Sum-, Max- und
+                // Stromlenkungs-Lesart sind am Raster nicht eindeutig zu
+                // trennen — das Gewicht ist damit NICHT eindeutig herleitbar
+                // (Analyse: docs/SOUND_GAP_ANALYSIS.md, Umsetzung 2.16.0).
+                //
+                // ATTRIBUTION PRAEZISIERT (Zeilen-Audit 2.17.2): Die
+                // Kettenbeschreibung oben darf NICHT so gelesen werden, dass
+                // die GESAMTE Steuer-CV (Huellkurve + Accent) durch das
+                // R120/C36-RC laeuft — ob D27/R120/C36 im gemeinsamen Pfad
+                // oder nur im Accent-Zweig sitzt, ist am 150-dpi-Raster nicht
+                // eindeutig. Zwei unabhaengige Belege tragen die
+                // Accent-only-Lesart, die dieses Modell umsetzt:
+                // (1) Whittle, strukturell: der Accent "adds to the control
+                //     current of the VCA ... via an RC network of a 47k and
+                //     a 0.033uF" — die Huellkurve treibt den Steuerstrom
+                //     direkt, der Accent addiert UEBER das RC;
+                // (2) Whittles Messung des vom Dead-Band befreiten Anstiegs
+                //     (0,3..0,5 ms) — ein gemeinsames 726-us-RC im
+                //     Huellkurvenpfad waere damit schwer vereinbar.
+                // Darum: accentVcaRC traegt das 726-us/1,55-ms-RC, die
+                // Huellkurve laeuft direkt (nur Totzone + 0,5-ms-Anstieg +
+                // 100-us-Entklicker C42/R132).
+                // Es gilt wieder der einzige geraetegebundene Anker:
+                // Open303s Fit 4,0, kalibriert gegen Aufnahmen eines echten
+                // 303 — gleicher Status wie squareDuty.
                 ampControl += 4.0f * accentVcaRC;
             }
             else

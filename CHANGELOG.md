@@ -6,6 +6,294 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.17.2] - 2026-08-01
+
+### Fixed
+
+- **DAW-Sync + Phrase-Modus: Gate-Abschaltung nach den falschen Flags.**
+  Vollständiger Zeilen-Audit der DSP-Datei (alle 2941 Zeilen, Befund #3):
+  `processDawClock` leitete `dawGateArmed` aus den PATTERN-Flags ab
+  (`getFlags(sequenceStep)`), obwohl im Phrase-Modus (Arp-Figur 16,
+  Bank > 0) die Phrase die Gate/Accent/Slide-Maske ersetzt. Folge bei
+  DAW-Sync: Phrase-Slides wurden in Stepmitte gekappt, Phrase-Gates
+  über Pattern-Rests nie halbiert. Jetzt nutzt der DAW-Pfad wie der
+  interne Clock-Pfad die effektiven Flags (`lastEffectiveFlags`).
+  Neuer falsifizierbarer Nachweis in tools/dsp_transport_test.mjs
+  (DAW + Phrase 37, beide Fehlrichtungen): Slide-Step hält den ganzen
+  Step (RMS spät im Step 0,0347), reiner Gate-Step endet in Stepmitte
+  (RMS 0); Gegenprobe gegen den alten Code schlägt nachweislich fehl.
+  Interner Clock-Pfad, Serienpfad und alle Klangpfade sind unberührt
+  (Smoke bit-identisch: peak=0.50919, rms=0.01821).
+
+### Fixed (Dokumentation — kein DSP-Eingriff)
+
+- **Befund #2:** Veralteter Slew-Kommentar an der `phonoSlewPerSample`-
+  Deklaration („38 445 Einheiten/s") widersprach dem gesetzten Wert
+  (63 462 Einheiten/s, updateRateConstants); korrigiert.
+- **Befund #1:** Die 2.16.0-Kettenbeschreibung am VCA-Steuerknoten war
+  so lesbar, als liefe die GESAMTE Steuer-CV (Hüllkurve + Accent)
+  durch das R120/C36-RC. Präzisiert: Am 150-dpi-Raster ist die Lage
+  von D27/R120/C36 relativ zum Zusammenführungspunkt nicht eindeutig;
+  Whittles Strukturaussage (Accent „adds … via an RC network of a 47k
+  and a 0.033uF" — Hüllkurve treibt direkt) und seine Messung des
+  totzonenbefreiten Anstiegs (0,3–0,5 ms) tragen die Accent-only-
+  Lesart, die der Code umsetzt. Kein Codeeingriff; Attribution im
+  Quelltext und in SCHEMATIC_COVERAGE dokumentiert.
+- OPEN_ITEMS: Überzogene Formulierung in B2 („entspricht nachweislich
+  dem Schaltplan") ersetzt durch den belegbaren Stand (Abdeckung laut
+  SCHEMATIC_COVERAGE, Anker dokumentiert).
+
+## [2.17.1] - 2026-07-31
+
+### Fixed (Dokumentation/Begründungen — kein DSP-Eingriff)
+
+- **Rolands Abgleichseiten 6/7 erstmals im Volltext gelesen** (lagen
+  seit 363ca8d im Repo) — zwei Behauptungen korrigiert:
+  **TM5 „WIDTH" ist der Oktavbreiten-Trim des VCO** (Roland S. 7:
+  „adjust TM5 WIDTH for 2:1 waveforms", Messpunkt Q28-Source), KEIN
+  Pulsbreiten-Trim — die Rechteck-Duty ist damit schaltungsbestimmt
+  und ihre Herleitung blockiert allein an der Schwellen-DC-Kette;
+  „prinzipbedingt Werksabgleich" war falsch. Und: **die
+  TM3/500-Hz-Stimmvorschrift steht jetzt direkt auf Rang 1** (Roland
+  S. 7: Ausschwingen 2 ms ± 0,5 ms = 400–666 Hz; Modell 457,8 Hz =
+  2,18 ms, mitten in der Werkstoleranz). Ergänzend belegt: TM6
+  1,000 V ± 3 mV/Okt, TM1/TM2-Timings. Quelltextkommentar,
+  SCHEMATIC_COVERAGE, THIRD_PARTY_NOTICES und OPEN_ITEMS angeglichen.
+
+## [2.17.0] - 2026-07-31
+
+### Fixed
+
+- **Gate→Ton-Totzone des Serien-303 eingebaut (~4 ms).** Whittle-
+  Messung am Gerät: „the start of the audible note was between 1 and
+  5 ms (typically 4 ms) after the start of the gate signal" — die
+  Steuer-CV muss die Dioden-/Basisstrecken am Steuerknoten durchqueren,
+  der Devil Fish bewirbt genau deren Beseitigung (0,3–0,5 ms). Modell:
+  4-ms-Totzone + 0,5-ms-Anstieg im Serienzustand; mit DF-Soft-Attack-
+  Mod entfällt sie wie am Gerät. Gemessen: hörbarer Start 3,47 ms +
+  Anstieg ≈ 4 ms nach Gate. Bisher öffnete der VCA sofort — ein
+  weiterer Baustein des „Timing-Feels" der Hardware.
+
+### Changed
+
+- **Accent→VCA-Struktur BEWIESEN (Summe).** Whittle wörtlich: „It adds
+  to the control current of the VCA … the primary reason why accented
+  notes are louder." Die 2.16.0-Ambiguität (Summe vs. Max) ist damit
+  aufgelöst; die Additiv-Struktur des Modells ist belegt, der
+  Gewichtswert 4,0 bleibt gerätekalibrierter Fit-Anker. Zusätzlich
+  bestätigt: MEG-Decay-Kurzschluss bei Accent und die reso-abhängige
+  Sweep-Glättung — beides war bereits korrekt modelliert.
+- Attack-Checkpoint bleed-robust (Onset-Schwelle 25 % statt 1 %, der
+  BA662-Durchgriff liegt bei ~−20 dB); grün bei 597 Hz ≥ 500.
+- Autogain-Refit auf dem Totzonen-Spektrum; Smoke-Referenz
+  Peak 0,509 / RMS 0,0182.
+
+## [2.16.1] - 2026-07-31
+
+### Fixed
+
+- **K1 zurückgenommen — Sweep-Attack wieder wie am Gerät.** Der
+  gemeldete Befund („ENV MOD und Cutoff verhalten sich seltsam") ist
+  auf die 2.13.0-K1-Lesart zurückgeführt: Die dort eingebaute
+  10-ms-Trägheit auf der gesamten Cutoff-CV existiert in der Hardware
+  NICHT — der x0x-Vektorplan zeigt C23 als Emitter-Bypass der
+  Antilog-Stromquelle (Q18, R94 10 k gegen GND), der die CV schnell
+  hält. Gemessen: Schwerpunkt im ersten 4-ms-Fenster nach Note-On
+  jetzt 728 Hz = exakt der 2.12.0-Stand (727 Hz); mit dem Lag waren
+  es 221 Hz. Die Lesart war geraten, obwohl das eigene Protokoll die
+  Netzverfolgung als Voraussetzung benannt hatte — dokumentiert in
+  SOUND_GAP_ANALYSIS „Umsetzung 2.16.1".
+- **Neuer CI-Checkpoint „sweep attack fast (no CV lag)"** in
+  tools/dsp_hardware_test.mjs: Schwerpunkt des ersten 4-ms-Fensters
+  ≥ 500 Hz — der fehlerhafte 2.13.0–2.16.0-Zustand wäre daran
+  gescheitert. Damit ist die Testlücke geschlossen, durch die der
+  Fehler rutschte (alle bisherigen Checkpoints maßen eingeschwungene
+  Zustände).
+- Autogain-Refit auf dem korrigierten Spektrum (A-Restabweichung
+  0,00 dB); neue Serien-Smoke-Referenz Peak 0,509 (≈ 2.12.0-Niveau).
+  SCHEMATIC_COVERAGE-Zeile korrigiert.
+
+## [2.16.0] - 2026-07-31
+
+### Added
+
+- **`docs/SCHEMATIC_COVERAGE.md`**: vollständige Abdeckungstabelle des
+  Schaltplans — jede Baugruppe der Seiten 4/5 mit Status
+  umgesetzt/ausgeschlossen/Messanker, KEINE Zeile „offen". Das ist ab
+  jetzt der Maßstab für „entspricht dem Schaltplan".
+
+### Changed
+
+- **kMax-Lesart GEMESSEN entschieden (A3)**: Serie (18,7/1,06) zeigt
+  ausschließlich Linien auf dem Obertonraster; Faktor 2 erzeugt eine
+  freilaufende Linie 41 % neben dem Raster (Grenzzyklus) — deckungs-
+  gleich mit dem Devil-Fish-Manual („double the usual feedback … to
+  allow the filter to self-oscillate"). Serienlesart bestätigt.
+- **Accent-Steuerkette vollständig netzverfolgt (A1)**: Q31-Knoten →
+  D27 → R120 22 k → C36 → R119 47 k → BA662A-STEUERPIN (frühere Lesart
+  „R119 an die Ausgangsstufe" korrigiert). 50-ms-Release bleibt
+  publizierter Messanker im hergeleiteten Intervall.
+- **Ehrliche Rücknahme: Accent-Gewicht zurück auf 4,0.** Die
+  2.14.0-„Herleitung" (6,0) beruhte auf einer Stromsummen-Lesart, die
+  die bessere Netzverfolgung nicht bestätigt (max-artige
+  Zusammenführung am Q31-Knoten; Lesarten am Raster nicht trennbar).
+  Es gilt wieder der gerätekalibrierte Fit 4,0; Autogain-Tabellen auf
+  den 2.13.0-Messstand zurückgestellt.
+- **A6 Blocking isoliert gemessen** (Kontrollvariante mit
+  eingefrorenem Bias): Zustandserholung ~70 ms, Ausgangs-DC-Anteil
+  klein (Rumble-Filter sperrt), hörbare Wirkung = Klirr-Asymmetrie.
+- A8/K5 dokumentiert (zwei Messpunkte: R105/Q28-Abgriff vs
+  TP4-Puffer); OPEN_ITEMS ohne offene Klang-/DSP-Punkte.
+
+## [2.15.0] - 2026-07-31
+
+### Added
+
+- **`docs/OPEN_ITEMS.md`**: die EINE vollständige Liste aller offenen
+  Punkte (Klang/DSP, Produkt/Release, UI) mit Status und Weg zur
+  Schließung — Pflicht-Nachführung bei jeder Änderung.
+- **PHONO: Kette Eingang→Ausgang recherchiert und dokumentiert**
+  (AN-346/LM833, ESP Project 06, 4558/NE5532-Datenblätter): RCA →
+  47 k → NFB-RIAA-Stufe (30–40 dB @ 1 kHz) → Rail-Sättigung →
+  Tape-Out. Das 2.13.0-Modell deckt diese Kette ab; ergänzt wurde das
+  **Slew-Limit der 4558-Klasse (1 V/µs)** — ehrlich vermessen: am
+  48-k-Serienmaterial spektral inert (die RIAA-Schleife begrenzt die
+  Flanken stärker als der OP), wirksam nur bei Extremmaterial;
+  als Korrektheitsglied enthalten. PHONO-Änderungen sind ab jetzt
+  ausdrücklich befundgetrieben.
+
+## [2.14.0] - 2026-07-31
+
+### Changed
+
+- **Accent-VCA-Gewicht hergeleitet: 4,0 → 6,0.** Die nodale Analyse des
+  D34/R137-Summenknotens (Netzverfolgung x0x-Beta-Plan, VCA-Abschnitt)
+  ersetzt Open303s gefittete 4,0: Hüllkurven-Stromquelle Q31/R131 220 k
+  (Spitze 50 µA) gegen Accent-Pfad D27/R120 22 k + R133 2,2 k/D35
+  (Spitze 298 µA) → Gewicht 5,95 ≈ 6,0 (Toleranzband 4,8–6,7
+  dokumentiert). Accents schlagen hörbar kräftiger durch (≈ +1,6 dB
+  gegenüber 2.13.0). Damit ist einer der beiden verbliebenen
+  Open303-Messwert-Anker durch eine Schaltungsherleitung ersetzt.
+- **Accent-Amp-Release bleibt 50 ms**, jetzt mit hergeleitetem
+  Schaltungsintervall (1,55 ms … ≥ 200 ms; publizierte Fremdmessung
+  als Anker im Intervall — keine Messung am Referenzgerät nötig).
+- **Folgekorrektur:** Autogain-Refit aller drei Distortion-Tabellen
+  (A-Restabweichung 0,00 dB an 12 Stützstellen); neue
+  Serien-Smoke-Referenz Peak 0,646.
+- Fehlerprotokoll: vollständige Restliste Klangcharakter
+  (docs/SOUND_GAP_ANALYSIS.md, „Umsetzung 2.14.0").
+
+## [2.13.0] - 2026-07-31
+
+### Fixed
+
+Antwort auf den zweiten A/B-Befund („nicht druckvoll genug, nicht gritty
+genug"; „PHONO klingt nicht wie ein Phono-Vorverstärker"); alle drei
+Umbauten sind aus Schaltung bzw. Scope-Messungen hergeleitet und
+vermessen (docs/SOUND_GAP_ANALYSIS.md, „Umsetzung 2.13.0"):
+
+- **VCO-Former (Befund 4/R4)**: Der Sägezahn FÄLLT jetzt wie am Gerät
+  (Scope: 11,25 → 6,09 V) und hat den runden 300-µs-Reset des
+  One-Shot-Rückladers („the tip of the saw isnt 'sharp'") — höhere
+  Lagen werden weicher, wie am Gerät. Das Rechteck kommt aus dem
+  hergeleiteten Schmitt-Former (Q25-Emitter am Sägezahn, R118-
+  Mitkopplung, Q27/D25/Q24-Folger gegen die 5,333-V-Schiene): Tiefpegel
+  flach, das Dach steigt ~19 % von Vss über die High-Phase (Scope-
+  Foto pixelvermessen), die fallende Flanke liegt auf dem Saw-Reset,
+  Duty 46,88 % bleibt Messwert-Anker. Kein Lehrbuch-Oszillator mehr.
+- **K1 — CV-Glättung R97/C23**: Netzverfolgung belegt 10 k × 1 µF
+  (τ = 10 ms) auf der GESAMTEN Cutoff-CV vor dem Antilog-Wandler.
+  Eingebaut auf dem Summen-Exponenten: Hüllkurve und Accent-Sweep
+  werden gemeinsam gerundet — der „Squelch"-Attack des Geräts.
+- **PHONO-Topologie**: Beim NFB-RIAA-Vorverstärker liegt die Entzerrung
+  in der Gegenkopplung — geclippt wird das bereits RIAA-geformte
+  Signal. Neue Kette: EQ → asymmetrischer Rail-Clip → Blocking
+  (Koppel-C-Arbeitspunkt, τ = 50 ms) → Rumble-Filter. Gemessen: die
+  geradzahligen Harmonischen tragen jetzt (H2 −8,2 dB, H4 −16,4 dB über
+  H3/H5) — Signatur echten Rail-Clippings; 2.10.0 fiel monoton
+  (symmetrische tanh-Kette).
+- **Folgekorrektur**: Autogain-Refit aller drei Distortion-Tabellen auf
+  dem neuen Referenzspektrum (A-Restabweichung 0,00 dB an 12 geprüften
+  Stützstellen). Neue Serien-Smoke-Referenz Peak 0,480.
+- Doku: R104 = 2,2 k (Stücklisten-Korrektur, vorher fälschlich 22 k).
+
+### Hinweis
+
+Presets klingen absichtlich anders: Wellenform und Sweep-Verlauf sind
+jetzt hardware-hergeleitet; PHONO ist deutlich bassiger und
+asymmetrischer.
+
+## [2.12.1] - 2026-07-31
+
+### Changed
+
+- **Datei-Header neu geschrieben (DSP + UI)**: `ACIDIFYDSP.cmajor` trug
+  noch den Open303-Copyright-Header aus der 0.7.x-Adaptions-Ära, obwohl
+  seit 2.12.0 kein Open303-Code und keine Open303-Kennlinie mehr im
+  Signalweg ist. Beide Dateien haben jetzt eigene ACIDIFY-Header mit
+  Clark Parker als Autor; Fremdanteile (Airwindows-Ports, zitierte
+  Messwerte) verweisen auf THIRD_PARTY_NOTICES.md.
+- **THIRD_PARTY_NOTICES.md präzisiert**: Open303 ist seit 2.12.0 nur
+  noch Messwertquelle (drei markierte Geräte-Messwerte: Accent-Gewicht
+  4,0, Rechteck-Duty 46,88 % + Halbpegel, Accent-Release 50 ms); die
+  MIT-Notiz bleibt ausschließlich für die 0.7.x-Stände in der
+  Repo-Historie erhalten. Neu dokumentiert: Faust
+  `vaeffects.diodeLadder` (Eric Tarr, Pirkle AN-6) als
+  ZDF-Referenzumsetzung; PHONO-Beschreibung auf den 2.10.0-Stand
+  gebracht.
+
+### Fixed
+
+- Veraltete Smoke-Referenzzahl in den Docs korrigiert: 0,459 war ein
+  Zwischenstand vor der Taper-Kalibrierung; die gültige
+  Serien-Smoke-Referenz ist Peak 0,507 (CHANGELOG-2.12.0-Eintrag,
+  VALIDATION, SOUND_GAP_ANALYSIS angeglichen). Kein DSP-Eingriff.
+
+## [2.12.0] - 2026-07-31
+
+### Fixed
+
+Hardware-Fixes nach dem A/B-Befund „meilenweit entfernt" und dem
+vollständigen Schaltungs-Audit (docs/SOUND_GAP_ANALYSIS.md); alle drei
+Änderungen sind aus den Roland-Servicenotes/Serviceplänen hergeleitet
+und gemessen:
+
+- **Env-Mod-Netz (Befund 1)**: Der Roland-„Gimmick" (Servicenotes S. 8)
+  ist eingebaut — VR5 blendet zwischen Q9-Bias und Hüllkurve über, mehr
+  Env Mod senkt die Basis-Cutoff („equal to turning CUTOFF knob
+  counterclockwise"). `exponent = envScaler·(env − 0,327)`;
+  offsetFraction aus VQ9 = 5,333/2 + 0,6 V und 10-V-MEG-Hub hergeleitet
+  (Open303s Geräte-Messung 0,32 bestätigt unabhängig). Gemessen:
+  Ausklang-Schwerpunkt fällt jetzt 138,6 → 105,4 → 69,6 Hz über den
+  Reglerweg — vorher war der Regler dort komplett wirkungslos.
+- **Potikennlinien (Befund 2)**: VR3/VR5 sind 50K(A)-Log-Potis; die
+  Abbildung war linear. A-Taper eingebaut, Krümmung am Rang-1-Anker
+  kalibriert: Roland-Stimmvorschrift „C1, Cutoff 50 %, Resonanz max →
+  Resonanzspitze 500 Hz ± 100". Gemessen (Verhältnis-Spektrum):
+  457,8 Hz — vorher 884 Hz.
+- **Slide-Domäne (Befund 3)**: Der Slide gleitet jetzt in der CV-Domäne
+  (Oktaven, τ = 22 ms) statt in Hertz — Auf-/Abwärts-Slides sind
+  tonhöhensymmetrisch wie am Gerät (gemessen 17,9/19,6 ms, Asymmetrie
+  9 %; Hz-Domäne läge bei ~45–60 %).
+- **Folgekorrektur**: Distortion-Autogain-Tabellen auf dem neuen,
+  dunkleren Serien-Referenzspektrum nachgemessen (Restabweichung
+  0,00 dB an allen 21 Stützstellen); neue Smoke-Referenz Peak 0,507.
+
+### Added
+
+- **`tools/dsp_hardware_test.mjs` (R5)**: Geräte-Fakten als scheiterbare
+  Tests — Roland-Stimmvorschrift, Env-Mod-Monotonie (inkl. ≥ 4 dB
+  dunkler über 800 Hz), Slide-Symmetrie in Oktaven. Läuft in der CI.
+- `docs/reference/`: Alle Schaltplan- und Referenzquellen dauerhaft
+  versioniert (Roland-Servicenotes S. 1–8 inkl. 150-dpi-Scans,
+  x0xb0x-EAGLE/PNG/Fabmanual, Devil-Fish-Handbuch, x0x-VCF-Mods).
+
+### Hinweis
+
+Presets klingen absichtlich anders als 2.11.x: Cutoff-/Env-Mod-Regler
+arbeiten jetzt auf der Hardware-Kennlinie und dem Hardware-Verhalten.
+Der Standard-Patch ist dunkler und „squelchiger" — das ist der Punkt.
+
 ## [2.11.6] - 2026-07-31
 
 ### Changed
@@ -1547,6 +1835,16 @@ vollständigen Repository-Commit. `0.2.0` führte den modernen Studio-Workflow
 ein. Sie werden hier ausdrücklich als historische Vorstufen festgehalten,
 besitzen aber keinen eigenen Commit-Anker im Repository.
 
+[2.17.2]: https://github.com/ClarkParker/ACIDIFY/commit/ffd89e404624557dc0b62f1902ae281797fe863d
+[2.17.1]: https://github.com/ClarkParker/ACIDIFY/commit/4ee46565ee5712b0bfc56b4754de08a23ce01eeb
+[2.17.0]: https://github.com/ClarkParker/ACIDIFY/commit/32ba7668767e6880039b7d30f2a518e461023eaa
+[2.16.1]: https://github.com/ClarkParker/ACIDIFY/commit/ac8937fda4493d746691679a78702ec79fdc956c
+[2.16.0]: https://github.com/ClarkParker/ACIDIFY/commit/f13c9f05c74e4cc33801e98c0f82fbbb1f4322fc
+[2.15.0]: https://github.com/ClarkParker/ACIDIFY/commit/0f61d478a4b83d066508c391285eff5758f51204
+[2.14.0]: https://github.com/ClarkParker/ACIDIFY/commit/252adb490c47960f293c4150694975b19092c433
+[2.13.0]: https://github.com/ClarkParker/ACIDIFY/commit/d20ce7a2761b5d51f74ec1920f1025589f948d94
+[2.12.1]: https://github.com/ClarkParker/ACIDIFY/commit/6b7cf0ba24cfdc31c28d3ec8f4e13a72d9f27c93
+[2.12.0]: https://github.com/ClarkParker/ACIDIFY/commit/d33a4c795a64655bec010249a01c91a0ec6c29ae
 [2.11.6]: https://github.com/ClarkParker/ACIDIFY/commit/eb334ae8d0cb7132a002fe417d0d0ce41f393b97
 [2.11.5]: https://github.com/ClarkParker/ACIDIFY/commit/4e5daac9785b330a194c72c43472bf2863b96ba8
 [2.11.4]: https://github.com/ClarkParker/ACIDIFY/commit/37b6e546f9c07f5ce231cde3818e3e126e1a0d70

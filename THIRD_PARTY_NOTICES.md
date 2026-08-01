@@ -1,10 +1,33 @@
 # Third-Party Notices
 
-ACIDIFY enthält eigenständige Cmajor-Ports und Anpassungen permissiv
-lizenzierter DSP-Algorithmen. Es werden keine vorkompilierten Fremdbibliotheken
-eingebunden. Die folgenden Quellstände sind für 0.5.0 festgepinnt.
+ACIDIFY enthält eigenständige Cmajor-Ports permissiv lizenzierter
+DSP-Algorithmen (Airwindows) sowie zitierte Messwerte. Es werden keine
+vorkompilierten Fremdbibliotheken eingebunden.
 
-## Open303
+## Open303 — Status seit 2.12.0: Messwertquelle, kein Code
+
+**Im aktuellen Signalweg ist kein Open303-Code und keine
+Open303-Kennlinie mehr enthalten.** Filterkern (topologiehergeleitete
+ZDF-Diodenleiter), Koppelnetz, Cutoff-/Env-Mod-Abbildung (A-Taper +
+Q9-Bias-Netz), Hüllkurvenzeiten, Slide (22 ms, CV-Domäne) und
+VCA/OTA-Stufe sind aus den Roland-Serviceschaltplänen hergeleitet
+(docs/SOUND_GAP_ANALYSIS.md, docs/HARDWARE_AUDIT.md).
+
+Verbleibend sind **drei zitierte Werte eines echten TB-303**, die über
+das Open303-Projekt publiziert wurden und im Quelltext einzeln als
+solche markiert sind (Messwerte/Geräte-Fits sind Fakten bzw.
+gerätegebundene Kalibrierungen, keine Schöpfung):
+
+| Wert | Stelle | Status |
+|---|---|---|
+| Rechteck-Duty `46,88 %` + Halbpegel | VCO-Shaper | Anker des 2.13.0-Former-Modells (Form aus Schaltung + Scope hergeleitet; Duty schaltungsbestimmt, Herleitung blockiert an der Schwellen-DC-Kette — Messwert bleibt Anker) |
+| Accent-VCA-Gewicht `4.0` | ampControl-Pfad | gerätekalibrierter Fit als Anker; die Steuerkette ist vollständig netzverfolgt (2.16.0), aber Sum-/Max-Lesart am Raster nicht eindeutig — die 2.14.0-„Herleitung" (6,0) wurde als überkonfident zurückgenommen |
+| Accent-Amp-Release `50 ms` | VCA-Hüllkurve | Messwert-Anker; die Schaltungsherleitung liefert nur ein Intervall (1,55 ms … MEG-Fortlauf, siehe Quelltextkommentar) |
+
+**Historie:** Frühe Stände (bis einschließlich der 0.7.x-Reihe, in der
+Repo-Historie enthalten) adaptierten Abbildungen und Konstanten aus
+Open303; dafür — und nur dafür — bleibt die folgende Lizenznotiz
+erhalten. Referenzstand der damaligen Nutzung:
 
 - Projekt: [RobinSchmidt/Open303](https://github.com/RobinSchmidt/Open303)
 - Commit: `313bf0d9ade7c1dcb6b3a74f5ea1780a29d70074`
@@ -29,11 +52,8 @@ eingebunden. Die folgenden Quellstände sind für 0.5.0 festgepinnt.
 | `Source/DSPCode/rosic_AcidSequencer.cpp` | `dfddda8995e769798a1a9d46a28d004a4a64509f` |
 | `Source/DSPCode/rosic_AcidSequencer.h` | `654097d9fd396587b01ab26bf7b6e8d3eba99295` |
 
-Die Cmajor-Adaption verwendet insbesondere Cutoff-/Env-Mod-Messkennlinien,
-Resonanzkrümmung, TB-Filterrekursion, Koppelfrequenzen, Hüllkurvenzeiten,
-Square-Shaper-Konstanten, Slide-Zeit und Sequencer-Gate-Länge. Architektur,
-Zustandsführung, Accent-Sweep-Knotenmodell, Hostparameter und Test-Harness sind
-für ACIDIFY neu implementiert.
+Die dort gelisteten Referenzbereiche betrafen den damaligen Stand;
+die heutige Nutzung ist ausschließlich die Messwert-Tabelle oben.
 
 ### Open303 MIT License
 
@@ -102,11 +122,36 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+## Diodenleiter-Referenzumsetzung (Faust)
+
+Die ZDF-Herleitung der Diodenleiter folgt Pirkle (App Note 6, „Virtual
+Analog Diode Ladder Filter") mit der Faust-Bibliotheksfunktion
+`vaeffects.diodeLadder` von Eric Tarr als Referenzumsetzung
+(Faust-Libraries, STK-4.3/MIT-artige Lizenz, lizenzkompatibel; im
+Quelltext an der Funktion vermerkt). ACIDIFYs Umsetzung weicht belegt
+ab: ungleiche Leiterkondensatoren 33/33/33/18 nF, Koppelnetz in der
+Resonanzschleife, frequenzabhängige Dioden-Sättigung, Newton-Schleife.
+
 ## ACIDIFY PHONO
 
-`PHONO` ist kein kopierter Fremdalgorithmus. Es ist ein generisches
-ACIDIFY-Modell aus RIAA-Wiedergabezeitkonstanten 3180/318/75 µs,
-Line-Level-Vorverstärkung, Übersteuerung und Sicherheitsbegrenzung. Ohne ein
-festgelegtes und vermessenes Phono-Vorverstärkermodell wird ausdrücklich keine
-Übereinstimmung mit einem bestimmten DJ-Mixer oder Plattenspielereingang
-behauptet.
+`PHONO` ist kein kopierter Fremdalgorithmus. Es modelliert die
+recherchierte Standardkette eines Consumer-Phono-Eingangs der
+80er/90er (2.15.0, Quellen: TI/National AN-346 „High-Performance
+Audio Applications of the LM833"; ESP/Rod Elliott, Project 06;
+JRC/TI-Datenblätter 4558/NE5532):
+
+RCA-Eingang → 47-k-Abschluss + Koppel-C (für Line-Pegel wirkungslos)
+→ EIN Verstärker (4558-Klasse) mit RIAA-Netzwerk in der Gegenkopplung
+(30–40 dB bei 1 kHz, Bass +20 dB) → Sättigung an den Rails →
+Ausgangskopplung → Wahlschalter/Tape-Out (flach; dort wurde
+aufgenommen). Modelliert als: RIAA-Wiedergabeentzerrung (3180/318/
+75 µs) VOR der Sättigung → asymmetrischer Rail-Clip (+1,0/−0,65,
+Modellannahme einer einfachen Stufe) → Slew-Limit 1 V/µs
+(4558-Datenblatt; am 48-k-Serienmaterial messbar inert, dokumentiert)
+→ Koppel-C-Arbeitspunktverschiebung (Blocking, τ = 50 ms,
+Modellannahme) → 25-Hz-Infraschallfilter 2. Ordnung. Der
+HF-Unity-Gain-Zero der NFB-Stufe liegt oberhalb von 20 kHz und ist
+bei 48 kHz Abtastrate außerhalb des Bandes (nicht modelliert,
+begründet). Ohne ein festgelegtes und vermessenes Einzelgerät wird
+ausdrücklich keine Übereinstimmung mit einem bestimmten Verstärker-
+oder DJ-Mixer-Eingang behauptet.
