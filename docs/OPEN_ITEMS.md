@@ -1,6 +1,6 @@
 # Offene Punkte — vollständige Liste
 
-> Stand 2.16.0. Diese Datei ist die EINE Stelle für alles, was offen
+> Stand 2.17.2. Diese Datei ist die EINE Stelle für alles, was offen
 > ist; docs/SCHEMATIC_COVERAGE.md ist der Vollständigkeitsbeweis gegen
 > den Schaltplan (keine Zeile „offen"). Vereinbarung: Es wird NICHT am
 > Referenzgerät des Projektinhabers gemessen.
@@ -36,7 +36,7 @@ geschlossen (2.16.0):
 | # | Punkt | Status |
 |---|---|---|
 | B1 | main-Branch steht auf 2.11.6 | Promotion auf Anweisung |
-| B2 | A/B-Abnahme des aktuellen Builds in Amorph/DAW | Build entspricht jetzt nachweislich dem Schaltplan (SCHEMATIC_COVERAGE.md); Test ist Abnahme, keine Lückensuche |
+| B2 | A/B-Abnahme des aktuellen Builds in Amorph/DAW | Abdeckungsstand laut SCHEMATIC_COVERAGE.md (jede Baugruppe U/X/A, Anker als Anker benannt); Zeilen-Audit 2.17.2 abgeschlossen. Der Hörtest bleibt die Abnahme des Projektinhabers |
 | B3 | Presets an den neuen Klang anpassen? | Entscheidung offen |
 | B4 | Param-Limit 66 > 50 | toleriert, dokumentiert — kein Handlungsbedarf |
 | B5 | „AAA Clone"-Label | hängt an B2 + optionalen Rang-2-Captures (A10-alt: ausdrücklich optional, nicht vom Projektinhaber) |

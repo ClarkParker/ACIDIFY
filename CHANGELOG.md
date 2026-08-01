@@ -6,6 +6,43 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.17.2] - 2026-08-01
+
+### Fixed
+
+- **DAW-Sync + Phrase-Modus: Gate-Abschaltung nach den falschen Flags.**
+  Vollständiger Zeilen-Audit der DSP-Datei (alle 2941 Zeilen, Befund #3):
+  `processDawClock` leitete `dawGateArmed` aus den PATTERN-Flags ab
+  (`getFlags(sequenceStep)`), obwohl im Phrase-Modus (Arp-Figur 16,
+  Bank > 0) die Phrase die Gate/Accent/Slide-Maske ersetzt. Folge bei
+  DAW-Sync: Phrase-Slides wurden in Stepmitte gekappt, Phrase-Gates
+  über Pattern-Rests nie halbiert. Jetzt nutzt der DAW-Pfad wie der
+  interne Clock-Pfad die effektiven Flags (`lastEffectiveFlags`).
+  Neuer falsifizierbarer Nachweis in tools/dsp_transport_test.mjs
+  (DAW + Phrase 37, beide Fehlrichtungen): Slide-Step hält den ganzen
+  Step (RMS spät im Step 0,0347), reiner Gate-Step endet in Stepmitte
+  (RMS 0); Gegenprobe gegen den alten Code schlägt nachweislich fehl.
+  Interner Clock-Pfad, Serienpfad und alle Klangpfade sind unberührt
+  (Smoke bit-identisch: peak=0.50919, rms=0.01821).
+
+### Fixed (Dokumentation — kein DSP-Eingriff)
+
+- **Befund #2:** Veralteter Slew-Kommentar an der `phonoSlewPerSample`-
+  Deklaration („38 445 Einheiten/s") widersprach dem gesetzten Wert
+  (63 462 Einheiten/s, updateRateConstants); korrigiert.
+- **Befund #1:** Die 2.16.0-Kettenbeschreibung am VCA-Steuerknoten war
+  so lesbar, als liefe die GESAMTE Steuer-CV (Hüllkurve + Accent)
+  durch das R120/C36-RC. Präzisiert: Am 150-dpi-Raster ist die Lage
+  von D27/R120/C36 relativ zum Zusammenführungspunkt nicht eindeutig;
+  Whittles Strukturaussage (Accent „adds … via an RC network of a 47k
+  and a 0.033uF" — Hüllkurve treibt direkt) und seine Messung des
+  totzonenbefreiten Anstiegs (0,3–0,5 ms) tragen die Accent-only-
+  Lesart, die der Code umsetzt. Kein Codeeingriff; Attribution im
+  Quelltext und in SCHEMATIC_COVERAGE dokumentiert.
+- OPEN_ITEMS: Überzogene Formulierung in B2 („entspricht nachweislich
+  dem Schaltplan") ersetzt durch den belegbaren Stand (Abdeckung laut
+  SCHEMATIC_COVERAGE, Anker dokumentiert).
+
 ## [2.17.1] - 2026-07-31
 
 ### Fixed (Dokumentation/Begründungen — kein DSP-Eingriff)

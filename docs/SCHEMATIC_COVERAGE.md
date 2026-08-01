@@ -1,6 +1,6 @@
 # Schaltplan-Abdeckung — vollständige Tabelle
 
-> Stand 2.16.1. Jede Baugruppe der Roland-Servicenotes (Seite 4/5) hat
+> Stand 2.17.2. Jede Baugruppe der Roland-Servicenotes (Seite 4/5) hat
 > genau einen Status: **U** = umgesetzt mit Herleitung/Anker,
 > **X** = begründet ausgeschlossen, **A** = umgesetzt mit publiziertem
 > Messwert-Anker, wo die Schaltung keinen eindeutigen Wert hergibt.
@@ -59,7 +59,7 @@
 | Baugruppe | Status | Beleg / Begründung |
 |---|---|---|
 | BA662A-OTA (IC15) | U | tanh-Kennlinie, otaDrive/vcaGain aus Bauteilwerten |
-| Steuerkette Q31-Knoten → D27 → R120 22 k → C36 33 n → R119 47 k → BA662-Steuerpin | U | 2.16.0 vollständig netzverfolgt (Roland S. 5); Anstieg 726 µs = R120·C36 ✓ im Modell |
+| Steuerkette Q31-Knoten → D27 → R120 22 k → C36 33 n → R119 47 k → BA662-Steuerpin | U/A | 2.16.0 netzverfolgt (Roland S. 5); PRÄZISIERT 2.17.2: Lage des R120/C36-RC relativ zum Hüllkurven/Accent-Zusammenführungspunkt am Raster nicht eindeutig — Whittle (Accent „adds … via an RC network“, Hüllkurve treibt direkt) + gemessener 0,3–0,5-ms-Anstieg tragen die Accent-only-Lesart des Modells (726 µs nur im Accent-Zweig) |
 | Zusammenführung Hüllkurve (Q31/R131 220 k) + Accent (D35/R133 2,2 k) | U/A | Struktur BEWIESEN additiv (Whittle: „It adds to the control current of the VCA … the primary reason why accented notes are louder", 2.17.0); Gewichtswert 4,0 bleibt gerätekalibrierter Fit-Anker |
 | Ausgangsnetzwerk (C38/C21/C22, R121 220 k/R122 100 k; Summenzweige 71,6/155,7 Hz) | U | updateOutputNetworkCoefficients + VCA-Zweige aus Bauteilwerten |
 | R162 2,2 k/C40 (Bias) | X | reine DC-Arbeitspunktbildung; im Signalmodell implizit |

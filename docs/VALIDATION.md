@@ -1,3 +1,26 @@
+# Validierung 2.17.2
+
+## 2.17.2
+
+Vollständiger Zeilen-Audit ACIDIFYDSP.cmajor (alle 2941 Zeilen gelesen,
+Befundliste in docs/SOUND_GAP_ANALYSIS.md, „Umsetzung 2.17.2"). Ein
+Codefix: DAW-Gate-Abschaltung nutzt jetzt die effektiven Flags
+(Phrase-Maske) statt der Pattern-Flags. Nachweis im erweiterten
+tools/dsp_transport_test.mjs, Szenario DAW-Sync + Phrase 37, beide
+Fehlrichtungen falsifizierbar: Slide-Step (Phrase sagt Slide, Pattern
+nur Gate) hält den ganzen Step — RMS spät im Step 0,0347; reiner
+Gate-Step (Phrase sagt Gate, Pattern Rest) endet in Stepmitte — RMS
+exakt 0. Gegenprobe: mit der alten Zeile (`getFlags`) schlägt der Test
+reproduzierbar fehl („slide step was cut at mid-step, late rms
+≈ 2,8e-45"). Serienpfad unberührt: Serien-Smoke bit-identisch
+Peak 0,50919 / RMS 0,01821. Volle Batterie grün: smoke, hardware
+(5 Checkpoints), gain (Restabweichung ≤ 0,34 dB), arp, articulation,
+matrix, transport (inkl. neuem Checkpoint dawPhraseEffectiveFlags),
+ui_smoke, cmajor_lint (bekannte Param-Warnung), ui_lint --strict,
+manifest_check, node --check, check_version.
+
+---
+
 # Validierung 2.17.1
 
 ## 2.17.1

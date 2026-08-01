@@ -480,3 +480,48 @@ nie im Volltext gelesen worden. Sie korrigieren zwei Aussagen:
 - Ergänzend belegt: TM6-Prozedur 1,000 V ± 3 mV/Okt (CV-Ausgang) und
   TM1/TM2 (Tempo 8 ms ± 1 ms, INT-Clock 1,8 ms ± 0,2 ms) — im Modell
   ideal (Sequencer exakt, CV ideal), als perfekt abgeglichene Trims.
+
+## Umsetzung 2.17.2 — Vollständiger Zeilen-Audit der DSP-Datei
+
+Anlass: Der Projektinhaber hielt dagegen, dass „unzählige Codezeilen
+seit dem ersten Build nie wieder angeschaut" worden seien, während
+„alles geprüft" behauptet wurde. Der Einwand war berechtigt: Die
+bisherigen Prüfungen waren themenbezogen (Filter, VCO, VCA, PHONO,
+Hüllkurven), kein systematisches Lesen der ganzen Datei. Deshalb
+wurden jetzt ALLE 2941 Zeilen von ACIDIFYDSP.cmajor Abschnitt für
+Abschnitt gelesen. Befundliste (vollständig):
+
+- **Befund #1 (Attribution, kein Codefehler):** Die 2.16.0-Ketten-
+  beschreibung am VCA-Steuerknoten (Q31 → D27 → R120 → C36 → R119 →
+  BA662-Steuerpin) war so lesbar, als liefe die GESAMTE Steuer-CV
+  durch das R120/C36-RC — der Code legt das RC aber nur in den
+  Accent-Zweig. Auflösung: Am 150-dpi-Raster ist die Lage des RC
+  relativ zum Zusammenführungspunkt nicht eindeutig; Whittles
+  Strukturaussage (Accent „adds to the control current … via an RC
+  network of a 47k and a 0.033uF", Hüllkurve treibt direkt) und seine
+  Messung des totzonenbefreiten Anstiegs (0,3–0,5 ms — mit einem
+  gemeinsamen 726-µs-RC schwer vereinbar) tragen die Accent-only-
+  Lesart. Der Code bleibt; die Attribution steht jetzt explizit im
+  Quelltextkommentar. Ehrlich benannt: Das ist eine begründete
+  Lesart-Entscheidung, kein eindeutiger Schaltungsbeweis.
+- **Befund #2 (veralteter Kommentar):** An der `phonoSlewPerSample`-
+  Deklaration stand „38 445 Einheiten/s" (Rechenstand vor der
+  1,65-Einheiten-Skalierung); gesetzt werden 63 462 Einheiten/s
+  (updateRateConstants). Kommentar korrigiert — der Klangpfad war
+  korrekt, nur der Kommentar log.
+- **Befund #3 (echter Logikfehler, gefixt):** `processDawClock`
+  leitete die Gate-Abschaltung aus den PATTERN-Flags ab
+  (`getFlags(sequenceStep)`); im Phrase-Modus ersetzt aber die Phrase
+  die Maske (startSequenceStepAt → `lastEffectiveFlags`). Bei
+  DAW-Sync + Phrase wurden Slides in Stepmitte gekappt und
+  Phrase-Gates über Pattern-Rests nie halbiert. Fix: effektive Flags.
+  Prüfstein: neues Szenario in tools/dsp_transport_test.mjs (DAW +
+  Phrase 37), beide Fehlrichtungen; Gegenprobe gegen die alte Zeile
+  scheitert reproduzierbar. Details: VALIDATION 2.17.2.
+- Alle übrigen Abschnitte (Zustände, Drive-Prozessoren, Autogain,
+  Accent-Sweep, Mappings, Rate-Konstanten, Arp-Engine, Trigger/
+  Release, interner Clock-Pfad, Leiter, OTA/VCA-Zweige, Events, MIDI,
+  Hauptschleife, Graph): gegen Doku und Herleitungen gelesen, keine
+  weiteren Abweichungen gefunden. Was NICHT behauptet wird: dass
+  damit jede Zahl bewiesen wäre — die dokumentierten Anker bleiben
+  Anker (SCHEMATIC_COVERAGE.md).

@@ -302,8 +302,9 @@ processor AcidifyCore
     // JRC-Datenblatt; Streuung bis 2,2 V/us bei TIs RC4558) — der
     // Standard-Doppel-OP der japanischen Consumer-Geraete der
     // 80er/90er. Bei ~26 V Rail-Spanne (+-13 V) und Rails-Modell
-    // +1,0/-0,65 (1,65 Einheiten) entspricht 1 V/us 38 445
-    // Einheiten/s; eine volle Flanke dauert ~26 us.
+    // +1,0/-0,65 (1,65 Einheiten) entspricht 1 V/us
+    // 1e6 V/s / 26 V * 1,65 = 63 462 Einheiten/s (gesetzt in
+    // updateRateConstants); eine volle Flanke dauert ~26 us.
     float phonoSlewPerSample = 1.0e9f;
     float64 phonoSlewState = 0.0;
 
@@ -1822,7 +1823,16 @@ processor AcidifyCore
             lastDawTick = absoluteStep;
             dawTickReady = true;
 
-            let flags = getFlags (sequenceStep);
+            // EFFEKTIVE Flags des gerade gestarteten Steps (Zeilen-Audit
+            // 2.17.2): Im Phrase-Modus (arpMode 16, Bank > 0) ersetzt die
+            // Phrase die Gate/Accent/Slide-Maske des Patterns —
+            // startSequenceStepAt legt das Ergebnis in lastEffectiveFlags ab.
+            // Vorher stand hier getFlags(sequenceStep), also die PATTERN-
+            // Flags: Bei DAW-Sync + Phrase wurde das Gate nach der falschen
+            // Maske abgeschaltet (Phrase-Slides in Stepmitte gekappt,
+            // Phrase-Gates ueber Pattern-Rests nie halbiert). Der interne
+            // Clock-Pfad nutzte immer schon die effektiven Flags.
+            let flags = lastEffectiveFlags;
             dawGateArmed = (flags & 1) != 0 && (flags & 4) == 0;
             let stepStart = isOddStep ? oddStepStart : pairStart;
             let stepEnd = isOddStep ? pairStart + pairSpan : oddStepStart;
@@ -2695,6 +2705,24 @@ processor AcidifyCore
                 // Stromlenkungs-Lesart sind am Raster nicht eindeutig zu
                 // trennen — das Gewicht ist damit NICHT eindeutig herleitbar
                 // (Analyse: docs/SOUND_GAP_ANALYSIS.md, Umsetzung 2.16.0).
+                //
+                // ATTRIBUTION PRAEZISIERT (Zeilen-Audit 2.17.2): Die
+                // Kettenbeschreibung oben darf NICHT so gelesen werden, dass
+                // die GESAMTE Steuer-CV (Huellkurve + Accent) durch das
+                // R120/C36-RC laeuft — ob D27/R120/C36 im gemeinsamen Pfad
+                // oder nur im Accent-Zweig sitzt, ist am 150-dpi-Raster nicht
+                // eindeutig. Zwei unabhaengige Belege tragen die
+                // Accent-only-Lesart, die dieses Modell umsetzt:
+                // (1) Whittle, strukturell: der Accent "adds to the control
+                //     current of the VCA ... via an RC network of a 47k and
+                //     a 0.033uF" — die Huellkurve treibt den Steuerstrom
+                //     direkt, der Accent addiert UEBER das RC;
+                // (2) Whittles Messung des vom Dead-Band befreiten Anstiegs
+                //     (0,3..0,5 ms) — ein gemeinsames 726-us-RC im
+                //     Huellkurvenpfad waere damit schwer vereinbar.
+                // Darum: accentVcaRC traegt das 726-us/1,55-ms-RC, die
+                // Huellkurve laeuft direkt (nur Totzone + 0,5-ms-Anstieg +
+                // 100-us-Entklicker C42/R132).
                 // Es gilt wieder der einzige geraetegebundene Anker:
                 // Open303s Fit 4,0, kalibriert gegen Aufnahmen eines echten
                 // 303 — gleicher Status wie squareDuty.

@@ -416,6 +416,125 @@ graph AcidifyGridTest [[ main ]]
 }
 `;
 
+// DAW-Sync + Phrase-Modus (Zeilen-Audit 2.17.2): Der DAW-Gate-Abschalter
+// muss die EFFEKTIVEN Flags des Steps nutzen (Phrase ersetzt die
+// Pattern-Maske), nicht die Pattern-Flags. Phrase 37 hat Slides auf den
+// Phrase-Steps 0/2/4 und reine Gates auf 5/6/7; die Note kommt waehrend
+// Pattern-Step 0, also spielt Phrase-Step p auf Pattern-Step p+1.
+// Zwei gegenlaeufige Nachweise:
+//   A) Pattern-Step 3 (Phrase-Slide, Pattern-Flags nur Gate): das Gate
+//      muss den GANZEN Step halten — der alte Code kappte es in Stepmitte.
+//   B) Pattern-Step 8 (Phrase-Gate, Pattern-Flags Rest): das Gate muss in
+//      Stepmitte enden — der alte Code hielt es den ganzen Step.
+const phraseHarness = String.raw`
+
+processor AcidifyPhraseEvents
+{
+    output event float dawModeOut;
+    output event float arpModeOut;
+    output event float phraseOut;
+    output event float64 transportOut;
+    output event std::midi::Message midiOut;
+
+    int frame = 0;
+
+    void sendAmorphTransport (bool playing, float64 bpm, float64 quarterNote)
+    {
+        transportOut <- playing ? 1.0 : 0.0;
+        transportOut <- bpm;
+        transportOut <- 4.0;
+        transportOut <- 4.0;
+        transportOut <- quarterNote;
+        transportOut <- 0.0;
+    }
+
+    void main()
+    {
+        let noteFrame = int (float (processor.frequency) * 0.025f);
+
+        loop
+        {
+            if (frame == 0)
+            {
+                dawModeOut <- 1.0f;
+                arpModeOut <- 16.0f;
+                phraseOut <- 37.0f;
+                sendAmorphTransport (true, 120.0, 0.0);
+            }
+            else if (frame == noteFrame)
+            {
+                // Note C3, Velocity 0x50 (< 100, kein Accent) — pflegt im
+                // laufenden Sequencer nur den Arp-Pool.
+                midiOut <- std::midi::Message ((0x90 << 16) | (48 << 8) | 0x50);
+            }
+
+            frame += 1;
+            advance();
+        }
+    }
+}
+
+processor AcidifyPhraseStepTrace
+{
+    input event float stepIn;
+    output stream float out;
+    float value = 0.0f;
+
+    event stepIn (float step)
+    {
+        value = (step + 1.0f) / 16.0f;
+    }
+
+    void main()
+    {
+        loop
+        {
+            out <- value;
+            advance();
+        }
+    }
+}
+
+processor AcidifyPhraseMerge
+{
+    input stream float<2> audioIn;
+    input stream float stepIn;
+    output stream float<2> out;
+
+    void main()
+    {
+        loop
+        {
+            out <- float<2> (audioIn[0], stepIn);
+            advance();
+        }
+    }
+}
+
+graph AcidifyPhraseGateTest [[ main ]]
+{
+    output stream float<2> out;
+
+    node events = AcidifyPhraseEvents;
+    node phrase = Acidify;
+    node stepTrace = AcidifyPhraseStepTrace;
+    node merge = AcidifyPhraseMerge;
+
+    connection
+    {
+        events.dawModeOut -> phrase.param49;
+        events.arpModeOut -> phrase.param61;
+        events.phraseOut -> phrase.param64;
+        events.transportOut -> phrase.transportIn;
+        events.midiOut -> phrase.midiIn;
+        phrase.currentStep -> stepTrace.stepIn;
+        phrase.out -> merge.audioIn;
+        stepTrace.out -> merge.stepIn;
+        merge.out -> out;
+    }
+}
+`;
+
 function findChunk(buffer, name) {
   let offset = 12;
   while (offset + 8 <= buffer.length) {
@@ -692,6 +811,37 @@ try {
   const handoffDuringSync = handoffTempo(1.8);
   const handoffAfterRelease = handoffTempo(2.7);
 
+  const phraseChannels = await renderTrace("phrase", phraseHarness, 2, 2.0);
+  const phraseSteps = transitions(phraseChannels[1]);
+  const phraseAudio = phraseChannels[0];
+  const stepStart = step => {
+    const hit = phraseSteps.find(t => t.step === step);
+    if (!hit) throw new Error(`DAW phrase gate: step ${step} never started: ${JSON.stringify(phraseSteps)}`);
+    return hit.frame;
+  };
+  // Fenster spaet im Step (95..120 ms nach Stepstart bei 125 ms Steplaenge):
+  // nach der Stepmitte (62,5 ms) plus 8 ms Halten + 8 ms Rampe der
+  // unaccentierten Abschaltung ist ein gekapptes Gate hier sicher still.
+  const lateRms = step => {
+    const from = stepStart(step) + Math.round(0.095 * sampleRate);
+    const to = stepStart(step) + Math.round(0.120 * sampleRate);
+    if (to > phraseAudio.length) {
+      throw new Error(`DAW phrase gate: window for step ${step} exceeds render`
+        + ` (${to} > ${phraseAudio.length})`);
+    }
+    let sum = 0;
+    for (let i = from; i < to; i += 1) sum += phraseAudio[i] * phraseAudio[i];
+    return Math.sqrt(sum / Math.max(to - from, 1));
+  };
+  const phraseSlideHold = lateRms(3);   // Phrase-Slide, Pattern sagt Gate-ohne-Slide
+  const phraseGateRelease = lateRms(8); // Phrase-Gate, Pattern sagt Rest
+  if (phraseSlideHold < 0.01) {
+    throw new Error(`DAW phrase gate: slide step was cut at mid-step (late rms ${phraseSlideHold})`);
+  }
+  if (phraseGateRelease > phraseSlideHold / 8 || phraseGateRelease > 0.004) {
+    throw new Error(`DAW phrase gate: plain gate step was held past mid-step (late rms ${phraseGateRelease})`);
+  }
+
   const gridChannels = await renderTrace("grid", gridHarness, 8, 3.75);
   const gridEighth = transitions(gridChannels[0]);
   const gridTriplet = transitions(gridChannels[1]);
@@ -770,6 +920,11 @@ try {
       playModeInvert: true,
       playModeRandomDeterministic: true,
       dawGridPositionBinding: true,
+      dawPhraseEffectiveFlags: true,
+    },
+    dawPhraseGate: {
+      slideHoldLateRms: +phraseSlideHold.toFixed(5),
+      gateReleaseLateRms: +phraseGateRelease.toFixed(6),
     },
   }));
 } finally {
