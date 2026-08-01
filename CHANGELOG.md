@@ -6,6 +6,24 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.17.3] - 2026-08-01
+
+### Added (Dokumentation — kein DSP/UI-Eingriff)
+
+- **Englisches Benutzerhandbuch** `docs/manual/MANUAL.md` mit zwölf
+  Screenshots aus der echten UI (Playwright-Captures aus
+  mockup/preview.html, alle drei Editor-Ansichten, beide Overlays,
+  Dark Mode). Anlass: erstes Nutzerfeedback — Bedienung unklar,
+  MIDI-Input wurde nicht verstanden. Kernstück ist die
+  MIDI-Regel-Tabelle (Sequencer gestoppt = Live-Spiel mit
+  Velocity-Accent und Legato-Slide; Sequencer läuft = MIDI nur im
+  ARP-Editor als Notenpool, in CLASSIC/STUDIO zählt allein das
+  Pattern) und der DAW-Modus-Hinweis (Sequencer folgt dem
+  Host-Transport: Play in der DAW startet ACIDIFY; ohne
+  Host-Transportdaten bleibt RUN/TEMPO als Fallback bedienbar).
+  Alle Verhaltensaussagen gegen den DSP-Quelltext geprüft
+  (Zeilen-Audit 2.17.2 als Grundlage). README verlinkt das Manual.
+
 ## [2.17.2] - 2026-08-01
 
 ### Fixed

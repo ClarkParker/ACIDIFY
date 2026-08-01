@@ -1,3 +1,21 @@
+# Validierung 2.17.3
+
+## 2.17.3
+
+Doku-Release (Benutzerhandbuch), kein DSP/UI-Eingriff. Zwölf
+Screenshots per Playwright aus der echten Web-Component (preview.html,
+Scale-Faktor 2), Ansichten CLASSIC/STUDIO/ARP je per Segment-Klick auf
+den Editor-Schalter verifiziert (data-view-Attribut geprüft), Overlays
+MODS/DIST, Dark Mode. Verhaltensaussagen des Manuals gegen den
+Quelltext geprüft: MIDI-Zustandstabelle (midiIn-Handler),
+DAW-Positionsbindung nur im FWD-Play-Mode (processDawClock),
+Accent-Decay fix 200 ms, Velocity-Schwelle 100, CC 120/123,
+Slide = Steplänge+1. Serien-Smoke bit-identisch Peak 0,50919 /
+RMS 0,01821; ui_smoke grün (Brand-Span 2.17.3); check_version
+konsistent.
+
+---
+
 # Validierung 2.17.2
 
 ## 2.17.2

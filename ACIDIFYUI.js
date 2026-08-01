@@ -5907,7 +5907,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.17.2</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.17.3</span></div>
         </div>
       </header>
       <div class="osc-cell">

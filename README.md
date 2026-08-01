@@ -5,12 +5,12 @@ den [Amorph Host](https://github.com/ClarkParker/Amorph_DEV_KIt). Das Projekt
 verbindet eine hardwareinspirierte Bedienoberfläche mit einem 4× oversampelten
 Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 
-> Status: **DSP+UI 2.17.2 — Silver Series, vollständiger Zeilen-Audit des DSP**. Clean-Core,
+> Status: **DSP+UI 2.17.3 — Silver Series, englisches Benutzerhandbuch mit Screenshots**. Clean-Core,
 > 50-Parameter-Vertrag, Amorph-`transportIn`-Sync, sicherer Internal-Fallback,
 > Swing und drei getrennte Post-Stufen sind implementiert und automatisiert
 > geprüft. Studio ergänzt skalenbewusstes Generate/Mutate, Reverse, Pitch Mirror
 > und eine Bass-Line-Kontur in der Matrix. Der Nutzer hat den vorigen 0.6.4-Build in Amorph als
-> grundsätzlich passend bestätigt; der neue 2.17.2-Build muss für die
+> grundsätzlich passend bestätigt; der neue 2.17.3-Build muss für die
 > abschließende Produktbestätigung erneut in Amorph und der Ziel-DAW getestet
 > werden. Die Bezeichnung „AAA Clone“ bleibt bis zu kalibrierten
 > Hardware-Captures und Blindtests ausdrücklich ein Ziel, kein bereits
@@ -21,6 +21,7 @@ Cmajor-DSP-Kern und einem 16-Step-Sequencer.
 - `ACIDIFY.cmajorpatch` – Amorph-Manifest
 - `ACIDIFYDSP.cmajor` – MIDI-Instrument, Sequencer und 4×-DSP
 - `ACIDIFYUI.js` – selbständige, skalierbare Web-Component ohne Abhängigkeiten
+- `docs/manual/MANUAL.md` – englisches Benutzerhandbuch mit Screenshots (Funktionen, Bedienung, MIDI-Regeln)
 - `CHANGELOG.md` – vollständige Versionshistorie
 - `docs/CONCEPT.md` – Produkt-, UI- und DSP-Konzept mit Quellen
 - `docs/PARAMETERS.md` – stabiler `param1..param50`-Vertrag
