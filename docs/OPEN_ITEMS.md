@@ -35,7 +35,7 @@ geschlossen (2.16.0):
 
 | # | Punkt | Status |
 |---|---|---|
-| B1 | main-Branch steht auf 2.11.6 | Promotion auf Anweisung |
+| B1 | main-Branch | GESCHLOSSEN: auf Anweisung des Projektinhabers auf 2.17.2 promotet (CI-verifizierter Stand 91d75d2) |
 | B2 | A/B-Abnahme des aktuellen Builds in Amorph/DAW | Abdeckungsstand laut SCHEMATIC_COVERAGE.md (jede Baugruppe U/X/A, Anker als Anker benannt); Zeilen-Audit 2.17.2 abgeschlossen. Der Hörtest bleibt die Abnahme des Projektinhabers |
 | B3 | Presets an den neuen Klang anpassen? | Entscheidung offen |
 | B4 | Param-Limit 66 > 50 | toleriert, dokumentiert — kein Handlungsbedarf |
