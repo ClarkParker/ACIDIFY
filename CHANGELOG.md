@@ -6,6 +6,27 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.18.1] - 2026-08-02
+
+### Changed (Dokumentation — kein DSP/UI-Verhalten)
+
+- **Handbuch-Feinschliff des Projektinhabers übernommen** (Upload,
+  Handbuch-Teil zu 2.18.0): alle zwölf Screenshots aus der
+  2.18.0-Oberfläche in echter doppelter Auflösung neu gerendert
+  (Gesamtansichten 2360×1160); zwei Ausschnitte überarbeitet, weil der
+  alte Inhalt abgeschnitten hätte (studio.png = kompletter
+  Programmer-Streifen, mods.png = Overlay mit vollständiger rechter
+  Spalte); manual.html mit angepassten Bildmarkern; PDF neu gebaut
+  (14 Seiten, 5,52 MB).
+- **Handbuch-Wortlaut auf die Fassung des Projektinhabers
+  zurückgestellt:** die beschreibenden „303"-Nennungen im Fließtext
+  (original 303 circuit behavior, classic 303 slide, bone-stock 303,
+  Devil-Fish/x0x-Quellenverweis) bleiben laut dessen dokumentierter
+  Entscheidung erhalten — die 2.18.0-Neutralisierung dieser vier
+  Stellen ging über die GUI-Label-Hygiene hinaus und ist
+  zurückgenommen. GUI-Labels bleiben neutral (DESK usw.);
+  MANUAL.md und manual.html sind wieder satzgenau deckungsgleich.
+
 ## [2.18.0] - 2026-08-02
 
 ### Added

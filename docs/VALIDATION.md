@@ -1,3 +1,21 @@
+# Validierung 2.18.1
+
+## 2.18.1
+
+Doku-Release (Handbuch-Teil des Projektinhaber-Uploads). Geprüft:
+Build-Skript unverändert (diff leer); Bilder echte 2×-Renderings
+(overview 2360×1160, studio 2328×544 Programmer-Streifen, mods
+1720×600 mit vollständiger rechter Spalte); manual.html gegen
+MANUAL.md nach Rückstellung der vier Textstellen satzgenau
+deckungsgleich (grep-Abgleich der geänderten Passagen);
+Versionsstempel vereinheitlicht auf 2.18.1. PDF lokal gebaut
+(14 Seiten, 5,52 MB), Seiten 10–13 visuell geprüft: Marker liegen in
+den gemeinten Bedienelementen, DESK-Label und neue Mods-Statuszeile
+sichtbar. Serien-Smoke bit-identisch Peak 0,50919 / RMS 0,01821;
+ui_smoke grün (Brand-Span 2.18.1); check_version konsistent.
+
+---
+
 # Validierung 2.18.0
 
 ## 2.18.0
