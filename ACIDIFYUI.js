@@ -51,6 +51,158 @@ const ACIDIFY_GLOBALS = [
 const GRID_NAMES = ["1/32", "1/16T", "1/16.", "1/16", "1/8T", "1/8.", "1/8", "1/4T", "1/4.", "1/4", "1/2", "1/1", "2/1", "3/1"];
 const PLAY_MODE_NAMES = ["FWD", "REV", "FWD&REV", "INVERT", "RND"];
 
+// Guided tour: follows the chapters of docs/manual/MANUAL.md but points at the real
+// controls instead of screenshots. Local UI state only, exactly like the dark mode.
+const GUIDE_STEPS = [
+  {
+    title: "PANEL OVERVIEW",
+    points: [
+      "Top deck: brand keys, <b>OSCILLATOR</b>, the six tone knobs, <b>MASTER</b> and <b>OUTPUT</b>.",
+      "Middle strip: tempo, clock, grid, play mode, swing, length, root and the filter display.",
+      "Bottom: the 16-step programmer with three editors - <b>CLASSIC</b>, <b>STUDIO</b>, <b>ARP</b>.",
+      "Press <b>M</b> to cycle the editors. Everything else on the panel stays the same.",
+    ],
+  },
+  {
+    title: "EDITORS · CLASSIC / STUDIO / ARP",
+    targets: [".studio-toggle"],
+    points: [
+      "The switch at the top right of the programmer picks the editor - <b>click a segment</b> or press <b>M</b> to cycle.",
+      "<b>CLASSIC</b>: the hardware step row plus keyboard and step functions.",
+      "<b>STUDIO</b>: the same pattern as a lane matrix with edit and generate tools.",
+      "<b>ARP</b>: your held MIDI notes supply the pitches, the pattern supplies the rhythm.",
+    ],
+  },
+  {
+    title: "SOUND CONTROLS",
+    targets: [".deck-a .tone-bank"],
+    points: [
+      "<b>CUTOFF</b> sets the resting point of the filter; <b>ENV MOD</b> decides how far each note pushes it up.",
+      "More ENV MOD also pulls the resting cutoff down - original circuit behaviour, not a bug.",
+      "<b>DECAY</b> 200 ms to 2.5 s; accented steps always use the short 200 ms, like the hardware.",
+      "<b>ACCENT</b> is louder plus an extra resonance-dependent filter sweep.",
+    ],
+  },
+  {
+    title: "MASTER · OUTPUT",
+    targets: [".deck-a .volume-bank"],
+    points: [
+      "<b>MASTER</b> sits after the distortion stage, so it never changes the distortion character.",
+      "<b>DRV</b> and <b>MIX</b> are direct access to the distortion Drive and Mix.",
+      "The meter latches clipping - click it to reset the red strip.",
+      "<b>DIST</b> and <b>MOD</b> open the two overlays.",
+    ],
+  },
+  {
+    title: "CLOCK · INTERNAL",
+    targets: [".clock-cell"],
+    points: [
+      "<b>INT</b>: the internal clock runs the sequencer, <b>RUN</b> starts and stops it.",
+      "Mouse wheel on <b>TEMPO</b> = 0.1 BPM steps, hold <b>Shift</b> for 0.01.",
+    ],
+  },
+  {
+    title: "DAW SYNC",
+    targets: [".clock-cell"],
+    rule: "In DAW mode the sequencer starts and stops with your DAW's transport.",
+    points: [
+      "<b>RUN</b> becomes <b>FOLLOW</b> and the tempo knob mirrors the host - both read-only.",
+      "In <b>FWD</b> the pattern locks to song position: bar 1 beat 1 is step 1. Other play modes advance one step per grid tick.",
+      "No host transport? RUN and TEMPO keep working as a manual fallback.",
+      "Switching back to INT keeps the last host tempo.",
+    ],
+  },
+  {
+    title: "GRID · SWING · LENGTH",
+    targets: [".grid-cell", ".stepper-cell"],
+    points: [
+      "<b>GRID</b>: step length from 1/32 to 3/1, including dotted (.) and triplet (T) values.",
+      "<b>PLAY MODE</b>: FWD, REV, FWD&REV pendulum, INVERT (outside-in) and RND.",
+      "<b>SWING</b> delays every second step; 100% is a full triplet feel. Works in INT and DAW.",
+      "<b>LENGTH</b> 1-16 steps, <b>ROOT</b> C1-C4 - every step pitch is relative to the root.",
+    ],
+  },
+  {
+    title: "MIDI INPUT · WHAT PLAYS WHEN",
+    table: [
+      ["SITUATION", "WHAT MIDI NOTES DO", true],
+      ["Sequencer stopped", "Notes play live. Velocity 100+ accents, legato slides.", false],
+      ["Running · CLASSIC / STUDIO", "Notes are <b>ignored</b> - the pattern is the only note source.", false],
+      ["Running · ARP", "Notes feed the arpeggiator; the pattern supplies gate, accent and slide.", false],
+      ["Any time", "CC 120 / CC 123 = all notes off.", false],
+    ],
+    points: [
+      "Hear nothing? Stop the transport to play live, or switch to <b>ARP</b> to play into the running sequence.",
+    ],
+  },
+  {
+    title: "CLASSIC EDITOR",
+    view: "classic",
+    targets: [".step-row"],
+    points: [
+      "Reached with <b>CLASSIC</b> in the editor switch, or <b>M</b>. Click selects a step, <b>double-click</b> toggles gate, <b>wheel</b> changes pitch, <b>right-click</b> opens the note picker.",
+      "The <b>A</b> and <b>S</b> pills toggle accent and slide directly on the step.",
+      "The keyboard below sets the pitch of the selected step; OCT ±, GATE, ACCENT, SLIDE and CLEAR act on it.",
+      "<b>SLIDE</b> ties the step to the next one and glides into it - the classic acid slide.",
+    ],
+  },
+  {
+    title: "STUDIO EDITOR",
+    view: "studio",
+    targets: [".studio-editor"],
+    points: [
+      "Reached with <b>STUDIO</b> in the editor switch, or <b>M</b>. The same pattern as a matrix: <b>ACCENT</b> and <b>SLIDE</b> lanes, the <b>BASS LINE</b> contour and the <b>PITCH GATE</b> row.",
+      "Drag across cells to paint or multi-select, then use the tool panel on the right.",
+      "<b>EDIT</b> undo/redo/copy/paste · <b>ARRANGE</b> rotate, reverse, mirror · <b>GENERATE</b> phrase, mutate, scale.",
+      "Hold <b>Shift</b> while dragging any value for fine control.",
+    ],
+  },
+  {
+    title: "ARPEGGIATOR",
+    view: "arp",
+    targets: [".arp-editor"],
+    points: [
+      "Reached with <b>ARP</b> in the editor switch, or <b>M</b>. Start the sequencer and <b>hold notes</b> - the arp plays them in the selected figure.",
+      "The pattern still runs the rhythm: gates, accents and slides come from the steps, pitches from your hand.",
+      "16 figures, <b>OCTAVES</b> 1-4 and <b>HOLD</b> to latch the chord.",
+      "<b>PHRASE</b> plays the built-in acid bank; <b>→ PATTERN</b> captures what you hear into your own 16 steps.",
+    ],
+  },
+  {
+    title: "CIRCUIT MODS",
+    overlay: "mods",
+    targets: [".mods-overlay"],
+    points: [
+      "Six classic hardware modifications, each with its own switch - the instrument is bone-stock until you flip one.",
+      "<b>OVERDRIVE</b> filter input drive · <b>RESO BOOST</b> feedback x1.22 · <b>CUTOFF RANGE</b> 2.5 to 5 kHz.",
+      "<b>ENV MOD x3</b> triples the sweep · <b>SLIDE TIME</b> 22-132 ms · <b>SOFT ATTACK</b> 0.5-30 ms ramp.",
+      "Defaults are stock. Close with the X, Escape or a click outside.",
+    ],
+  },
+  {
+    title: "DISTORTION STAGE",
+    overlay: "distortion",
+    targets: [".distortion-overlay"],
+    points: [
+      "Post-filter drive, 4x oversampled, true bypass when off.",
+      "<b>PURE</b> subtle saturation · <b>DESK</b> compact-mixer preamp crunch · <b>PHONO</b> the 90s phono-input trick.",
+      "All characters are loudness-matched and crossfaded - switch while playing.",
+      "The stage sits <b>after</b> the filter, so CUTOFF does not tame its harmonics.",
+    ],
+  },
+  {
+    title: "GESTURES · SHORTCUTS",
+    targets: [".tips-power-row"],
+    points: [
+      "<b>TIPS</b> tooltips on hover · <b>DARK</b> silver or anthracite · <b>POWER</b> full bypass.",
+      "Mouse wheel works on every knob, display, step and matrix cell; <b>Shift</b> is fine adjustment everywhere.",
+      "<b>M</b> cycles CLASSIC → STUDIO → ARP, <b>Escape</b> closes overlays.",
+      "Reopen this tour any time with the <b>?</b> key next to the logo.",
+    ],
+    note: "ACIDIFY is an independent instrument by Clark Parker. Product names of other manufacturers are used for description only and imply no affiliation or endorsement.",
+  },
+];
+
 const STEP_PITCH_DEFAULTS = [0, 0, 7, 0, 12, 10, 7, 3, 0, 0, 12, 7, 10, 5, 3, 7];
 const STEP_FLAG_DEFAULTS = [3, 5, 1, 1, 3, 5, 1, 1, 0, 1, 3, 5, 1, 1, 1, 5];
 const STEP_PITCH_IDS = [
@@ -62,7 +214,7 @@ const STEP_FLAG_IDS = [
   "param37", "param38", "param39", "param40", "param41", "param42", "param43", "param44",
 ];
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const DISTORTION_NAMES = ["PURE", "MACKIE", "PHONO"];
+const DISTORTION_NAMES = ["PURE", "DESK", "PHONO"];
 // ARP-PHRASES-BEGIN
 // GENERIERT von tools/gen_phrases.py — nicht von Hand editieren.
 // data je Step: (pitch+12) | gate<<6 | accent<<7 | slide<<8.
@@ -185,29 +337,29 @@ const CONTROL_TOOLTIPS = {
   param4: "Controls how strongly the filter envelope moves the cutoff frequency.",
   param5: "Sets the filter-envelope decay time.",
   param6: "Sets the global intensity of accented steps and high-velocity MIDI notes.",
-  param7: "Selects the oscillator waveform: sawtooth or the modelled 303-style square wave.",
+  param7: "Selects the oscillator waveform: sawtooth or the modelled hollow square wave.",
   param8: "Sets the final output level in decibels.",
   param9: "Sets the internal clock tempo. Wheel or arrow keys change 0.1 BPM; hold Shift for 0.01 BPM. In DAW mode the knob follows the host tempo.",
   param10: "Starts or stops the internal pattern clock. In DAW mode this follows host transport when available.",
   param11: "Sets the active pattern length from 1 to 16 steps.",
   param12: "Sets the MIDI root note used by the 16-step pattern.",
   param45: "Turns the optional post-output distortion stage on or off.",
-  param46: "Selects the distortion character: Pure, Mackie or Phono.",
+  param46: "Selects the distortion character: Pure, Desk or Phono.",
   param47: "Sets the amount of drive applied by the selected distortion character.",
   param48: "Blends the distorted signal with the clean instrument output.",
   param49: "Selects the clock source. INT uses the internal tempo and RUN/STOP; DAW follows host tempo, transport and position.",
   param50: "Adds swing to each pair of grid steps. 0% is straight; 100% reaches a 2:1 triplet feel.",
-  param65: "Sets the note value of one sequencer step, from 1/32 to 3/1 including dotted (.) and triplet (T) grids. 1/16 is the classic 303 resolution.",
+  param65: "Sets the note value of one sequencer step, from 1/32 to 3/1 including dotted (.) and triplet (T) grids. 1/16 is the classic acid resolution.",
   param66: "Selects the pattern play order: FWD, REV, FWD&REV pendulum, INVERT (outside-in alternating) or deterministic RND. In DAW sync, FWD stays locked to the host position; the other modes count host ticks internally.",
-  param51: "Devil Fish filter overdrive on/off. Off is the stock 303 input level.",
+  param51: "Filter overdrive mod on/off. Off is the stock input level.",
   param52: "Overdrive amount, 1x to 66.6x the stock ladder drive (R62 220k down to 3.3k).",
   param53: "x0x resonance boost (R97 10k to 8.2k): enables self-oscillation at the top of the resonance range.",
-  param54: "Extends the cutoff maximum from 2.5 kHz to 5 kHz (Devil Fish).",
-  param55: "Triples the Env Mod range (Devil Fish).",
-  param56: "Devil Fish slide-time control on/off. Off is the stock 22 ms slide.",
+  param54: "Extends the cutoff maximum from 2.5 kHz to 5 kHz (classic hardware mod).",
+  param55: "Triples the Env Mod range (classic hardware mod).",
+  param56: "Slide-time control mod on/off. Off is the stock 22 ms slide.",
   param57: "Slide time, 22 ms (stock) to 132 ms (500k pot in series with the DAC resistance).",
-  param58: "Devil Fish soft attack on/off. Off is the stock instant VCA start.",
-  param59: "VCA attack time, 0.5 ms to 30 ms (Devil Fish range).",
+  param58: "Soft-attack mod on/off. Off is the stock instant VCA start.",
+  param59: "VCA attack time, 0.5 ms to 30 ms (mod range).",
 };
 
 function noteName(note) {
@@ -448,6 +600,9 @@ class AcidifyPatchView extends HTMLElement {
     this._generationScaleIndex = 0;
     this._scaleMenuOpen = false;
     this._arpView = false;
+    this._guideOpen = false;
+    this._guideStep = 0;
+    this._guideReturn = null;
     this._lastArpMode = 0;
     this._phraseMenuOpen = false;
     this._arpLiveNotes = new Array(16).fill(-1);
@@ -505,6 +660,7 @@ class AcidifyPatchView extends HTMLElement {
     this._wirePitchMenu();
     this._wireDistortion();
     this._wireMods();
+    this._wireGuide();
     this._wireModMirrors();
     this._wirePower();
     this._wirePhraseMenu();
@@ -688,6 +844,7 @@ class AcidifyPatchView extends HTMLElement {
     if (this._pitchMenuOutsidePointer) this.removeEventListener("pointerdown", this._pitchMenuOutsidePointer, true);
     if (this._tooltipToggleClick) this.querySelector(".tooltip-toggle")?.removeEventListener("click", this._tooltipToggleClick);
     if (this._themeToggleClick) this.querySelector(".theme-toggle")?.removeEventListener("click", this._themeToggleClick);
+    if (this._guideKeyDown) this.removeEventListener("keydown", this._guideKeyDown, true);
     if (this._tooltipPointerOver) this.removeEventListener("pointerover", this._tooltipPointerOver);
     if (this._tooltipPointerMove) this.removeEventListener("pointermove", this._tooltipPointerMove);
     if (this._tooltipPointerOut) this.removeEventListener("pointerout", this._tooltipPointerOut);
@@ -1418,6 +1575,167 @@ class AcidifyPatchView extends HTMLElement {
     this._renderDistortionState();
   }
 
+  _wireGuide() {
+    this.querySelector(".guide-trigger")?.addEventListener("click", () => this._setGuideOpen(!this._guideOpen));
+    this.querySelector(".guide-close")?.addEventListener("click", () => this._setGuideOpen(false));
+    this.querySelector(".guide-prev")?.addEventListener("click", () => this._goGuide(-1));
+    this.querySelector(".guide-next")?.addEventListener("click", () => this._goGuide(1));
+    this.querySelector(".guide-layer")?.addEventListener("pointerdown", event => {
+      if (event.target === event.currentTarget) this._setGuideOpen(false);
+    });
+    // Capture phase: the tour sees Escape and the arrow keys before mods / distortion do.
+    this._guideKeyDown = event => {
+      if (!this._guideOpen) return;
+      if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); this._setGuideOpen(false); return; }
+      if (event.key === "ArrowRight" || event.key === "PageDown") { event.preventDefault(); event.stopPropagation(); this._goGuide(1); return; }
+      if (event.key === "ArrowLeft" || event.key === "PageUp") { event.preventDefault(); event.stopPropagation(); this._goGuide(-1); return; }
+      if (event.key === "Home") { event.preventDefault(); event.stopPropagation(); this._guideStep = 0; this._renderGuide(); }
+    };
+    this.addEventListener("keydown", this._guideKeyDown, true);
+  }
+
+  _setGuideOpen(enabled, step = 0) {
+    const open = Boolean(enabled);
+    if (open === this._guideOpen) return;
+    this._guideOpen = open;
+    const layer = this.querySelector(".guide-layer");
+    const trigger = this.querySelector(".guide-trigger");
+    trigger?.setAttribute("aria-expanded", `${open}`);
+    this.classList.toggle("guide-open", open);
+    if (open) {
+      this._guideReturn = {
+        view: this._arpView ? "arp" : this._studioMode ? "studio" : "classic",
+        mods: this._modsOpen,
+        distortion: this._distortionOpen,
+      };
+      this._guideStep = clamp(Math.round(step), 0, GUIDE_STEPS.length - 1);
+      if (layer) { layer.hidden = false; layer.setAttribute("aria-hidden", "false"); }
+      this._renderGuide();
+      queueMicrotask(() => this.querySelector(".guide-next")?.focus());
+      return;
+    }
+    if (layer) { layer.hidden = true; layer.setAttribute("aria-hidden", "true"); }
+    const back = this._guideReturn;
+    this._guideReturn = null;
+    if (back) {
+      if (this._modsOpen !== back.mods) this._setModsOpen(back.mods);
+      if (this._distortionOpen !== back.distortion) this._setDistortionOpen(back.distortion);
+      const view = this._arpView ? "arp" : this._studioMode ? "studio" : "classic";
+      if (view !== back.view) this._setViewMode(back.view);
+    }
+    trigger?.focus();
+  }
+
+  _goGuide(delta) {
+    if (!this._guideOpen) return;
+    const next = this._guideStep + delta;
+    if (next < 0) return;
+    if (next >= GUIDE_STEPS.length) { this._setGuideOpen(false); return; }
+    this._guideStep = next;
+    this._renderGuide();
+  }
+
+  _renderGuide() {
+    if (!this._guideOpen) return;
+    const step = GUIDE_STEPS[this._guideStep];
+    if (!step) return;
+    if (step.view) {
+      const view = this._arpView ? "arp" : this._studioMode ? "studio" : "classic";
+      if (view !== step.view) this._setViewMode(step.view);
+    }
+    const wantMods = step.overlay === "mods";
+    const wantDist = step.overlay === "distortion";
+    if (this._modsOpen !== wantMods) this._setModsOpen(wantMods);
+    if (this._distortionOpen !== wantDist) this._setDistortionOpen(wantDist);
+
+    const title = this.querySelector(".guide-title");
+    if (title) title.textContent = step.title;
+    const body = this.querySelector(".guide-body");
+    if (body) {
+      const parts = [];
+      if (step.rule) parts.push(`<p class="guide-rule">${step.rule}</p>`);
+      if (step.table) {
+        const cells = step.table.map(row =>
+          `<span class="${row[2] ? "head" : "key"}">${row[0]}</span><span class="${row[2] ? "head" : ""}">${row[1]}</span>`).join("");
+        parts.push(`<div class="guide-table">${cells}</div>`);
+      }
+      if (step.note) parts.push(`<p class="guide-note">${step.note}</p>`);
+      if (step.points?.length) {
+        parts.push(`<ul class="guide-points">${step.points.map(point => `<li>${point}</li>`).join("")}</ul>`);
+      }
+      body.innerHTML = parts.join("");
+    }
+    const count = this.querySelector(".guide-count");
+    if (count) count.textContent = `${this._guideStep + 1} / ${GUIDE_STEPS.length}`;
+    const prev = this.querySelector(".guide-prev");
+    if (prev) prev.disabled = this._guideStep === 0;
+    const next = this.querySelector(".guide-next");
+    if (next) next.textContent = this._guideStep === GUIDE_STEPS.length - 1 ? "DONE" : "NEXT ›";
+    if (this._modsOpen || this._distortionOpen) queueMicrotask(() => this.querySelector(".guide-next")?.focus());
+    this._positionGuide();
+    window.requestAnimationFrame(() => this._positionGuide());
+  }
+
+  // Spotlight and card live outside the zoomed .chassis, so the tour stays legible in real
+  // pixels even when the panel is scaled down to 590x290.
+  _positionGuide() {
+    const layer = this.querySelector(".guide-layer");
+    const spot = this.querySelector(".guide-spot");
+    const card = this.querySelector(".guide-card");
+    const step = GUIDE_STEPS[this._guideStep];
+    if (!layer || !spot || !card || !step) return;
+    const host = this.getBoundingClientRect();
+    const width = this.offsetWidth || host.width || 1180;
+    const height = this.offsetHeight || host.height || 580;
+    const ratio = host.width && width ? host.width / width : 1;
+    let box = null;
+    (step.targets ?? []).forEach(selector => {
+      const node = this.querySelector(selector);
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      if (rect.width < 2 || rect.height < 2) return;
+      const local = {
+        left: (rect.left - host.left) / ratio,
+        top: (rect.top - host.top) / ratio,
+        right: (rect.right - host.left) / ratio,
+        bottom: (rect.bottom - host.top) / ratio,
+      };
+      box = box ? {
+        left: Math.min(box.left, local.left), top: Math.min(box.top, local.top),
+        right: Math.max(box.right, local.right), bottom: Math.max(box.bottom, local.bottom),
+      } : local;
+    });
+    const compact = width < 720;
+    this.classList.toggle("guide-compact", compact);
+    layer.classList.toggle("no-target", !box);
+    if (box) {
+      const pad = 5;
+      const left = clamp(box.left - pad, 2, width - 6);
+      const top = clamp(box.top - pad, 2, height - 6);
+      spot.style.left = `${Math.round(left)}px`;
+      spot.style.top = `${Math.round(top)}px`;
+      spot.style.width = `${Math.round(Math.min(width - left - 2, box.right - box.left + pad * 2))}px`;
+      spot.style.height = `${Math.round(Math.min(height - top - 2, box.bottom - box.top + pad * 2))}px`;
+    } else {
+      spot.style.left = "0px";
+      spot.style.top = "0px";
+      spot.style.width = "0px";
+      spot.style.height = "0px";
+    }
+    if (compact) { card.style.left = ""; card.style.top = ""; return; }
+    const cardWidth = card.offsetWidth || 330;
+    const cardHeight = card.offsetHeight || 150;
+    const centre = box ? box.left + (box.right - box.left) / 2 : width / 2;
+    const left = clamp(centre - cardWidth / 2, 10, Math.max(10, width - cardWidth - 10));
+    let top;
+    if (!box) top = Math.max(10, (height - cardHeight) / 2);
+    else if (box.bottom + 14 + cardHeight <= height - 8) top = box.bottom + 14;
+    else if (box.top - 14 - cardHeight >= 8) top = box.top - 14 - cardHeight;
+    else top = clamp(height - cardHeight - 10, 8, Math.max(8, height - cardHeight - 10));
+    card.style.left = `${Math.round(left)}px`;
+    card.style.top = `${Math.round(top)}px`;
+  }
+
   _wireMods() {
     this.querySelector(".mods-trigger")?.addEventListener("click", () => {
       this._setModsOpen(true);
@@ -1509,10 +1827,10 @@ class AcidifyPatchView extends HTMLElement {
       : "Circuit mods stock; open controls");
     if (trigger) trigger.dataset.tooltip = count > 0
       ? `Circuit mods — ${count} of 6 active. The lamp stays lit while the circuit is modified.`
-      : "Circuit mods — Devil Fish and x0x modifications. All off, so the instrument runs the stock 303 circuit.";
+      : "Circuit mods — six classic hardware modifications. All off, so the instrument runs the stock circuit.";
     const status = this.querySelector(".mods-status");
     if (status) {
-      status.textContent = count > 0 ? `${count} OF 6 ACTIVE · MODIFIED CIRCUIT` : "ALL STOCK · FACTORY 303 CIRCUIT";
+      status.textContent = count > 0 ? `${count} OF 6 ACTIVE · MODIFIED CIRCUIT` : "ALL STOCK · FACTORY CIRCUIT";
       status.classList.toggle("modified", count > 0);
     }
     const footerState = this.querySelector(".mods-footer-state");
@@ -1909,8 +2227,8 @@ class AcidifyPatchView extends HTMLElement {
     hint.textContent = held.length
       ? `KEYS  ${held.map(note => noteName(note).replace("#", "♯")).join(" · ")}`
       : this._phraseBankActive()
-        ? "PHRASE ERSETZT DAS PATTERN"
-        : "PATTERN GIBT GATE · ACCENT · SLIDE";
+        ? "PHRASE REPLACES THE PATTERN"
+        : "PATTERN SETS GATE · ACCENT · SLIDE";
   }
 
   // Bank-Phrase aktiv: die Phrase ersetzt Pitch UND Gate/Accent/Slide der
@@ -2597,6 +2915,7 @@ class AcidifyPatchView extends HTMLElement {
     zoom = Math.round(clamp(zoom, 0.4, 2.5) * 20) / 20;
     chassis.style.zoom = zoom;
     chassis.style.transform = "";
+    if (this._guideOpen) this._positionGuide();
   }
 
   getHTML() {
@@ -5889,15 +6208,121 @@ class AcidifyPatchView extends HTMLElement {
     box-shadow: inset 0 2px 5px rgba(0,0,0,.65), 0 1px 1px rgba(0,0,0,.5); }
   acidify-patch-view.theme-dark .deck-a .tips-power-row .brand-key .key-label { color: #c8cdcb; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
   acidify-patch-view.theme-dark .deck-a .tips-power-row .brand-key.bypassed .key-label { color: #ff5545; }
+
+  /* ---------- Guided tour: "?" beside the logo, spotlight on the real panel ---------- */
+  acidify-patch-view .deck-a .branding.brand-cell { position: relative; }
+  acidify-patch-view .guide-trigger { position: absolute; z-index: 12; right: 13px; top: 14px;
+    width: 24px; height: 22px; display: grid; place-items: center; padding: 0; cursor: pointer;
+    border-radius: 2px; border: 1px solid #1a1e1f; color: #1d2426;
+    font: 900 13px/1 'Arial Narrow',Arial,sans-serif; text-shadow: 0 1px 0 rgba(255,255,255,.55);
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 3px rgba(52,60,62,.3), 0 3px 3px rgba(0,0,0,.45); }
+  acidify-patch-view .guide-trigger:hover { color: #8c1a12; }
+  acidify-patch-view .guide-trigger[aria-expanded="true"] { color: #8c1a12; text-shadow: none;
+    background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%);
+    box-shadow: inset 0 2px 5px rgba(30,36,38,.55), 0 1px 1px rgba(0,0,0,.5); }
+  acidify-patch-view .guide-trigger:focus-visible { outline: 2px solid rgba(169,32,26,.82); outline-offset: 2px; }
+
+  acidify-patch-view .guide-layer { position: absolute; z-index: 200; inset: 0; }
+  acidify-patch-view .guide-layer[hidden] { display: none; }
+  acidify-patch-view .guide-spot { position: absolute; left: 0; top: 0; width: 0; height: 0; box-sizing: border-box;
+    border-radius: 4px; border: 2px solid #ff5540; pointer-events: none;
+    box-shadow: 0 0 0 9999px rgba(10,12,12,.62), 0 0 14px rgba(255,85,64,.55);
+    transition: left .16s ease, top .16s ease, width .16s ease, height .16s ease; }
+  acidify-patch-view .guide-layer.no-target .guide-spot { border-color: transparent; box-shadow: 0 0 0 9999px rgba(10,12,12,.62); }
+  acidify-patch-view .guide-card { position: absolute; left: 50%; top: 20%; width: 336px; box-sizing: border-box;
+    border-radius: 3px; overflow: hidden; border: 1px solid #6f7573; color: #15191a;
+    background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg,#eef0ef 0%,#dcdedd 46%,#c5c8c7 100%);
+    box-shadow: 0 22px 40px rgba(0,0,0,.55), inset 0 1px 0 #fff; }
+  acidify-patch-view .guide-card-head { height: 25px; box-sizing: border-box; padding: 0 7px 0 11px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    border-bottom: 1px solid rgba(45,50,49,.45); box-shadow: 0 1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .guide-title { color: #a51d17; font: 900 11px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.7px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
+  acidify-patch-view .guide-close { flex: 0 0 auto; width: 22px; height: 17px; display: grid; place-items: center; cursor: pointer;
+    border-radius: 2px; border: 1px solid #1a1e1f; color: #1d2426; font: 900 10px/1 'Arial Narrow',Arial,sans-serif;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4); }
+  acidify-patch-view .guide-body { padding: 9px 0 2px; }
+  acidify-patch-view .guide-points { margin: 0; padding: 0 12px 8px 25px; display: flex; flex-direction: column; gap: 5px;
+    color: #26302f; font: 400 11px/14px Arial,Helvetica,sans-serif; letter-spacing: .1px; text-wrap: pretty; }
+  acidify-patch-view .guide-points li::marker { color: #a51d17; }
+  acidify-patch-view .guide-points b { color: #8c1a12; font-weight: 900; }
+  acidify-patch-view .guide-note { margin: 0 12px 9px; padding: 6px 8px; border-radius: 2px;
+    border: 1px solid rgba(45,50,49,.35); background: rgba(255,255,255,.35);
+    color: #5d6768; font: 400 9px/12px Arial,Helvetica,sans-serif; }
+  acidify-patch-view.theme-dark .guide-note { border-color: rgba(255,255,255,.12); background: rgba(0,0,0,.22); color: #969ea0; }
+  acidify-patch-view.guide-compact .guide-note { margin: 0 9px 6px; font-size: 8px; line-height: 10px; }
+  acidify-patch-view .guide-rule { margin: 0 12px 9px; padding: 7px 9px; border-radius: 2px; border: 1px solid #0a0706;
+    background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(0,0,0,.09) 3px 4px), linear-gradient(180deg,#251614,#130b09);
+    box-shadow: inset 0 3px 6px rgba(0,0,0,.75); color: #ff6756; font: 11px/15px 'Courier New',monospace;
+    text-shadow: 0 0 6px rgba(255,57,37,.45); }
+  acidify-patch-view .guide-table { margin: 0 12px 9px; display: grid; grid-template-columns: 96px 1fr; gap: 1px;
+    border: 1px solid rgba(45,50,49,.45); border-radius: 2px; overflow: hidden; background: rgba(45,50,49,.4); }
+  acidify-patch-view .guide-table span { padding: 4px 6px; background: linear-gradient(180deg,#e9ebea,#d8dbda);
+    color: #26302f; font: 400 10px/13px Arial,Helvetica,sans-serif; }
+  acidify-patch-view .guide-table span.head { background: linear-gradient(180deg,#c2c6c4,#b0b4b2); color: #1d2426;
+    font: 900 9px/13px 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px; }
+  acidify-patch-view .guide-table span b { color: #8c1a12; font-weight: 900; }
+  acidify-patch-view .guide-table span.key { color: #1d2426; font-weight: 700; }
+  acidify-patch-view .guide-foot { height: 29px; box-sizing: border-box; padding: 0 8px; display: flex; align-items: center;
+    justify-content: space-between; gap: 8px; border-top: 1px solid rgba(45,50,49,.35); box-shadow: 0 -1px 0 rgba(255,255,255,.6); }
+  acidify-patch-view .guide-nav { width: 72px; height: 20px; display: grid; place-items: center; cursor: pointer;
+    border-radius: 2px; border: 1px solid #1a1e1f; color: #1d2426; font: 900 8px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.1px;
+    background: linear-gradient(102deg,#fdfefe 0 18%,#dfe4e4 34%,#aeb6b8 52%,#eaeeee 68%,#c3cacb 86%,#8f9799 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 2px rgba(0,0,0,.4); }
+  acidify-patch-view .guide-nav:active { background: linear-gradient(102deg,#c6cccd 0 18%,#aeb5b7 34%,#8a9295 52%,#bcc3c4 68%,#99a1a3 86%,#727b7d 100%); box-shadow: inset 0 2px 5px rgba(30,36,38,.55); }
+  acidify-patch-view .guide-nav[disabled] { opacity: .4; cursor: default; }
+  acidify-patch-view .guide-count { color: #5d6768; font: 900 9px/1 'Arial Narrow',Arial,sans-serif; letter-spacing: 1.3px; }
+  acidify-patch-view .guide-close:focus-visible, acidify-patch-view .guide-nav:focus-visible {
+    outline: 2px solid rgba(169,32,26,.82); outline-offset: 2px; }
+  /* 590x290: the card docks to the bottom edge and keeps real pixel sizes. */
+  acidify-patch-view.guide-compact .guide-card { left: 6px; right: 6px; top: auto; bottom: 6px; width: auto; }
+  acidify-patch-view.guide-compact .guide-card-head { height: 22px; }
+  acidify-patch-view.guide-compact .guide-title { font-size: 10px; letter-spacing: 1.2px; }
+  acidify-patch-view.guide-compact .guide-body { padding: 7px 0 1px; }
+  acidify-patch-view.guide-compact .guide-points { gap: 3px; padding: 0 9px 6px 21px; font-size: 10px; line-height: 12px; }
+  acidify-patch-view.guide-compact .guide-points li:nth-child(n+4) { display: none; }
+  acidify-patch-view.guide-compact .guide-rule { margin: 0 9px 7px; padding: 5px 7px; font-size: 10px; line-height: 13px; }
+  acidify-patch-view.guide-compact .guide-table { margin: 0 9px 7px; grid-template-columns: 84px 1fr; }
+  acidify-patch-view.guide-compact .guide-table span { padding: 3px 5px; font-size: 9px; line-height: 11px; }
+  acidify-patch-view.guide-compact .guide-foot { height: 25px; }
+
+  acidify-patch-view.theme-dark .guide-trigger { color: #c8cdcb; text-shadow: 0 1px 0 rgba(0,0,0,.6);
+    background: linear-gradient(102deg,#5a5f61 0 18%,#4c5153 34%,#3d4245 52%,#4e5355 68%,#454a4c 86%,#33383a 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -2px 3px rgba(0,0,0,.45), 0 3px 3px rgba(0,0,0,.55); }
+  acidify-patch-view.theme-dark .guide-trigger[aria-expanded="true"] { color: #ff5545;
+    background: linear-gradient(102deg,#393d3f 0 18%,#313538 34%,#26292b 52%,#33373a 68%,#2b2f31 86%,#1e2123 100%);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.65), 0 1px 1px rgba(0,0,0,.5); }
+  acidify-patch-view.theme-dark .guide-card { border-color: #171a1b; color: #c3c8ca;
+    background-image: repeating-linear-gradient(93deg, rgba(255,255,255,.03) 0 1px, rgba(0,0,0,.06) 1px 2px, transparent 2px 5px),
+      linear-gradient(180deg,#42464a 0%,#373b3e 46%,#2a2e30 100%);
+    box-shadow: 0 22px 40px rgba(0,0,0,.72), inset 0 1px 0 rgba(255,255,255,.1); }
+  acidify-patch-view.theme-dark .guide-card-head { border-bottom-color: rgba(0,0,0,.6); box-shadow: 0 1px 0 rgba(255,255,255,.07); }
+  acidify-patch-view.theme-dark .guide-title { color: #ff5545; text-shadow: 0 1px 0 rgba(0,0,0,.7); }
+  acidify-patch-view.theme-dark .guide-points { color: #c3c8ca; }
+  acidify-patch-view.theme-dark .guide-points b { color: #ff8a76; }
+  acidify-patch-view.theme-dark .guide-table { border-color: rgba(0,0,0,.6); background: rgba(0,0,0,.5); }
+  acidify-patch-view.theme-dark .guide-table span { background: linear-gradient(180deg,#3e4245,#34383a); color: #c3c8ca; }
+  acidify-patch-view.theme-dark .guide-table span.head { background: linear-gradient(180deg,#2d3133,#25292b); color: #e2e6e7; }
+  acidify-patch-view.theme-dark .guide-table span b { color: #ff8a76; }
+  acidify-patch-view.theme-dark .guide-table span.key { color: #e2e6e7; }
+  acidify-patch-view.theme-dark .guide-foot { border-top-color: rgba(255,255,255,.1); }
+  acidify-patch-view.theme-dark .guide-count { color: #969ea0; }
+  acidify-patch-view.theme-dark .guide-close,
+  acidify-patch-view.theme-dark .guide-nav { color: #c8cdcb;
+    background: linear-gradient(102deg,#5a5f61 0 18%,#4c5153 34%,#3d4245 52%,#4e5355 68%,#454a4c 86%,#33383a 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 2px 2px rgba(0,0,0,.5); }
 </style>
 <div class="chassis">
   <div class="panel">
     <section class="top-strip deck-a">
       <header class="branding brand-cell">
+        <button class="guide-trigger" type="button" aria-expanded="false" aria-haspopup="dialog"
+          aria-label="Open the guided tour" data-tooltip="Guided tour: walks through the panel and highlights the control it is talking about. Arrow keys page, Escape closes.">?</button>
         <div>
           <div class="brand"><span class="acid">ACID</span>IFY</div>
           <div class="brand-rule"></div>
-          <div class="model">AC-303 BASSLINE SYNTHESIZER</div>
+          <div class="model">ACID BASSLINE INSTRUMENT</div>
           <div class="computer">MONOPHONIC · 4× MODELLED CORE</div>
         </div>
         <div class="brand-foot">
@@ -5907,7 +6332,7 @@ class AcidifyPatchView extends HTMLElement {
             <button class="brand-key power-cell" type="button" aria-pressed="true"
               data-tooltip="Bypass the whole instrument (dry signal passes through)."><i class="key-led power-led lit"></i><span class="key-label power-label">POWER</span></button>
           </div>
-          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.17.4</span></div>
+          <div class="brand-legal"><span>COMPUTER CONTROLLED</span><span class="brand-version">v2.18.0</span></div>
         </div>
       </header>
       <div class="osc-cell">
@@ -6070,7 +6495,7 @@ class AcidifyPatchView extends HTMLElement {
             <div class="control distortion-types" data-param="param46" data-endpoint-id="param46"
               data-min="0" data-max="2" data-step="1" data-init="0" data-control="buttons">
               <button data-value="0" type="button"><strong>PURE</strong><small>SUBTLE</small></button>
-              <button data-value="1" type="button"><strong>MACKIE</strong><small>1202</small></button>
+              <button data-value="1" type="button"><strong>DESK</strong><small>MIXER</small></button>
               <button data-value="2" type="button"><strong>PHONO</strong><small>RIAA</small></button>
             </div>
           </div>
@@ -6087,7 +6512,7 @@ class AcidifyPatchView extends HTMLElement {
         <header class="mods-overlay-head">
           <div>
             <strong id="mods-title">CIRCUIT MODS</strong>
-            <span class="mods-status" role="status">STOCK 303</span>
+            <span class="mods-status" role="status">ALL STOCK</span>
           </div>
           <button class="mods-close" type="button" aria-label="Close circuit mods">×</button>
         </header>
@@ -6159,7 +6584,7 @@ class AcidifyPatchView extends HTMLElement {
             <span class="mod-cell-desc">VCA SOFT ATTACK · ENV + ACCENT</span>
           </div>
         </div>
-        <footer><span>PARAM 51–59 · DEVIL FISH / X0X</span><span class="mods-footer-state">DEFAULTS = STOCK</span></footer>
+        <footer><span>PARAM 51–59 · CIRCUIT MODIFICATIONS</span><span class="mods-footer-state">DEFAULTS = STOCK</span></footer>
       </section>
     </div>
 
@@ -6187,7 +6612,7 @@ class AcidifyPatchView extends HTMLElement {
           <strong class="edit-readout">--</strong>
           <span class="octave-indicator"></span>
         </div>
-        <div class="keyboard"><div class="keyboard-head"><span class="keyboard-title">KEYBOARD</span><span class="keyboard-hint">TONHÖHE DES GEWÄHLTEN STEPS</span></div><div class="keyboard-keys">${pitchKeys}</div></div>
+        <div class="keyboard"><div class="keyboard-head"><span class="keyboard-title">KEYBOARD</span><span class="keyboard-hint">PITCH OF THE SELECTED STEP</span></div><div class="keyboard-keys">${pitchKeys}</div></div>
         <div class="time-controls">
           <button class="function-button" data-transpose="-12" title="Transpose the selected step down one octave."><strong>OCT −</strong><small>TRANSPOSE</small></button>
           <button class="function-button" data-transpose="12" title="Transpose the selected step up one octave."><strong>OCT +</strong><small>TRANSPOSE</small></button>
@@ -6205,7 +6630,7 @@ class AcidifyPatchView extends HTMLElement {
             data-tooltip="Writes what the arp is playing into the 16-step pattern: a bank phrase is copied exactly (tiled to 16 steps, normalized to the root); a figure freezes the last note played on each step. Undo works as usual.">
             <strong>→ PATTERN</strong><small>CAPTURE</small>
           </button>
-          <span class="octave-indicator arp-hint">PATTERN GIBT GATE · ACCENT · SLIDE</span>
+          <span class="octave-indicator arp-hint">PATTERN SETS GATE · ACCENT · SLIDE</span>
         </div>
         <div class="arp-direction-cell">
           <span class="edit-caption">DIRECTION</span>
@@ -6321,7 +6746,7 @@ class AcidifyPatchView extends HTMLElement {
               </div></div>
           </div>
           <span class="studio-toast" role="status"></span>
-          <div class="studio-hint">RECHTSKLICK AUF STEP · TONHÖHE · SHIFT FÜR FEINWERTE</div>
+          <div class="studio-hint">RIGHT-CLICK A STEP · PITCH · SHIFT FOR FINE VALUES</div>
         </div>
       </div>
     </section>
@@ -6342,6 +6767,21 @@ class AcidifyPatchView extends HTMLElement {
     <footer class="pitch-menu-foot">25 SEMITONES · THREE VISIBLE OCTAVE LEVELS</footer>
   </section>
   <div class="tooltip-bubble" role="tooltip" hidden></div>
+</div>
+<div class="guide-layer" hidden aria-hidden="true">
+  <div class="guide-spot" aria-hidden="true"></div>
+  <section class="guide-card" role="dialog" aria-modal="false" aria-labelledby="guide-title">
+    <header class="guide-card-head">
+      <strong class="guide-title" id="guide-title">PANEL OVERVIEW</strong>
+      <button class="guide-close" type="button" aria-label="Close the guided tour">×</button>
+    </header>
+    <div class="guide-body"></div>
+    <footer class="guide-foot">
+      <button class="guide-nav guide-prev" type="button">‹ BACK</button>
+      <span class="guide-count" role="status">1 / ${GUIDE_STEPS.length}</span>
+      <button class="guide-nav guide-next" type="button">NEXT ›</button>
+    </footer>
+  </section>
 </div>`;
   }
 }

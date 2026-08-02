@@ -6,6 +6,47 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.18.0] - 2026-08-02
+
+### Added
+
+- **Eingebaute Panel-Tour:** Eine „?"-Taste am rechten Rand der
+  Logo-Zelle öffnet eine 14-seitige Tour entlang der Handbuch-Kapitel
+  (UI-Umbau aus dem Upload des Projektinhabers übernommen und
+  integriert). Spotlight statt Screenshots: Jede Seite schneidet das
+  echte Bedienelement aus dem Scrim und rahmt es. Seite 2 erklärt den
+  CLASSIC/STUDIO/ARP-Schalter; die Tour schaltet die Ansichten selbst
+  um, öffnet die Mods- und Distortion-Overlays und stellt beim
+  Schließen den Ausgangszustand wieder her. DAW-Transport-Regel und
+  MIDI-Regel-Tabelle als hervorgehobene Seiten. Navigation: Weiter/
+  Zurück, Pfeiltasten, PageUp/PageDown, Home, Escape/X/Scrim schließen.
+  Kein neuer DSP-Parameter (lokaler UI-Zustand wie der Dark-Mode);
+  ACIDIFYDSP.cmajor und param1..param66 unangetastet.
+
+### Changed
+
+- **Marken-Hygiene in der GUI:** Fremde Produktnamen aus allen
+  sichtbaren Labels entfernt (Modellzeile „ACID BASSLINE INSTRUMENT",
+  Distortion-Charakter „DESK/MIXER" statt „MACKIE/1202", Mods-Status
+  und -Footer, Tooltips); die letzte Tour-Seite trägt einen
+  Trademark-Disclaimer. tools/ui_smoke_test.mjs wacht darüber
+  (gerenderte UI darf MACKIE, AC-303, Devil Fish, FACTORY 303,
+  303-CLASS nicht enthalten). Manifest-description neutral gefasst.
+- Die vier verbliebenen deutschen UI-Strings sind jetzt Englisch
+  (Keyboard-, Arp-, Phrase- und Studio-Hinweis).
+- **Handbuch nachgeführt:** MANUAL.md/manual.html auf die neuen Labels
+  angeglichen (DESK, neutrale Mod-Beschreibungen mit den vom
+  Projektinhaber gewählten Formulierungen), „?"-Taste dokumentiert
+  (Zonen-Tabelle + Gesten-Tabelle), alle zwölf Screenshots aus der
+  neuen UI neu geschossen, PDF neu gebaut (14 Seiten).
+- Die Tour-Karte liegt außerhalb des gezoomten Chassis und bleibt bei
+  590×290 lesbar.
+
+### Unchanged
+
+- Kein neuer DSP-Parameter, ACIDIFYDSP.cmajor unangetastet,
+  Serien-Smoke bit-identisch (peak=0.50919, rms=0.01821).
+
 ## [2.17.4] - 2026-08-02
 
 ### Added (Dokumentation — kein DSP/UI-Eingriff)
@@ -1884,6 +1925,7 @@ vollständigen Repository-Commit. `0.2.0` führte den modernen Studio-Workflow
 ein. Sie werden hier ausdrücklich als historische Vorstufen festgehalten,
 besitzen aber keinen eigenen Commit-Anker im Repository.
 
+[2.17.4]: https://github.com/ClarkParker/ACIDIFY/commit/faa9710e828736ac6a28f3f2a9b0850fc50fd52b
 [2.17.3]: https://github.com/ClarkParker/ACIDIFY/commit/aa9f99129abd0ba975aac45cc8fcb95f72b65a66
 [2.17.2]: https://github.com/ClarkParker/ACIDIFY/commit/ffd89e404624557dc0b62f1902ae281797fe863d
 [2.17.1]: https://github.com/ClarkParker/ACIDIFY/commit/4ee46565ee5712b0bfc56b4754de08a23ce01eeb
