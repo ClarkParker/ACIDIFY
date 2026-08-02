@@ -6,6 +6,37 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.17.4] - 2026-08-02
+
+### Added (Dokumentation — kein DSP/UI-Eingriff)
+
+- **Druckfertiges PDF-Handbuch** `docs/manual/ACIDIFY_Manual.pdf`:
+  A4 hochkant, 14 vorpaginierte Seiten, gesetzt aus dem unveränderten
+  Wortlaut von `docs/manual/MANUAL.md`. Optik nach der Silver-Series-
+  Oberfläche des Plugins (Alu-Verläufe und Hairlines der Chassis-Token,
+  LED-Displays in Courier auf `#160c0a` mit `#ff6756`, Akzentrot
+  `#b52921`, Impact-Wortmarke) — alle Werte aus `ACIDIFYUI.js`
+  übernommen, keine externen Webfonts oder CDNs.
+  - Titelseite mit Version aus dem Manifest und Gesamtansicht,
+    Inhaltsverzeichnis mit Seitenzahlen, Kopfzeile mit Kapitelname,
+    Fußzeile mit LED-Seitenzahl.
+  - **Nummerierte Bildmarker**: rote Ziffern liegen an der gemeinten
+    Stelle im Screenshot, dieselbe Ziffer steht in der zugehörigen
+    Tabellenzeile (Panel-Zonen, Klangregler, Grid/Play/Swing/Length/
+    Root, Step-Reihe, Classic-Editor, Studio-Lanes und Werkzeuggruppen,
+    Arp-Bedienelemente, sechs Circuit Mods, Distortion, TIPS/DARK/POWER).
+  - Alle Markdown-Tabellen als echte Tabellen gesetzt; die beiden
+    Support-Dauerbrenner („MIDI Input: What Plays When" und der
+    DAW-Transport-Hinweis) als hervorgehobene LED-Boxen.
+  - Screenshots über die volle Satzspiegelbreite (170 mm).
+- **`tools/build_manual_pdf.mjs`**: baut das PDF reproduzierbar aus
+  `docs/manual/manual.html` mit headless Chromium (Playwright,
+  Launch-Flags wie `tools/ui_smoke_test.mjs`, `preferCSSPageSize`).
+  Bricht ab, wenn ein Screenshot fehlt, die Seitenzahl von der im
+  Markup abweicht oder die Seite einen Rendering-Fehler wirft.
+  (Beide Dateien aus dem Upload des Projektinhabers übernommen,
+  Wortlaut-Abgleich und PDF-Kontrolle siehe VALIDATION.)
+
 ## [2.17.3] - 2026-08-01
 
 ### Added (Dokumentation — kein DSP/UI-Eingriff)

@@ -1,3 +1,21 @@
+# Validierung 2.17.4
+
+## 2.17.4
+
+Doku-Release (PDF-Satz des Handbuchs, Dateien aus dem Upload des
+Projektinhabers übernommen), kein DSP/UI-Eingriff.
+docs/manual/manual.html gegen docs/manual/MANUAL.md abgeglichen
+(Stichprobe aller zehn Kapitel: identischer Wortlaut, alle Tabellen
+als HTML-Tabellen, keine ergänzten Verhaltensaussagen). PDF-Build
+lokal ausgeführt (tools/build_manual_pdf.mjs, 14 Seiten, 3,19 MB),
+Seiten 1–6 visuell kontrolliert: Titel, Inhaltsverzeichnis, Kapitel
+mit nummerierten Bildmarkern, MIDI/DAW-LED-Boxen, keine
+abgeschnittenen Tabellen. Serien-Smoke bit-identisch Peak 0,50919 /
+RMS 0,01821; ui_smoke grün (Brand-Span 2.17.4); check_version
+konsistent.
+
+---
+
 # Validierung 2.17.3
 
 ## 2.17.3
