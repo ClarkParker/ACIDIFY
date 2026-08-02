@@ -640,7 +640,7 @@ try {
     pendingEchoes: node._recentSends.length,
   }));
   if (distortionState.enabled !== 1 || distortionState.type !== 1
-      || distortionState.status !== "MACKIE ACTIVE"
+      || distortionState.status !== "DESK ACTIVE"
       || !distortionState.triggerActive || distortionState.pendingEchoes !== 0) {
     throw new Error(`Distortion controls failed: ${JSON.stringify(distortionState)}`);
   }
@@ -751,7 +751,7 @@ try {
   await page.locator('.control[data-param="param53"] button').click();
   await page.waitForFunction(() => {
     const node = document.querySelector("acidify-patch-view");
-    return node && node.querySelector(".mods-status").textContent === "ALL STOCK · FACTORY 303 CIRCUIT";
+    return node && node.querySelector(".mods-status").textContent === "ALL STOCK · FACTORY CIRCUIT";
   });
   await page.keyboard.press("Escape");
   if (await page.locator(".mods-overlay").isVisible()
@@ -1008,7 +1008,7 @@ try {
   });
   if (!phraseLock.unchanged || phraseLock.pitchMenuOpen || !phraseLock.selectionHeld
       || !phraseLock.tooltip.includes("bypassed and locked")
-      || phraseLock.hint !== "PHRASE ERSETZT DAS PATTERN" || !phraseLock.hintFits
+      || phraseLock.hint !== "PHRASE REPLACES THE PATTERN" || !phraseLock.hintFits
       || !phraseLock.phraseClass || !phraseLock.distinctFace || !phraseLock.amberLed) {
     throw new Error(`Phrase-bank lock failed: ${JSON.stringify(phraseLock)}`);
   }
@@ -1031,7 +1031,7 @@ try {
       edited: (flagsBefore & 1) === 1 && (node._stepSnapshot()[2].flags & 1) === 0,
     };
   });
-  if (phraseZero.dimmed || phraseZero.hint !== "PATTERN GIBT GATE · ACCENT · SLIDE"
+  if (phraseZero.dimmed || phraseZero.hint !== "PATTERN SETS GATE · ACCENT · SLIDE"
       || !phraseZero.tooltip.includes("00 PATTERN") || !phraseZero.edited) {
     throw new Error(`Phrase 00 PATTERN unlock failed: ${JSON.stringify(phraseZero)}`);
   }
@@ -1470,6 +1470,237 @@ try {
     throw new Error(`Reconnect lifecycle failed: ${JSON.stringify(reconnect)}`);
   }
 
+  // ---- 2.18.0: guided tour ("?" beside the logo) ----
+  const guideTrigger = page.locator(".guide-trigger");
+  if ((await guideTrigger.count()) !== 1) throw new Error("Expected exactly one guide trigger");
+  const guidePlacement = await patchView.evaluate(node => {
+    const cell = node.querySelector(".brand-cell").getBoundingClientRect();
+    const key = node.querySelector(".guide-trigger").getBoundingClientRect();
+    const logo = node.querySelector(".brand").getBoundingClientRect();
+    return {
+      insideCell: key.left >= cell.left && key.right <= cell.right + 0.5 && key.top >= cell.top - 0.5,
+      rightEdgeGap: +(cell.right - key.right).toFixed(1),
+      rightHalf: key.left >= cell.left + cell.width / 2,
+      clearOfLogoText: key.left >= logo.left + logo.width * 0.62,
+      onLogoRow: key.top >= logo.top - 8 && key.top < logo.bottom,
+      hidden: node.querySelector(".guide-layer").hidden,
+      expanded: node.querySelector(".guide-trigger").getAttribute("aria-expanded"),
+      titles: node.querySelectorAll(".guide-layer [title], .guide-trigger[title]").length,
+    };
+  });
+  if (!guidePlacement.insideCell || !guidePlacement.rightHalf || !guidePlacement.clearOfLogoText
+      || !guidePlacement.onLogoRow
+      || guidePlacement.rightEdgeGap < 4 || guidePlacement.rightEdgeGap > 26
+      || !guidePlacement.hidden || guidePlacement.expanded !== "false" || guidePlacement.titles !== 0) {
+    throw new Error(`Guide trigger placement failed: ${JSON.stringify(guidePlacement)}`);
+  }
+
+  await guideTrigger.click();
+  const guideOpen = await patchView.evaluate(node => ({
+    visible: !node.querySelector(".guide-layer").hidden,
+    expanded: node.querySelector(".guide-trigger").getAttribute("aria-expanded"),
+    count: node.querySelector(".guide-count").textContent,
+    title: node.querySelector(".guide-title").textContent,
+    points: node.querySelectorAll(".guide-points li").length,
+    prevDisabled: node.querySelector(".guide-prev").disabled,
+    spotHidden: node.querySelector(".guide-layer").classList.contains("no-target"),
+    steps: node.constructor.name === "AcidifyPatchView",
+  }));
+  if (!guideOpen.visible || guideOpen.expanded !== "true" || guideOpen.count !== "1 / 14"
+      || guideOpen.title !== "PANEL OVERVIEW" || guideOpen.points < 3 || !guideOpen.prevDisabled
+      || !guideOpen.spotHidden) {
+    throw new Error(`Guide did not open: ${JSON.stringify(guideOpen)}`);
+  }
+
+  await page.locator(".guide-next").click();
+  await page.waitForTimeout(300);
+  const guideSecond = await patchView.evaluate(node => {
+    const spot = node.querySelector(".guide-spot").getBoundingClientRect();
+    const target = node.querySelector(".studio-toggle").getBoundingClientRect();
+    return {
+      count: node.querySelector(".guide-count").textContent,
+      title: node.querySelector(".guide-title").textContent,
+      prevDisabled: node.querySelector(".guide-prev").disabled,
+      spotCoversTarget: spot.left <= target.left + 1 && spot.right >= target.right - 1
+        && spot.top <= target.top + 1 && spot.bottom >= target.bottom - 1,
+    };
+  });
+  if (guideSecond.count !== "2 / 14" || guideSecond.title !== "EDITORS · CLASSIC / STUDIO / ARP"
+      || guideSecond.prevDisabled || !guideSecond.spotCoversTarget) {
+    throw new Error(`Guide next/spotlight failed: ${JSON.stringify(guideSecond)}`);
+  }
+
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  const guideArrows = await patchView.evaluate(node => node.querySelector(".guide-count").textContent);
+  await page.keyboard.press("ArrowLeft");
+  const guideBack = await patchView.evaluate(node => node.querySelector(".guide-count").textContent);
+  if (guideArrows !== "4 / 14" || guideBack !== "3 / 14") {
+    throw new Error(`Guide arrow-key paging failed: ${guideArrows} -> ${guideBack}`);
+  }
+
+  // The DAW rule and the MIDI table are the two mandatory pages.
+  await page.waitForTimeout(220);
+  const guideFacts = await patchView.evaluate(node => {
+    node._guideStep = 5;
+    node._renderGuide();
+    const rule = node.querySelector(".guide-rule")?.textContent ?? "";
+    node._guideStep = 7;
+    node._renderGuide();
+    const table = [...node.querySelectorAll(".guide-table span")].map(cell => cell.textContent);
+    return { rule, tableCells: table.length, table: table.join(" | ") };
+  });
+  if (!guideFacts.rule.includes("In DAW mode the sequencer starts and stops with your DAW's transport")
+      || guideFacts.tableCells !== 10
+      || !guideFacts.table.includes("CC 120 / CC 123")
+      || !guideFacts.table.includes("ignored")) {
+    throw new Error(`Guide rule/table page failed: ${JSON.stringify(guideFacts)}`);
+  }
+
+  // Pages that need a view or an overlay switch it on and hand the entry state back.
+  const guideDrivesUi = await patchView.evaluate(node => {
+    node._guideStep = 10;
+    node._renderGuide();
+    const arp = node._arpView;
+    node._guideStep = 11;
+    node._renderGuide();
+    const mods = node._modsOpen && !node.querySelector(".mods-scrim").hidden;
+    node._guideStep = 12;
+    node._renderGuide();
+    return { arp, mods, distortion: node._distortionOpen, modsClosedAgain: !node._modsOpen };
+  });
+  if (!guideDrivesUi.arp || !guideDrivesUi.mods || !guideDrivesUi.distortion || !guideDrivesUi.modsClosedAgain) {
+    throw new Error(`Guide did not drive the panel: ${JSON.stringify(guideDrivesUi)}`);
+  }
+
+  const guideExplainsSwitch = await patchView.evaluate(node => {
+    const pages = [];
+    for (let index = 0; index < 14; index += 1) {
+      node._guideStep = index;
+      node._renderGuide();
+      pages.push(node.querySelector(".guide-title").textContent + " :: " + node.querySelector(".guide-body").innerHTML);
+    }
+    node._guideStep = 0;
+    node._renderGuide();
+    return {
+      switchPage: pages.findIndex(text => text.startsWith("EDITORS")),
+      mentionsSwitch: pages.filter(text => text.includes("editor switch") || text.includes("editor - ")).length,
+      namesM: pages.filter(text => text.includes("press <b>M</b>") || text.includes("or <b>M</b>")).length,
+    };
+  });
+  if (guideExplainsSwitch.switchPage !== 1 || guideExplainsSwitch.mentionsSwitch < 4
+      || guideExplainsSwitch.namesM < 4) {
+    throw new Error(`Guide does not explain the editor switch: ${JSON.stringify(guideExplainsSwitch)}`);
+  }
+
+  await page.keyboard.press("Escape");
+  const guideClosed = await patchView.evaluate(node => ({
+    hidden: node.querySelector(".guide-layer").hidden,
+    expanded: node.querySelector(".guide-trigger").getAttribute("aria-expanded"),
+    view: node.querySelector(".studio-toggle").dataset.view,
+    distortion: node._distortionOpen,
+    mods: node._modsOpen,
+  }));
+  if (!guideClosed.hidden || guideClosed.expanded !== "false" || guideClosed.view !== "classic"
+      || guideClosed.distortion || guideClosed.mods) {
+    throw new Error(`Guide Escape/restore failed: ${JSON.stringify(guideClosed)}`);
+  }
+
+  await guideTrigger.click();
+  // Der Outside-Click-Listener wird beim Oeffnen verzoegert angehaengt,
+  // damit der Oeffnungsklick nicht sofort wieder schliesst — kurz warten.
+  await page.waitForTimeout(250);
+  // Klickpunkt dynamisch bestimmen: im Guide-Layer, aber ausserhalb der
+  // Karte — feste Koordinaten brechen, sobald der Block in einer anderen
+  // Viewport-Groesse laeuft.
+  const outsidePoint = await patchView.evaluate(node => {
+    const layer = node.querySelector(".guide-layer").getBoundingClientRect();
+    const card = node.querySelector(".guide-card").getBoundingClientRect();
+    const candidates = [
+      { x: layer.right - 8, y: layer.top + 8 },
+      { x: layer.left + 8, y: layer.top + 8 },
+      { x: layer.right - 8, y: layer.bottom - 8 },
+      { x: layer.left + 8, y: layer.bottom - 8 },
+    ];
+    return candidates.find(pt => pt.x < card.left || pt.x > card.right
+                                 || pt.y < card.top || pt.y > card.bottom);
+  });
+  if (!outsidePoint) throw new Error("No point outside the guide card found");
+  await page.mouse.click(outsidePoint.x, outsidePoint.y);
+  await page.waitForTimeout(150);
+  if (!(await patchView.evaluate(node => node.querySelector(".guide-layer").hidden))) {
+    throw new Error("Guide did not close on a click outside the card");
+  }
+
+  // Small target size: the card docks to the bottom and stays legible in real pixels.
+  await page.setViewportSize({ width: 590, height: 290 });
+  await page.waitForTimeout(320);
+  await guideTrigger.click();
+  const guideCompact = await patchView.evaluate(node => {
+    const card = node.querySelector(".guide-card").getBoundingClientRect();
+    const host = node.getBoundingClientRect();
+    const points = getComputedStyle(node.querySelector(".guide-points"));
+    return {
+      compact: node.classList.contains("guide-compact"),
+      insideHost: card.left >= host.left - 0.5 && card.right <= host.right + 0.5 && card.bottom <= host.bottom + 0.5,
+      width: +card.width.toFixed(1),
+      fontPx: parseFloat(points.fontSize),
+      lineHeight: parseFloat(points.lineHeight),
+    };
+  });
+  if (!guideCompact.compact || !guideCompact.insideHost || guideCompact.width < 380
+      || guideCompact.fontPx < 9 || guideCompact.lineHeight < 11) {
+    throw new Error(`Guide compact layout failed: ${JSON.stringify(guideCompact)}`);
+  }
+  await page.keyboard.press("Escape");
+  await page.setViewportSize({ width: 1180, height: 580 });
+  await page.waitForTimeout(320);
+
+  // Both themes: the card follows the anthracite finish.
+  const guideThemes = await patchView.evaluate(node => {
+    node._setGuideOpen(true);
+    const silver = getComputedStyle(node.querySelector(".guide-card")).backgroundImage;
+    node.querySelector(".theme-toggle").click();
+    const dark = getComputedStyle(node.querySelector(".guide-card")).backgroundImage;
+    const title = getComputedStyle(node.querySelector(".guide-title")).color;
+    node.querySelector(".theme-toggle").click();
+    node._setGuideOpen(false);
+    return { silver, dark, title, differs: silver !== dark };
+  });
+  if (!guideThemes.differs || !guideThemes.dark.includes("rgb(66, 70, 74)")
+      || guideThemes.title !== "rgb(255, 85, 69)") {
+    throw new Error(`Guide dark theme failed: ${JSON.stringify(guideThemes)}`);
+  }
+
+  // Regression: no third-party product names as UI labels (trademark hygiene).
+  const brandLeftovers = await patchView.evaluate(node => {
+    const haystack = node.innerHTML;
+    return ["MACKIE", "Mackie", "AC-303", "Devil Fish", "DEVIL FISH", "FACTORY 303", "303-CLASS"]
+      .filter(word => haystack.includes(word));
+  });
+  if (brandLeftovers.length) {
+    throw new Error(`Third-party marks still in the UI: ${brandLeftovers.join(", ")}`);
+  }
+  const brandCopy = await patchView.evaluate(node => ({
+    model: node.querySelector(".model").textContent,
+    distortion: [...node.querySelectorAll(".distortion-types button strong")].map(n => n.textContent).join("/"),
+    modsFooter: node.querySelector(".mods-overlay footer span").textContent,
+  }));
+  if (brandCopy.model !== "ACID BASSLINE INSTRUMENT" || brandCopy.distortion !== "PURE/DESK/PHONO"
+      || brandCopy.modsFooter.includes("DEVIL")) {
+    throw new Error(`Neutral product copy failed: ${JSON.stringify(brandCopy)}`);
+  }
+
+  // Regression: no German strings left in the UI.
+  const germanLeftovers = await patchView.evaluate(node => {
+    const haystack = node.innerHTML;
+    return ["TONHÖHE", "GEWÄHLTEN", "RECHTSKLICK", "GIBT GATE", "FEINWERTE", "ERSETZT"]
+      .filter(word => haystack.includes(word));
+  });
+  if (germanLeftovers.length) {
+    throw new Error(`German strings still in the UI: ${germanLeftovers.join(", ")}`);
+  }
+
   if (pageErrors.length) throw new Error(`UI page error: ${pageErrors.join("; ")}`);
   console.log(JSON.stringify({
     ok: true,
@@ -1527,6 +1758,21 @@ try {
       fineTempo,
     },
     tooltips: { on: tooltipOn, off: tooltipOff },
+    guide: {
+      placement: guidePlacement,
+      open: guideOpen,
+      second: guideSecond,
+      paging: { arrows: guideArrows, back: guideBack },
+      facts: guideFacts,
+      drivesUi: guideDrivesUi,
+      closed: guideClosed,
+      compact: guideCompact,
+      explainsSwitch: guideExplainsSwitch,
+      themes: guideThemes,
+      germanLeftovers: germanLeftovers.length,
+      brandLeftovers: brandLeftovers.length,
+      brandCopy,
+    },
     scaledBounds: bounds,
     reconnect,
   }));

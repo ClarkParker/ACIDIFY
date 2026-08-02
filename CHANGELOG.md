@@ -6,6 +6,96 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.18.0] - 2026-08-02
+
+### Added
+
+- **Eingebaute Panel-Tour:** Eine „?"-Taste am rechten Rand der
+  Logo-Zelle öffnet eine 14-seitige Tour entlang der Handbuch-Kapitel
+  (UI-Umbau aus dem Upload des Projektinhabers übernommen und
+  integriert). Spotlight statt Screenshots: Jede Seite schneidet das
+  echte Bedienelement aus dem Scrim und rahmt es. Seite 2 erklärt den
+  CLASSIC/STUDIO/ARP-Schalter; die Tour schaltet die Ansichten selbst
+  um, öffnet die Mods- und Distortion-Overlays und stellt beim
+  Schließen den Ausgangszustand wieder her. DAW-Transport-Regel und
+  MIDI-Regel-Tabelle als hervorgehobene Seiten. Navigation: Weiter/
+  Zurück, Pfeiltasten, PageUp/PageDown, Home, Escape/X/Scrim schließen.
+  Kein neuer DSP-Parameter (lokaler UI-Zustand wie der Dark-Mode);
+  ACIDIFYDSP.cmajor und param1..param66 unangetastet.
+
+### Changed
+
+- **Marken-Hygiene in der GUI:** Fremde Produktnamen aus allen
+  sichtbaren Labels entfernt (Modellzeile „ACID BASSLINE INSTRUMENT",
+  Distortion-Charakter „DESK/MIXER" statt „MACKIE/1202", Mods-Status
+  und -Footer, Tooltips); die letzte Tour-Seite trägt einen
+  Trademark-Disclaimer. tools/ui_smoke_test.mjs wacht darüber
+  (gerenderte UI darf MACKIE, AC-303, Devil Fish, FACTORY 303,
+  303-CLASS nicht enthalten). Manifest-description neutral gefasst.
+- Die vier verbliebenen deutschen UI-Strings sind jetzt Englisch
+  (Keyboard-, Arp-, Phrase- und Studio-Hinweis).
+- **Handbuch nachgeführt:** MANUAL.md/manual.html auf die neuen Labels
+  angeglichen (DESK, neutrale Mod-Beschreibungen mit den vom
+  Projektinhaber gewählten Formulierungen), „?"-Taste dokumentiert
+  (Zonen-Tabelle + Gesten-Tabelle), alle zwölf Screenshots aus der
+  neuen UI neu geschossen, PDF neu gebaut (14 Seiten).
+- Die Tour-Karte liegt außerhalb des gezoomten Chassis und bleibt bei
+  590×290 lesbar.
+
+### Unchanged
+
+- Kein neuer DSP-Parameter, ACIDIFYDSP.cmajor unangetastet,
+  Serien-Smoke bit-identisch (peak=0.50919, rms=0.01821).
+
+## [2.17.4] - 2026-08-02
+
+### Added (Dokumentation — kein DSP/UI-Eingriff)
+
+- **Druckfertiges PDF-Handbuch** `docs/manual/ACIDIFY_Manual.pdf`:
+  A4 hochkant, 14 vorpaginierte Seiten, gesetzt aus dem unveränderten
+  Wortlaut von `docs/manual/MANUAL.md`. Optik nach der Silver-Series-
+  Oberfläche des Plugins (Alu-Verläufe und Hairlines der Chassis-Token,
+  LED-Displays in Courier auf `#160c0a` mit `#ff6756`, Akzentrot
+  `#b52921`, Impact-Wortmarke) — alle Werte aus `ACIDIFYUI.js`
+  übernommen, keine externen Webfonts oder CDNs.
+  - Titelseite mit Version aus dem Manifest und Gesamtansicht,
+    Inhaltsverzeichnis mit Seitenzahlen, Kopfzeile mit Kapitelname,
+    Fußzeile mit LED-Seitenzahl.
+  - **Nummerierte Bildmarker**: rote Ziffern liegen an der gemeinten
+    Stelle im Screenshot, dieselbe Ziffer steht in der zugehörigen
+    Tabellenzeile (Panel-Zonen, Klangregler, Grid/Play/Swing/Length/
+    Root, Step-Reihe, Classic-Editor, Studio-Lanes und Werkzeuggruppen,
+    Arp-Bedienelemente, sechs Circuit Mods, Distortion, TIPS/DARK/POWER).
+  - Alle Markdown-Tabellen als echte Tabellen gesetzt; die beiden
+    Support-Dauerbrenner („MIDI Input: What Plays When" und der
+    DAW-Transport-Hinweis) als hervorgehobene LED-Boxen.
+  - Screenshots über die volle Satzspiegelbreite (170 mm).
+- **`tools/build_manual_pdf.mjs`**: baut das PDF reproduzierbar aus
+  `docs/manual/manual.html` mit headless Chromium (Playwright,
+  Launch-Flags wie `tools/ui_smoke_test.mjs`, `preferCSSPageSize`).
+  Bricht ab, wenn ein Screenshot fehlt, die Seitenzahl von der im
+  Markup abweicht oder die Seite einen Rendering-Fehler wirft.
+  (Beide Dateien aus dem Upload des Projektinhabers übernommen,
+  Wortlaut-Abgleich und PDF-Kontrolle siehe VALIDATION.)
+
+## [2.17.3] - 2026-08-01
+
+### Added (Dokumentation — kein DSP/UI-Eingriff)
+
+- **Englisches Benutzerhandbuch** `docs/manual/MANUAL.md` mit zwölf
+  Screenshots aus der echten UI (Playwright-Captures aus
+  mockup/preview.html, alle drei Editor-Ansichten, beide Overlays,
+  Dark Mode). Anlass: erstes Nutzerfeedback — Bedienung unklar,
+  MIDI-Input wurde nicht verstanden. Kernstück ist die
+  MIDI-Regel-Tabelle (Sequencer gestoppt = Live-Spiel mit
+  Velocity-Accent und Legato-Slide; Sequencer läuft = MIDI nur im
+  ARP-Editor als Notenpool, in CLASSIC/STUDIO zählt allein das
+  Pattern) und der DAW-Modus-Hinweis (Sequencer folgt dem
+  Host-Transport: Play in der DAW startet ACIDIFY; ohne
+  Host-Transportdaten bleibt RUN/TEMPO als Fallback bedienbar).
+  Alle Verhaltensaussagen gegen den DSP-Quelltext geprüft
+  (Zeilen-Audit 2.17.2 als Grundlage). README verlinkt das Manual.
+
 ## [2.17.2] - 2026-08-01
 
 ### Fixed
@@ -1835,6 +1925,9 @@ vollständigen Repository-Commit. `0.2.0` führte den modernen Studio-Workflow
 ein. Sie werden hier ausdrücklich als historische Vorstufen festgehalten,
 besitzen aber keinen eigenen Commit-Anker im Repository.
 
+[2.18.0]: https://github.com/ClarkParker/ACIDIFY/commit/34a54da2e87581ab787249ee6db53172941e8e4f
+[2.17.4]: https://github.com/ClarkParker/ACIDIFY/commit/faa9710e828736ac6a28f3f2a9b0850fc50fd52b
+[2.17.3]: https://github.com/ClarkParker/ACIDIFY/commit/aa9f99129abd0ba975aac45cc8fcb95f72b65a66
 [2.17.2]: https://github.com/ClarkParker/ACIDIFY/commit/ffd89e404624557dc0b62f1902ae281797fe863d
 [2.17.1]: https://github.com/ClarkParker/ACIDIFY/commit/4ee46565ee5712b0bfc56b4754de08a23ce01eeb
 [2.17.0]: https://github.com/ClarkParker/ACIDIFY/commit/32ba7668767e6880039b7d30f2a518e461023eaa

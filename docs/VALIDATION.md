@@ -1,3 +1,78 @@
+# Validierung 2.18.0
+
+## 2.18.0
+
+UI-Release (Panel-Tour + Marken-Hygiene, Upload des Projektinhabers
+integriert), DSP unangetastet. Geprüft:
+
+- Upload-Review: node --check grün; keine externen Zugriffe (nur
+  bestehendes localStorage + eingebettete data-URIs); Diff gegen
+  2.17.3 deckungsgleich mit dem Handoff (Tour-Code, Umbenennungen,
+  Übersetzungen, Brand-Span v2.18.0); keine verbotenen Markenbegriffe
+  in der UI.
+- ui_smoke (erweitert um den Tour-Block des Uploads): grün — Trigger
+  in der Logo-Zelle, Öffnen/Schließen per Klick, Escape und Scrim,
+  Seitenzähler 1..14, Pfeiltasten, Spotlight-Deckung,
+  Zustands-Wiederherstellung, Kompaktlayout 590×290, beide Themes,
+  Marken-Guard, keine deutschen Strings.
+- Sichtprüfung: Tour geöffnet (Silber + Dark), Seite 6/14 „DAW SYNC"
+  mit Spotlight auf der CLOCK-Zelle und LED-Box-Pflichtsatz.
+- Handbuch synchronisiert: MANUAL.md/manual.html auf DESK/neutrale
+  Labels, „?"-Zeilen ergänzt, zwölf Screenshots aus der neuen UI neu
+  geschossen (Modellzeile, englische Hinweise und „?"-Taste sichtbar),
+  PDF neu gebaut: 14 Seiten, 3,20 MB.
+- Lints: ui_lint --strict 0/0, check_sync konsistent, manifest_check
+  clean, cmajor_lint (bekannte Param-Warnung), check_version 2.18.0.
+- DSP-Batterie unverändert grün: Smoke 44,1/48/96/192 kHz
+  (48 kHz bit-identisch Peak 0,50919 / RMS 0,01821), hardware
+  (5 Checkpoints), gain, arp, articulation, matrix, transport
+  (inkl. dawPhraseEffectiveFlags).
+- Zwei Fehler im hochgeladenen ui_smoke-Test selbst behoben (der
+  Autoren-Workspace konnte Playwright nicht ausführen): zwei
+  Assertions erwarteten noch die alten deutschen Strings, und der
+  Scrim-Klick-Test nutzte feste Koordinaten außerhalb des
+  590×290-Viewports — Klickpunkt jetzt dynamisch aus Layer-/
+  Karten-Geometrie berechnet, Outside-Click-Verhalten der UI manuell
+  als korrekt verifiziert.
+
+---
+
+# Validierung 2.17.4
+
+## 2.17.4
+
+Doku-Release (PDF-Satz des Handbuchs, Dateien aus dem Upload des
+Projektinhabers übernommen), kein DSP/UI-Eingriff.
+docs/manual/manual.html gegen docs/manual/MANUAL.md abgeglichen
+(Stichprobe aller zehn Kapitel: identischer Wortlaut, alle Tabellen
+als HTML-Tabellen, keine ergänzten Verhaltensaussagen). PDF-Build
+lokal ausgeführt (tools/build_manual_pdf.mjs, 14 Seiten, 3,19 MB),
+Seiten 1–6 visuell kontrolliert: Titel, Inhaltsverzeichnis, Kapitel
+mit nummerierten Bildmarkern, MIDI/DAW-LED-Boxen, keine
+abgeschnittenen Tabellen. Serien-Smoke bit-identisch Peak 0,50919 /
+RMS 0,01821; ui_smoke grün (Brand-Span 2.17.4); check_version
+konsistent.
+
+---
+
+# Validierung 2.17.3
+
+## 2.17.3
+
+Doku-Release (Benutzerhandbuch), kein DSP/UI-Eingriff. Zwölf
+Screenshots per Playwright aus der echten Web-Component (preview.html,
+Scale-Faktor 2), Ansichten CLASSIC/STUDIO/ARP je per Segment-Klick auf
+den Editor-Schalter verifiziert (data-view-Attribut geprüft), Overlays
+MODS/DIST, Dark Mode. Verhaltensaussagen des Manuals gegen den
+Quelltext geprüft: MIDI-Zustandstabelle (midiIn-Handler),
+DAW-Positionsbindung nur im FWD-Play-Mode (processDawClock),
+Accent-Decay fix 200 ms, Velocity-Schwelle 100, CC 120/123,
+Slide = Steplänge+1. Serien-Smoke bit-identisch Peak 0,50919 /
+RMS 0,01821; ui_smoke grün (Brand-Span 2.17.3); check_version
+konsistent.
+
+---
+
 # Validierung 2.17.2
 
 ## 2.17.2
