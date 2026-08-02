@@ -31,7 +31,7 @@ The three editor tabs at the top right of the programmer (CLASSIC / STUDIO / ARP
 | **TUNING** | Master tune, ±1 semitone around center. |
 | **CUTOFF** | Filter cutoff. This sets the *resting point* of the filter. Notes still open the filter above it when ENV MOD is up (see below). |
 | **RESONANCE** | Filter resonance. Full clockwise sits just under self-oscillation, like a stock unit. |
-| **ENV MOD** | How much the filter envelope pushes the cutoff up on each note. **Important:** more ENV MOD also pulls the resting cutoff down between notes. That is original circuit behavior, not a bug. If you want to hear the filter fully closed, turn ENV MOD down as well as CUTOFF. |
+| **ENV MOD** | How much the filter envelope pushes the cutoff up on each note. **Important:** more ENV MOD also pulls the resting cutoff down between notes. That is original 303 circuit behavior, not a bug. If you want to hear the filter fully closed, turn ENV MOD down as well as CUTOFF. |
 | **DECAY** | Filter envelope decay time, 200 ms to 2.5 s. On accented steps the decay is always fixed at the short 200 ms setting, exactly like the hardware. |
 | **ACCENT** | How hard accented steps hit: louder through the VCA and an extra resonance-dependent filter sweep. At high RESONANCE the accent sweep gets faster and more aggressive. |
 | **MASTER** | Output volume, −36 to +6 dB. Sits after the distortion stage, so it never changes the distortion character. |
@@ -82,7 +82,7 @@ This is the part that confuses everyone once, so here is the whole rule set:
 | Situation | What MIDI notes do |
 |---|---|
 | **Sequencer stopped** (RUN off, or DAW transport stopped) | MIDI notes play directly, like a mono synth. Velocity 100 or higher triggers an accent. Playing legato (new note while holding the old one) slides between the notes. |
-| **Sequencer running, CLASSIC or STUDIO editor** | MIDI notes are **ignored**. The 16-step pattern is the only note source, exactly like the original hardware. Program the pattern instead of playing it. |
+| **Sequencer running, CLASSIC or STUDIO editor** | MIDI notes are **ignored**. The 16-step pattern is the only note source, exactly like the original 303. Program the pattern instead of playing it. |
 | **Sequencer running, ARP editor** | MIDI notes feed the arpeggiator: hold a chord and the arp plays it. The pattern still provides the rhythm: its gates, accents and slides act as a step mask, only the pitches come from your chord. |
 | Any time | MIDI CC 120 / CC 123 = all notes off. |
 
@@ -119,7 +119,7 @@ The editor below shows the selected step. Use the **KEYBOARD** to set its pitch,
 | **OCT − / OCT +** | Transpose the selected step one octave down/up |
 | **GATE** | Toggle note/rest |
 | **ACCENT** | Toggle accent (louder + filter bite) |
-| **SLIDE** | Ties this step to the next: the note holds through the step and glides into the next pitch. This is the classic acid slide. |
+| **SLIDE** | Ties this step to the next: the note holds through the step and glides into the next pitch. This is the classic 303 slide. |
 | **CLEAR** | Reset the step |
 
 Slide behavior detail: a slide on step N makes step N run at full length and glide into step N+1. Without slide, each note plays half the step length, then releases.
@@ -171,7 +171,7 @@ The display above shows the current figure and the note currently played by the 
 
 ![Circuit mods](img/mods.png)
 
-Six classic hardware modifications, each one a real component change from the published mod documentation. Every mod has its own ON/OFF switch, so the plugin runs the stock circuit until you flip something. Defaults = stock.
+Six famous hardware modifications, each one a real component change from the Devil Fish and x0x mod documentation. Every mod has its own ON/OFF switch, so the plugin is a bone-stock 303 until you flip something. Defaults = stock.
 
 | Mod | Effect |
 |---|---|

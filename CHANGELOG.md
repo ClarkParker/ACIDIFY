@@ -6,6 +6,27 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [2.18.1] - 2026-08-02
+
+### Changed (Dokumentation — kein DSP/UI-Verhalten)
+
+- **Handbuch-Feinschliff des Projektinhabers übernommen** (Upload,
+  Handbuch-Teil zu 2.18.0): alle zwölf Screenshots aus der
+  2.18.0-Oberfläche in echter doppelter Auflösung neu gerendert
+  (Gesamtansichten 2360×1160); zwei Ausschnitte überarbeitet, weil der
+  alte Inhalt abgeschnitten hätte (studio.png = kompletter
+  Programmer-Streifen, mods.png = Overlay mit vollständiger rechter
+  Spalte); manual.html mit angepassten Bildmarkern; PDF neu gebaut
+  (14 Seiten, 5,52 MB).
+- **Handbuch-Wortlaut auf die Fassung des Projektinhabers
+  zurückgestellt:** die beschreibenden „303"-Nennungen im Fließtext
+  (original 303 circuit behavior, classic 303 slide, bone-stock 303,
+  Devil-Fish/x0x-Quellenverweis) bleiben laut dessen dokumentierter
+  Entscheidung erhalten — die 2.18.0-Neutralisierung dieser vier
+  Stellen ging über die GUI-Label-Hygiene hinaus und ist
+  zurückgenommen. GUI-Labels bleiben neutral (DESK usw.);
+  MANUAL.md und manual.html sind wieder satzgenau deckungsgleich.
+
 ## [2.18.0] - 2026-08-02
 
 ### Added
@@ -1925,6 +1946,7 @@ vollständigen Repository-Commit. `0.2.0` führte den modernen Studio-Workflow
 ein. Sie werden hier ausdrücklich als historische Vorstufen festgehalten,
 besitzen aber keinen eigenen Commit-Anker im Repository.
 
+[2.18.1]: https://github.com/ClarkParker/ACIDIFY/commit/fd438ce41a26c487e4ed9dbf5b42012e191b6ea7
 [2.18.0]: https://github.com/ClarkParker/ACIDIFY/commit/34a54da2e87581ab787249ee6db53172941e8e4f
 [2.17.4]: https://github.com/ClarkParker/ACIDIFY/commit/faa9710e828736ac6a28f3f2a9b0850fc50fd52b
 [2.17.3]: https://github.com/ClarkParker/ACIDIFY/commit/aa9f99129abd0ba975aac45cc8fcb95f72b65a66
